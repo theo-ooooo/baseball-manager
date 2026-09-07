@@ -39,3 +39,9 @@ Validation completed:
 Hosting distinction: the current session has no verified connection to the user's personal Cloudflare account. The existing owner-private Sites project uses managed Cloudflare infrastructure. Publication is pending at this checkpoint; use the actual deployment response for the final site URL.
 
 Known product limits from the initial session remain: partial real rosters outside MLB/NPB, shared simplified league rules, fictional player ratings/contracts and staff, simplified pitching, and no draft/posting/injury systems. See README for the precise supported scope.
+
+## 2026-09-07 — Private test publication confirmed
+
+The native Sites deployment completed successfully at https://dugout-world-manager.kkwondev.chatgpt.site. Access remains owner-private on managed Cloudflare infrastructure. Published application source: `016e04949ef6b8c5c7d1275171a98963ca291fe8`.
+
+GitHub Actions independently completed build, all 14 tests and typechecking successfully: https://github.com/theo-ooooo/baseball-manager/actions/runs/34142177139. The publication record adds documentation only; it does not change the deployed application. No browser or live persistence verification is claimed.
