@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../apps/web/globals.css";
 
 export const metadata: Metadata = {
   title: "DUGOUT | 월드 베이스볼 매니저",
