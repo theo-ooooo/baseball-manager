@@ -56,7 +56,6 @@ Follow-up scope authorized during this session: four-week preseason with friendl
 
 The user reports connecting Cloudflare. Discovery in this conversation still returns no callable Cloudflare account/deployment tools, and local Cloudflare authentication is absent. Continue implementation and prepare a safe direct-account deployment path; do not describe Sites deployment as personal-account deployment.
 
-
 ## 2026-09-08 — Preseason, squad development and catalog implementation
 
 Implemented a 28-day preseason with four friendlies, separate official statistics and an opening-day stop. Added a server-enforced optional first-year external/FA recruitment ban that allows renewals, sales and coaches and expires in year two. Added first-team registration (28 players), reserve promotions/demotions, a separate three-day development schedule/statistics, generated academy depth, and coach-influenced development. Defensive slots are explicit, swappable and validated; position familiarity affects defensive strength and grows with training/appearances. Team instructions affect hitting, running and defense; named tactic books persist lineup, starter, defense and instructions. Existing career snapshots remain valid and can receive newly catalogued players without resetting their contracts or statistics.
@@ -67,20 +66,17 @@ Two new generated Drizzle migrations add metadata columns and update catalog row
 
 Validation at this checkpoint: production build and typecheck passed; 11 engine tests and 5 actual Worker/D1 API tests passed, including preseason/official-stat separation, transfer restrictions, slot/bench swaps, reserve registration, named tactics and persisted real-coach metadata. Production SSR/assets test also passed. Interface controls are included in the following commit. No browser interaction or live persistence verification was performed. Personal Cloudflare account deployment remains unavailable in this conversation.
 
-
 ## 2026-09-08 — Management interface controls
 
 Connected the FM-style workspace to the new server systems. Added preseason setup and countdown, first-year recruitment restriction notices, friendly schedules, reserve registration/development screens, individual position training, real-coach search and hiring, named tactic controls and four adjustable team instructions. The field now uses persisted defensive positions, supports desktop dragging and an equivalent two-click/keyboard interaction, bench replacements, selected-player feedback and familiarity labels. The dashboard reads the same defensive assignment. Existing careers receive an explicit catalog-update control. Removed the old automatic-only field and fictional-only staff screen.
 
 The complete current source passed production build, TypeScript checking and all 20 tests: 11 engine regressions, 5 actual Worker/D1 API tests, production SSR/assets and 3 component-semantics tests. Browser visual/interaction QA was not performed. Current deployment target is the existing owner-private Sites test site on managed Cloudflare; personal-account migration has not been executed because account/deployment tools and local Cloudflare authentication are not exposed in this conversation.
 
-
 ## 2026-09-08 — Management release published
 
 Owner-private Sites version 2 deployed successfully at https://dugout-world-manager.kkwondev.chatgpt.site, using application source `ecada565965c27044739bcdc97a9e8a1b2d3c614`. The package includes the two new D1 migrations. GitHub main was verified at the same application commit, and GitHub Actions completed successfully: https://github.com/theo-ooooo/baseball-manager/actions/runs/34179130029. This record changes documentation only.
 
 Deployment remains in the existing Sites-managed Cloudflare environment. The user's personal Cloudflare account has not been used. Migration is possible after the destination account becomes accessible, with a D1 data export/import and verified replacement authentication; keep the existing database until the migrated career data and access controls have been checked. No browser interaction or production career mutation was performed as verification.
-
 
 ## 2026-09-08 — Stadium replay implementation
 
@@ -89,23 +85,27 @@ Replaced the score-table replay with a stadium-centered replay: overhead stadium
 Validation: production build, typechecking and all 23 tests pass, including state continuity, old archives, caught stealing/home-run runner paths and actual Worker/D1 integration. Browser interaction was not requested and was not performed. Publication pending. Further requests queued: performance-based real-player ratings, calendar reports/morale/inbox decisions, selling-club consent and actual transfer offers, plus date-based real fixtures/series/rest days.
 
 ### KRW default and replay publication — 2026-09-08
+
 - Replay commit `47713b7bb62ac032613ff719d193d5e0cea07580` was published successfully as Site version 3. Deployment `appgdep_6a9f7f52e318819196218ce681ce60f7` succeeded at the existing owner-private test URL.
 - All money displays now use KRW (억 원 / 만 원); contract salary inputs and fee previews use 만 원. Legacy persisted currency units are retained and converted with the explicitly labelled fixed game rate USD 1 = KRW 1,400. This is not a current exchange-rate quote.
 - TypeScript validation passed. Currency publication will accompany the next management update.
 
 ### Performance-derived real-player ratings — 2026-09-08
+
 - Added 2025 official KBO, MLB and NPB counting-stat snapshots (3,398 batting/pitching records). The model is deterministic, removes real-player random attributes/name overrides, and regresses small samples toward the league's observed mean. Potential is an explicit age/performance estimate. Unobserved defense/speed use hidden neutral simulation values.
 - 1,075 real players have at least 100 PA / 30 IP; 530 have provisional smaller samples; 437 remain visibly ungraded. Ambiguous identities are not assigned another player's stats. Example: Lotte Jeon Min-jae is linked to his own 369 PA, 95 hits, 5 HR 2025 season.
 - D1 migrations add source/evaluation metadata and update catalog ratings. Read-time compatibility upgrades show corrected ratings immediately; the next mutation persists them with the existing revision gate. Contracts, ownership and game stats remain intact, and subsequent model refreshes retain recorded development deltas.
 - Rating identity, missing-data handling and idempotent career upgrades passed targeted tests. TypeScript passed. Publication pending the management/date-calendar update.
 
 ### Calendar-based season progression — 2026-09-08
+
 - D1 fixture catalog now contains 4,008 dated fixtures: MLB 2,430, NPB 858 and KBO 720. IDs are distinct and every club's scheduled count is verified (162 / 143 / 144). KBO deliberately uses the initial 675 planned fixtures, including originally scheduled rainout dates, plus one officially dated remaining matchup per pair; historical rain/weather cancellations are not reproduced. This limitation is visible in the calendar.
 - One advance processes the scheduled games on the same date across leagues; rest dates advance recovery, training and wages without inventing a match. Doubleheaders have separate fixture IDs and the second game selects a recovered starter. Recent world results are kept in the career snapshot.
 - Calendar UI defaults to all league games with month navigation, club filtering, home/away and dates. Generated leagues, short seasons and future years have series/travel/rest dates. Existing completed results are preserved, with remaining fixtures rescheduled.
 - Calendar tests verify all official and generated club totals, legal identities, Monday rest and simultaneous KBO games; targeted engine tests also passed after updating the old expectation that every foreign league finishes on the home league's final date. Full production validation is scheduled after the remaining management update.
 
 ### Club decisions, inbox and automatic continue — 2026-09-08
+
 - Added persistent read/unread inbox, date-driven opponent/weekly/contract reports, player morale and expected roles, playing-time concerns and manager responses. Two-week playing-time promises are tracked and fulfilled/broken promises affect morale; new concerns stop multi-day progression. These are explicitly fictional game-world emotions.
 - Selling clubs now evaluate core/starter role, replacement depth, contract years, contention and season timing. Their refusal overrides an agent agreement and is rechecked at signing. In full 2026 careers the simplified game deadline is July 31 for KBO/NPB and August 3 for MLB; other/short careers close at 80% of the season. This is not full transfer/registration-rule parity.
 - Outgoing sales require transfer listing, interested buyer and an unexpired seven-day offer. Forged/expired/reused offers cannot transfer a player or create money.
@@ -322,3 +322,10 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - 교체창을 열었을 때의 승격·말소 방향을 유지한다. 다른 화면에서 같은 선수를 먼저 교체해 revision 충돌로 최신 상태가 들어와도, 열려 있던 교체창이 반대 방향의 교체로 바뀌지 않는다. 현재 상태를 확인하라는 이유를 표시하고 재선택 전 확정을 막는다.
 - 실제 로컬 브라우저에서 교체창을 연 뒤 별도 요청으로 같은 교체를 먼저 저장하고, 이전 revision으로 확인 버튼을 눌렀다. 최신 revision 4와 선수 소속은 유지되고 반대 교체 없이 버튼이 비활성화됨을 확인했다. 후속 운영 빌드·TypeScript·lint·변경 파일 포맷이 통과했다. 경기·DB 변경은 없고 기존 67개 회귀 검증은 후속 GitHub 검증에서도 실행된다.
+
+## 2026-09-08 — 새 화면과 등록 교체 운영 배포 완료
+
+- 최종 구현 `af3aff9`의 브랜치·PR 검증이 통과했고, 한글 PR #5를 main `633d3ca`에 병합했다. GitHub Actions run `34206084155`에서 67개 테스트를 포함한 검증과 Cloudflare 자동배포가 모두 성공했다.
+- 공개 주소 `https://baseball-manager.kkwondev.workers.dev`에서 새 단색 바탕, 13개 리그, 그라데이션 0개, 페이지 가로 넘침과 브라우저 오류 없음을 확인했다. 기존 커리어를 읽기 전용으로 원본 백업과 비교해 revision 42, 선수 42명, 경기 기록 5개, 예산·날짜·구단·타순·선발·선수별 성적과 계약이 보존됐음을 확인했다. 운영 커리어를 진행하거나 초기화하지 않았다.
+- 동일한 최종 구현의 Sites 버전 11도 배포 `appgdep_6a9fcadd19588191884f76e1db4d6771`이 성공했다. 기존 프로젝트와 소유자 전용 접근 범위, 환경 revision 2를 유지했다. 현재 발행 차단 요인은 없다.
+- 이 후속 커밋은 배포 확인 기록만 추가한다. 전체 접근성 인증, 운영 부하와 모든 리그 규칙의 완전 재현은 이번 검증 범위에 포함하지 않는다.
