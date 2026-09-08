@@ -73,7 +73,8 @@ function RosterExchange({
 }: Props & { player: Player; onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [replacementId, setReplacementId] = useState('');
-  const promoting = player.squad === 'reserve';
+  // A revision conflict can refresh this player while the dialog is still open.
+  const [promoting] = useState(() => player.squad === 'reserve');
   const target = promoting ? 'first' : 'reserve';
   const replacement = g.roster.find((p) => p.id === replacementId);
   const error = replacement ? squadMoveError(g, player.id, target, replacement.id) : null;
