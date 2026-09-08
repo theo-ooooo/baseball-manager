@@ -227,6 +227,19 @@ test('D1 persists defensive swaps, tactic books, reserve development and real co
     .bind(user, reserve.id)
     .first();
   assert.ok(JSON.parse(projected.data).familiarity.SS > 0);
+  const trained = JSON.parse(projected.data);
+  saved = await action({ type: 'positionTraining', id: reserve.id, position: '' }, user);
+  const reset = (await call('/api/career', undefined, user)).body.state.roster.find(
+    (p) => p.id === reserve.id,
+  );
+  assert.equal(reset.positionTraining, undefined);
+  assert.deepEqual(reset.familiarity, trained.familiarity);
+  assert.deepEqual(reset.stats, trained.stats);
+  const storedReset = await db
+    .prepare('SELECT data FROM career_players WHERE user_id=? AND player_id=?')
+    .bind(user, reserve.id)
+    .first();
+  assert.equal(JSON.parse(storedReset.data).positionTraining, undefined);
   const staff = await db
     .prepare('SELECT is_real,source_club FROM career_staff WHERE user_id=?')
     .bind(user)

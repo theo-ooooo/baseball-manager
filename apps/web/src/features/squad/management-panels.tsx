@@ -169,9 +169,7 @@ export function PositionTraining({ p, act, busy }: { p: Player; act: Act; busy: 
         value={p.positionTraining || ''}
         onChange={(e) => void act({ type: 'positionTraining', id: p.id, position: e.target.value })}
       >
-        <option value="" disabled>
-          배치 포지션 자동 훈련
-        </option>
+        <option value="">배치 포지션 자동 훈련</option>
         {options.map((pos) => (
           <option key={pos} value={pos}>
             {positionLabels[pos]} · {Math.round(familiarity(p, pos))}%

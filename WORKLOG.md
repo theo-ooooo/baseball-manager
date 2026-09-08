@@ -225,3 +225,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - Added deployment after successful main validation, using the exact tested Worker artifact. Feature branch/PR runs only validate; production jobs serialize and skip an older main commit. The deployment records a D1 Time Travel bookmark, applies forward migrations, publishes the Worker and verifies the live catalog health response.
 - Verified the personal Cloudflare account and target D1, and verified GitHub contains the scoped Cloudflare API secret and account variable. Worker upload dry-run passes with the guest provider, correct D1 binding, assets and Images binding. Actual deployment and career transfer follow final UI/browser validation; no Zero Trust plan was activated.
+
+## 2026-09-08 — Restore automatic position training
+
+- Browser play-through found that choosing an individual training position could never return to automatic training. Enabled the automatic option and added a backend command to clear the override while preserving familiarity and statistics.
+- The actual Worker/D1 regression verifies persisted removal, unchanged accumulated training and season stats. All 55 tests pass, with production build, TypeScript, format and zero-warning lint.

@@ -177,6 +177,10 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
     case 'positionTraining': {
       const p = g.roster.find((p) => p.id === a.id),
         pos = String(a.position) as DefensivePosition;
+      if (p && a.position === '') {
+        delete p.positionTraining;
+        return g;
+      }
       if (!p || !defensivePositions.includes(pos) || (pos === 'P') !== (p.pos === 'P'))
         throw new Error('훈련할 포지션을 확인해 주세요.');
       p.positionTraining = pos;
