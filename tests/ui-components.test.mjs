@@ -11,7 +11,13 @@ const vite = await createServer({
   appType: 'custom',
   configFile: false,
   root,
-  resolve: { alias: { '@': root } },
+  resolve: {
+    alias: {
+      '@': root,
+      // Use the same image implementation as the production Vinext plugin.
+      'next/image': fileURLToPath(new URL('./shims/image.js', import.meta.resolve('vinext'))),
+    },
+  },
   server: { middlewareMode: true },
 });
 
@@ -84,4 +90,18 @@ test('Dedicated player profile omits hidden potential and shows observed and unm
   assert.doesNotMatch(hidden, /role="dialog"/);
   raw.rules.revealPotential = true;
   assert.match(render(presentState(raw)), /잠재력/);
+});
+
+test('Club badges render sourced assets and a labelled abbreviation when no logo is available', async () => {
+  const { ClubBadge } = await vite.ssrLoadModule('/apps/web/club-badge.tsx');
+  const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
+  const world = buildSeedWorld();
+  const sourced = world.clubs.find((club) => club.id === 'kbo-lotte');
+  const html = renderToStaticMarkup(React.createElement(ClubBadge, { club: sourced }));
+  assert.ok(html.includes(`src="${sourced.logo.path}"`));
+  assert.ok(html.includes(`alt="${sourced.name} 로고"`));
+  const missing = world.clubs.find((club) => club.id === 'lmp-tucson');
+  const fallback = renderToStaticMarkup(React.createElement(ClubBadge, { club: missing }));
+  assert.ok(fallback.includes(`aria-label="${missing.name} 구단 약칭"`));
+  assert.doesNotMatch(fallback, /<img/);
 });

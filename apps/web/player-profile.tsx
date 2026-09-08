@@ -1,4 +1,5 @@
 'use client';
+import { ClubBadge } from './club-badge';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -209,6 +210,7 @@ export function PlayerProfile(props: Props) {
   return (
     <article className="panel player-page">
       <header className="profile-header">
+        {getClub(player.club) && <ClubBadge club={getClub(player.club)} size="large" />}
         <span className={`profile-number ${player.real ? '' : 'generated'}`}>{player.number}</span>
         <div>
           <span className={player.real ? 'real-tag' : 'gen-tag'}>

@@ -1,5 +1,5 @@
 'use client';
-import { type ReactNode, type CSSProperties } from 'react';
+import { type ReactNode } from 'react';
 import { Search, X } from 'lucide-react';
 import {
   Select,
@@ -8,17 +8,10 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import type { Club } from '../../packages/shared/src/types';
 import { type Player } from '../../packages/shared/src/game-view';
 import { isUnrated } from '../../packages/shared/src/ratings';
 
-export function Badge({ club, size = 'normal' }: { club: Club; size?: string }) {
-  return (
-    <span className={`club-badge ${size}`} style={{ '--club': club.color } as CSSProperties}>
-      {club.short}
-    </span>
-  );
-}
+export { ClubBadge as Badge } from './club-badge';
 
 export function Rating({ value, player }: { value: number; player?: Player }) {
   if (player && isUnrated(player)) return <span className="muted tiny">미평가</span>;

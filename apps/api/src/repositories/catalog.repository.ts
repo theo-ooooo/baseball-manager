@@ -41,7 +41,7 @@ export class CatalogRepository {
         'SELECT id,name,country,flag,region,label,games,level,source,season FROM leagues ORDER BY sort_order',
       ),
       db.prepare(
-        'SELECT id,league_id AS league,name,short,color,city,division FROM clubs ORDER BY sort_order',
+        'SELECT id,league_id AS league,name,short,color,city,division,logo_json AS logo FROM clubs ORDER BY sort_order',
       ),
       db.prepare(
         "SELECT id,COALESCE(club_id,'fa') AS club,name,original,position AS pos,age,is_real AS real,country,number,contact,power,speed,fielding AS field,stuff,control,potential,salary,years,source,age_estimated AS ageEstimated,rating_json AS rating FROM players ORDER BY sort_order",
@@ -73,7 +73,9 @@ export class CatalogRepository {
       year: Number(meta.year),
       rosterNote: meta.roster_note,
       leagues: leagueRows.results as unknown as League[],
-      clubs: clubRows.results as unknown as Club[],
+      clubs: (clubRows.results as unknown as (Omit<Club, 'logo'> & { logo: string | null })[]).map(
+        (club) => ({ ...club, logo: club.logo ? JSON.parse(club.logo) : undefined }),
+      ),
       players,
       fixtures: fixtureRows.results as unknown as Fixture[],
       agents: agentRows.results as unknown as Agent[],

@@ -166,6 +166,15 @@ export type Club = {
   color: string;
   city: string;
   division: string;
+  logo?: ClubLogo;
+};
+export type ClubLogo = {
+  path: string;
+  sourcePage: string;
+  sourceUrl: string;
+  sha256: string;
+  mimeType: string;
+  rightsNote: string;
 };
 export type RealSeed = {
   name: string;

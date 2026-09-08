@@ -54,6 +54,10 @@ test('Workers runs NestJS with migrated D1 catalog and protects career identity'
   assert.equal(catalog.status, 200);
   assert.equal(catalog.body.leagues.length, 13);
   assert.equal(catalog.body.clubs.length, 137);
+  const logos = JSON.parse(await readFile('apps/api/seed/club-logos.json', 'utf8'));
+  for (const club of catalog.body.clubs) {
+    assert.deepEqual(club.logo, logos[club.id]);
+  }
   assert.equal(catalog.body.players.length, 4503);
   assert.equal(catalog.body.players.filter((p) => p.real).length, 2042);
   assert.equal(new Set(catalog.body.players.map((p) => p.id)).size, 4503);

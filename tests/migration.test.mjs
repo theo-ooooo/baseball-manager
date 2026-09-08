@@ -59,6 +59,12 @@ test('Forward catalog migration preserves existing career bytes, ownership, cont
     );
     assert.equal(yoo.record.obp, 0.352);
     assert.equal(yoo.record.k, 66);
+    const logos = JSON.parse(readFileSync('apps/api/seed/club-logos.json', 'utf8'));
+    const clubs = db.prepare('SELECT id, logo_json FROM clubs').all();
+    assert.equal(clubs.filter((club) => club.logo_json).length, 134);
+    for (const club of clubs) {
+      assert.deepEqual(JSON.parse(club.logo_json), logos[club.id] ?? null);
+    }
   } finally {
     db.close();
   }

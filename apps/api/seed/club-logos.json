@@ -1,0 +1,1074 @@
+{
+  "kbo-doosan": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2025/OB.png",
+    "sha256": "d5dd34d8116b93471ca1cd23f26a5d54efde88a4a1554af9ce5358c13322375d",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-doosan.png"
+  },
+  "kbo-hanwha": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2025/HH.png",
+    "sha256": "322ec45d8b0c81be9ece26a13fc0fd3bb3b62ed54a56184ad179f6d1552207b4",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-hanwha.png"
+  },
+  "kbo-kia": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/HT.png",
+    "sha256": "dfd23a6b274ddcccd9199ac57ae6e09aa044da071f52da9c4f2b45bdf4c90aed",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-kia.png"
+  },
+  "kbo-kiwoom": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/WO.png",
+    "sha256": "ef5acaf7a2744528ed19b5fd5c361a681491c4a6b98920c3d88f5d2eebd442f4",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-kiwoom.png"
+  },
+  "kbo-kt": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/KT.png",
+    "sha256": "9db1c2dbce1e36850eed7721acb21a8e873af8936a57db5a288e794d1103d6d1",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-kt.png"
+  },
+  "kbo-lg": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/LG.png",
+    "sha256": "2d84d91098f9da01e21f584d67316809e49cb428f6c374aca9b93b82ba4b9378",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-lg.png"
+  },
+  "kbo-lotte": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/LT.png",
+    "sha256": "e84736201505d9c307b2b9d9c9fb8d767087a44b774661659611125f3eddbc4d",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-lotte.png"
+  },
+  "kbo-nc": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/NC.png",
+    "sha256": "343312b2f831bc38896b56219cbeb8d08cba15c99f4392e62a9e2158c2ebfefa",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-nc.png"
+  },
+  "kbo-samsung": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2022/SS.png",
+    "sha256": "9a2b27d423758d4fd6d192c8173baf84b5bffa4fc057084188f52d947f62467a",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-samsung.png"
+  },
+  "kbo-ssg": {
+    "sourcePage": "https://www.koreabaseball.com/",
+    "sourceUrl": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/KBOHome/resources/images/emblem/regular/2024/SK.png",
+    "sha256": "a118325b059974c33d90df6e5e2067de4e1f5c129b60c958c1561178b41c1571",
+    "mimeType": "image/png",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/kbo-ssg.png"
+  },
+  "mlb-angels": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/108.svg",
+    "sha256": "0b73a6c9523ac0a35a817516e13c4e96a7908dc0df389f01f8dba5d6c47d21e6",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-angels.svg"
+  },
+  "mlb-astros": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/117.svg",
+    "sha256": "fd2e9fa1d895e8cb88fb9ee3562acb6a1b9852158aa4793aa3a742097cc5556e",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-astros.svg"
+  },
+  "mlb-athletics": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/133.svg",
+    "sha256": "598538b486eef1fc4834f0a88093fc03b26c558e264afc21f5c3c4b2ba209f0c",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-athletics.svg"
+  },
+  "mlb-bluejays": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/141.svg",
+    "sha256": "1920a269c4dce0f8f38d338c4a47380144922a7d84f92ad4609188cac0f4d8e3",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-bluejays.svg"
+  },
+  "mlb-braves": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/144.svg",
+    "sha256": "11162237c379e6e6e54916ee4eebe4407961b4d37293b71b21868077d1bead0d",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-braves.svg"
+  },
+  "mlb-brewers": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/158.svg",
+    "sha256": "9271da480f41d07eaa124a20dd4bc2dfaf879c17721b61bef9c45d8e6cc837d4",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-brewers.svg"
+  },
+  "mlb-cardinals": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/138.svg",
+    "sha256": "c1f1aa692b825d69521a724ca0848b337bd4fe57120daf3760a4e2eb12e3653d",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-cardinals.svg"
+  },
+  "mlb-cubs": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/112.svg",
+    "sha256": "8fe99678c053859b50adbbe769aade0011ed6b2349962a9963dcc0b6db162aef",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-cubs.svg"
+  },
+  "mlb-dbacks": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/109.svg",
+    "sha256": "b63b3aaf303ff3bd856c480ef855a0bdab1794e78185e3b791492c860fdf804a",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-dbacks.svg"
+  },
+  "mlb-dodgers": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/119.svg",
+    "sha256": "9840fd7c20fb4614a1797f1fcf9613586fb54dac49dbe4b894086aa07555280f",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-dodgers.svg"
+  },
+  "mlb-giants": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/137.svg",
+    "sha256": "04d8deeb9e7dd172edae9c1a202bf91461d89a973dd243edddb99329cfe99f3c",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-giants.svg"
+  },
+  "mlb-guardians": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/114.svg",
+    "sha256": "5fada1700c1622777d64d1971e028ea7aca7729a11537736d4e88c6acada763e",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-guardians.svg"
+  },
+  "mlb-mariners": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/136.svg",
+    "sha256": "c9508331d23c9a20493210e9cd23d29978fc5e599efeffe6e180118885ff4d06",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-mariners.svg"
+  },
+  "mlb-marlins": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/146.svg",
+    "sha256": "6a6e50ca9bad01e65aaeb0557d9e7b4dc94647aea42fdd2549643aca35a767df",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-marlins.svg"
+  },
+  "mlb-mets": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/121.svg",
+    "sha256": "b8214420e8588f91928f45829e9abd8c5ac30df6293a29597b1aa7cc9bc972e0",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-mets.svg"
+  },
+  "mlb-nationals": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/120.svg",
+    "sha256": "69e019986481b7844b548fe2d1cdc88a58815d0b1b8cbf22bd65fcf17f3458d8",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-nationals.svg"
+  },
+  "mlb-orioles": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/110.svg",
+    "sha256": "9e6476d34cd2e98e792cb73ef06e99b2c243089b3a7e102465db427ec3d26535",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-orioles.svg"
+  },
+  "mlb-padres": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/135.svg",
+    "sha256": "c0d5f92ef4a58f097c74aedebb9fd1ff4270217d45b75ef7aa6eeded115131da",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-padres.svg"
+  },
+  "mlb-phillies": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/143.svg",
+    "sha256": "465da43739de56c09d5f8ec3328be11e9318f53959cc05979d3ab3d0a547a3bb",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-phillies.svg"
+  },
+  "mlb-pirates": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/134.svg",
+    "sha256": "a88e4a6bd86217dd2e1c66f48de97113a7edde01f03d7a9c280b6b05bd0ddaa3",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-pirates.svg"
+  },
+  "mlb-rangers": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/140.svg",
+    "sha256": "775ec1e70b6655e087249f7306c8ea033c2cc5c52bd1da71339df02160190a38",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-rangers.svg"
+  },
+  "mlb-rays": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/139.svg",
+    "sha256": "b50fd02140a8fe66e57eb5c421fc6847a52abfbc7469bc3099a49d1e09ff77fc",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-rays.svg"
+  },
+  "mlb-reds": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/113.svg",
+    "sha256": "112b22efe0bb3f7352a0630068977526d2fbaf36c67a10683a8b2c9e966c1618",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-reds.svg"
+  },
+  "mlb-redsox": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/111.svg",
+    "sha256": "53eb07384a14fcc54efb807581672b793c75cc1bfdc0c6610345051820cd92af",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-redsox.svg"
+  },
+  "mlb-rockies": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/115.svg",
+    "sha256": "f4ac929c740e482a4c62127cbb0b04c9aa48848f6481dcabfd66f7c064abdd47",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-rockies.svg"
+  },
+  "mlb-royals": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/118.svg",
+    "sha256": "55678f28a752ec5ac86e290b2481b8a5e3d7de7460a3f469412147dc224eb32c",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-royals.svg"
+  },
+  "mlb-tigers": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/116.svg",
+    "sha256": "90602ddfa5130edf47241fcde4152d7c7421b881af67ed3d66d0b5d700446c39",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-tigers.svg"
+  },
+  "mlb-twins": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/142.svg",
+    "sha256": "9f062b8e0a2626babce4f051f2d3f1bee163fa6d74ff12ff3501be2e2767b090",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-twins.svg"
+  },
+  "mlb-whitesox": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/145.svg",
+    "sha256": "ca1ee0dc0e5a0f848703d0081ba60a12d44b0364da5c3b146985b6fe33f2e994",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-whitesox.svg"
+  },
+  "mlb-yankees": {
+    "sourcePage": "https://www.mlb.com/team",
+    "sourceUrl": "https://www.mlbstatic.com/team-logos/147.svg",
+    "sha256": "a9041069f46b033c0ecaa1472fd5a12da22f1f5af53fd8a686687540d5586fdd",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official club mark. MLB terms restrict reuse beyond personal noncommercial use unless separately authorized.",
+    "path": "/club-logos/mlb-yankees.svg"
+  },
+  "npb-b": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_b_l.gif",
+    "sha256": "10057511d44c1535a5a9b1c0aed6b37f0adf2d8937501541dd4823361c8ee0de",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-b.gif"
+  },
+  "npb-c": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_c_l.gif",
+    "sha256": "ba6ff498c1c7f187e137060a9a342edea282cc73d114ad1c74a1bda4f907224b",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-c.gif"
+  },
+  "npb-d": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_d_l.gif",
+    "sha256": "a93052d2383921c58cac4d209b5a9e5f58c0b7fd4a90d864156cd5326fe9b6f6",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-d.gif"
+  },
+  "npb-db": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_db_l.gif",
+    "sha256": "67c722d548f0dfa9e67647a39fd90e0c69e60e906cffe98e929991aed5b35a4f",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-db.gif"
+  },
+  "npb-e": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_e_l.gif",
+    "sha256": "f9fe353b1fb71485a022200d63c89a0a0163e251372f69c89758ec0d4e763106",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-e.gif"
+  },
+  "npb-f": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_f_l.gif",
+    "sha256": "01fce24a95d3ed2c729a24578da48de1be18b377f630911a0395ce931bdaf955",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-f.gif"
+  },
+  "npb-g": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_g_l.gif",
+    "sha256": "5938fc5994c6a4c62009672cae76f548ccfe54ab008b0631fbd24aa9477585b6",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-g.gif"
+  },
+  "npb-h": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_h_l.gif",
+    "sha256": "1e85657ae878e88ed9c8dc2441f58a811c119aa49e9c76d8cb1ecec3152820ce",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-h.gif"
+  },
+  "npb-l": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_l_l.gif",
+    "sha256": "8dbab3b04bbd845e19ae1ffb49e82e124e8e583d3895757c9d8dff9832f811fd",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-l.gif"
+  },
+  "npb-m": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_m_l.gif",
+    "sha256": "a4348a69fc0c71fcf9c81ad47d30fa31474f178f6d507a8232d80dffdaf23738",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-m.gif"
+  },
+  "npb-s": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_s_l.gif",
+    "sha256": "ca61d36eb7f4651c85c5e6d12610c81b358970fb4b07891b153be96aa93d3a1a",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-s.gif"
+  },
+  "npb-t": {
+    "sourcePage": "https://npb.jp/eng/teams/",
+    "sourceUrl": "https://p.npb.jp/img/common/logo/2026/logo_t_l.gif",
+    "sha256": "37476c93566598a958e5c34b3e1ae5f35f5544bda7c375c240ed47db922118ae",
+    "mimeType": "image/gif",
+    "rightsNote": "Official club mark. Source footer states all rights reserved. No open reuse license was identified.",
+    "path": "/club-logos/npb-t.gif"
+  },
+  "lmb-diablos": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Diablos.png",
+    "sha256": "0583b9fa78b5761a2b291de39b06ec4c25d102e71a6b0e9b6be1a41444977ed5",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-diablos.png"
+  },
+  "lmb-monterrey": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Sultanes.png",
+    "sha256": "82441ce7017b1baa6e968bd83e3871be3bd80821e515578c39b1a784e027dc0e",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-monterrey.png"
+  },
+  "lmb-tijuana": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Toros.png",
+    "sha256": "6558e4d9a5a4c8c136b56a0eaaeab9894ee6edda1de4e84c0288bb3e33c62f37",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-tijuana.png"
+  },
+  "lmb-yucatan": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2025-05/LOGO LEONES 2025.png",
+    "sha256": "7f03aca8ecf49bfe492515beb899bf7aee5cec0e44ed3180a7a52bbc7b4ea4ee",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-yucatan.png"
+  },
+  "lmb-puebla": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Pericos.png",
+    "sha256": "8931afb35de52954098eebfab5ae960f337422e8d305fe02c3294806ca4f881a",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-puebla.png"
+  },
+  "lmb-monclova": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Acereros.png",
+    "sha256": "53887005f62a8968dcfb258fe3bb6900726da6d9eb9889dd235de5dc6b7c85bd",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-monclova.png"
+  },
+  "lmb-laguna": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Algodoneros.png",
+    "sha256": "0dbcbe37912c6f15f6492ea0a09d4fd440dc7afb5a0467b49a3a0cd6f1c7a6ad",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-laguna.png"
+  },
+  "lmb-jalisco": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2026-01/LOGO CH AZUL_1a1.png",
+    "sha256": "1c8ed6c830387525409eb180fc823ed50dcb311696e9dc29d917c457a0982522",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-jalisco.png"
+  },
+  "lmb-saltillo": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Saraperos.png",
+    "sha256": "a7fac5d5c1f212582815278c804b9d2acc7ea6244f28ae738a92536a5b148c18",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-saltillo.png"
+  },
+  "lmb-aguascalientes": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2026-01/rieleros_azul.png",
+    "sha256": "e73ef98b33c6a4e926493a6ed8581cbd0e85ed4f7167dd49718361f771388054",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-aguascalientes.png"
+  },
+  "lmb-chihuahua": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Dorados1.png",
+    "sha256": "040d0037f63ea44a265ccdea4aeb4a4de0969a17d3ee012dcad380221c6a3eae",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-chihuahua.png"
+  },
+  "lmb-durango": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2025-03/caliente.png",
+    "sha256": "6b18be4a5f71f86a3dd4e09441736c37b6428149cf4463dc637edb71abae112f",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-durango.png"
+  },
+  "lmb-veracruz": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2025-05/veracruz.png",
+    "sha256": "16e76efbfaf3eb227c96f1a0ff85b79757874e9294d1e1838afd3c2a1f02c97c",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-veracruz.png"
+  },
+  "lmb-oaxaca": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Guerreros.png",
+    "sha256": "e8d8fd6f61b8d8f9a549fb402fc24f207ef74349c71f4416d9d761e3c30df2fb",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-oaxaca.png"
+  },
+  "lmb-quintana": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2025-04/Tigres_2025.png",
+    "sha256": "7359dbb56c72f2f739854243ecdf42d709029abb7b56087451b65920f26746a4",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-quintana.png"
+  },
+  "lmb-tabasco": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2026-03/olmecas_azul.png",
+    "sha256": "87e67b433054ce739aab7dec97efa8c35639bad85b84785fec0513b7cafeb84f",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-tabasco.png"
+  },
+  "lmb-campeche": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Piratas.png",
+    "sha256": "12fbfa8f0aeada48c0657cb33042f27e68b6ef8c064a0404b34568eb8f2ae634",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-campeche.png"
+  },
+  "lmb-leon": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2025-04/contactos Dimo fix.png",
+    "sha256": "17de91ec3fad78d2a53e9bfb1ec69c0f3e594fa857a71c50a864166901b17ee7",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-leon.png"
+  },
+  "lmb-queretaro": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Conspiradores.png",
+    "sha256": "4f1573108c8158d312dedf82067b76547c9b261e9c8df060a492b2009c202658",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-queretaro.png"
+  },
+  "lmb-doslaredos": {
+    "sourcePage": "https://lmb.com.mx/",
+    "sourceUrl": "https://d11rb39sj794dg.cloudfront.net/public/2024-04/Tecolotes.png",
+    "sha256": "9af3f972f8ee37e55de060f49b106aa520abb213827a5bbd95cb87827e04409e",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmb-doslaredos.png"
+  },
+  "lbprc-santurce": {
+    "sourcePage": "https://ligapr.com/",
+    "sourceUrl": "https://ligapr.com/storage/images/teams/bfD7WoDbIG1b9FqeGYvSP2rvnOo8UVI2sn55HWXF.png",
+    "sha256": "f0ba3ed39d74d00ec3749904d989bf0e59c0a2b582b917ccd2e10dfc239120cc",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lbprc-santurce.png"
+  },
+  "lbprc-caguas": {
+    "sourcePage": "https://ligapr.com/",
+    "sourceUrl": "https://ligapr.com/storage/images/teams/TJsm8InRCy8fV4XqkVdqsAAE2IhxUXViascwzXlk.png",
+    "sha256": "6d05e071b29bd095469aacc3e27e1467612b7aef19d8cfa99aca83316225b5f1",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lbprc-caguas.png"
+  },
+  "lbprc-mayaguez": {
+    "sourcePage": "https://ligapr.com/",
+    "sourceUrl": "https://ligapr.com/storage/images/teams/rLJgR6rJAbZqtDLrUUqxvFyb5voRQkqwRSZ8mRqQ.png",
+    "sha256": "68e4491f41ad909749e5bf1e039e111f2a9889149e33e53604ace57aa8d0d4a8",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lbprc-mayaguez.png"
+  },
+  "lbprc-carolina": {
+    "sourcePage": "https://ligapr.com/",
+    "sourceUrl": "https://ligapr.com/storage/images/teams/RfjNRehSgODnb50HGeEVjmSmGk76mAdHz01CJ1qm.png",
+    "sha256": "a9209e4f439c4e1928e8de3b0cb9e99fe9829d50c80f72a4f88d6a454a4b609d",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lbprc-carolina.png"
+  },
+  "lbprc-ponce": {
+    "sourcePage": "https://ligapr.com/",
+    "sourceUrl": "https://ligapr.com/storage/images/teams/sFoSvuPUA8zfkZFIZrYTFpzRGorDlmlYKekHzGYn.png",
+    "sha256": "59c991ec5fa5200a8fb1f778bf5e325364881313cefd656909d816c642452df4",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lbprc-ponce.png"
+  },
+  "lbprc-sanjuan": {
+    "sourcePage": "https://ligapr.com/",
+    "sourceUrl": "https://ligapr.com/storage/images/teams/TaTF7zRMbK6hjpdCcGVzWXWY2egMzpLoMrPiLvlk.jpg",
+    "sha256": "0d9976804a5d56d63bd36d143cd7fb01c6387f9e5218705996b23c7df3cd25fc",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lbprc-sanjuan.jpg"
+  },
+  "extraliga-draci": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/11aaea8ed3dd7591455dd0c7dc6597e5ff201ab8.png/w320h320ft1775647961.webp",
+    "sha256": "0ae52ae3aa83455da144e9326655ee9c0f9731aec8e1c4cde593a3945a7a2753",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-draci.webp"
+  },
+  "extraliga-eagles": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/97a385b47684ba3aec9f488b0278d1a50c2eafa9.png/w320h320ft1775648005.webp",
+    "sha256": "92dede28b00805cdfdf4b73fc742492410cadef1837b704098dde6a1e4f0df80",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-eagles.webp"
+  },
+  "extraliga-hrosi": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/288f9e11cce69e4538b059f5e5fa295effec7c04.png/w320h320ft1775647961.webp",
+    "sha256": "6f034dda622222a4477a9299734b06cc298728bd455e6beca20ca59b2f350a0c",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-hrosi.webp"
+  },
+  "extraliga-arrows": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/9f8c3d8e6e2a8d6d43b5a4abf6c04dae09248d51.png/w320h320ft1775648005.webp",
+    "sha256": "2a5ceed0e65646e4b04753a3b4cfdda08032ee4875f79f7d1ef106fbcfc71dab",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-arrows.webp"
+  },
+  "extraliga-kotlarka": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/a6fd918b3ba36ba3e84eaf42031b4427fc4dc6f4.png/w320h320ft1775648005.webp",
+    "sha256": "9ed8ed446830cdb185d9339d188103d2ce3ba5e2439ba3a1b0924577c8b1c153",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-kotlarka.webp"
+  },
+  "extraliga-trebic": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/618c3cb960587f124fe42b70864540598d451958.png/w320h320ft1775647961.webp",
+    "sha256": "5fd77f84d44e190049b74b354aeff7c93ef284e268ad792bd86741e9171c6028",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-trebic.webp"
+  },
+  "extraliga-hluboka": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/8dc19f4db3ed93d87e87b4ab86ffa83a340364f4.png/w320h320ft1775648005.webp",
+    "sha256": "3512cfc6a3b204115c6426684b608fb10d5089ca3682f4386c951d0e9bc638c6",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-hluboka.webp"
+  },
+  "extraliga-sabat": {
+    "sourcePage": "https://www.baseball.cz/competition/detail/1?season=21",
+    "sourceUrl": "https://www.baseball.cz/imgmin/data/_cache/84b59e3e5ddc03b15499f62655bb0f02ed9c6f46.png/w320h320ft1775648005.webp",
+    "sha256": "3e3779444a7e31ee932434391c6fd63518a49d425213bed82f3e2cd097bc2125",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/extraliga-sabat.webp"
+  },
+  "cpbl-brothers": {
+    "sourcePage": "https://www.cpbl.com.tw/",
+    "sourceUrl": "https://www.cpbl.com.tw/files/file_pool/1/0l109765754453009797/logo_brothers.png",
+    "sha256": "f11fa549b913eea54c6dad8cc85ea687ce556cc4c1804bb0d1e13b15a2b5fb4d",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/cpbl-brothers.png"
+  },
+  "cpbl-lions": {
+    "sourcePage": "https://www.cpbl.com.tw/",
+    "sourceUrl": "https://www.cpbl.com.tw/files/file_pool/1/0l109765753819131779/logo_lions.png",
+    "sha256": "691cef7bed1984c6a40388767edbe4aee583dac36ec78b443465874381938d14",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/cpbl-lions.png"
+  },
+  "cpbl-monkeys": {
+    "sourcePage": "https://www.cpbl.com.tw/",
+    "sourceUrl": "https://www.cpbl.com.tw/files/file_pool/1/0o012549940550727932/2024_cpbl%e5%85%ad%e9%9a%8alogo_r2_%e5%ae%98%e7%b6%b2.png",
+    "sha256": "c3fff6669d3472c702fc3d03638798d3a0e0a0ee2681882f258239ea1dfd382e",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/cpbl-monkeys.png"
+  },
+  "cpbl-guardians": {
+    "sourcePage": "https://www.cpbl.com.tw/",
+    "sourceUrl": "https://www.cpbl.com.tw/files/file_pool/1/0l109765753631383724/logo_fubon.png",
+    "sha256": "f3c3062185453f92df76bdad72a8bc5dea00d4ac66de60a167048d0ce055c79a",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/cpbl-guardians.png"
+  },
+  "cpbl-dragons": {
+    "sourcePage": "https://www.cpbl.com.tw/",
+    "sourceUrl": "https://www.cpbl.com.tw/files/file_pool/1/0l109765752096404797/logo_dragon.png",
+    "sha256": "58647f7f400c3b67a8b86ccfd764446b1645e70ec3d87fbdc9001a0fdde58eb4",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/cpbl-dragons.png"
+  },
+  "cpbl-hawks": {
+    "sourcePage": "https://www.cpbl.com.tw/",
+    "sourceUrl": "https://www.cpbl.com.tw/files/file_pool/1/0n062433781050140053/%e5%96%ae%e8%89%b2t-100x100.png",
+    "sha256": "4f0d5ee30b3853705f61dd9ab34039fed791c6f62fa970f19cf7e343695d89cc",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/cpbl-hawks.png"
+  },
+  "lidom-licey": {
+    "sourcePage": "https://lidom.com/",
+    "sourceUrl": "https://lidom.com/#sample3-tab1",
+    "sha256": "ca5db8f9fb09c7f95e972ec07e2c330a0f79a24ce570ac4d50928b95df2022f4",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lidom-licey.jpg"
+  },
+  "lidom-estrellas": {
+    "sourcePage": "https://lidom.com/",
+    "sourceUrl": "https://lidom.com/#sample3-tab2",
+    "sha256": "0db566e1ef21ebe3ebef2e7fa573a9d389aaac26130dbe5296717e552dc6404a",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lidom-estrellas.jpg"
+  },
+  "lidom-escogido": {
+    "sourcePage": "https://lidom.com/",
+    "sourceUrl": "https://lidom.com/#sample3-tab3",
+    "sha256": "15a162aaece5ea6fa98733bf5bf5ce52423dbc96cc178b4adb94fe4785045016",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lidom-escogido.jpg"
+  },
+  "lidom-aguilas": {
+    "sourcePage": "https://lidom.com/",
+    "sourceUrl": "https://lidom.com/#sample3-tab4",
+    "sha256": "91f41d996726816bab746ae68c815bfe18f2b6086f8f40de6d0d0a4f206b3345",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lidom-aguilas.jpg"
+  },
+  "lidom-toros": {
+    "sourcePage": "https://lidom.com/",
+    "sourceUrl": "https://lidom.com/#sample3-tab5",
+    "sha256": "cf938637fee81b9914552fadeabbc1088f18f20a4b70b144014d62b5df5fd6b7",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lidom-toros.jpg"
+  },
+  "lidom-gigantes": {
+    "sourcePage": "https://lidom.com/",
+    "sourceUrl": "https://lidom.com/#sample3-tab6",
+    "sha256": "27ab5dcfe23790a4d148f5937fefae2de67b44f86a10a328eb557ef0e4b412d0",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lidom-gigantes.jpg"
+  },
+  "abl-adelaide": {
+    "sourcePage": "https://adelaidegiants.com.au/",
+    "sourceUrl": "https://assets.baseball.com.au/uploads/sites/6/2019/09/Adelaide_Desktop-5.png",
+    "sha256": "37763c0a918a03072b981060d644360ea40852e2adac89f345b20afc1b512db2",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/abl-adelaide.png"
+  },
+  "abl-brisbane": {
+    "sourcePage": "https://brisbanebandits.com.au/",
+    "sourceUrl": "https://assets.baseball.com.au/uploads/sites/8/2020/07/Header-logo-for-desktop.png",
+    "sha256": "18768cd46bae9224b233760467bf6cb02f57957cd029dd83fbed4a4fcd77e8d3",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/abl-brisbane.png"
+  },
+  "abl-perth": {
+    "sourcePage": "https://perthheat.com.au/",
+    "sourceUrl": "https://assets.baseball.com.au/uploads/sites/12/2019/10/Perth-1.png",
+    "sha256": "9d300f0bd5bdf8982ef5c31a63b30bdf7257c4ed56842bffab2588a7d2572844",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/abl-perth.png"
+  },
+  "abl-sydney": {
+    "sourcePage": "https://sydneybluesox.com.au/",
+    "sourceUrl": "https://assets.baseball.com.au/uploads/sites/13/2023/07/SBS-Syd-Mascot-Rondel-5C.png",
+    "sha256": "9a41e16457fc8bfc15df3c43ae10526c936810cc9b4f7ff07e75e28f2c807b00",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/abl-sydney.png"
+  },
+  "lvbp-caracas": {
+    "sourcePage": "https://leones.com/",
+    "sourceUrl": "https://leones.com/wp-content/uploads/2023/08/Logo-Leones-1942.png",
+    "sha256": "4b86dd1cbc9409292049de85d6c13fc9d9c16a00395b3d532887f25a360d3817",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-caracas.png"
+  },
+  "lvbp-magallanes": {
+    "sourcePage": "https://magallanesbbc.com.ve/",
+    "sourceUrl": "https://magallanesbbc.com.ve/assets/img/site/logo-timon-2023.png",
+    "sha256": "9eee9efded4feaa7e974d2ea42a0a8718c10152cf3e86cc3ec6ff0ad3a66cdb5",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-magallanes.png"
+  },
+  "lmp-culiacan": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/cul.png",
+    "sha256": "de2943ed52d95b31eaaa356aebfb935374732064e1dc84897cebd8ca10c8c636",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-culiacan.png"
+  },
+  "lmp-hermosillo": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/her.png",
+    "sha256": "8e14ede6d7f62e40f8d409f1fc9fb100a8869ed18e56898788ea6a92df3beb6c",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-hermosillo.png"
+  },
+  "lmp-obregon": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/obr.png",
+    "sha256": "04719674a203b8e1bf468f81de6cb7d27f88977c9f219937927e10c76ecf7b61",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-obregon.png"
+  },
+  "lmp-mochis": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/moc.png",
+    "sha256": "42ce974b9b0fba65462dda19691a65470d32ab815815538eef386a2766681af6",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-mochis.png"
+  },
+  "lmp-mazatlan": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/maz.png",
+    "sha256": "c637046b14528e38a79f3db4012809782f2ab3276da9b2e09d58cf8d6b48f35d",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-mazatlan.png"
+  },
+  "lmp-jalisco": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/jal.png",
+    "sha256": "7e0bd020690728105bbdf820c09d41cd16cd8092ea7390cabb669373ff83f499",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-jalisco.png"
+  },
+  "lmp-mexicali": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/mxc.png",
+    "sha256": "cfc5f4d3f64b0f244321282a9922aefa5de10b2e64ba864fc7a470bb19ecf731",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-mexicali.png"
+  },
+  "lmp-guasave": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/assets/images/equipos/gsv.png",
+    "sha256": "16a9e5ce085ea4bd19108d7dbd86d64f6dda62982bad0a5de8bfe2c5dd8da915",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-guasave.png"
+  },
+  "lmp-nayarit": {
+    "sourcePage": "https://losalgodoneros.com/",
+    "sourceUrl": "https://losalgodoneros.com/wp-content/themes/alchemists/assets/images/equipos/nay.png",
+    "sha256": "621c0f4a161e7a5cc86914c5482931fc7e47be652af822cdbff7393e92f6d182",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lmp-nayarit.png"
+  },
+  "seriea-nettuno": {
+    "sourcePage": "https://www.sanmarinobaseball.com/calendario/",
+    "sourceUrl": "https://www.sanmarinobaseball.com/wp-content/uploads/2025/07/logo-nettuno.jpg",
+    "sha256": "6e42908e405e669009f94de605c2b8c3d1e41952aa400981e1383ccfc2e864a1",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-nettuno.jpg"
+  },
+  "seriea-grosseto": {
+    "sourcePage": "https://www.sanmarinobaseball.com/calendario/",
+    "sourceUrl": "https://www.sanmarinobaseball.com/wp-content/uploads/2025/07/LOGO-bbc-grosseto.png",
+    "sha256": "fd448a36953f84ad5fcfa187078664d78c5b87557f6456bded57bb5b4b788fc4",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-grosseto.png"
+  },
+  "seriea-macerata": {
+    "sourcePage": "https://www.sanmarinobaseball.com/calendario/",
+    "sourceUrl": "https://www.sanmarinobaseball.com/wp-content/uploads/2025/07/logo-macerata-1.jpg",
+    "sha256": "6db35d4bf1c86976fa3edcd4a58a1b2e469210e9d28a1b61246b5553a60e75d5",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-macerata.jpg"
+  },
+  "seriea-reggio": {
+    "sourcePage": "https://www.sanmarinobaseball.com/calendario/",
+    "sourceUrl": "https://www.sanmarinobaseball.com/wp-content/uploads/2025/07/Logo-reggio-emilia-baseball.png",
+    "sha256": "4941cad04cd8d16e952c90e36bc7a95d16f34c5bc4a360e5baa49bc9e6d1dcce",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-reggio.png"
+  },
+  "seriea-sanmarino": {
+    "sourcePage": "https://www.sanmarinobaseball.com/calendario/",
+    "sourceUrl": "https://www.sanmarinobaseball.com/wp-content/uploads/elementor/thumbs/logo-1-1-rjx6at33z9qlmqfw8jjqcxv5dttdikzr0e2u1zukku.png",
+    "sha256": "c1e1594716f2818ca5e3d0f21e91116ffde9197bac20e123a07ea61df8d8354d",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-sanmarino.png"
+  },
+  "seriea-parma": {
+    "sourcePage": "https://www.parmabaseball.it/",
+    "sourceUrl": "https://www.parmabaseball.it/wp-content/uploads/2021/06/logo-parma-blu.png",
+    "sha256": "e97bf97df29026bcd602409b059b0d185e5bbc21eff0271de69beb3f33625302",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-parma.png"
+  },
+  "seriea-bologna": {
+    "sourcePage": "https://www.fortitudobaseball.it/",
+    "sourceUrl": "https://slyvi-tstorage.slyvi.it/tli_2558376523521_6b8feca0d5f0aec7fb97ca58bed01e8e52a70179_1610619783102774.png",
+    "sha256": "01a05f0bffebdbb321e5847089194ec7015bc0874397b592a497a84a44db7450",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-bologna.png"
+  },
+  "seriea-verona": {
+    "sourcePage": "https://www.veronabaseball.com/",
+    "sourceUrl": "https://static.wixstatic.com/media/9bb2f3_faac2d54c2114b519564a94f51d35ece~mv2.png/v1/fill/w_119,h_66,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/verona%20baseball%20logo.png",
+    "sha256": "2b803bbf217f4d9423594010a4a18dcf2f4266df4199b33a50062af0e7d4fd2e",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-verona.png"
+  },
+  "honkbal-pirates": {
+    "sourcePage": "https://amsterdampirates.nl",
+    "sourceUrl": "https://images.foys.io/foys/club-sites/cfd33d64-c4d1-4786-af48-dbc5fff19d44",
+    "sha256": "5a90e788497fc9b3658fa8f88fcacf5984133958a894fe9d6b6b43da4eb9b781",
+    "mimeType": "image/webp",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/honkbal-pirates.webp"
+  },
+  "honkbal-hcaw": {
+    "sourcePage": "https://www.hcaw.nl/",
+    "sourceUrl": "https://www.hcaw.nl/wp-content/uploads/2025/09/IMG_0024.png",
+    "sha256": "5cad3d97ae90118fb062a3ea3805e6997d4a88d6d47946843fb3f4fe6d98f11a",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/honkbal-hcaw.png"
+  },
+  "lvbp-laguaira": {
+    "sourcePage": "https://www.tiburonesbbc.com/",
+    "sourceUrl": "https://www.tiburonesbbc.com/header-logo.svg",
+    "sha256": "f24201ca4147b47d1283a3a84242c0b6d4da9cdf1618bad73ed678d15cd7beeb",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-laguaira.svg"
+  },
+  "lvbp-margarita": {
+    "sourcePage": "https://bravosdemargarita.com/",
+    "sourceUrl": "https://bravosdemargarita.com/assets/img/site/logo.png",
+    "sha256": "86ea6bf3bf17d7fe3be6260cd9d03e1c0cac377ab4fb864d4caabb53993128cb",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-margarita.png"
+  },
+  "seriea-ronchi": {
+    "sourcePage": "https://www.ronchibaseball.com/",
+    "sourceUrl": "https://static.wixstatic.com/media/9a38b6_e981110631514b23b3a2ff068f0a80b3~mv2.png/v1/fill/w_109,h_107,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/29.png",
+    "sha256": "769aeb3eff0c96bbddae9f1efd2f3b6952401edc33fc162b94b59dcbceccd9d0",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/seriea-ronchi.png"
+  },
+  "honkbal-kinheim": {
+    "sourcePage": "https://www.kinheim.net/",
+    "sourceUrl": "https://www.kinheim.net/wp-content/uploads/kinheim/2017/07/402-kinheim-los-wit@1.5x.png",
+    "sha256": "884a5db680f69b3be6b7e3381e000f476de608dc4d6d7ac9ccad691395d5762e",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/honkbal-kinheim.png"
+  },
+  "honkbal-pioniers": {
+    "sourcePage": "https://www.hoofddorp-pioniers.nl/",
+    "sourceUrl": "https://www.hoofddorp-pioniers.nl/wp-content/uploads/logo-Hoofddorp-Pioniers-web-1-300x146.jpg",
+    "sha256": "5d41eedadcd0215b2d743a96ce8906a5128ffe9ec753c75e1bb1cb19f4d309b0",
+    "mimeType": "image/jpeg",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/honkbal-pioniers.jpg"
+  },
+  "honkbal-runners": {
+    "sourcePage": "https://hsvuvv.nl/",
+    "sourceUrl": "https://images.foys.io/foys/club-sites/8501deee-03a7-48ef-91ce-4d2ef2703cdd",
+    "sha256": "4e9b3e83ada50c583326b620ec27ce35fb2a921ea854eda65cf973438cfc8759",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/honkbal-runners.png"
+  },
+  "honkbal-twins": {
+    "sourcePage": "https://oosterhouttwins.nl/",
+    "sourceUrl": "https://oosterhouttwins.nl/app/uploads/2025/05/oosterhout-twins-logo.svg",
+    "sha256": "fcc4f9a8f721fe793f6e6762ebf3ccf9b1ed8dc81bae254ed8626c25eb865ac9",
+    "mimeType": "image/svg+xml",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/honkbal-twins.svg"
+  },
+  "lvbp-lara": {
+    "sourcePage": "https://cardenalesdelara.com/",
+    "sourceUrl": "https://i0.wp.com/cardenalesdelara.com/wp-content/uploads/2021/08/logo-cardenales-juego.png?fit=100%2C100&ssl=1",
+    "sha256": "a4d72ea7a073fc79d3e957aaaf6f961fced65b82ff50fcd050f5e1933d2e4434",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-lara.png"
+  },
+  "lvbp-zulia": {
+    "sourcePage": "https://cardenalesdelara.com/",
+    "sourceUrl": "https://i0.wp.com/cardenalesdelara.com/wp-content/uploads/2021/09/logo-aguilas-juego.png?fit=128%2C128&ssl=1",
+    "sha256": "9f45fb53609b296c5084b6e07490bb15d0ac2434943e9f6e0efa87862273197f",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-zulia.png"
+  },
+  "lvbp-anzoategui": {
+    "sourcePage": "https://cardenalesdelara.com/",
+    "sourceUrl": "https://i0.wp.com/cardenalesdelara.com/wp-content/uploads/2021/09/logo-caribes-juego.png?fit=128%2C128&ssl=1",
+    "sha256": "0ed49ce44181cc815da0fde871d8f4a05e0a62e4f816702d7a1f87755e85e5f0",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-anzoategui.png"
+  },
+  "lvbp-aragua": {
+    "sourcePage": "https://cardenalesdelara.com/",
+    "sourceUrl": "https://i0.wp.com/cardenalesdelara.com/wp-content/uploads/2021/09/logo-tigres-juego-1.webp?fit=128%2C128&ssl=1",
+    "sha256": "db72a2f517d8b78dada4cf31a1f416c5e33a7a29509a61a84a944a25c2e994fe",
+    "mimeType": "image/png",
+    "rightsNote": "Official source does not confer reuse permission. Club and league logos remain the intellectual property of their respective owners.",
+    "path": "/club-logos/lvbp-aragua.png"
+  }
+}

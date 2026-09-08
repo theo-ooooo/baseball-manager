@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { productionWorker } from './helpers/worker.mjs';
 
 test(
@@ -35,6 +37,18 @@ test(
       const favicon = await worker.dispatchFetch('http://localhost/favicon.svg');
       assert.equal(favicon.status, 200);
       assert.match(await favicon.text(), /<svg/);
+      const manifest = JSON.parse(await readFile('public/club-logos/manifest.json', 'utf8'));
+      assert.equal(Object.keys(manifest.logos).length, 134);
+      assert.equal(manifest.unavailable.length, 3);
+      for (const logo of Object.values(manifest.logos)) {
+        const asset = await worker.dispatchFetch('http://localhost' + logo.path);
+        assert.equal(asset.status, 200, logo.path);
+        assert.equal(asset.headers.get('content-type').split(';')[0], logo.mimeType, logo.path);
+        const hash = createHash('sha256')
+          .update(Buffer.from(await asset.arrayBuffer()))
+          .digest('hex');
+        assert.equal(hash, logo.sha256, logo.path);
+      }
     } finally {
       await worker.dispose();
     }

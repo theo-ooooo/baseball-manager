@@ -2842,3 +2842,33 @@ input,
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.club-badge.with-logo {
+  background: #f7f8fa;
+  border-color: #8c909a;
+  box-shadow: none;
+  padding: 3px;
+}
+.club-badge.with-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.club-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.calendar-game .club-label {
+  font-size: 13px;
+}
+.stadium-scorebug > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.stadium-scorebug .club-badge {
+  border: 0;
+  font-style: normal;
+}

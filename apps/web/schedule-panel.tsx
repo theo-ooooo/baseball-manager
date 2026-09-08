@@ -1,4 +1,5 @@
-'use client';
+import { ClubBadge } from './club-badge';
+('use client');
 import { useState } from 'react';
 import type { GameState, Result } from '../../packages/shared/src/types';
 import { addDays, daysBetween, gameDate, dateLabel } from '../../packages/shared/src/calendar';
@@ -80,9 +81,15 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
                       own = f.home === g.club || f.away === g.club;
                     return (
                       <div className={`calendar-game ${own ? 'own' : ''}`} key={f.id}>
-                        <span>{getClub(f.away).name}</span>
+                        <span className="club-label">
+                          <ClubBadge club={getClub(f.away)} size="tiny" />
+                          {getClub(f.away).name}
+                        </span>
                         <strong>{r ? `${r.awayScore} : ${r.homeScore}` : 'vs'}</strong>
-                        <span>{getClub(f.home).name}</span>
+                        <span className="club-label">
+                          <ClubBadge club={getClub(f.home)} size="tiny" />
+                          {getClub(f.home).name}
+                        </span>
                         <small>
                           {r ? '종료' : date < today ? '경기 종료' : f.time || '예정'} ·{' '}
                           {getClub(f.home).city}
@@ -132,11 +139,17 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
             <span className="muted">
               {r.date?.slice(5).replace('-', '/') || dateLabel(g, r.day)}
             </span>
-            <span>{getClub(r.away).short}</span>
+            <span className="club-label">
+              <ClubBadge club={getClub(r.away)} size="tiny" />
+              {getClub(r.away).short}
+            </span>
             <strong>
               {r.awayScore} : {r.homeScore}
             </strong>
-            <span>{getClub(r.home).short}</span>
+            <span className="club-label">
+              <ClubBadge club={getClub(r.home)} size="tiny" />
+              {getClub(r.home).short}
+            </span>
             <span>리플레이 →</span>
           </button>
         ))}

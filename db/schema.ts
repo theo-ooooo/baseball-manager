@@ -29,6 +29,7 @@ export const clubs = sqliteTable(
     color: text('color').notNull(),
     city: text('city').notNull(),
     division: text('division').notNull(),
+    logo: text('logo_json'),
     sortOrder: integer('sort_order').notNull(),
   },
   (t) => [index('idx_clubs_league').on(t.leagueId)],

@@ -1,4 +1,5 @@
 'use client';
+import { ClubBadge } from './club-badge';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from './use-reduced-motion';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Flag } from 'lucide-react';
@@ -153,12 +154,14 @@ export function StadiumScene({
       <div className="stadium-scorebug">
         <div>
           <span style={{ borderColor: getClub(result.away).color }}>
+            <ClubBadge club={getClub(result.away)} size="tiny" />
             {getClub(result.away).short}
           </span>
           <b>{liveScore[0] || 0}</b>
         </div>
         <div>
           <span style={{ borderColor: getClub(result.home).color }}>
+            <ClubBadge club={getClub(result.home)} size="tiny" />
             {getClub(result.home).short}
           </span>
           <b>{liveScore[1] || 0}</b>
