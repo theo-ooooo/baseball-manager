@@ -1,7 +1,7 @@
 import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
 
-import { preparePitching, nextStarter } from '@dugout/shared/pitching';
+import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
 import {
   prepareDynamics,
   postNews,
@@ -70,7 +70,7 @@ export function createGameEngine(world: WorldCatalog) {
       year: world.year,
       day: -28,
       club,
-      manager: manager.trim().slice(0, 24) || '강경원',
+      manager: manager.trim().slice(0, 24) || '신임 감독',
       budget: teamBudget(league),
       seed: seed >>> 0,
       rounds:
@@ -114,6 +114,10 @@ export function createGameEngine(world: WorldCatalog) {
     };
     prepareCalendar(g, world, true);
     prepareSquad(g, world);
+    // A new career has no manager-selected starter to preserve. Recommend the full plan.
+    g.pitching = autoPitching(firstTeam(g));
+    g.starter = g.pitching.rotation[0];
+    g.defense!.P = g.starter;
     prepareDynamics(g);
     const realStaff = coachPool().filter((c) => c.real && c.sourceClub === club);
     if (realStaff.length)
@@ -672,7 +676,9 @@ export function createGameEngine(world: WorldCatalog) {
       case 'starter':
         if (!firstTeam(s).some((p) => p.id === a.id && p.pos === 'P'))
           throw new Error('투수를 선택해 주세요.');
+        managementAction(s, { type: 'pitchingRole', id: a.id, role: 'starter' });
         s.starter = String(a.id);
+        s.pitching!.next = s.pitching!.rotation.indexOf(s.starter);
         if (s.defense) s.defense.P = s.starter;
         return s;
       case 'tactic':

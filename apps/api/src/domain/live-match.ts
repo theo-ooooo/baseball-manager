@@ -28,6 +28,7 @@ export function createLiveMatchActions(
         home,
         away,
         seed: g.seed,
+        pitchingVersion: 2,
         cursor: 0,
         finished: false,
         result,

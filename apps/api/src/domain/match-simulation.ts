@@ -26,6 +26,7 @@ import {
 } from '@dugout/shared/management';
 import { gameDate } from '@dugout/shared/calendar';
 import { pitchingDecisions } from './pitching-decisions';
+import { selectReliever } from './relief-selection';
 
 export function createMatchSimulator(world: WorldCatalog) {
   const { getClub, rosterFor } = createGameView(world);
@@ -147,14 +148,14 @@ export function createMatchSimulator(world: WorldCatalog) {
           (!isStarter && (inn - entered[defending] >= 1 || currentStats.outs >= 6)) ||
           (closing && current.id !== plan.closer)
         ) {
-          const candidates = (
-            closing
-              ? [plan.closer, ...plan.bullpen]
-              : [...plan.bullpen, ...(inn >= 9 ? [plan.closer] : [])]
-          )
-            .map((id) => rosters[defending].find((p) => p.id === id))
-            .filter((p): p is Player => !!p && !used[defending].has(p.id));
-          const available = candidates.find((p) => p.condition >= 50) || candidates[0];
+          const available = selectReliever({
+            plan,
+            roster: rosters[defending],
+            used: new Set(used[defending].keys()),
+            inning: inn,
+            lead,
+            legacy: !!g.liveMatch && g.liveMatch.pitchingVersion !== 2,
+          });
           if (available) {
             pitchers[defending] = available;
             entered[defending] = inn;

@@ -3,6 +3,8 @@ import { ratingText, potentialText } from '@dugout/shared/ratings';
 import { lineupReason } from '@dugout/shared/player-attributes';
 import { PitchingPanel } from './pitching-panel';
 import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import type { DefensivePosition, GameState, Player, TeamInstructions } from '@dugout/shared/types';
 import { blankStats, coachRoles, money, overall } from '@dugout/shared/game-view';
 import {
@@ -180,6 +182,10 @@ export function PositionTraining({ p, act, busy }: { p: Player; act: Act; busy: 
   );
 }
 export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
+  const router = useRouter();
+  const requestedPanel = useSearchParams().get('panel');
+  const panel =
+    requestedPanel === 'pitching' || requestedPanel === 'library' ? requestedPanel : 'lineup';
   const [name, setName] = useState('');
   const instructionKey = JSON.stringify([g.tactic, g.instructions]);
   const [draft, setDraft] = useState<{ key: string; value: TeamInstructions } | null>(null);
@@ -196,199 +202,213 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
     void act({ type: 'lineup', ids });
   }
   return (
-    <>
-      <section className="panel tactic-library">
-        <div>
-          <h2>전술 보관함</h2>
-          <small>타순·수비 배치·선발·팀 지시를 함께 저장합니다.</small>
-        </div>
-        <input
-          aria-label="저장할 전술 이름"
-          maxLength={30}
-          placeholder="예: 좌완 상대 · 기동력"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button
-          className="button primary compact"
-          disabled={busy || !name.trim()}
-          onClick={async () => {
-            if (await act({ type: 'saveTactic', name })) setName('');
-          }}
-        >
-          현재 전술 저장
-        </button>
-        <div className="saved-tactics">
-          {g.tacticBook?.map((t) => (
-            <div key={t.id}>
-              <button disabled={busy} onClick={() => void act({ type: 'loadTactic', id: t.id })}>
-                {t.name}
-              </button>
-              <button
-                aria-label={`${t.name} 삭제`}
-                disabled={busy}
-                onClick={() => void act({ type: 'deleteTactic', id: t.id })}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-      <div className="tactics-layout">
-        <div>
-          <section className="panel">
-            <div className="panel-header">
-              <h2>수비 · 선발</h2>
-              <span>전술 숙련도 {Math.round(g.tacticFamiliarity ?? 55)}%</span>
-            </div>
-            <DefensiveField g={g} act={act} busy={busy} onPlayer={onPlayer} />
-            <div className="panel-content">
-              <label className="label">
-                다음 경기 선발
-                <select
-                  className="management-select"
-                  aria-label="선발 투수"
-                  value={g.starter}
-                  disabled={busy}
-                  onChange={(e) => void act({ type: 'starter', id: e.target.value })}
-                >
-                  {active
-                    .filter((p) => p.pos === 'P')
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} · 컨디션 {Math.round(p.condition)}%
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <p className="tiny">
-                낯선 포지션에서는 수비력이 낮아집니다. 훈련과 출전으로 숙련도가 오릅니다. 투수
-                보직과 로테이션은 아래 투수 운용에서 지정합니다.
-              </p>
-            </div>
-          </section>
-          <section className="panel training-block">
-            <div className="panel-header">
-              <h2>팀 지시</h2>
-              <span>프리셋 선택 후 조정 가능</span>
-            </div>
-            <div className="preset-buttons">
-              {Object.entries(presetNames).map(([value, label]) => (
-                <button
-                  key={value}
-                  className={g.tactic === value ? 'selected' : ''}
-                  disabled={busy}
-                  onClick={() => void act({ type: 'tactic', value })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="instruction-sliders">
-              {(
-                [
-                  ['steal', '도루 시도', '적극적일수록 도루와 도루 실패 증가'],
-                  ['patience', '선구안', '볼넷 확률 증가'],
-                  ['power', '장타 지향', '홈런과 삼진 증가 · 컨택 감소'],
-                  ['depth', '수비 깊이', '전진 시 장타 위험 증가 · 깊은 배치 시 수비 부담 증가'],
-                ] as const
-              ).map(([key, label, hint]) => (
-                <label key={key}>
-                  <span>
-                    {label}
-                    <b>{instructions[key]}</b>
-                  </span>
-                  <input
-                    aria-label={label}
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    disabled={busy}
-                    value={instructions[key]}
-                    onChange={(e) =>
-                      setInstructions({ ...instructions, [key]: Number(e.target.value) })
-                    }
-                  />
-                  <small>{hint}</small>
-                </label>
-              ))}
-              <button
-                className="button primary compact"
-                disabled={busy}
-                onClick={() => void act({ type: 'instructions', value: instructions })}
-              >
-                팀 지시 적용
-              </button>
-              <p className="tiny">
-                큰 전술 변경은 숙련도를 낮춥니다. 적용한 지시만 전술 보관함에 저장됩니다.
-              </p>
-            </div>
-          </section>
-        </div>
-        <section className="panel">
-          <div className="panel-header">
-            <h2>선발 타순</h2>
-            <button
-              className="text-button"
-              disabled={busy}
-              onClick={() => void act({ type: 'auto' })}
-            >
-              코치 추천
-            </button>
+    <Tabs
+      value={panel}
+      onValueChange={(value) => router.replace(`/?view=tactics&panel=${value}`, { scroll: false })}
+    >
+      <TabsList variant="line" aria-label="전술 관리">
+        <TabsTrigger value="lineup">타순 · 수비</TabsTrigger>
+        <TabsTrigger value="pitching">투수 운용</TabsTrigger>
+        <TabsTrigger value="library">전술 보관함</TabsTrigger>
+      </TabsList>
+      <TabsContent value="library">
+        <section className="panel tactic-library">
+          <div>
+            <h2>전술 보관함</h2>
+            <small>타순·수비 배치·선발·팀 지시를 함께 저장합니다.</small>
           </div>
-          <div className="management-lineup">
-            {batters.map((p, i) => (
-              <div key={p.id}>
-                <b>{i + 1}</b>
-                <div>
-                  <select
-                    aria-label={`${i + 1}번 타자`}
-                    value={p.id}
-                    disabled={busy}
-                    onChange={(e) => changeBatter(i, e.target.value)}
-                  >
-                    {active
-                      .filter((v) => v.pos !== 'P')
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.name} · {v.pos}
-                        </option>
-                      ))}
-                  </select>
-                  <button className="text-button" onClick={() => onPlayer(p)}>
-                    능력 {ratingText(p)} · 컨디션 {Math.round(p.condition)}%
-                  </button>
-                  <small className="lineup-reason">{lineupReason(p, i)}</small>
-                </div>
-                <div className="lineup-arrows">
-                  <button
-                    aria-label={`${p.name} 타순 올리기`}
-                    disabled={busy || i === 0}
-                    onClick={() => changeBatter(i, g.lineup[i - 1])}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    aria-label={`${p.name} 타순 내리기`}
-                    disabled={busy || i === 8}
-                    onClick={() => changeBatter(i, g.lineup[i + 1])}
-                  >
-                    ↓
-                  </button>
-                </div>
+          <input
+            aria-label="저장할 전술 이름"
+            maxLength={30}
+            placeholder="예: 좌완 상대 · 기동력"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button
+            className="button primary compact"
+            disabled={busy || !name.trim()}
+            onClick={async () => {
+              if (await act({ type: 'saveTactic', name })) setName('');
+            }}
+          >
+            현재 전술 저장
+          </button>
+          <div className="saved-tactics">
+            {g.tacticBook?.map((t) => (
+              <div key={t.id}>
+                <button disabled={busy} onClick={() => void act({ type: 'loadTactic', id: t.id })}>
+                  {t.name}
+                </button>
+                <button
+                  aria-label={`${t.name} 삭제`}
+                  disabled={busy}
+                  onClick={() => void act({ type: 'deleteTactic', id: t.id })}
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>
-          <div className="panel-content tiny">
-            타순을 바꿔도 기존 선수의 수비 위치는 유지됩니다. 벤치 선수와 교체하면 수비 배치를 다시
-            확인하세요.
-          </div>
         </section>
-      </div>
-      <PitchingPanel g={g} act={act} busy={busy} onPlayer={onPlayer} />
-    </>
+      </TabsContent>
+      <TabsContent value="lineup">
+        <div className="tactics-layout">
+          <div>
+            <section className="panel">
+              <div className="panel-header">
+                <h2>수비 · 선발</h2>
+                <span>전술 숙련도 {Math.round(g.tacticFamiliarity ?? 55)}%</span>
+              </div>
+              <DefensiveField g={g} act={act} busy={busy} onPlayer={onPlayer} />
+              <div className="panel-content">
+                <label className="label">
+                  다음 경기 선발
+                  <select
+                    className="management-select"
+                    aria-label="선발 투수"
+                    value={g.starter}
+                    disabled={busy}
+                    onChange={(e) => void act({ type: 'starter', id: e.target.value })}
+                  >
+                    {active
+                      .filter((p) => p.pos === 'P')
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} · 컨디션 {Math.round(p.condition)}%
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <p className="tiny">
+                  낯선 포지션에서는 수비력이 낮아집니다. 훈련과 출전으로 숙련도가 오릅니다. 투수
+                  보직과 로테이션은 투수 운용 탭에서 지정합니다.
+                </p>
+              </div>
+            </section>
+            <section className="panel training-block">
+              <div className="panel-header">
+                <h2>팀 지시</h2>
+                <span>프리셋 선택 후 조정 가능</span>
+              </div>
+              <div className="preset-buttons">
+                {Object.entries(presetNames).map(([value, label]) => (
+                  <button
+                    key={value}
+                    className={g.tactic === value ? 'selected' : ''}
+                    disabled={busy}
+                    onClick={() => void act({ type: 'tactic', value })}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="instruction-sliders">
+                {(
+                  [
+                    ['steal', '도루 시도', '적극적일수록 도루와 도루 실패 증가'],
+                    ['patience', '선구안', '볼넷 확률 증가'],
+                    ['power', '장타 지향', '홈런과 삼진 증가 · 컨택 감소'],
+                    ['depth', '수비 깊이', '전진 시 장타 위험 증가 · 깊은 배치 시 수비 부담 증가'],
+                  ] as const
+                ).map(([key, label, hint]) => (
+                  <label key={key}>
+                    <span>
+                      {label}
+                      <b>{instructions[key]}</b>
+                    </span>
+                    <input
+                      aria-label={label}
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      disabled={busy}
+                      value={instructions[key]}
+                      onChange={(e) =>
+                        setInstructions({ ...instructions, [key]: Number(e.target.value) })
+                      }
+                    />
+                    <small>{hint}</small>
+                  </label>
+                ))}
+                <button
+                  className="button primary compact"
+                  disabled={busy}
+                  onClick={() => void act({ type: 'instructions', value: instructions })}
+                >
+                  팀 지시 적용
+                </button>
+                <p className="tiny">
+                  큰 전술 변경은 숙련도를 낮춥니다. 적용한 지시만 전술 보관함에 저장됩니다.
+                </p>
+              </div>
+            </section>
+          </div>
+          <section className="panel">
+            <div className="panel-header">
+              <h2>선발 타순</h2>
+              <button
+                className="text-button"
+                disabled={busy}
+                onClick={() => void act({ type: 'auto' })}
+              >
+                코치 추천
+              </button>
+            </div>
+            <div className="management-lineup">
+              {batters.map((p, i) => (
+                <div key={p.id}>
+                  <b>{i + 1}</b>
+                  <div>
+                    <select
+                      aria-label={`${i + 1}번 타자`}
+                      value={p.id}
+                      disabled={busy}
+                      onChange={(e) => changeBatter(i, e.target.value)}
+                    >
+                      {active
+                        .filter((v) => v.pos !== 'P')
+                        .map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name} · {v.pos}
+                          </option>
+                        ))}
+                    </select>
+                    <button className="text-button" onClick={() => onPlayer(p)}>
+                      능력 {ratingText(p)} · 컨디션 {Math.round(p.condition)}%
+                    </button>
+                    <small className="lineup-reason">{lineupReason(p, i)}</small>
+                  </div>
+                  <div className="lineup-arrows">
+                    <button
+                      aria-label={`${p.name} 타순 올리기`}
+                      disabled={busy || i === 0}
+                      onClick={() => changeBatter(i, g.lineup[i - 1])}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      aria-label={`${p.name} 타순 내리기`}
+                      disabled={busy || i === 8}
+                      onClick={() => changeBatter(i, g.lineup[i + 1])}
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="panel-content tiny">
+              타순을 바꿔도 기존 선수의 수비 위치는 유지됩니다. 벤치 선수와 교체하면 수비 배치를
+              다시 확인하세요.
+            </div>
+          </section>
+        </div>
+      </TabsContent>
+      <TabsContent value="pitching">
+        <PitchingPanel g={g} act={act} busy={busy} onPlayer={onPlayer} />
+      </TabsContent>
+    </Tabs>
   );
 }
 export function ReservePanel({ g, act, busy, onPlayer }: Props) {

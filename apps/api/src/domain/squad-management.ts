@@ -1,4 +1,4 @@
-import { preparePitching } from '@dugout/shared/pitching';
+import { pitchingAssignment, preparePitching } from '@dugout/shared/pitching';
 import { prepareCalendar } from '@dugout/shared/calendar';
 import type {
   DefensivePosition,
@@ -109,18 +109,28 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
       preparePitching(g);
       const p = activePlayer(g, a.id),
         plan = g.pitching!;
-      if (p.pos !== 'P' || !['starter', 'bullpen', 'closer'].includes(String(a.role)))
+      if (
+        p.pos !== 'P' ||
+        !['starter', 'bullpen', 'setup', 'chase', 'closer'].includes(String(a.role))
+      )
         throw new Error('투수 보직을 확인해 주세요.');
+      if (pitchingAssignment(g, p) === a.role) return g;
       if (plan.rotation.includes(p.id) && a.role !== 'starter' && plan.rotation.length <= 1)
         throw new Error('선발투수는 최소 1명이 필요합니다.');
       if (a.role === 'starter' && !plan.rotation.includes(p.id) && plan.rotation.length >= 6)
         throw new Error('선발 로테이션은 최대 6명입니다.');
       plan.rotation = plan.rotation.filter((id) => id !== p.id);
       plan.bullpen = plan.bullpen.filter((id) => id !== p.id);
+      plan.setup = plan.setup!.filter((id) => id !== p.id);
+      plan.chase = plan.chase!.filter((id) => id !== p.id);
       if (plan.closer === p.id) plan.closer = '';
       if (a.role === 'starter') plan.rotation.push(p.id);
       else if (a.role === 'closer') plan.closer = p.id;
-      else plan.bullpen.push(p.id);
+      else {
+        plan.bullpen.push(p.id);
+        if (a.role === 'setup') plan.setup.push(p.id);
+        if (a.role === 'chase') plan.chase.push(p.id);
+      }
       if (g.starter === p.id && a.role !== 'starter') g.starter = plan.rotation[0];
       preparePitching(g);
       return g;
@@ -238,6 +248,7 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
       g.tactic = t.tactic;
       g.instructions = { ...t.instructions };
       g.tacticFamiliarity = Math.max(20, (g.tacticFamiliarity || 55) - 8);
+      preparePitching(g);
       return g;
     }
     case 'deleteTactic':

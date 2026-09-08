@@ -14,6 +14,7 @@ import { type GameState, type Player, overall, money, askPrice } from '@dugout/s
 import { potentialText } from '@dugout/shared/ratings';
 import { Mood } from '../clubs/club-panels';
 import { Rating, PlayerName, positions } from '../../components/game-ui';
+import { RoleBadge, assignmentLabel, pitchingAssignment } from '../squad/pitching-panel';
 
 export function PlayerTable({
   players,
@@ -29,12 +30,15 @@ export function PlayerTable({
   g: GameState;
 }) {
   const { getClub } = useWorld();
+  const own = new Set(g.roster.map((p) => p.id));
   return (
     <Table className={`data-table player-table ${compact ? 'player-table-summary' : ''}`}>
       <TableHeader>
         <TableRow>
           <TableHead>선수</TableHead>
-          <TableHead className="player-secondary-column">구분</TableHead>
+          <TableHead className="player-secondary-column">
+            {kind === 'market' ? '구분' : '구분 · 보직'}
+          </TableHead>
           {!compact && <TableHead>나이</TableHead>}
           <TableHead>OVR</TableHead>
           {g.rules?.revealPotential && <TableHead>잠재력</TableHead>}
@@ -62,86 +66,99 @@ export function PlayerTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {players.map((p) => (
-          <TableRow key={p.id}>
-            <TableCell>
-              <PlayerName p={p} onClick={onPlayer} />
-            </TableCell>
-            <TableCell className="player-secondary-column">
-              {positions[p.pos]}
-              {kind !== 'market' && (
-                <small className="block muted">{p.squad === 'reserve' ? '2군' : '1군'}</small>
+        {players.map((p) => {
+          const role = kind !== 'market' && own.has(p.id) ? pitchingAssignment(g, p) : '';
+          return (
+            <TableRow key={p.id}>
+              <TableCell>
+                <PlayerName p={p} onClick={onPlayer} />
+                {role && (
+                  <small className="ui-role-inline">
+                    <RoleBadge role={role}>{assignmentLabel(g, p)}</RoleBadge>
+                  </small>
+                )}
+              </TableCell>
+              <TableCell className="player-secondary-column">
+                {positions[p.pos]}
+                {kind !== 'market' &&
+                  (role ? (
+                    <small className="block">
+                      <RoleBadge role={role}>{assignmentLabel(g, p)}</RoleBadge>
+                    </small>
+                  ) : (
+                    <small className="block muted">{p.squad === 'reserve' ? '2군' : '1군'}</small>
+                  ))}
+              </TableCell>
+              {!compact && (
+                <TableCell>
+                  {p.age}
+                  {p.ageEstimated && <small className="block muted">게임 나이</small>}
+                </TableCell>
               )}
-            </TableCell>
-            {!compact && (
               <TableCell>
-                {p.age}
-                {p.ageEstimated && <small className="block muted">게임 나이</small>}
+                <Rating value={overall(p)} player={p} />
               </TableCell>
-            )}
-            <TableCell>
-              <Rating value={overall(p)} player={p} />
-            </TableCell>
-            {g.rules?.revealPotential && (
-              <TableCell>
-                <span className="potential">{potentialText(p)}</span>
-              </TableCell>
-            )}
-            {kind === 'market' ? (
-              <>
+              {g.rules?.revealPotential && (
                 <TableCell>
-                  <span className="muted">
-                    {p.club === 'fa' ? 'FA · 자유계약' : getClub(p.club)?.name || '이적 선수'}
-                  </span>
+                  <span className="potential">{potentialText(p)}</span>
                 </TableCell>
-                <TableCell>{money(askPrice(p))}</TableCell>
-                <TableCell>{money(p.salary)}</TableCell>
-              </>
-            ) : (
-              <>
-                {!compact && (
+              )}
+              {kind === 'market' ? (
+                <>
                   <TableCell>
-                    <Mood p={p} />
+                    <span className="muted">
+                      {p.club === 'fa' ? 'FA · 자유계약' : getClub(p.club)?.name || '이적 선수'}
+                    </span>
                   </TableCell>
-                )}
-                <TableCell>
-                  <div className="condition">
-                    <Progress value={p.condition} />
-                    <span>{Math.round(p.condition)}%</span>
-                  </div>
-                </TableCell>
-                {!compact && (
-                  <>
-                    <TableCell>{p.stats.g}</TableCell>
+                  <TableCell>{money(askPrice(p))}</TableCell>
+                  <TableCell>{money(p.salary)}</TableCell>
+                </>
+              ) : (
+                <>
+                  {!compact && (
                     <TableCell>
-                      {p.pos === 'P'
-                        ? p.stats.outs
-                          ? ((p.stats.er * 27) / p.stats.outs).toFixed(2)
-                          : '–'
-                        : p.stats.ab
-                          ? (p.stats.h / p.stats.ab).toFixed(3)
-                          : '–'}
+                      <Mood p={p} />
                     </TableCell>
-                    <TableCell>{p.pos === 'P' ? p.stats.wins : p.stats.hr}</TableCell>
-                  </>
-                )}
-                <TableCell className="player-secondary-column">
-                  {money(p.salary)}
-                  <small className="block muted">{p.years}년 남음</small>
-                </TableCell>
-              </>
-            )}
-            <TableCell>
-              <button
-                className="icon-button"
-                aria-label={`${p.name} 상세 보기`}
-                onClick={() => onPlayer(p)}
-              >
-                <ArrowUpRight size={17} />
-              </button>
-            </TableCell>
-          </TableRow>
-        ))}
+                  )}
+                  <TableCell>
+                    <div className="condition">
+                      <Progress value={p.condition} />
+                      <span>{Math.round(p.condition)}%</span>
+                    </div>
+                  </TableCell>
+                  {!compact && (
+                    <>
+                      <TableCell>{p.stats.g}</TableCell>
+                      <TableCell>
+                        {p.pos === 'P'
+                          ? p.stats.outs
+                            ? ((p.stats.er * 27) / p.stats.outs).toFixed(2)
+                            : '–'
+                          : p.stats.ab
+                            ? (p.stats.h / p.stats.ab).toFixed(3)
+                            : '–'}
+                      </TableCell>
+                      <TableCell>{p.pos === 'P' ? p.stats.wins : p.stats.hr}</TableCell>
+                    </>
+                  )}
+                  <TableCell className="player-secondary-column">
+                    {money(p.salary)}
+                    <small className="block muted">{p.years}년 남음</small>
+                  </TableCell>
+                </>
+              )}
+              <TableCell>
+                <button
+                  className="icon-button"
+                  aria-label={`${p.name} 상세 보기`}
+                  onClick={() => onPlayer(p)}
+                >
+                  <ArrowUpRight size={17} />
+                </button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
