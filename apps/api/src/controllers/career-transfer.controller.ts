@@ -17,6 +17,8 @@ import { CareerImportError, importCareer } from '../repositories/career-import';
 export class CareerTransferController {
   @Get('export')
   async backup(@Req() request: ApiRequest) {
+    if (request.headers['x-dugout-transfer'] !== 'export')
+      throw new UnauthorizedException('원본 백업은 데이터 이전 권한이 필요합니다.');
     return exportCareer(env.DB, userId(request));
   }
 

@@ -339,7 +339,15 @@ export type SaleOffer = {
   year: number;
 };
 
-export type PitchingPlan = { rotation: string[]; bullpen: string[]; closer: string; next: number };
+export type PitchingPlan = {
+  rotation: string[];
+  bullpen: string[];
+  closer: string;
+  next: number;
+  /** Disjoint subsets of bullpen. Missing in older careers. */
+  setup?: string[];
+  chase?: string[];
+};
 export type LiveMatch = {
   home: string;
   away: string;
@@ -348,4 +356,6 @@ export type LiveMatch = {
   finished: boolean;
   result: Result;
   opponents?: Player[][];
+  /** Existing matches retain their original relief decisions when resumed. */
+  pitchingVersion?: 2;
 };

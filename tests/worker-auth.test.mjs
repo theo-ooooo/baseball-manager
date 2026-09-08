@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { productionWorker } from './helpers/worker.mjs';
 
@@ -22,7 +23,7 @@ test('Guest sessions isolate careers, ignore forged identity, restore possession
   try {
     const db = await backupSchema(worker);
     const open = () =>
-      worker.dispatchFetch('https://localhost/api/career/export', {
+      worker.dispatchFetch('https://localhost/api/session', {
         headers: { 'oai-authenticated-user-id': 'victim', 'x-dugout-user-id': 'victim' },
       });
     const first = await open();
@@ -31,10 +32,11 @@ test('Guest sessions isolate careers, ignore forged identity, restore possession
     assert.match(cookie, /Secure; HttpOnly; SameSite=Lax/);
     assert.match(cookie, /^__Host-dugout_guest=[a-f0-9]{64}; Path=\//);
     assert.equal(first.headers.get('cache-control'), 'no-store');
-    const owner = (await first.json()).sourceUserId;
+    const originalKey = (await first.json()).recoveryKey;
+    const owner = 'guest:' + createHash('sha256').update(originalKey).digest('hex');
     assert.match(owner, /^guest:[a-f0-9]{64}$/);
     const second = await open();
-    assert.notEqual((await second.json()).sourceUserId, owner);
+    assert.notEqual((await second.json()).recoveryKey, originalKey);
     const headers = { cookie: cookie.split(';')[0], 'x-dugout-user-id': 'victim' };
     const state = '{"potential":88.5,"original":"preserved"}';
     await db
@@ -42,7 +44,7 @@ test('Guest sessions isolate careers, ignore forged identity, restore possession
       .bind(owner, state, 42, '2026-09-08')
       .run();
     const read = await worker.dispatchFetch('https://localhost/api/career/export', { headers });
-    assert.equal((await read.json()).tables.careers[0].state, state);
+    assert.equal(read.status, 401); // Raw backups must not bypass the game's hidden potential presentation.
     const session = await worker.dispatchFetch('https://localhost/api/session', { headers });
     const { recoveryKey } = await session.json();
     const restore = (extra = {}, key = recoveryKey) =>
@@ -58,7 +60,7 @@ test('Guest sessions isolate careers, ignore forged identity, restore possession
     const restored = await restore({ origin: 'https://localhost' });
     assert.equal(restored.status, 200);
     assert.equal(restored.headers.get('set-cookie'), cookie);
-    assert.equal((await open().then((r) => r.json())).tables.careers.length, 0);
+    assert.notEqual((await open().then((r) => r.json())).recoveryKey, originalKey);
     const forgedImport = await worker.dispatchFetch('https://localhost/api/career/import', {
       method: 'POST',
       headers: { 'x-dugout-transfer': 'import', 'content-type': 'application/json' },
@@ -125,7 +127,13 @@ test('Temporary Sites transfer credential grants only the owner backup and prese
 });
 
 test('Expiring import endpoint preserves a large snapshot, fixes ownership and refuses overwrites', async () => {
-  const source = await productionWorker();
+  const source = await productionWorker({
+    bindings: {
+      MIGRATION_EXPORT_TOKEN: 'source-backup',
+      MIGRATION_OWNER_ID: 'original-owner',
+      MIGRATION_TRANSFER_EXPIRES: new Date(Date.now() + 60_000).toISOString(),
+    },
+  });
   const target = await productionWorker({
     bindings: {
       AUTH_PROVIDER: 'guest',
@@ -161,7 +169,7 @@ test('Expiring import endpoint preserves a large snapshot, fixes ownership and r
       .run();
     const backup = await source
       .dispatchFetch('https://localhost/api/career/export', {
-        headers: { 'oai-authenticated-user-id': 'original-owner' },
+        headers: { authorization: 'Bearer source-backup' },
       })
       .then((r) => r.json());
     const request = (token = 'temporary-transfer') =>

@@ -395,3 +395,38 @@ test('Potential visibility follows each career on catalog, negotiation and confl
   );
   assert.ok(raw.deals[0].player.potential > 0);
 });
+
+test('Bullpen groups upgrade legacy D1 saves without changing data and persist through commands and reads', async () => {
+  const user = 'pitcher-groups';
+  let saved = await action({ type: 'start', club: 'kbo-lotte', mode: 'short' }, user);
+  const original = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  delete original.pitching.setup;
+  delete original.pitching.chase;
+  const legacy = JSON.stringify(original);
+  await db.prepare('UPDATE careers SET state=? WHERE user_id=?').bind(legacy, user).run();
+  saved = (await call('/api/career', undefined, user)).body;
+  assert.ok(saved.state.pitching.setup.length && saved.state.pitching.chase.length);
+  assert.equal(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+    legacy,
+  );
+  const pitcher = saved.state.pitching.bullpen[0];
+  saved = await action({ type: 'pitchingRole', id: pitcher, role: 'chase' }, user);
+  const restored = (await call('/api/career', undefined, user)).body;
+  const stored = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.deepEqual(restored.state.pitching, stored.pitching);
+  assert.ok(stored.pitching.chase.includes(pitcher) && !stored.pitching.setup.includes(pitcher));
+  for (const field of ['starter', 'lineup', 'roster', 'budget', 'history', 'day'])
+    assert.deepEqual(stored[field], original[field]);
+  const invalid = await call(
+    '/api/career',
+    { type: 'pitchingRole', id: pitcher, role: 'invalid', revision: restored.revision },
+    user,
+  );
+  assert.equal(invalid.status, 400);
+  assert.equal((await call('/api/career', undefined, user)).body.revision, restored.revision);
+});

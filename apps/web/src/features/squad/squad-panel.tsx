@@ -4,16 +4,30 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type GameState, type Player, overall } from '@dugout/shared/game-view';
 import { Choice, SearchBox, Empty } from '../../components/game-ui';
 import { PlayerTable } from '../players/player-table';
+import { pitchingAssignment, roleNames, type PitchingAssignment } from './pitching-panel';
+
+const roleFilters: Exclude<PitchingAssignment, ''>[] = [
+  'starter',
+  'setup',
+  'chase',
+  'bullpen',
+  'closer',
+  'reserve',
+];
 
 export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => void }) {
   const [filter, setFilter] = useState('all'),
+    [role, setRole] = useState('all'),
     [query, setQuery] = useState(''),
     [sort, setSort] = useState('rating'),
     [detailed, setDetailed] = useState(false);
+  const pitchers = g.roster.filter((p) => p.pos === 'P');
+  const roleCount = (r: string) => pitchers.filter((p) => pitchingAssignment(g, p) === r).length;
   const list = g.roster
     .filter(
       (p) =>
         (filter === 'all' || p.pos === filter || (filter === 'young' && p.age <= 23)) &&
+        (filter !== 'P' || role === 'all' || pitchingAssignment(g, p) === role) &&
         p.name.toLowerCase().includes(query.toLowerCase()),
     )
     .sort((a, b) =>
@@ -26,7 +40,13 @@ export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
   return (
     <section className="panel">
       <div className="toolbar">
-        <Tabs value={filter} onValueChange={setFilter}>
+        <Tabs
+          value={filter}
+          onValueChange={(value) => {
+            setFilter(value);
+            setRole('all');
+          }}
+        >
           <TabsList variant="line">
             {[
               ['all', '전체 선수'],
@@ -63,12 +83,37 @@ export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
           />
         </div>
       </div>
+      {filter === 'P' && (
+        <div className="ui-scope ui-role-chips" role="group" aria-label="투수 보직 필터">
+          <button
+            aria-pressed={role === 'all'}
+            className={`ui-chip ${role === 'all' ? 'active' : ''}`}
+            onClick={() => setRole('all')}
+          >
+            전체 투수 <b>{pitchers.length}</b>
+          </button>
+          {roleFilters.map((r) => (
+            <button
+              key={r}
+              aria-pressed={role === r}
+              className={`ui-chip ui-chip-${r} ${role === r ? 'active' : ''}`}
+              onClick={() => setRole(r)}
+            >
+              {roleNames[r]} <b>{roleCount(r)}</b>
+            </button>
+          ))}
+        </div>
+      )}
       <PlayerTable players={list} onPlayer={onPlayer} g={g} compact={!detailed} />
       {!list.length && <Empty text="조건에 맞는 선수가 없습니다." />}
       <div className="panel-foot">
         {list.length}명 · 실명 {list.filter((p) => p.real).length}명 / 가상{' '}
         {list.filter((p) => !p.real).length}명
-        <span>OVR: 2025 공식 성적 기반 · * 적은 표본 · 잠재력은 추정</span>
+        <span>
+          {filter === 'P'
+            ? '보직 변경: 선수 상세 또는 전술 · 타순 화면'
+            : 'OVR: 2025 공식 성적 기반 · * 적은 표본 · 잠재력은 추정'}
+        </span>
       </div>
     </section>
   );

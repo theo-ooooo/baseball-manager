@@ -8,7 +8,8 @@
 - AppController를 health/catalog/career/career-transfer/session으로 분리했다. 게스트 복구는 `/saves`, 데이터는 사용자별 D1에 유지한다.
 - 원본 Sites identity와 DB는 보존한다. 개인 Cloudflare 계정을 확인했고 신규 D1을 사용한다. Zero Trust는 사용자 결정으로 사용하지 않는다.
 - GitHub 배포 자격증명을 등록했고 `main` 검증 후 같은 산출물로 자동배포한다. 로컬 Wrangler OAuth 오류가 있어 배포는 GitHub의 별도 토큰을 사용한다.
-- 공개 Worker 주소는 `https://baseball-manager.kkwondev.workers.dev`이며 실제 배포 완료 여부는 WORKLOG의 최종 결과를 확인한다.
+- 공개 Worker 주소는 `https://baseball-manager.kkwondev.workers.dev`다. 첫 `main` 자동배포(run `34196591204`)와 12개 마이그레이션 적용을 확인했고, 기존 커리어 revision 42와 선수·계약·성적·기록을 복사·검증했다. 원본 DB/비공개 백업은 보존했고 임시 이전 키는 제거했다. 이후 배포 버전은 최신 WORKLOG를 확인한다.
+- 투수 운용은 전술 화면의 별도 탭이며 필승조·추격조·일반 불펜을 추가했다. 기존 진행 경기는 시작 당시 교체 규칙으로 재개한다. 상세 검증과 적용 범위는 최신 WORKLOG를 따른다.
 
 > 폴더 재구성 후 현재 경로는 `docs/architecture.md`를 참고한다. 아래 과거 기록의 루트 `app/`, `db/`, `drizzle/`는 각각 `apps/web/app/`, `apps/api/db/`, `apps/api/drizzle/`로 이동했다.
 

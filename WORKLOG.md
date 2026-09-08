@@ -243,3 +243,28 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - `npm run dev` now applies append-only migrations to the Vite plugin's isolated local D1 before starting. It uses the same placeholder binding and persistence directory and never targets the remote database. Generated local configuration remains under ignored infrastructure build output.
 - Verified local development serves the v7 D1 health response and browser setup. Large authorized imports retain a conflict response for duplicate historic IDs. The local Wrangler OAuth currently fails personal D1 authentication; the connected Cloudflare API still verifies the target database as empty, and GitHub's separate scoped deployment token is registered. Remote migrations will run through the main deployment workflow.
+
+## 2026-09-08 — Limit unmasked backups to migration credentials
+
+- Final public-route review restricted raw backup exports to the expiring migration credential. Ordinary guest API calls cannot use this route to reveal hidden potential or server-only simulation inputs. Recovery keys still reopen the saved career through the normal masked API.
+- The original owner backup was already verified and retained outside Git; the original Site's temporary environment values were removed and revision 2 was deployed successfully. Its database is preserved.
+
+## 2026-09-08 — Bullpen groups in the squad, player profile and actual matches
+
+- Added setup (필승조) and chase (추격조) subsets to the existing bullpen plan, retaining rotation, closer, selected starter and saved bullpen order. Missing groups upgrade on read without a database write; explicitly empty groups stay empty. Role commands, reserve moves, manual starter selection and saved tactics keep the groups exclusive. No schema reset or SQL rewrite is needed.
+- The simulator prioritizes setup pitchers from inning 6 in ties or leads of 1–3, chase pitchers when trailing, general relief for early changes/large leads, and the closer from inning 9 with a 1–3 lead. It skips used pitchers and prefers rested alternatives. Existing live matches retain the previous algorithm; a captured deterministic full-result hash verifies unchanged resumption across this update.
+- New careers now choose their initial starter from the recommended rotation instead of forcing the highest-overall pitcher into it. Existing manager selections are preserved. Removed the remaining real-name manager fallback.
+- Split the long tactics page into lineup/defense, pitcher management and saved-tactic tabs, with a direct pitcher-panel URL. Added five role groups and selectors, rotation controls, squad filters/counts, and visible role badges in desktop/mobile tables and player profiles. Browser changes to setup/chase persist after reload; the pitcher profile also displays the existing detailed abilities with missing measurements labelled.
+- Validation: the current session tree passes all 63 tests, production build, TypeScript, zero-warning lint and format. Tests cover legacy D1 read preservation, persisted role changes, manual starters, saved tactics, reserve eligibility, fatigue/used-pitcher fallbacks, actual live-game substitutions and legacy replay identity. Browser checks cover role change/reload, profile change/reload, role filters/counts, 390px badges and the dedicated tactics tab at 390px/1440px without page overflow. No public career was advanced for testing.
+
+## 2026-09-08 — Keep the local API working across module reloads
+
+- Browser QA reproduced a duplicate-listen error after Vite re-evaluated the NestJS bundle. Bootstrap now obtains an isolated Workers HTTP routing key and its own bridge; Vite disposal closes the replaced Nest application.
+- Rebuilt the API while the development server and a guest career remained open, then verified health, the same revision/manager/day and the tactics page without restarting the server. The combined production bundle passes the 63-test suite and TypeScript/lint/format checks above.
+
+## 2026-09-08 — First public Cloudflare release and verified career transfer
+
+- GitHub PR #1 was merged at main `1714297`. Its automatic test and production jobs both succeeded (Actions run `34196591204`), applying all 12 migrations and publishing `https://baseball-manager.kkwondev.workers.dev` on the verified personal Cloudflare account. Live health reports Vinext/NestJS/D1 and catalog v7.
+- Downloaded a raw owner-scoped backup from the existing private Site, stored it and the new guest recovery key with private filesystem permissions outside Git, and imported into the separately provisioned D1. The importer compared every value in all ten tables after changing only the owner ID: 1 career, 42 players, 42 contracts, 5 staff, 137 standings, 5 archived matches, 18 finance entries and 28 action records; negotiations and transfers were empty.
+- Independently opened the new guest career through the normal API and verified revision 42, budget, date, year, club, complete history, lineup, selected starter, player stats and contracts against the original backup. The source database remains intact. Temporary transfer values were removed from both environments; the public Worker's secret list is empty. Backup/recovery values are not in Git.
+- The private Site's source `ac74a36` (version 6) deployed successfully with the raw-export restriction and environment revision 2. Pitcher-group and development follow-up commits are awaiting their own validated release; the first successful main deployment above does not yet contain them.

@@ -18,7 +18,15 @@ import { askPrice, fromManwon, money, toManwon } from '@dugout/shared/game-view'
 import { potentialText, ratingText } from '@dugout/shared/ratings';
 import { detailedAttributes, lineupReason } from '@dugout/shared/player-attributes';
 import { defensivePositions, familiarity, transfersBlocked } from '@dugout/shared/management';
-import { pitchingRole } from '@dugout/shared/pitching';
+import {
+  LOW_CONDITION,
+  REPLACEMENT_NOTE,
+  RoleBadge,
+  RoleSelect,
+  assignmentLabel,
+  pitchingAssignment,
+  roleHelp,
+} from '../squad/pitching-panel';
 import { useWorld } from '../career/world-context';
 import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
 import { PositionTraining } from '../squad/management-panels';
@@ -217,6 +225,14 @@ export function PlayerProfile(props: Props) {
             {player.original !== player.name && `${player.original} · `}
             {positionNames[player.pos]} · {player.ageEstimated ? '게임 나이 ' : ''}
             {player.age}세 · {player.club === 'fa' ? 'FA · 자유계약' : getClub(player.club)?.name}
+            {own && player.pos === 'P' && (
+              <>
+                {' · '}
+                <RoleBadge role={pitchingAssignment(game, player)}>
+                  {assignmentLabel(game, player)}
+                </RoleBadge>
+              </>
+            )}
           </p>
         </div>
         <span className="rating">{ratingText(player)}</span>
@@ -263,17 +279,32 @@ export function PlayerProfile(props: Props) {
               <h3>선수단 역할</h3>
               <Mood p={player} />
               <p>{player.mood?.reason}</p>
-              <p>
-                {player.pos === 'P'
-                  ? pitchingRole(game, player)
-                  : slot >= 0
+              {player.pos === 'P' ? (
+                <div className="ui-scope ui-profile-role">
+                  <div className="ui-profile-role-head">
+                    <RoleBadge role={pitchingAssignment(game, player)}>
+                      {assignmentLabel(game, player)}
+                    </RoleBadge>
+                    {game.starter === player.id && <b className="ui-next-tag">다음 경기 선발</b>}
+                    {player.condition < LOW_CONDITION && (
+                      <b className="ui-next-tag ui-warn">체력 부족 · 휴식 권장</b>
+                    )}
+                  </div>
+                  <p>
+                    {roleHelp[pitchingAssignment(game, player) || 'bullpen']}
+                    {pitchingAssignment(game, player) !== 'reserve' && ` ${REPLACEMENT_NOTE}`}
+                  </p>
+                  <RoleSelect g={game} p={player} busy={busy} act={act} />
+                  <Link className="text-button" href="/?view=tactics&panel=pitching">
+                    투수 운용 · 로테이션 순서 →
+                  </Link>
+                </div>
+              ) : (
+                <p>
+                  {slot >= 0
                     ? `${slot + 1}번 · ${lineupReason(player, slot)}`
                     : '벤치 · 타순 미등록'}
-              </p>
-              {player.pos === 'P' && (
-                <Link className="text-button" href="/?view=tactics">
-                  투수 보직 · 선발 변경 →
-                </Link>
+                </p>
               )}
               <PositionTraining p={player} act={act} busy={busy} />
               <button
