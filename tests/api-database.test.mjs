@@ -485,7 +485,7 @@ test(
     await db.batch([
       db.prepare('CREATE TABLE projection_probe (event TEXT)'),
       db.prepare(
-        "CREATE TRIGGER observe_player_projection AFTER INSERT ON career_players BEGIN INSERT INTO projection_probe VALUES('player'); END",
+        "CREATE TRIGGER observe_player_projection AFTER UPDATE ON career_players BEGIN INSERT INTO projection_probe VALUES('player'); END",
       ),
       db.prepare(
         "CREATE TRIGGER observe_contract_projection AFTER DELETE ON contracts BEGIN INSERT INTO projection_probe VALUES('contract'); END",
@@ -632,4 +632,61 @@ test('Bullpen groups upgrade legacy D1 saves without changing data and persist t
   );
   assert.equal(invalid.status, 400);
   assert.equal((await call('/api/career', undefined, user)).body.revision, restored.revision);
+});
+
+test('Routine news and tactic saves leave projections untouched; a player edit updates only that row', async () => {
+  const user = 'delta-write-cost';
+  let saved = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Delta', mode: 'short' },
+    user,
+  );
+  const tables = [
+    'career_players',
+    'contracts',
+    'career_staff',
+    'negotiations',
+    'career_standings',
+  ];
+  await db.prepare('CREATE TABLE delta_probe (table_name TEXT, operation TEXT)').run();
+  const triggers = tables.flatMap((table) =>
+    ['INSERT', 'UPDATE', 'DELETE'].map((operation) => ({
+      name: `delta_${table}_${operation}`,
+      table,
+      operation,
+    })),
+  );
+  try {
+    await db.batch(
+      triggers.map(({ name, table, operation }) =>
+        db.prepare(
+          `CREATE TRIGGER ${name} AFTER ${operation} ON ${table} BEGIN INSERT INTO delta_probe VALUES('${table}','${operation}'); END`,
+        ),
+      ),
+    );
+    saved = await action({ type: 'readNews', id: saved.state.news[0].id }, user);
+    saved = await action({ type: 'tactic', value: 'power' }, user);
+    assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM delta_probe').first()).n, 0);
+    const player = saved.state.roster.find((p) => p.pos === 'IF');
+    saved = await action({ type: 'positionTraining', id: player.id, position: 'SS' }, user);
+    assert.deepEqual((await db.prepare('SELECT * FROM delta_probe').all()).results, [
+      { table_name: 'career_players', operation: 'UPDATE' },
+    ]);
+    const projected = await db
+      .prepare('SELECT data FROM career_players WHERE user_id=? AND player_id=?')
+      .bind(user, player.id)
+      .first();
+    assert.equal(JSON.parse(projected.data).positionTraining, 'SS');
+    const ledger = (
+      await db
+        .prepare(
+          'SELECT id,revision,season AS year,day,kind,amount,balance,created_at AS createdAt FROM finance_entries WHERE user_id=? ORDER BY revision DESC LIMIT 60',
+        )
+        .bind(user)
+        .all()
+    ).results;
+    assert.deepEqual(saved.ledger, ledger);
+  } finally {
+    await db.batch(triggers.map(({ name }) => db.prepare(`DROP TRIGGER IF EXISTS ${name}`)));
+    await db.prepare('DROP TABLE delta_probe').run();
+  }
 });

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createGameView } from '@dugout/shared/game-view';
+import { careerProjections } from './career-projections';
 import type { GameState, WorldCatalog, FinanceEntry, Result } from '@dugout/shared/types';
 
 type CareerRow = { state: string; revision: number };
@@ -58,6 +58,7 @@ export class CareerRepository {
     world: WorldCatalog,
     kind: string,
     requestId: string,
+    priorLedger?: FinanceEntry[],
   ) {
     const token = crypto.randomUUID(),
       now = new Date().toISOString(),
@@ -112,10 +113,6 @@ export class CareerRepository {
           .bind(user, JSON.stringify(rows), user, token),
       );
     };
-    const replace = (table: string, fields: string[], rows: Record<string, unknown>[]) => {
-      clear(table);
-      insert(table, fields, rows);
-    };
     if (resetting)
       for (const table of ['career_matches', 'transfers', 'finance_entries', 'career_actions'])
         clear(table);
@@ -129,92 +126,44 @@ export class CareerRepository {
       );
       const result = await db.batch(statements);
       if (result[0].meta.changes !== 1) return null;
-      return { state, revision, ledger: await this.ledger(db, user) };
+      return { state, revision, ledger: priorLedger ?? (await this.ledger(db, user)) };
     }
-    const { agentFor } = createGameView(world);
-    const allPlayers = [
-      ...new Map([...state.transferred, ...state.roster].map((p) => [p.id, p])).values(),
-    ];
-    replace(
-      'career_players',
-      ['player_id', 'club_id', 'position', 'name', 'data'],
-      allPlayers.map((p) => ({
-        player_id: p.id,
-        club_id: p.club,
-        position: p.pos,
-        name: p.name,
-        data: JSON.stringify(p),
-      })),
+    const previous = new Map(
+      before && !resetting ? careerProjections(before, world).map((p) => [p.table, p]) : [],
     );
-    replace(
-      'contracts',
-      ['player_id', 'club_id', 'salary', 'years', 'season', 'agent_id'],
-      allPlayers
-        .filter((p) => p.club !== 'fa')
-        .map((p) => ({
-          player_id: p.id,
-          club_id: p.club,
-          salary: p.salary,
-          years: p.years,
-          season: state.year,
-          agent_id: agentFor(p).id,
-        })),
-    );
-    replace(
-      'career_staff',
-      [
-        'role',
-        'coach_id',
-        'name',
-        'skill',
-        'salary',
-        'style',
-        'is_real',
-        'source_club',
-        'source',
-        'verified_role',
-      ],
-      state.staff.map((c) => ({
-        role: c.role,
-        coach_id: c.id,
-        name: c.name,
-        skill: c.skill,
-        salary: c.salary,
-        style: c.style,
-        is_real: c.real ? 1 : 0,
-        source_club: c.sourceClub || null,
-        source: c.source || null,
-        verified_role: c.verifiedRole || null,
-      })),
-    );
-    replace(
-      'negotiations',
-      ['deal_id', 'player_id', 'status', 'salary', 'years', 'data'],
-      state.deals.map((d) => ({
-        deal_id: d.id,
-        player_id: d.player.id,
-        status: d.status,
-        salary: d.salary,
-        years: d.years,
-        data: JSON.stringify(d),
-      })),
-    );
-    replace(
-      'career_standings',
-      ['club_id', 'league_id', 'season', 'wins', 'losses', 'draws', 'runs_for', 'runs_against'],
-      Object.entries(state.standings).flatMap(([league, rows]) =>
-        rows.map((s) => ({
-          club_id: s.club,
-          league_id: league,
-          season: state.year,
-          wins: s.w,
-          losses: s.l,
-          draws: s.d,
-          runs_for: s.rf,
-          runs_against: s.ra,
-        })),
-      ),
-    );
+    for (const projection of careerProjections(state, world)) {
+      const { table, key, fields, rows } = projection;
+      const prior = new Map((previous.get(table)?.rows || []).map((row) => [row[key], row]));
+      const current = new Set(rows.map((row) => row[key]));
+      if (resetting) clear(table);
+      else {
+        const removed = [...prior.keys()].filter((id) => !current.has(id));
+        if (removed.length)
+          statements.push(
+            db
+              .prepare(
+                `DELETE FROM ${table} WHERE user_id=? AND ${key} IN (SELECT value FROM json_each(?)) AND ${guard}`,
+              )
+              .bind(user, JSON.stringify(removed), user, token),
+          );
+      }
+      const changed = rows.filter(
+        (row) => JSON.stringify(row) !== JSON.stringify(prior.get(row[key])),
+      );
+      if (!changed.length) continue;
+      const extracts = fields.map((field) => `json_extract(value,'$.${field}')`).join(',');
+      const updates = fields
+        .filter((field) => field !== key)
+        .map((field) => `${field}=excluded.${field}`)
+        .join(',');
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO ${table}(user_id,${fields.join(',')}) SELECT ?,${extracts} FROM json_each(?) WHERE ${guard} ON CONFLICT(user_id,${key}) DO UPDATE SET ${updates}`,
+          )
+          .bind(user, JSON.stringify(changed), user, token),
+      );
+    }
     insert(
       'career_matches',
       ['match_id', 'season', 'day', 'home', 'away', 'home_score', 'away_score', 'data'],
@@ -277,6 +226,16 @@ export class CareerRepository {
       );
     }
     const amount = state.budget - (resetting ? 0 : before?.budget || 0);
+    const entry: FinanceEntry = {
+      id: `${user}:${revision}`,
+      revision,
+      year: state.year,
+      day: state.day,
+      kind,
+      amount,
+      balance: state.budget,
+      createdAt: now,
+    };
     if (amount)
       insert(
         'finance_entries',
@@ -301,6 +260,15 @@ export class CareerRepository {
     );
     const result = await db.batch(statements);
     if (result[0].meta.changes !== 1) return null;
-    return { state, revision, ledger: await this.ledger(db, user) };
+    const ledger = resetting ? [] : priorLedger;
+    return {
+      state,
+      revision,
+      ledger: ledger
+        ? amount
+          ? [entry, ...ledger].slice(0, 60)
+          : ledger
+        : await this.ledger(db, user),
+    };
   }
 }
