@@ -208,3 +208,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Moved third-party CSS and its license into `apps/web/styles/vendor`; preserved the original files and excluded them from authored-code formatting. Removed 13 unused frontend dependencies left behind by the deleted starter components.
 - Kept `packages/shared` for real cross-application contracts and pure calculations, and `scripts` for active build/data/deployment tools. Cloudflare generated declarations are being moved under infrastructure with the following authentication/build unit.
 - Validation: production build and 48 tests, TypeScript, format and zero-warning lint pass with the relocated CSS and reduced dependency manifest. No database change.
+
+## 2026-09-08 — Preserve career rows during the Cloudflare transfer
+
+- Added raw owner-scoped backup and schema-checked import for all ten career tables. Imports bind large values, change only `user_id`, refuse existing targets and conflicting historical IDs, and write one atomic D1 batch. Read-back comparisons verify every preserved value and row count.
+- Validation: six isolated D1 tests pass for a 600 KB snapshot, all tables, original/other-user preservation, competing imports, duplicate historical IDs, failed-constraint rollback, unknown fields, mixed ownership and schema drift. No production career has been changed.
