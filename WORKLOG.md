@@ -197,3 +197,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Consolidated all frontend routes, features, UI primitives, hooks, styles, static assets and Vite configuration under `apps/web`; removed root frontend entrypoints. Added npm workspaces with application-owned runtime dependencies and `@dugout/shared/*` exports.
 - Grouped web features by career, players, squad, clubs, matches, schedule, market and finance. Moved schema/migrations under `apps/api`, and Worker/Sites infrastructure under `infra`. The existing Sites identity remains intact; build staging still supplies root `dist` for Worker tests and Sites packaging.
 - Validation: relocated production build, TypeScript, zero-warning lint and all 47 tests pass. Existing migration SQL/snapshots and official asset bytes are preserved; no career data was modified. Personal Cloudflare account access is now verified, and a separate empty target D1 was provisioned for the requested migration. Authentication, data transfer and automatic deployment follow in separate units.
+
+## 2026-09-08 — Remove unused starter code
+
+- Removed the unused D1 notes example, its unused Drizzle helper, unused Sites auth helper, 46 unreachable starter UI components, three placeholder SVGs and the replaced stadium raster. Removed the old starter-chart-only test alongside that unused component.
+- Removed empty root directories left by the web/API/infrastructure moves. Kept the 15 UI primitives reached by the application and their dependencies. Typecheck and lint verify the remaining imports; the full build and gameplay tests continue with the authentication/deployment unit.
