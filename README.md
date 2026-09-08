@@ -1,5 +1,7 @@
 # DUGOUT · 월드 베이스볼 매니저
 
+> **Codex 인계 브랜치 / 미완성·미배포:** 먼저 [CODEX_HANDOFF.md](CODEX_HANDOFF.md)를 읽으세요. 아래 README 일부 설명은 운영 main 기준이며, 이 브랜치는 사용자 요청으로 개발을 중단한 WIP를 보존합니다.
+
 [테스트 사이트 열기](https://dugout-world-manager.kkwondev.chatgpt.site) · 본인 ChatGPT 계정으로 로그인 · 비공개
 
 실명 선수와 생성 선수로 구단을 운영하는 한국어 야구 매니지먼트 게임입니다. 구단 선택 → 4주 프리시즌·선수단 정비 → 경기·시즌 진행 → 협상·이적 → 재계약·다음 시즌까지 플레이할 수 있습니다.

@@ -1,3 +1,4 @@
+import {battingProfile} from './player-attributes';
 import {createCalendarView} from './calendar';
 import type {WorldCatalog,GameState,Player,Stats,Pos,Coach} from './types';
 export * from './types';
@@ -13,10 +14,16 @@ export const fromManwon=(amount:number)=>amount/GAME_KRW_PER_USD;
 export function money(n:number){const won=Math.round(n*10000*GAME_KRW_PER_USD),abs=Math.abs(won),sign=won<0?'−':'';if(abs>=100000000)return `${sign}${(abs/100000000).toLocaleString('ko-KR',{maximumFractionDigits:2})}억 원`;if(abs>=10000)return `${sign}${(abs/10000).toLocaleString('ko-KR',{maximumFractionDigits:0})}만 원`;return `${sign}${abs.toLocaleString('ko-KR')}원`;}
 
 export function teamBudget(league:string){return league==='mlb'?18000:league==='npb'?6000:league==='kbo'?3500:['cpbl','lmb','lidom'].includes(league)?1600:800;}
-export function lineupAuto(roster:Player[]){const sorted=[...roster].filter(p=>p.pos!=='P').sort((a,b)=>(overall(b)*b.condition)-(overall(a)*a.condition));const chosen:Player[]=[];for(const [pos,n] of [['C',1],['IF',4],['OF',3]] as [Pos,number][]){chosen.push(...sorted.filter(p=>p.pos===pos).slice(0,n));}for(const p of sorted)if(chosen.length<9&&!chosen.includes(p))chosen.push(p);return chosen.sort((a,b)=>b.contact+b.speed*.4-a.contact-a.speed*.4).map(p=>p.id);}
+export function lineupAuto(roster:Player[]){const sorted=[...roster].filter(p=>p.pos!=='P').sort((a,b)=>(overall(b)*b.condition)-(overall(a)*a.condition));const chosen:Player[]=[];for(const [pos,n] of [['C',1],['IF',4],['OF',3]] as [Pos,number][]){chosen.push(...sorted.filter(p=>p.pos===pos).slice(0,n));}for(const p of sorted)if(chosen.length<9&&!chosen.includes(p))chosen.push(p);const remaining=[...chosen],ordered:Player[]=[];
+ const take=(slot:number,score:(p:Player)=>number)=>{remaining.sort((a,b)=>score(b)-score(a)||a.id.localeCompare(b.id));const p=remaining.shift();if(p)ordered[slot]=p;};
+ const onbase=(p:Player)=>{const b=battingProfile(p);return b.obp*180+b.speed*.35-b.gdp*100;};
+ const production=(p:Player)=>{const b=battingProfile(p);return b.obp*100+b.slg*85;};
+ take(0,onbase);take(3,p=>production(p)+p.power*.4);take(1,production);take(2,p=>production(p)+p.contact*.12);take(4,production);take(8,onbase);for(const slot of [5,6,7])take(slot,production);
+ return ordered.filter(Boolean).map(p=>p.id);}
+
 export const coachRoles=['타격','투수','수비','체력','스카우트'];
 export function coachSkill(g:GameState,role:string){return g.staff.find(c=>c.role===role)?.skill||35;}
-export function askPrice(p:Player){return p.club==='fa'?0:Math.round(p.salary*(1.2+p.years*.45)+(p.potential-overall(p))*3);}
+export function askPrice(p:Player){return p.marketValue??(p.club==='fa'?0:Math.round(p.salary*(1.2+p.years*.45)+(p.potential-overall(p))*3));}
 export function createGameView(world:WorldCatalog){
  const {clubs,leagues,rosterNote}=world;const calendar=createCalendarView(world);
  const clubMap=new Map(clubs.map(c=>[c.id,c])), leagueMap=new Map(leagues.map(l=>[l.id,l]));

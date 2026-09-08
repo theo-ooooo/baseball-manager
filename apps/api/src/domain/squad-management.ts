@@ -1,3 +1,4 @@
+import {preparePitching} from '../../../../packages/shared/src/pitching';
 import {prepareCalendar} from '../../../../packages/shared/src/calendar';
 import type {DefensivePosition,GameState,Player,TeamInstructions,WorldCatalog} from '../../../../packages/shared/src/types';
 import {blankStats,coachSkill,hash,lineupAuto,overall} from '../../../../packages/shared/src/game-view';
@@ -29,7 +30,7 @@ export function prepareSquad(g:GameState,world:WorldCatalog){
   }
   g.reserve={w:0,l:0,d:0,history:[]};
  }
- g.instructions??=defaults(g.tactic);g.tacticFamiliarity??=55;g.tacticBook??=[];g.defense=defenseFor(g);
+ g.instructions??=defaults(g.tactic);g.tacticFamiliarity??=55;g.tacticBook??=[];g.defense=defenseFor(g);preparePitching(g);
 }
 function activePlayer(g:GameState,id:unknown){const p=firstTeam(g).find(p=>p.id===id);if(!p)throw new Error('1군에 등록된 선수를 선택해 주세요.');return p;}
 function repair(g:GameState){g.lineup=lineupAuto(firstTeam(g));if(!firstTeam(g).some(p=>p.id===g.starter))g.starter=firstTeam(g).find(p=>p.pos==='P')!.id;g.defense=autoDefense(g);}
@@ -41,6 +42,14 @@ export function canRemove(g:GameState,p:Player){
 export function managementAction(g:GameState,a:Record<string,unknown>):GameState|null {
  switch(a.type){
   case 'syncCatalog':return g;
+  case 'pitchingRole':{
+   preparePitching(g);const p=activePlayer(g,a.id),plan=g.pitching!;if(p.pos!=='P'||!['starter','bullpen','closer'].includes(String(a.role)))throw new Error('투수 보직을 확인해 주세요.');
+   if(plan.rotation.includes(p.id)&&a.role!=='starter'&&plan.rotation.length<=1)throw new Error('선발투수는 최소 1명이 필요합니다.');
+   if(a.role==='starter'&&!plan.rotation.includes(p.id)&&plan.rotation.length>=6)throw new Error('선발 로테이션은 최대 6명입니다.');
+   plan.rotation=plan.rotation.filter(id=>id!==p.id);plan.bullpen=plan.bullpen.filter(id=>id!==p.id);if(plan.closer===p.id)plan.closer='';
+   if(a.role==='starter')plan.rotation.push(p.id);else if(a.role==='closer')plan.closer=p.id;else plan.bullpen.push(p.id);preparePitching(g);return g;
+  }
+  case 'rotationOrder':{preparePitching(g);const ids=a.ids as string[],old=g.pitching!.rotation;if(!Array.isArray(ids)||ids.length!==old.length||new Set(ids).size!==ids.length||ids.some(id=>!old.includes(id)))throw new Error('선발 순서를 확인해 주세요.');g.pitching!.rotation=ids;g.pitching!.next=0;return g;}
   case 'squad':{
    const p=g.roster.find(p=>p.id===a.id);if(!p||!['first','reserve'].includes(String(a.value)))throw new Error('선수와 등록 구분을 확인해 주세요.');
    if((p.squad||'first')===a.value)return g;

@@ -1,3 +1,4 @@
+import {presentCareer} from './presentation';
 import { BadRequestException, ConflictException, Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CatalogRepository } from '../repositories/catalog.repository';
 import { CareerRepository } from '../repositories/career.repository';
@@ -21,7 +22,7 @@ export class CareerService {
     if (await this.careers.seenRequest(db,user,requestId)) return this.read(db,user);
     const current = await this.read(db,user);
     const expected = Number(action.revision);
-    if (!Number.isInteger(expected) || expected !== current.revision) throw new ConflictException({error:'다른 화면에서 변경됐습니다. 최신 커리어를 불러왔습니다.',...current});
+    if (!Number.isInteger(expected) || expected !== current.revision) throw new ConflictException({error:'다른 화면에서 변경됐습니다. 최신 커리어를 불러왔습니다.',...presentCareer(current)});
     const world = await this.catalog.getWorld(db), engine = createGameEngine(world);
     let next;
     try {
@@ -29,7 +30,7 @@ export class CareerService {
         if (current.state && action.replace !== true) throw new Error('기존 커리어 교체를 확인해 주세요.');
         if (!world.clubs.some(c => c.id === action.club)) throw new Error('구단을 선택해 주세요.');
         if (action.mode !== 'short' && action.mode !== 'full') throw new Error('시즌 길이를 선택해 주세요.');
-        next = engine.newGame(String(action.club),String(action.manager||'감독'),action.mode,Date.now(),{firstSeasonTransferBan:action.firstSeasonTransferBan===true});
+        next = engine.newGame(String(action.club),String(action.manager||'감독'),action.mode,Date.now(),{firstSeasonTransferBan:action.firstSeasonTransferBan===true,revealPotential:action.revealPotential===true});
       } else {
         if (!current.state) throw new Error('먼저 커리어를 시작해 주세요.');
         if (action.type === 'advance' && (!Number.isInteger(action.count) || Number(action.count)<1 || Number(action.count)>7)) throw new Error('한 번에 1~7일을 진행할 수 있습니다.');
@@ -37,7 +38,7 @@ export class CareerService {
       }
     } catch (error) { throw new BadRequestException(error instanceof Error ? error.message : '잘못된 요청입니다.'); }
     const saved = await this.careers.save(db,user,expected,current.state,next,world,String(action.type),requestId);
-    if (!saved) throw new ConflictException({error:'다른 요청이 먼저 저장됐습니다. 최신 커리어를 불러왔습니다.',...await this.read(db,user)});
+    if (!saved) throw new ConflictException({error:'다른 요청이 먼저 저장됐습니다. 최신 커리어를 불러왔습니다.',...presentCareer(await this.read(db,user))});
     return saved;
   }
 }

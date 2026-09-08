@@ -1,3 +1,4 @@
+import {presentCareer,presentWorld} from './services/presentation';
 import { Controller, Get, Post, Param, Req, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { env } from 'cloudflare:workers';
 import { CareerService } from './services/career.service';
@@ -20,15 +21,15 @@ export class AppController {
     return { status: 'ok', frontend: 'vinext', backend: 'nestjs', database: 'cloudflare-d1', catalogVersion: row.value };
   }
   @Get('catalog')
-  async world(@Req() request: ApiRequest) { userId(request); return this.catalog.getWorld(env.DB); }
+  async world(@Req() request: ApiRequest) { const user=userId(request);const [world,career]=await Promise.all([this.catalog.getWorld(env.DB),this.careers.read(env.DB,user)]);return presentWorld(world,career.state?.rules?.revealPotential===true); }
   @Get('career')
-  async career(@Req() request: ApiRequest) { return this.careers.read(env.DB,userId(request)); }
+  async career(@Req() request: ApiRequest) { return presentCareer(await this.careers.read(env.DB,userId(request))); }
   @Get('career/matches/:id')
   async match(@Req() request: ApiRequest, @Param('id') id: string) { return this.careers.match(env.DB,userId(request),id); }
   @Post('career')
   async action(@Req() request: ApiRequest) {
     const user = userId(request), body = request.body;
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestException('요청 형식이 올바르지 않습니다.');
-    return this.careers.act(env.DB,user,body as Record<string,unknown>);
+    return presentCareer(await this.careers.act(env.DB,user,body as Record<string,unknown>));
   }
 }

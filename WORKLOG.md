@@ -112,3 +112,12 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Continue skips idle dates until the next match, phase transition, player concern or buyer offer, while processing each day's wages, recovery and world fixtures. The separate seven-day action remains available.
 - TypeScript, production build, and all 32 tests passed, including the actual NestJS Worker with migrated D1, atomic accounting, archive retrieval and production HTML/assets. No browser interaction or visual QA was performed because it was not requested.
 - Further user additions queued: official team logos (52 major-league assets verified so far), hidden potential with a new-career option, dedicated player pages, detailed attributes and role-aware lineup recommendations.
+
+## 2026-09-08 — 사용자 요청으로 개발 중단, Codex 인계
+
+- 운영 852348dc7939c9b2b3106eb0530e5086ffc8bdf3의 Sites 배포 성공 확인. 이후 미완성 변경은 미배포.
+- 사용자가 남은 작업을 취소하고 Codex 이관을 요청했다. 추가 개발·수정·배포를 중단했다.
+- `codex/handoff-2026-09-08`에 투수 보직, 타석 단위 경기 진행, 2D 구장, 잠재력 마스킹, 상세 능력/타순 추천의 WIP를 보존한다. 선수 페이지·DB v2 migration·팀 로고 통합은 미완료.
+- 최신 WIP 타입 검사 통과. 초기 경기/투수 단위 테스트 5개 통과 후 추가 변경이 있었으며 최신 전체 테스트/빌드/브라우저 검증은 미실행.
+- `CODEX_HANDOFF.md`에 배포 기준, 변경 파일, 미완료 부분, 알려진 위험, 실행·DB·배포·인증 이전 방법을 기록했다.
+- 공식 구단 로고 52개와 추가 2025 성적 자료/수집 스크립트는 `handoff/research-assets.zip`에 보존. 개인정보/credential/운영 세이브/의존성/빌드 산출물은 포함하지 않는다.

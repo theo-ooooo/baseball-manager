@@ -12,7 +12,7 @@ export function rateRealPlayers(players:Player[],records:PerformanceRecord[]){
   const r=matches.length===1?matches[0]:matches.find(r=>r.league===p.club.split('-')[0]);
   const sample=r?(p.pos==='P'?(r.outs||0)/3:r.pa||0):0;
   const missing=!r||sample===0;
-  const evidence:RatingEvidence={version:'performance-2025-v1',status:missing?'missing':sample<(p.pos==='P'?30:100)?'provisional':'rated',season:2025,source:r?.source,record:r,method:'시즌 성적 · 표본 보정 v1',estimatedAttributes:p.pos==='P'?['수비','주력']:['수비',...(r?.sb===undefined?['주력']:[])],base:{}};
+  const evidence:RatingEvidence={version:'performance-2025-v2',status:missing?'missing':sample<(p.pos==='P'?30:100)?'provisional':'rated',season:2025,source:r?.source,record:r,method:'시즌 성적 · 표본 보정 v2 · 출루·주루 기록 확장',estimatedAttributes:p.pos==='P'?['수비','주력']:['수비',...(r?.sb===undefined?['주력']:[])],base:{}};
   // Unobserved tools use a neutral simulation baseline, hidden from scouting displays.
   Object.assign(p,{contact:50,power:50,speed:50,field:50,stuff:50,control:50,potential:50});
   if(!missing&&r){
