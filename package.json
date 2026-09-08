@@ -19,7 +19,8 @@
     "test:api": "npm run build && node --test tests/api-database.test.mjs",
     "db:seed:generate": "node scripts/generate-world-seed.mjs",
     "format": "prettier --write \"{apps/web/app,apps/web/src/features,apps/web/src/hooks,apps/web/styles,apps/api/src,apps/api/db,packages/shared/src,infra,scripts,tests}/**/*.{ts,tsx,mjs,css}\" \"apps/web/src/components/{game-ui,club-badge}.tsx\"",
-    "format:check": "prettier --check \"{apps/web/app,apps/web/src/features,apps/web/src/hooks,apps/web/styles,apps/api/src,apps/api/db,packages/shared/src,infra,scripts,tests}/**/*.{ts,tsx,mjs,css}\" \"apps/web/src/components/{game-ui,club-badge}.tsx\""
+    "format:check": "prettier --check \"{apps/web/app,apps/web/src/features,apps/web/src/hooks,apps/web/styles,apps/api/src,apps/api/db,packages/shared/src,infra,scripts,tests}/**/*.{ts,tsx,mjs,css}\" \"apps/web/src/components/{game-ui,club-badge}.tsx\"",
+    "deploy:cloudflare": "node scripts/deploy-cloudflare.mjs"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
