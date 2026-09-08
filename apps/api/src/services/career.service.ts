@@ -39,12 +39,13 @@ export class CareerService {
         ? action.requestId
         : crypto.randomUUID();
     if (await this.careers.seenRequest(db, user, requestId)) return this.read(db, user);
-    const current = await this.read(db, user);
+    // Keep the persisted snapshot as the delta baseline; the engine normalizes its own copy.
+    const current = await this.careers.read(db, user);
     const expected = Number(action.revision);
     if (!Number.isInteger(expected) || expected !== current.revision)
       throw new ConflictException({
         error: '다른 화면에서 변경됐습니다. 최신 커리어를 불러왔습니다.',
-        ...presentCareer(current),
+        ...presentCareer(await this.read(db, user)),
       });
     const world = await this.catalog.getWorld(db),
       engine = createGameEngine(world);
@@ -89,6 +90,7 @@ export class CareerService {
       world,
       String(action.type),
       requestId,
+      current.ledger,
     );
     if (!saved)
       throw new ConflictException({
