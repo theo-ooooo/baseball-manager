@@ -1,8 +1,8 @@
 # DUGOUT · 월드 베이스볼 매니저
 
-> **Codex 후속 구현 브랜치:** `codex/handoff-2026-09-08`에서 인계된 기능과 DB 마이그레이션을 완성하고 코드 구조를 정리했습니다. 아래는 이 브랜치의 구현 기준이며, 기존 테스트 사이트에는 아직 배포하지 않았습니다. 검증·제약은 [WORKLOG.md](WORKLOG.md), 운영 기준은 [CODEX_HANDOFF.md](CODEX_HANDOFF.md)를 참고하세요.
+공개 Cloudflare Worker에서 브라우저별 게스트 커리어를 운영하도록 구성했습니다. 배포 주소는 [DUGOUT](https://baseball-manager.kkwondev.workers.dev)이며 실제 배포·이전 상태와 검증은 [WORKLOG.md](WORKLOG.md)에 기록합니다.
 
-[테스트 사이트 열기](https://dugout-world-manager.kkwondev.chatgpt.site) · 본인 ChatGPT 계정으로 로그인 · 비공개
+[기존 비공개 Sites 앱](https://dugout-world-manager.kkwondev.chatgpt.site)은 별도 원본 데이터로 보존합니다.
 
 실명 선수와 생성 선수로 구단을 운영하는 한국어 야구 매니지먼트 게임입니다. 구단 선택 → 4주 프리시즌·선수단 정비 → 경기·시즌 진행 → 협상·이적 → 재계약·다음 시즌까지 플레이할 수 있습니다.
 
@@ -20,7 +20,9 @@
 
 NestJS의 기본 Express 어댑터를 Workers의 `httpServerHandler`에 연결합니다. Vinext와 NestJS는 소스·책임을 분리하고, 현재 배포에서는 같은 Worker의 `/api/*` 요청을 NestJS에 전달합니다. 별도의 상시 실행 Node 서버는 필요하지 않습니다.
 
-현재 테스트 사이트는 **ChatGPT Sites가 관리하는 Cloudflare 환경**을 사용합니다. 사용자의 개인 Cloudflare 계정에 배포됐다는 뜻은 아닙니다. 개인 계정으로 옮길 때는 D1·배포 인증뿐 아니라 사용자 인증도 연결해야 합니다. Sites 밖의 공개 Worker에서 임의의 `oai-authenticated-user-id` 헤더를 신뢰하면 안 됩니다.
+개인 Cloudflare 계정의 Worker/D1과 기존 Sites 관리형 환경은 별도입니다. 공개 앱은 임의 사용자 헤더를 폐기하고 브라우저별 게스트 쿠키를 사용합니다. `/saves`에서 개인 복구 키를 보관하면 브라우저 데이터 삭제 후 또는 다른 기기에서 같은 커리어를 열 수 있습니다. 복구 키는 Git에 저장하지 않습니다.
+
+`main` 검증 후 같은 빌드 산출물로 D1 마이그레이션과 Worker 자동배포를 진행합니다. 브랜치·PR은 검증만 수행합니다. [배포 문서](docs/deployment.md)를 참고하세요.
 
 ## 플레이할 수 있는 기능
 
@@ -48,7 +50,7 @@ NestJS의 기본 Express 어댑터를 Workers의 `httpServerHandler`에 연결�
 
 카탈로그를 수정할 때는 해당 행과 `catalog_meta`의 `version`을 함께 갱신해야 캐시가 새 데이터를 읽습니다. 기존 커리어의 계약과 시즌 성적은 보존됩니다. 화면의 새 명단 반영 버튼 또는 다음 관리 행동에서 누락된 소속 실명 선수를 추가하고 1군·2군을 편성합니다. 커리어 안에서 이루어진 이적은 되돌리지 않습니다. 전술·2군 경기 요약은 커리어 스냅샷, 개인 숙련도·2군 성적은 선수 JSON에 저장합니다.
 
-이 브랜치는 기존 0000–0008을 수정하지 않고 0009(2025 성적 v2), 0010(로고 메타데이터 컬럼), 0011(로고·카탈로그 v7)을 추가합니다. 기존 커리어 행을 삭제하거나 seed로 초기화하지 않습니다. 능력치 모델을 갱신할 때 소수점 훈련 성장분도 보존하며, 진행 중 경기의 선수 입력은 완료 전까지 고정합니다. 운영 D1에는 아직 적용하지 않았습니다.
+Forward migrations 0009 (2025 ratings v2), 0010 (logo columns) and 0011 (catalog v7) preserve 0000-0008 and career rows. Runtime model refresh preserves fractional development and freezes player inputs during active games. See WORKLOG for production application status.
 
 ## 개발·검증
 
@@ -64,11 +66,11 @@ npm run test:engine      # 빠른 게임 규칙 테스트
 npm run dev
 ```
 
-전체 테스트는 실제 배포 Worker 번들을 Miniflare에 올리고 D1 마이그레이션을 적용합니다. NestJS HTTP 라우팅, 사용자별 저장, 동시 명령 충돌, 중복 명령, 타석 저장·재개·완료, 계약·코치·이적·회계 행, 전체 시즌과 다음 시즌, 경기 기록 보존, 기존 DB 갱신, 선수 페이지 SSR과 모든 로고 자산 응답을 확인합니다. React 정적 렌더링으로 잠재력과 누락 로고 표시도 검사합니다. 실제 브라우저 클릭·시각 QA와 운영 부하 테스트는 수행하지 않았습니다.
+Tests run the production Worker with isolated migrated D1, covering ownership, concurrent commands, accounting, PA persistence, archives, SSR, logos and guest transfer. Browser checks cover guest creation/recovery, match pause/reload/completion, player pages and desktop/mobile layouts. Production load and exhaustive accessibility or league-rule parity have not been verified.
 
-화면 조립과 요청 처리는 `apps/web/src/features/career/game.tsx`, 기능별 화면은 같은 디렉터리의 `*-panel.tsx` 및 프로필·사이드바 모듈에 있습니다. 서버의 시즌/관리 흐름은 `game-engine.ts`, 타석 계산은 `match-simulation.ts`, 진행·재개 명령은 `live-match.ts`로 분리했습니다. `npm run format`은 작성한 애플리케이션 소스에만 적용하고, 기존 마이그레이션·대량 seed·외부 UI 코드는 제외합니다.
+Frontend composition is in `apps/web/src/features/career/game.tsx`; each feature has its own directory under `features`. Server game rules remain in `apps/api/src/domain`. Formatting excludes generated data, historical migrations and vendor sources.
 
-일반 로컬 브라우저에는 Sites 로그인 정보가 없으므로, 커리어 저장은 인증된 테스트 사이트에서 사용합니다. 통합 테스트에서만 격리된 런타임에 테스트용 인증 헤더를 주입합니다.
+`npm run dev`는 격리된 로컬 D1에 마이그레이션을 적용한 뒤 게스트 모드로 시작합니다. 로컬 저장은 `apps/web/.wrangler` 아래에 유지되며 Git에서 제외합니다. 통합 테스트는 매번 별도 D1을 사용합니다.
 
 ```bash
 npm run db:generate      # 스키마 변경 시 마이그레이션 생성

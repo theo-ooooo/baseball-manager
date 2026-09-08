@@ -1,5 +1,15 @@
 # Codex 인수인계 — DUGOUT / baseball-manager
 
+## 현재 후속 작업 — 2026-09-08 구조·게스트·배포
+
+추가 지시로 폴더·컨트롤러 분리, 미사용 코드 삭제, 공개 Cloudflare 자동배포, 게스트 저장, UI 단순화와 직접 사용 검증을 구현했다. 실제 배포와 기존 커리어 이전 결과는 최신 WORKLOG를 따른다. 아래 “배포 요청 없음/브라우저 미검증” 문장은 이전 체크포인트 기록이다.
+
+- 프론트는 `apps/web` 하나이며 API는 `apps/api`, 공유 계약은 `packages/shared`, 배포는 `infra`에 있다. `examples`, 루트 `app`, `types`, `vendor`, `worker` 및 미사용 starter UI·의존성을 정리했다.
+- AppController를 health/catalog/career/career-transfer/session으로 분리했다. 게스트 복구는 `/saves`, 데이터는 사용자별 D1에 유지한다.
+- 원본 Sites identity와 DB는 보존한다. 개인 Cloudflare 계정을 확인했고 신규 D1을 사용한다. Zero Trust는 사용자 결정으로 사용하지 않는다.
+- GitHub 배포 자격증명을 등록했고 `main` 검증 후 같은 산출물로 자동배포한다. 로컬 Wrangler OAuth 오류가 있어 배포는 GitHub의 별도 토큰을 사용한다.
+- 공개 Worker 주소는 `https://baseball-manager.kkwondev.workers.dev`이며 실제 배포 완료 여부는 WORKLOG의 최종 결과를 확인한다.
+
 > 폴더 재구성 후 현재 경로는 `docs/architecture.md`를 참고한다. 아래 과거 기록의 루트 `app/`, `db/`, `drizzle/`는 각각 `apps/web/app/`, `apps/api/db/`, `apps/api/drizzle/`로 이동했다.
 
 ## Codex 후속 작업 — 2026-09-08 현재

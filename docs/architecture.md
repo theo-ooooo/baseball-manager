@@ -14,7 +14,12 @@ apps/
     public/                static assets and verified club logos
     vite.config.ts         frontend build configuration
   api/                     @dugout/api: NestJS backend
-    src/                   controllers, services, repositories, domain
+    src/
+      controllers/         health, catalog, career, transfer and session HTTP endpoints
+      auth/                internal identity access and guest-cookie helpers
+      services/            use-case coordination and presentation
+      repositories/        D1 reads, projections and verified career transfer
+      domain/              server-only game rules
     db/                    D1/Drizzle schema
     drizzle/               append-only SQL migrations and snapshots
     seed/                  migration inputs; never runtime imports
@@ -34,3 +39,5 @@ A request enters the Cloudflare Worker: `/api/*` goes to NestJS; page requests g
 The web workspace produces `apps/web/dist`; the staging script copies its deployable bundle to root `dist` for integration tests and publication. Both directories are generated and ignored. `.openai/hosting.json` retains the original Sites identity; personal Cloudflare configuration is separate under `infra/cloudflare`.
 
 Existing migration names, SQL contents and journal timestamps are preserved when moving their directory. Future database changes append migrations. Career snapshots, contracts, ownership, statistics and archives must survive deployment and any database transfer.
+
+The public Worker derives guest identity from a random host-only cookie and discards caller-supplied identity headers. Session and career APIs are NestJS controllers. Only the original managed Sites profile accepts its platform-injected identity. Expiring transfer credentials are scoped to one source or target and never enable general game commands.
