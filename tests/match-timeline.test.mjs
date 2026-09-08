@@ -183,3 +183,33 @@ test('Simulation draining rejects an unbounded generator before any career save'
   assert.throws(() => runMatch(infinite()), /한도/);
   assert.ok(iterations <= MAX_MATCH_EVENTS + 3);
 });
+
+test('Preview board preserves field positions when substitution and batting-order changes are submitted together', () => {
+  const g = start(),
+    original = structuredClone(g);
+  const incoming = g.roster.find(
+    (p) => p.squad !== 'reserve' && p.pos !== 'P' && !g.lineup.includes(p.id),
+  );
+  const defense = { ...g.defense };
+  const vacated = Object.keys(defense).find((pos) => defense[pos] === g.lineup[0]);
+  defense[vacated] = incoming.id;
+  const lineup = [...g.lineup];
+  lineup[0] = incoming.id;
+  [lineup[0], lineup[2]] = [lineup[2], lineup[0]];
+  const next = e.applyAction(g, plan(g, 0, { lineup, defense }));
+  const side = next.liveMatch.home === g.club ? 1 : 0;
+  assert.deepEqual(next.liveMatch.timeline.replayTeams[side].defense, defense);
+  assert.deepEqual(next.liveMatch.timeline.replayTeams[side].lineup, lineup);
+  assert.equal(new Set(Object.values(next.defense)).size, 10);
+  const legacy = e.applyAction(g, plan(g, 0, { lineup }));
+  assert.equal(new Set(Object.values(legacy.defense)).size, 10);
+  for (const invalid of [
+    null,
+    {},
+    { ...defense, P: incoming.id },
+    { ...defense, C: defense.LF },
+    { ...defense, CF: 'reserve-player' },
+  ])
+    assert.throws(() => e.applyAction(g, plan(g, 0, { lineup, defense: invalid })), /수비 위치/);
+  assert.deepEqual(g, original);
+});

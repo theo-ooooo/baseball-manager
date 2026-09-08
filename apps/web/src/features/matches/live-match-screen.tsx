@@ -137,24 +137,46 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                 : `${event?.inning}회 ${event?.half ? '말' : '초'}`}
           </DialogDescription>
         </DialogHeader>
-        <div className="stadium-replay-layout">
+        {editor && !finished && (
+          <MatchPlanEditor
+            key={`${cursor}:${live.timelineVersion}`}
+            g={g}
+            cursor={cursor}
+            busy={busy}
+            act={act}
+            onDirty={setPlanDirty}
+            onCancel={() => {
+              setPlanDirty(false);
+              setEditor(false);
+            }}
+            onApplied={() => setEditor(false)}
+            onResume={() => {
+              setPlaying(true);
+              next();
+            }}
+          />
+        )}
+
+        <div className={`stadium-replay-layout ${editor && !finished ? 'is-planning' : ''}`}>
           <div className="stadium-main">
-            <StadiumScene
-              key={`${cursor}:${settled}`}
-              result={sceneResult}
-              index={Math.max(0, cursor - 1)}
-              playing={!settled && cursor > 0}
-              speed={Number(speed)}
-              reduced={reduced || settled}
-              onEnd={() => {
-                if (playing && cursor < length) setCursor(cursor + 1);
-                else {
-                  setPlaying(false);
-                  setSettled(true);
-                }
-              }}
-            />
-            <div className="stadium-controls live-controls">
+            {!editor && (
+              <StadiumScene
+                key={`${cursor}:${settled}`}
+                result={sceneResult}
+                index={Math.max(0, cursor - 1)}
+                playing={!settled && cursor > 0}
+                speed={Number(speed)}
+                reduced={reduced || settled}
+                onEnd={() => {
+                  if (playing && cursor < length) setCursor(cursor + 1);
+                  else {
+                    setPlaying(false);
+                    setSettled(true);
+                  }
+                }}
+              />
+            )}
+            <div className="stadium-controls live-controls" hidden={editor}>
               <button
                 className="replay-play"
                 disabled={busy || finished || planDirty}
@@ -219,22 +241,8 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               )}
             </div>
           </div>
-          <aside className="stadium-match-report">
-            {editor && !finished ? (
-              <MatchPlanEditor
-                key={`${cursor}:${live.timelineVersion}`}
-                g={g}
-                cursor={cursor}
-                busy={busy}
-                act={act}
-                onDirty={setPlanDirty}
-                onCancel={() => {
-                  setPlanDirty(false);
-                  setEditor(false);
-                }}
-                onApplied={() => setEditor(false)}
-              />
-            ) : (
+          {!editor && (
+            <aside className="stadium-match-report">
               <>
                 <h3>경기 중계</h3>
                 <p className="tiny">{finished ? '최종 기록' : '진행한 타석만 표시합니다.'}</p>
@@ -255,8 +263,8 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                     ))}
                 </div>
               </>
-            )}
-          </aside>
+            </aside>
+          )}
         </div>
       </DialogContent>
     </Dialog>
