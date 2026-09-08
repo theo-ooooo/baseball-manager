@@ -93,3 +93,8 @@ export const careerActions = sqliteTable('career_actions', {
   revision: integer('revision').notNull(), kind: text('kind').notNull(), requestId: text('request_id').notNull(),
   createdAt: text('created_at').notNull(),
 }, t => [primaryKey({ columns: [t.userId, t.revision] }), index('idx_actions_user_request').on(t.userId, t.requestId)]);
+
+export const fixtures = sqliteTable('fixtures', {
+ id:text('id').primaryKey(),date:text('date').notNull(),league:text('league').notNull(),
+ home:text('home').notNull().references(()=>clubs.id),away:text('away').notNull().references(()=>clubs.id),time:text('time'),source:text('source'),
+},t=>[index('idx_fixtures_date_league').on(t.date,t.league)]);

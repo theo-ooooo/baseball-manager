@@ -25,12 +25,13 @@ test('Renewals preserve performance accumulated since the offer, and catalog tem
   assert.deepEqual(renewed.stats,stats);assert.equal(renewed.condition,condition);
   assert.equal(e.newGame('mlb-dodgers','Other','short',19).roster.find(p=>p.id===player.id).stats.ab,0);
 });
-test('Every league, including odd club counts, completes all short-season fixtures',()=>{
+test('World standings include exactly the fixtures elapsed on the calendar',()=>{
   let g=e.newGame('kbo-lg','Test','short',51);
   while(['preseason','regular'].includes(g.phase))g=e.advance(g,7);
   for(const l of leagues){
     const count=clubs.filter(c=>c.league===l.id).length;
-    for(const row of g.standings[l.id])assert.equal(row.w+row.l+row.d,(count-1)*2,l.id+':'+row.club);
+    const until=new Date(Date.parse(g.calendar.openingDate+'T12:00:00Z')+g.day*86400000).toISOString().slice(0,10);
+    for(const row of g.standings[l.id])assert.equal(row.w+row.l+row.d,e.fixtures(g,l.id).filter(f=>f.date<until&&(f.home===row.club||f.away===row.club)).length,l.id+':'+row.club);
   }
 });
 test('All playable clubs have legal, unique lineups and a starting pitcher',()=>{for(const club of clubs){const g=e.newGame(club.id,'Test','short',42);assert.equal(new Set(g.roster.map(p=>p.id)).size,g.roster.length,club.id);assert.equal(new Set(g.lineup).size,9,club.id);assert.ok(g.roster.find(p=>p.id===g.starter&&p.pos==='P'));e.applyAction(g,{type:'lineup',ids:g.lineup});for(const p of g.roster)assert.ok(Number.isFinite(e.overall(p))&&p.salary>0);}});

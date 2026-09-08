@@ -50,6 +50,20 @@
       "when": 1788838512450,
       "tag": "0006_performance_2025",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1788839082469,
+      "tag": "0007_large_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788839182025,
+      "tag": "0008_official_schedules",
+      "breakpoints": true
     }
   ]
 }

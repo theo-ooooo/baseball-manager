@@ -1,3 +1,4 @@
+import {prepareCalendar} from '../../../../packages/shared/src/calendar';
 import type {DefensivePosition,GameState,Player,TeamInstructions,WorldCatalog} from '../../../../packages/shared/src/types';
 import {blankStats,coachSkill,hash,lineupAuto,overall} from '../../../../packages/shared/src/game-view';
 import {autoDefense,defaults,defenseFor,defensivePositions,familiarity,firstTeam,reserveTeam,selectFirstTeam} from '../../../../packages/shared/src/management';
@@ -5,6 +6,7 @@ import {refreshRatings} from './performance-ratings';
 import {createPlayerGenerator} from './player-generator';
 
 export function prepareSquad(g:GameState,world:WorldCatalog){
+ prepareCalendar(g,world);
  if(g.catalogVersion!==world.version){
   const catalog=new Map(world.players.map(p=>[p.id,p]));
   for(const p of [...g.roster,...g.transferred]){const base=catalog.get(p.id);if(base)refreshRatings(p,base);}
