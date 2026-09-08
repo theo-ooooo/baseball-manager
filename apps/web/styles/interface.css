@@ -156,8 +156,7 @@
 /* ---------- Setup page ---------- */
 .ui-setup {
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(29, 78, 216, 0.08), transparent 50%), var(--ui-bg);
+  background: var(--ui-bg);
 }
 .ui-setup-header {
   height: 72px;
@@ -686,7 +685,7 @@
   font-size: 15px;
 }
 .ui-next {
-  background: linear-gradient(160deg, var(--ui-panel-2), var(--ui-panel) 60%);
+  background: var(--ui-panel);
 }
 .ui-next-meta {
   padding: 14px 18px 0;

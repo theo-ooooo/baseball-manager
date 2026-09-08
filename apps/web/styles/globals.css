@@ -508,8 +508,7 @@ b {
 }
 .setup-page {
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse at 25% 0%, rgba(29, 78, 216, 0.06), transparent 55%), var(--bg);
+  background: var(--bg);
 }
 .setup-header {
   height: 82px;
@@ -1004,8 +1003,7 @@ b {
 .workspace {
   flex: 1;
   min-width: 0;
-  background:
-    radial-gradient(ellipse at 80% 0, rgba(29, 78, 216, 0.06), transparent 40%), var(--bg);
+  background: var(--bg);
 }
 .topbar {
   height: 73px;
@@ -1189,7 +1187,7 @@ b {
   min-width: 0;
 }
 .next-match {
-  background: linear-gradient(115deg, var(--surface-1), var(--bg));
+  background: var(--surface-1);
 }
 .next-match .panel-header h2 {
   font-size: 12px;
@@ -1827,7 +1825,7 @@ b {
   align-items: center;
   gap: 16px;
   padding: 19px 22px;
-  background: linear-gradient(90deg, var(--surface-2), var(--surface-1));
+  background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: 7px;
   margin-bottom: 21px;
