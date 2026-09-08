@@ -261,3 +261,10 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - Browser QA reproduced a duplicate-listen error after Vite re-evaluated the NestJS bundle. Bootstrap now obtains an isolated Workers HTTP routing key and its own bridge; Vite disposal closes the replaced Nest application.
 - Rebuilt the API while the development server and a guest career remained open, then verified health, the same revision/manager/day and the tactics page without restarting the server. The combined production bundle passes the 63-test suite and TypeScript/lint/format checks above.
+
+## 2026-09-08 — First public Cloudflare release and verified career transfer
+
+- GitHub PR #1 was merged at main `1714297`. Its automatic test and production jobs both succeeded (Actions run `34196591204`), applying all 12 migrations and publishing `https://baseball-manager.kkwondev.workers.dev` on the verified personal Cloudflare account. Live health reports Vinext/NestJS/D1 and catalog v7.
+- Downloaded a raw owner-scoped backup from the existing private Site, stored it and the new guest recovery key with private filesystem permissions outside Git, and imported into the separately provisioned D1. The importer compared every value in all ten tables after changing only the owner ID: 1 career, 42 players, 42 contracts, 5 staff, 137 standings, 5 archived matches, 18 finance entries and 28 action records; negotiations and transfers were empty.
+- Independently opened the new guest career through the normal API and verified revision 42, budget, date, year, club, complete history, lineup, selected starter, player stats and contracts against the original backup. The source database remains intact. Temporary transfer values were removed from both environments; the public Worker's secret list is empty. Backup/recovery values are not in Git.
+- The private Site's source `ac74a36` (version 6) deployed successfully with the raw-export restriction and environment revision 2. Pitcher-group and development follow-up commits are awaiting their own validated release; the first successful main deployment above does not yet contain them.

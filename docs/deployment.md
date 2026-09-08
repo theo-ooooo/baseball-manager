@@ -2,7 +2,9 @@
 
 The public application is one Worker, `baseball-manager`, with D1 binding `DB`. Its configuration is `infra/cloudflare/wrangler.jsonc`. The account and database IDs are non-secret; the GitHub `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable supply deployment authentication.
 
-A push to `main` runs format, lint, production build, 55 tests and typecheck. The deployment job downloads that exact artifact, skips superseded commits, records a Time Travel bookmark, applies forward migrations, deploys, and checks `/api/health`. Production jobs are serialized. Feature branches and pull requests do not deploy. Merge only after the checks pass. Existing migrations must never be rewritten.
+A push to `main` runs format, lint, production build, the full test suite and typecheck. The deployment job downloads that exact artifact, skips superseded commits, records a Time Travel bookmark, applies forward migrations, deploys, and checks `/api/health`. Production jobs are serialized. Feature branches and pull requests do not deploy. Merge only after the checks pass. Existing migrations must never be rewritten.
+
+The first automatic production release succeeded on 2026-09-08 at main commit `1714297`, GitHub Actions run `34196591204`. All 12 forward migrations were applied, and the public API returned catalog `world-2026-09-08-v7`. The original owner career was subsequently copied and verified at revision 42, preserving all ten career tables; temporary transfer secrets were removed from both environments. Later source releases and validation are recorded in `WORKLOG.md`.
 
 Guest careers use a cryptographically random HttpOnly, Secure, SameSite cookie; D1 keys use its SHA-256 hash. `/saves` reveals the private recovery key on request and restores access to an existing career. Possessing the key grants access; clearing cookies without retaining it loses browser access. Restoration switches browser identity and never overwrites a career.
 
