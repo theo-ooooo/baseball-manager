@@ -54,3 +54,20 @@ test("renders sidebar skeletons deterministically", async () => {
   assert.equal(first, second);
   assert.match(first, /--skeleton-width:70%/);
 });
+
+test('Dedicated player profile omits hidden potential and shows observed and unmeasured abilities', async () => {
+  const { PlayerProfile } = await vite.ssrLoadModule('/apps/web/player-profile.tsx');
+  const { WorldProvider } = await vite.ssrLoadModule('/apps/web/world-context.tsx');
+  const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
+  const { createGameEngine } = await vite.ssrLoadModule('/apps/api/src/domain/game-engine.ts');
+  const { presentState, presentWorld } = await vite.ssrLoadModule('/apps/api/src/services/presentation.ts');
+  const world = buildSeedWorld();
+  const raw = createGameEngine(world).newGame('kbo-lotte', 'Profile', 'short', 12);
+  const render = game => renderToStaticMarkup(React.createElement(WorldProvider, { world: presentWorld(world, game.rules.revealPotential) },
+    React.createElement(PlayerProfile, { player: game.roster.find(p => p.original === '유강남'), game, busy: false, act: async () => null })));
+  const hidden = render(presentState(raw));
+  assert.match(hidden, /유강남/);assert.match(hidden, /삼진 회피/);assert.match(hidden, /미평가/);
+  assert.doesNotMatch(hidden, /잠재력/);assert.doesNotMatch(hidden, /role="dialog"/);
+  raw.rules.revealPotential = true;
+  assert.match(render(presentState(raw)), /잠재력/);
+});

@@ -143,3 +143,9 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Separated pitcher home runs allowed from batting home runs. Wins, saves and holds use separate decisions, including the five-inning starter threshold and win/save exclusion. Short-start winner selection uses a documented game effectiveness heuristic; full official scorer discretion and earned-run rules remain simplified.
 - Preserved the last PA scene across finalization so its completed animation is not restarted.
 - Validation: seven actual production Worker/D1 API tests passed, including PA reload, concurrent revisions, duplicate requests, zero projection writes during PA steps, deferred accounting, archive ownership and potential masking. Live engine regressions cover preseason, saved plans, postseason and doubleheaders; dedicated pitching decision regressions pass. No production DB mutation, deployment, load test or browser interaction performed.
+
+## 2026-09-08 — Codex: dedicated player profiles
+
+- Replaced PlayerModal with `/players/[id]` routes and URL-addressed management sections. Player entry points, direct access, return links and missing-player states use the same persisted career. Contract offers stay on the page and link to final signing.
+- Added separate profile, official/game-stat and contract sections, observed detailed attributes with missing-data labels, game morale, position familiarity, pitcher-role links and first/reserve registration. Potential visibility applies to the entire profile, including pitchers. Fixed market memo dependencies so catalog and ownership changes refresh listings.
+- Validation: TypeScript and production build pass; real Worker SSR serves direct player/section routes; rendered React profile tests confirm the independent page, missing-attribute labels and hidden/revealed potential. These checks do not claim browser navigation or visual QA. No deployment performed.

@@ -17,6 +17,10 @@ test('Production Worker serves the Korean Vinext page and its assets', async () 
     const stylesheet = await worker.dispatchFetch(new URL(css[1], 'http://localhost').href);
     assert.equal(stylesheet.status, 200);
     assert.match(await stylesheet.text(), /\.catalog-loading/);
+    for (const path of ['/players/kbo-lotte-real-0?from=squad', '/players/missing-player', '/?view=tactics']) {
+      const page = await worker.dispatchFetch('http://localhost' + path, { headers: { accept: 'text/html' } });
+      assert.equal(page.status, 200);assert.doesNotMatch(await page.text(), /Internal Server Error/);
+    }
     const favicon = await worker.dispatchFetch('http://localhost/favicon.svg');
     assert.equal(favicon.status, 200);
     assert.match(await favicon.text(), /<svg/);
