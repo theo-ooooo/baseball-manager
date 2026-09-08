@@ -76,7 +76,8 @@ export function GameScreen({
     [setup, setSetup] = useState(false),
     [newConfirm, setNewConfirm] = useState(false),
     [replay, setReplay] = useState<Result | null>(null),
-    [help, setHelp] = useState(false);
+    [help, setHelp] = useState(false),
+    [saveFailed, setSaveFailed] = useState(false);
   const locked = useRef(false);
   const [ledger, setLedger] = useState(initial.ledger);
   async function load() {
@@ -117,8 +118,10 @@ export function GameScreen({
       setG(d.state);
       setRevision(d.revision);
       setLedger(d.ledger || []);
+      setSaveFailed(false);
       return d.state;
     } catch (e) {
+      setSaveFailed(true);
       toast.error(e instanceof Error ? e.message : '저장하지 못했습니다.');
       return null;
     } finally {
@@ -193,12 +196,12 @@ export function GameScreen({
       marketPlayers(g).find((p) => p.id === initialPlayerId)
     : undefined;
   return (
-    <SidebarProvider style={{ '--sidebar-width': '204px' } as CSSProperties}>
+    <SidebarProvider style={{ '--sidebar-width': '224px' } as CSSProperties}>
       <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
       <main className="workspace">
         <header className="topbar">
           <div className="breadcrumb">
-            <SidebarTrigger className="mobile-menu" />
+            <SidebarTrigger className="mobile-menu" aria-label="메뉴 열기" />
             <Badge club={club} size="small" />
             <div>
               <strong>{club.name}</strong>
@@ -210,9 +213,9 @@ export function GameScreen({
             </div>
           </div>
           <div className="topbar-right">
-            <span className="save-state" aria-live="polite">
+            <span className={`save-state ${saveFailed ? 'save-error' : ''}`} aria-live="polite">
               {pending ? <LoaderCircle className="spin" size={12} /> : <Check size={12} />}{' '}
-              {pending ? '저장 중' : '저장됨'}
+              {pending ? '저장 중' : saveFailed ? '저장 확인 필요' : '자동 저장됨'}
             </span>
             <button className="icon-button" aria-label="게임 안내" onClick={() => setHelp(true)}>
               <CircleHelp size={18} />
@@ -234,15 +237,25 @@ export function GameScreen({
             <div className="page-actions">
               {g.phase !== 'finished' ? (
                 <>
-                  <button
-                    className="button secondary compact advance-week"
-                    disabled={busy}
-                    onClick={() => simulate(7)}
-                    title="7일 진행"
-                  >
-                    <ChevronsRight size={15} />
-                    <span>7일</span>
-                  </button>
+                  <details className="advance-menu">
+                    <summary aria-label="자동 진행 옵션">
+                      <ChevronsRight size={18} />
+                    </summary>
+                    <div>
+                      <strong>자동 진행</strong>
+                      <p>경기를 자동 계산하며 최대 7일 진행합니다. 중요한 일이 생기면 멈춥니다.</p>
+                      <button
+                        className="button secondary"
+                        disabled={busy}
+                        onClick={(event) => {
+                          event.currentTarget.closest('details')?.removeAttribute('open');
+                          void simulate(7);
+                        }}
+                      >
+                        7일 자동 진행
+                      </button>
+                    </div>
+                  </details>
                   <button
                     className="button primary continue-button"
                     disabled={busy}
@@ -271,31 +284,15 @@ export function GameScreen({
             </div>
           </div>
         </header>
-        <div className="context-bar">
-          <div className="context-title">
-            {view === 'player' ? '선수 상세' : nav.find((n) => n.id === view)?.label}
-          </div>
-          <nav aria-label="구단 바로가기">
-            {[
-              { id: 'home', label: '개요' },
-              { id: 'squad', label: '선수단' },
-              { id: 'schedule', label: '일정' },
-              { id: 'finance', label: '재정' },
-            ].map((n) => (
-              <button
-                key={n.id}
-                className={view === n.id ? 'active' : ''}
-                onClick={() => setView(n.id)}
-              >
-                {n.label}
-              </button>
-            ))}
-          </nav>
-          <span>
-            {league.label} · {club.city}
-          </span>
-        </div>
         <div className="workspace-body">
+          {saveFailed && (
+            <div className="decision-banner" role="alert">
+              <span>마지막 요청을 완료하지 못했습니다. 저장된 상태를 다시 확인해 주세요.</span>
+              <button className="text-button" onClick={() => window.location.reload()}>
+                저장 상태 다시 불러오기
+              </button>
+            </div>
+          )}
           {g.news.some((n) => n.choiceKind && !n.choice) && (
             <div className="decision-banner">
               <span>감독의 답변을 기다리는 선수 면담이 있습니다.</span>
@@ -313,7 +310,7 @@ export function GameScreen({
               </button>
             </div>
           )}
-          {g.phase === 'preseason' && (
+          {g.phase === 'preseason' && view !== 'home' && (
             <div className="preseason-banner">
               <strong>정규시즌 개막까지 {-g.day}일</strong>
               <span>

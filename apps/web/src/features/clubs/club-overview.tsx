@@ -1,12 +1,12 @@
 'use client';
-const tactics = [
-  ['balanced', '균형 잡힌 야구', '타격과 출루의 균형'],
-  ['power', '장타 중심', '장타 확률 증가 · 삼진 위험'],
-  ['smallball', '기동력 야구', '빠른 주자의 적극적인 도루'],
-  ['patient', '선구안 중심', '볼넷과 출루 기회 증가'],
-];
-
-import { ChevronRight, Target, Trophy } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  LoaderCircle,
+  Play,
+  Trophy,
+} from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -16,12 +16,25 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { useWorld } from '../career/world-context';
-import { type GameState, type Player, type Result, overall, money } from '@dugout/shared/game-view';
-import { InboxPanel } from './club-panels';
-import { dateLabel } from '@dugout/shared/calendar';
-import { DefensiveField } from '../squad/management-panels';
-import { Badge, Rating, Metric, PlayerName } from '../../components/game-ui';
+import { type GameState, type Player, type Result, money } from '@dugout/shared/game-view';
+import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
+import { Badge } from '../../components/game-ui';
 import type { Act } from '../career/game-contracts';
+
+const tactics: Record<string, string> = {
+  balanced: '균형 잡힌 야구',
+  power: '장타 중심',
+  smallball: '기동력 야구',
+  patient: '선구안 중심',
+};
+const phaseLabel: Record<GameState['phase'], string> = {
+  preseason: '프리시즌',
+  regular: '정규 시즌',
+  semifinal: '포스트시즌 · 준결승',
+  final: '포스트시즌 · 결승',
+  finished: '시즌 종료',
+};
+const TIRED = 70;
 
 export function Dashboard({
   g,
@@ -40,221 +53,305 @@ export function Dashboard({
   onPlayer: (p: Player) => void;
   replay: (r: Result) => void;
 }) {
-  const { getClub, getLeague, standings, nextFixture } = useWorld();
-  const rows = standings(g),
+  const { getClub, getLeague, standings, nextFixture, fixtures } = useWorld();
+  const club = getClub(g.club),
+    league = getLeague(club.league),
+    rows = standings(g),
     own = rows.find((s) => s.club === g.club)!,
-    rank = rows.findIndex((s) => s.club === g.club) + 1,
-    fixture = nextFixture(g);
-  const players = g.lineup.map((id) => g.roster.find((p) => p.id === id)!);
-  const pitcher = g.roster.find((p) => p.id === g.starter),
-    top = [...g.roster].sort((a, b) => overall(b) - overall(a)).slice(0, 4);
+    rank = rows.indexOf(own) + 1,
+    played = own.w + own.l + own.d,
+    fixture = nextFixture(g),
+    today = gameDate(g),
+    playedToday = g.history.some((r) => (r.date ? r.date === today : r.day === g.day)),
+    friendlies = g.history.filter((r) => r.friendly).length;
+  const starter = g.roster.find((p) => p.id === g.starter);
+  const tired = g.roster.filter((p) => p.condition < TIRED);
+  const unread = g.news.filter((n) => !n.read).length,
+    interviews = g.news.filter((n) => n.choiceKind && !n.choice).length,
+    expiring = g.roster.filter((p) => p.years === 1).length;
+  const condition = Math.round(
+    g.roster.reduce((s, p) => s + p.condition, 0) / Math.max(1, g.roster.length),
+  );
+
+  // Look ahead only through the existing calendar and fixture helpers; no new schedule rules.
+  const upcoming = (() => {
+    if (g.phase === 'regular') {
+      const done = new Set(g.history.map((r) => r.fixtureId));
+      const f = fixtures(g, league.id).find(
+        (f) => (f.home === g.club || f.away === g.club) && f.date > today && !done.has(f.id),
+      );
+      return f ? { day: g.day + daysBetween(today, f.date), pair: [f.home, f.away] } : null;
+    }
+    if (g.phase === 'preseason')
+      for (let day = g.day + 1; day < 0; day++) {
+        const pair = nextFixture({ ...g, day });
+        if (pair) return { day, pair };
+      }
+    return null;
+  })();
+
+  const series = g.series.find((s) => s.a === g.club || s.b === g.club),
+    seriesTarget = g.phase === 'semifinal' ? 2 : 3,
+    ownWins = series ? (series.a === g.club ? series.aw : series.bw) : 0,
+    oppWins = series ? (series.a === g.club ? series.bw : series.aw) : 0;
+
+  const standing =
+    g.phase === 'preseason'
+      ? { value: '개막 준비', sub: `정규시즌 개막까지 ${-g.day}일 · 연습경기 ${friendlies}/4회` }
+      : g.phase === 'regular' && played === 0
+        ? { value: '개막 대기', sub: `${league.name} ${rows.length}개 구단 · 첫 경기 전` }
+        : g.phase === 'semifinal' || g.phase === 'final'
+          ? {
+              value: series ? `${ownWins}승 ${oppWins}패` : `${rank}위`,
+              sub: series
+                ? `${phaseLabel[g.phase]} · ${seriesTarget}승 선취 · ${own.w}승 ${own.l}패`
+                : `${phaseLabel[g.phase]} 관전 · 정규 ${own.w}승 ${own.l}패`,
+            }
+          : {
+              value: (
+                <>
+                  {rank}위<small> / {rows.length}</small>
+                </>
+              ),
+              sub: `${own.w}승 ${own.l}패 ${own.d}무 · 승률 ${(own.w / (own.w + own.l || 1)).toFixed(3)}${
+                g.phase === 'finished' ? ' · 시즌 종료' : ''
+              }`,
+            };
+
+  const checklist = [
+    { label: '답변을 기다리는 면담', count: interviews, unit: '건', view: 'inbox', urgent: true },
+    { label: '안 읽은 소식', count: unread, unit: '건', view: 'inbox' },
+    {
+      label: `피로한 선수 (컨디션 ${TIRED}% 미만)`,
+      count: tired.length,
+      unit: '명',
+      view: 'squad',
+    },
+    { label: '계약 잔여 1년', count: expiring, unit: '명', view: 'squad' },
+    { label: '진행 중인 협상', count: g.deals.length, unit: '건', view: 'agents' },
+  ];
+  const recent = g.history.slice(0, 3);
+
   return (
-    <>
-      <div className="metrics">
-        <Metric
-          label="리그 순위"
-          value={
+    <div className="ui-home">
+      <section className="ui-stats" aria-label="핵심 지표">
+        <button className="ui-stat" onClick={() => setView('world')}>
+          <span className="ui-stat-label">
+            {g.phase === 'regular' && played ? '리그 순위' : '시즌 상태'}
+          </span>
+          <strong className="ui-stat-value">{standing.value}</strong>
+          <span className="ui-stat-sub">{standing.sub}</span>
+        </button>
+        <button className="ui-stat" onClick={() => setView('finance')}>
+          <span className="ui-stat-label">운영 예산</span>
+          <strong className="ui-stat-value">{money(g.budget)}</strong>
+          <span className={`ui-stat-sub ${g.budget < 0 ? 'ui-danger' : ''}`}>
+            {g.budget < 0 ? '예산 적자 · 재정 확인' : '영입 · 계약 · 운영비'}
+          </span>
+        </button>
+        <button className="ui-stat" onClick={() => setView('squad')}>
+          <span className="ui-stat-label">선수단 컨디션</span>
+          <strong className="ui-stat-value">
+            {condition}
+            <small>%</small>
+          </strong>
+          <span className={`ui-stat-sub ${tired.length ? 'ui-warn' : ''}`}>
+            {tired.length ? `${tired.length}명 피로 · ` : ''}
+            {g.roster.length}명 · 코치 {g.staff.length}명
+          </span>
+        </button>
+      </section>
+
+      <div className="ui-home-grid">
+        <section className="ui-card ui-next" aria-labelledby="ui-next-title">
+          <header className="ui-card-head">
+            <h2 id="ui-next-title">{fixture ? '다음 경기' : '다음 행동'}</h2>
+            <span className="ui-pill">{phaseLabel[g.phase]}</span>
+          </header>
+
+          {fixture ? (
             <>
-              {rank}
-              <small> / {rows.length}</small>
+              <p className="ui-next-meta">
+                {dateLabel(g)} · {league.name} · {getClub(fixture[0]).city}
+                {g.phase === 'preseason' ? ' · 연습경기' : ''}
+              </p>
+              <div className="ui-matchup">
+                <div className={fixture[1] === g.club ? 'own' : ''}>
+                  <Badge club={getClub(fixture[1])} size="large" />
+                  <strong>{getClub(fixture[1]).name}</strong>
+                  <small>원정</small>
+                </div>
+                <span className="ui-vs">VS</span>
+                <div className={fixture[0] === g.club ? 'own' : ''}>
+                  <Badge club={getClub(fixture[0])} size="large" />
+                  <strong>{getClub(fixture[0]).name}</strong>
+                  <small>홈</small>
+                </div>
+              </div>
+              <dl className="ui-next-facts">
+                <div>
+                  <dt>선발 투수</dt>
+                  <dd>
+                    {starter ? (
+                      <button className="ui-link" onClick={() => onPlayer(starter)}>
+                        {starter.name} · {Math.round(starter.condition)}%
+                      </button>
+                    ) : (
+                      '미정'
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>전술</dt>
+                  <dd>
+                    {tactics[g.tactic] || g.tactic} · 선발 {g.lineup.length}명
+                  </dd>
+                </div>
+              </dl>
             </>
-          }
-          sub={`${own.w}승 ${own.l}패 ${own.d}무 · ${(own.w / (own.w + own.l || 1)).toFixed(3)}`}
-        />
-        <Metric
-          label="운영 예산"
-          value={money(g.budget)}
-          sub={g.budget < 0 ? '예산 적자' : '영입 · 계약 · 운영'}
-        />
-        <Metric
-          label="선수단 컨디션"
-          value={
-            <>
-              {Math.round(g.roster.reduce((s, p) => s + p.condition, 0) / g.roster.length)}
-              <small>%</small>
-            </>
-          }
-          sub={`${g.roster.length}명 · ${g.staff.length}명의 코치`}
-        />
-        <Metric
-          label="최근 경기"
-          value={
-            <div className="form">
-              {own.form.length
-                ? own.form.map((v, i) => (
-                    <span className={v} key={i}>
-                      {v}
-                    </span>
-                  ))
-                : Array.from({ length: 5 }, (_, i) => <span key={i}>–</span>)}
+          ) : g.phase === 'finished' ? (
+            <div className="ui-empty">
+              <Trophy size={26} />
+              <h3>
+                {g.year} 시즌 종료{g.champion ? ` · ${getClub(g.champion).name} 우승` : ''}
+              </h3>
+              <p>
+                {club.name} · 최종 {rank}위. 재계약을 확인한 뒤 다음 시즌을 시작하세요.
+              </p>
             </div>
-          }
-          sub="최근 5경기"
-        />
-      </div>
-      <div className="dashboard-grid">
-        <aside className="briefing-column">
-          <InboxPanel g={g} act={act} busy={busy} onPlayer={onPlayer} compact />
-          <section className="panel">
-            <div className="panel-header">
-              <h2>주요 선수</h2>
-              <button className="text-button" onClick={() => setView('squad')}>
-                선수단
-                <ChevronRight size={12} />
+          ) : g.phase === 'semifinal' || g.phase === 'final' ? (
+            <div className="ui-empty">
+              <Trophy size={26} />
+              <h3>{phaseLabel[g.phase]} 진행 중</h3>
+              <p>
+                {series
+                  ? `${getClub(series.a === g.club ? series.b : series.a).name} 상대 ${ownWins}승 ${oppWins}패 · 오늘은 경기가 없습니다.`
+                  : '우리 팀은 포스트시즌에 없습니다. 다음 날로 진행하면 시즌이 마무리됩니다.'}
+              </p>
+            </div>
+          ) : (
+            <div className="ui-empty">
+              <CalendarDays size={26} />
+              <h3>
+                {playedToday
+                  ? '오늘 경기를 마쳤습니다'
+                  : g.phase === 'preseason'
+                    ? '개막 준비 기간'
+                    : '오늘은 휴식일'}
+              </h3>
+              <p>
+                {upcoming
+                  ? `다음 ${g.phase === 'preseason' ? '연습경기' : '경기'}: ${dateLabel(g, upcoming.day)} ${
+                      getClub(upcoming.pair[0] === g.club ? upcoming.pair[1] : upcoming.pair[0])
+                        .name
+                    } (${upcoming.pair[0] === g.club ? '홈' : '원정'}) · ${upcoming.day - g.day}일 후`
+                  : g.phase === 'preseason'
+                    ? `정규시즌 개막까지 ${-g.day}일 · 연습경기 ${friendlies}/4회`
+                    : '남은 정규시즌 경기가 없습니다. 다음 날로 진행하면 포스트시즌 여부가 결정됩니다.'}
+              </p>
+            </div>
+          )}
+
+          <div className="ui-card-actions">
+            {g.phase === 'finished' ? (
+              <button
+                className="ui-btn ui-btn-primary"
+                disabled={busy}
+                onClick={() => void act({ type: 'nextSeason' })}
+              >
+                {busy ? <LoaderCircle size={16} className="spin" /> : <Play size={16} />}
+                다음 시즌 시작
               </button>
-            </div>
-            <div className="top-players">
-              {top.map((p) => (
-                <div key={p.id}>
-                  <PlayerName p={p} onClick={onPlayer} />
-                  <Rating value={overall(p)} player={p} />
-                </div>
-              ))}
-            </div>
-          </section>
-        </aside>
-        <div className="main-column">
-          <section className="panel next-match">
-            <div className="panel-header">
-              <h2>다음 경기</h2>
-              <span>
-                {g.phase === 'preseason'
-                  ? '프리시즌'
-                  : g.phase === 'regular'
-                    ? '정규 시즌'
-                    : g.phase === 'finished'
-                      ? '시즌 종료'
-                      : '포스트시즌'}
+            ) : (
+              <button
+                className="ui-btn ui-btn-primary"
+                disabled={busy || !!g.liveMatch}
+                onClick={simulate}
+              >
+                {busy ? <LoaderCircle size={16} className="spin" /> : <Play size={16} />}
+                {g.liveMatch ? '경기 진행 중' : fixture ? '경기 진행' : '다음 날로 진행'}
+              </button>
+            )}
+            <button className="ui-btn ui-btn-ghost" onClick={() => setView('tactics')}>
+              <ClipboardList size={15} />
+              전술 · 타순
+            </button>
+            <button className="ui-btn ui-btn-ghost" onClick={() => setView('schedule')}>
+              <CalendarDays size={15} />
+              일정
+            </button>
+          </div>
+        </section>
+
+        <div className="ui-side">
+          <section className="ui-card" aria-labelledby="ui-todo-title">
+            <header className="ui-card-head">
+              <h2 id="ui-todo-title">확인할 일</h2>
+              <span className="ui-pill">
+                {checklist.filter((c) => c.count).length
+                  ? `${checklist.filter((c) => c.count).length}항목`
+                  : '없음'}
               </span>
-            </div>
-            {fixture ? (
-              <>
-                <div className="match-meta">
-                  <span>{getLeague(getClub(g.club).league).name}</span>
-                  <span>
-                    {dateLabel(g)} · {getClub(fixture[0]).city}
-                  </span>
-                </div>
-                <div className="matchup">
-                  <div>
-                    <Badge club={getClub(fixture[1])} size="large" />
-                    <strong>{getClub(fixture[1]).name}</strong>
-                    <small>원정</small>
-                  </div>
-                  <div className="versus">
-                    <b>v</b>
-                  </div>
-                  <div>
-                    <Badge club={getClub(fixture[0])} size="large" />
-                    <strong>{getClub(fixture[0]).name}</strong>
-                    <small>홈</small>
-                  </div>
-                </div>
-                <div className="match-bottom">
-                  <span>
-                    선발 <strong>{pitcher?.name}</strong>
-                    <span className="muted">{Math.round(pitcher?.condition || 0)}%</span>
-                  </span>
-                  <button className="text-button" disabled={busy} onClick={simulate}>
-                    경기 진행
+            </header>
+            <ul className="ui-todo">
+              {checklist.map((c) => (
+                <li key={c.label}>
+                  <button
+                    className={c.count ? (c.urgent ? 'urgent' : '') : 'quiet'}
+                    onClick={() => setView(c.view)}
+                  >
+                    <span>{c.label}</span>
+                    <b>{c.count ? `${c.count}${c.unit}` : '없음'}</b>
                     <ChevronRight size={14} />
                   </button>
-                </div>
-              </>
-            ) : (
-              <div className="empty-state">
-                <Trophy size={25} />
-                <h3>
-                  {g.phase === 'finished'
-                    ? `${getClub(g.champion).name} 우승`
-                    : '예정된 경기가 없습니다'}
-                </h3>
-                <p>
-                  {g.phase === 'finished'
-                    ? '재계약을 확인한 뒤 다음 시즌을 시작하세요.'
-                    : '선수단을 정비하거나 다음 날로 진행하세요.'}
-                </p>
-              </div>
-            )}
+                </li>
+              ))}
+            </ul>
           </section>
-          <section className="panel">
-            <div className="panel-header">
-              <h2>전술 · 수비 배치</h2>
-              <button className="text-button" onClick={() => setView('tactics')}>
-                설정
+
+          <section className="ui-card" aria-labelledby="ui-recent-title">
+            <header className="ui-card-head">
+              <h2 id="ui-recent-title">최근 결과</h2>
+              <button className="ui-link" onClick={() => setView('schedule')}>
+                전체 일정 · 결과
                 <ChevronRight size={13} />
               </button>
-            </div>
-            <DefensiveField g={g} onPlayer={onPlayer} compact />
-            <div className="tactic-summary">
-              <Target size={14} />
-              <strong>{tactics.find((t) => t[0] === g.tactic)?.[1]}</strong>
-              <span>선발 {players.length}명</span>
-            </div>
+            </header>
+            {recent.length ? (
+              <ul className="ui-recent">
+                {recent.map((r) => {
+                  const home = r.home === g.club,
+                    us = home ? r.homeScore : r.awayScore,
+                    them = home ? r.awayScore : r.homeScore,
+                    opp = getClub(home ? r.away : r.home),
+                    outcome = us > them ? 'W' : us < them ? 'L' : 'D';
+                  return (
+                    <li key={r.id}>
+                      <button onClick={() => replay(r)}>
+                        <span className={`ui-result ${outcome}`}>{outcome}</span>
+                        <span className="ui-recent-text">
+                          <strong>
+                            {us}–{them} {opp.name}
+                          </strong>
+                          <small>
+                            {r.date?.slice(5).replace('-', '/') || dateLabel(g, r.day)} ·{' '}
+                            {home ? '홈' : '원정'}
+                            {r.friendly ? ' · 연습경기' : r.post ? ' · 포스트시즌' : ''}
+                          </small>
+                        </span>
+                        <ChevronRight size={14} />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="ui-quiet">아직 치른 경기가 없습니다.</p>
+            )}
           </section>
         </div>
-        <aside className="right-column">
-          <section className="panel">
-            <div className="panel-header">
-              <h2>리그 순위</h2>
-              <button className="text-button" onClick={() => setView('world')}>
-                전체
-                <ChevronRight size={13} />
-              </button>
-            </div>
-            <StandingsTable g={g} compact />
-          </section>
-          <section className="panel">
-            <div className="panel-header">
-              <h2>최근 결과</h2>
-              <button className="text-button" onClick={() => setView('schedule')}>
-                일정
-                <ChevronRight size={13} />
-              </button>
-            </div>
-            {g.history.length ? (
-              <div className="compact-results">
-                {g.history.slice(0, 5).map((r) => (
-                  <button key={r.id} onClick={() => replay(r)}>
-                    <small>{r.date?.slice(5).replace('-', '/') || dateLabel(g, r.day)}</small>
-                    <span>{getClub(r.away).short}</span>
-                    <strong>
-                      {r.awayScore}–{r.homeScore}
-                    </strong>
-                    <span>{getClub(r.home).short}</span>
-                    <ChevronRight size={12} />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <p>아직 치른 경기가 없습니다.</p>
-              </div>
-            )}
-          </section>
-          <section className="panel club-checklist">
-            <div className="panel-header">
-              <h2>계약 현황</h2>
-            </div>
-            <button onClick={() => setView('agents')}>
-              <span>진행 중인 협상</span>
-              <b>{g.deals.length}</b>
-              <ChevronRight size={13} />
-            </button>
-            <button onClick={() => setView('squad')}>
-              <span>계약 잔여 1년</span>
-              <b>{g.roster.filter((p) => p.years === 1).length}명</b>
-              <ChevronRight size={13} />
-            </button>
-            <button onClick={() => setView('staff')}>
-              <span>코칭 스태프</span>
-              <b>{g.staff.length}명</b>
-              <ChevronRight size={13} />
-            </button>
-          </section>
-        </aside>
       </div>
-    </>
+    </div>
   );
 }
 

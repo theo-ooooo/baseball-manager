@@ -230,3 +230,11 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - Browser play-through found that choosing an individual training position could never return to automatic training. Enabled the automatic option and added a backend command to clear the override while preserving familiarity and statistics.
 - The actual Worker/D1 regression verifies persisted removal, unchanged accumulated training and season stats. All 55 tests pass, with production build, TypeScript, format and zero-warning lint.
+
+## 2026-09-08 — Simpler setup, management overview and browser-tested controls
+
+- Replaced the dense three-column setup with club selection then manager/season settings; removed the real-name default, retained every league/club and rule option, and kept the selected club and next action visible. The home view now shows three key metrics, the actual next schedule/action, items needing attention and three recent results. Detailed lineups, standings and inbox reading remain in their own screens.
+- Removed duplicate navigation, grouped secondary sidebar menus, added mobile close/open labels, adopted navy/teal surfaces and clearer spacing, and added a summary/detail toggle for the squad table. Failed saves are now visible instead of reverting to a misleading saved label.
+- Added manual one-PA progression and persisted playback speed. Reopening an active match shows its last saved scene immediately; the completed play button says the match has ended. The normal command/revision and backend rules remain unchanged.
+- Browser checks on the real production Worker: new guest career, rest-day progression, full friendly, pause/reload/resume, exactly one manual PA, persisted 8x speed, player search/direct profile/reload, reserve move, and guest recovery after cookie removal. Desktop 1440px and mobile 390px setup/home/squad were inspected; home and squad have no page-wide horizontal overflow. Production load and exhaustive accessibility/league parity are not claimed.
+- Validation: all 55 production/domain/D1/component tests, TypeScript, zero-warning lint and format checks pass. Final build repeats after the last accessibility labels/semantics. No production career changed yet.

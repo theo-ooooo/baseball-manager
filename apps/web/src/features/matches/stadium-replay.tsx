@@ -497,8 +497,17 @@ export function LiveMatchScreen({
   const { getClub } = useWorld(),
     live = g.liveMatch!;
   const [playing, setPlaying] = useState(false),
-    [speed, setSpeed] = useState('2'),
-    [settledCount, setSettledCount] = useState(0);
+    [speed, setSpeed] = useState(() => {
+      try {
+        const saved = localStorage.getItem('dugout:match-speed');
+        return saved && ['1', '2', '4', '8'].includes(saved) ? saved : '2';
+      } catch {
+        return '2';
+      }
+    }),
+    [stepping, setStepping] = useState(false),
+    [settledCount, setSettledCount] = useState(live.result.log.length);
+  const [restoredCount] = useState(live.result.log.length);
   const settled = settledCount === live.result.log.length;
   const reduced = useReducedMotion();
   const current = useRef({ act, busy });
@@ -554,10 +563,17 @@ export function LiveMatchScreen({
               key={live.result.log.length}
               result={live.result}
               index={Math.max(0, live.result.log.length - 1)}
-              playing={playing && !!event && !live.finished}
+              playing={(playing || stepping) && !!event && !live.finished}
               speed={Number(speed)}
-              reduced={live.finished || reduced}
-              onEnd={() => setSettledCount(live.result.log.length)}
+              reduced={
+                live.finished ||
+                reduced ||
+                (restoredCount > 0 && restoredCount === live.result.log.length)
+              }
+              onEnd={() => {
+                setSettledCount(live.result.log.length);
+                setStepping(false);
+              }}
             />
             <div className="stadium-controls live-controls">
               <button
@@ -566,12 +582,34 @@ export function LiveMatchScreen({
                 onClick={() => setPlaying(!playing)}
               >
                 {playing ? <Pause size={18} /> : <Play size={18} />}{' '}
-                {playing ? '일시정지' : event ? '경기 계속' : '플레이볼'}
+                {live.finished
+                  ? '경기 종료'
+                  : playing
+                    ? '일시정지'
+                    : event
+                      ? '경기 계속'
+                      : '플레이볼'}
+              </button>
+              <button
+                className="button secondary compact"
+                disabled={playing || busy || stepping || live.finished || (hasEvent && !settled)}
+                onClick={async () => {
+                  if (await act({ type: 'stepMatch' })) setStepping(true);
+                }}
+              >
+                다음 타석
               </button>
               <select
                 aria-label="경기 속도"
                 value={speed}
-                onChange={(e) => setSpeed(e.target.value)}
+                onChange={(e) => {
+                  setSpeed(e.target.value);
+                  try {
+                    localStorage.setItem('dugout:match-speed', e.target.value);
+                  } catch {
+                    /* Playback still works when storage is unavailable. */
+                  }
+                }}
               >
                 {['1', '2', '4', '8'].map((n) => (
                   <option key={n} value={n}>

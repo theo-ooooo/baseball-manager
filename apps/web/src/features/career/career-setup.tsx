@@ -1,17 +1,21 @@
 'use client';
-import { useState, useMemo, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import {
+  ArrowLeft,
   Check,
+  ChevronDown,
   ChevronRight,
   CircleHelp,
   LoaderCircle,
-  Shield,
   CircleDot as Baseball,
 } from 'lucide-react';
 import { useWorld } from './world-context';
 import { overall, money, teamBudget } from '@dugout/shared/game-view';
-import { Badge, Rating, Choice } from '../../components/game-ui';
+import { Badge, Rating } from '../../components/game-ui';
 import { Help } from './help-dialog';
+
+const regions = ['전체', '아시아', '아메리카', '유럽', '오세아니아'];
+const DEFAULT_MANAGER = '신임 감독';
 
 export function NewCareer({
   loading,
@@ -31,246 +35,335 @@ export function NewCareer({
   cancel: () => void;
 }) {
   const { clubs, leagues, getClub, getLeague, baseRoster } = useWorld();
-  const [lid, setLid] = useState('kbo'),
-    [cid, setCid] = useState('kbo-lg'),
-    [manager, setManager] = useState('강경원'),
+  const [step, setStep] = useState<'club' | 'manager'>('club'),
     [region, setRegion] = useState('전체'),
+    [lid, setLid] = useState('kbo'),
+    [cid, setCid] = useState('kbo-lg'),
+    [manager, setManager] = useState(''),
     [mode, setMode] = useState('short'),
     [ban, setBan] = useState(false),
     [reveal, setReveal] = useState(false),
+    [showPlayers, setShowPlayers] = useState(false),
     [help, setHelp] = useState(false);
-  const l = getLeague(lid),
-    c = getClub(cid),
-    roster = useMemo(() => baseRoster(cid), [cid, baseRoster]);
-  const featured = [...roster].sort((a, b) => overall(b) - overall(a)).slice(0, 5);
+  const league = getLeague(lid),
+    club = getClub(cid),
+    roster = baseRoster(cid),
+    featured = [...roster].sort((a, b) => overall(b) - overall(a)).slice(0, 5),
+    leagueClubs = clubs.filter((c) => c.league === lid),
+    visibleLeagues = leagues.filter((v) => region === '전체' || v.region === region),
+    disabled = busy || loading || !!error;
+  const pickLeague = (id: string) => {
+    setLid(id);
+    setCid(clubs.find((c) => c.league === id)!.id);
+  };
+  const start = () => onStart(cid, manager.trim() || DEFAULT_MANAGER, mode, ban, reveal);
+
   return (
-    <div className="setup-page">
-      <header className="setup-header">
+    <div className="ui-setup">
+      <header className="ui-setup-header">
         <div className="brand">
           <Baseball />
           <span>
             DUGOUT<i>BASEBALL MANAGEMENT</i>
           </span>
-          <b className="edition-number">26</b>
         </div>
-        <div className="setup-header-right">
-          <span>새 커리어</span>
-          <button className="icon-button" aria-label="게임 안내" onClick={() => setHelp(true)}>
-            <CircleHelp size={19} />
-          </button>
+        <div className="ui-setup-header-right">
           {existing && (
-            <button className="button secondary compact" onClick={cancel}>
-              기존 커리어로
+            <button className="ui-btn ui-btn-ghost" onClick={cancel}>
+              기존 커리어로 돌아가기
             </button>
           )}
+          <button className="ui-icon-btn" aria-label="게임 안내" onClick={() => setHelp(true)}>
+            <CircleHelp size={20} />
+          </button>
         </div>
       </header>
-      <main className="setup-main">
-        <div className="setup-heading">
-          <div>
-            <h1>구단 선택</h1>
-            <p>운영할 리그와 구단을 선택하세요.</p>
-          </div>
-          <div className="setup-steps">
-            <span className="current">01 리그</span>
-            <ChevronRight size={13} />
-            <span>02 구단</span>
-            <ChevronRight size={13} />
-            <span>03 감독 취임</span>
-          </div>
-        </div>
+
+      <main className="ui-setup-main">
+        <ol className="ui-steps" aria-label="새 커리어 진행 단계">
+          <li className={step === 'club' ? 'current' : 'done'}>
+            <span className="ui-step-no">{step === 'club' ? '1' : <Check size={13} />}</span>
+            구단 선택
+          </li>
+          <li className={step === 'manager' ? 'current' : ''}>
+            <span className="ui-step-no">2</span>
+            감독 · 시즌 설정
+          </li>
+        </ol>
+
         {error && (
-          <div className="error-banner" role="alert">
+          <div className="ui-alert" role="alert">
             <span>{error}</span>
-            <button onClick={retry}>다시 불러오기</button>
+            <button className="ui-btn ui-btn-ghost" onClick={retry}>
+              다시 불러오기
+            </button>
           </div>
         )}
-        <div className="setup-grid">
-          <section className="world-selector">
-            <div className="selector-heading">
-              <h2>리그</h2>
-              <span>{leagues.length}개 대회</span>
+
+        {step === 'club' ? (
+          <section className="ui-step-body" aria-labelledby="ui-step1-title">
+            <div className="ui-step-title">
+              <h1 id="ui-step1-title">어느 구단을 맡을까요?</h1>
+              <p>
+                {leagues.length}개 리그 · {clubs.length}개 구단 중 하나를 고르면 다음 단계에서
+                감독과 시즌을 설정합니다.
+              </p>
             </div>
-            <div className="region-filter">
-              <Choice
-                value={region}
-                onChange={setRegion}
-                label="대륙"
-                items={['전체', '아시아', '아메리카', '유럽', '오세아니아'].map((t) => ({
-                  value: t,
-                  label: t === '전체' ? '모든 대륙' : t,
-                }))}
-              />
+
+            <div className="ui-region-row" role="group" aria-label="대륙">
+              {regions.map((r) => (
+                <button
+                  key={r}
+                  aria-pressed={region === r}
+                  className={`ui-chip ${region === r ? 'active' : ''}`}
+                  onClick={() => {
+                    setRegion(r);
+                    if (r !== '전체' && league.region !== r) {
+                      const first = leagues.find((v) => v.region === r);
+                      if (first) pickLeague(first.id);
+                    }
+                  }}
+                >
+                  {r === '전체' ? '모든 대륙' : r}
+                </button>
+              ))}
             </div>
-            <div className="league-grid">
-              {leagues
-                .filter((v) => region === '전체' || v.region === region)
-                .map((v) => (
-                  <button
-                    className={`league-card ${v.id === lid ? 'selected' : ''}`}
-                    key={v.id}
-                    aria-pressed={v.id === lid}
-                    onClick={() => {
-                      setLid(v.id);
-                      setCid(clubs.find((c) => c.league === v.id)!.id);
-                    }}
-                  >
-                    <span className="flag">{v.flag}</span>
-                    <span>
-                      <strong>{v.name}</strong>
-                      <small>{v.country}</small>
-                    </span>
-                    <span className="league-count">
-                      {clubs.filter((c) => c.league === v.id).length}
-                    </span>
-                    {v.id === lid && <Check size={13} />}
-                  </button>
-                ))}
+
+            <div className="ui-league-row" aria-label="리그">
+              {visibleLeagues.map((v) => (
+                <button
+                  key={v.id}
+                  className={`ui-league ${v.id === lid ? 'active' : ''}`}
+                  aria-pressed={v.id === lid}
+                  onClick={() => pickLeague(v.id)}
+                >
+                  <span className="ui-league-flag">{v.flag}</span>
+                  <span className="ui-league-name">{v.name}</span>
+                  <span className="ui-league-meta">
+                    {v.country} · {clubs.filter((c) => c.league === v.id).length}
+                  </span>
+                </button>
+              ))}
             </div>
-          </section>
-          <section className="club-browser">
-            <div className="selector-heading">
-              <h2>{l.name}</h2>
-              <span>
-                {l.country} · {l.season}
-              </span>
+
+            <div className="ui-club-head">
+              <h2>
+                {league.flag} {league.name}
+                <small>
+                  {league.country} · {league.season} · {leagueClubs.length}개 구단
+                </small>
+              </h2>
             </div>
-            <div className="club-list-head">
-              <span>구단</span>
-              <span>연고지</span>
-            </div>
-            <div className="club-select-list">
-              {clubs
-                .filter((v) => v.league === lid)
-                .map((v) => (
-                  <button
-                    key={v.id}
-                    className={`club-option ${v.id === cid ? 'selected' : ''}`}
-                    aria-pressed={v.id === cid}
-                    onClick={() => setCid(v.id)}
-                  >
-                    <Badge club={v} size="small" />
+            <div className="ui-club-grid" role="group" aria-label={`${league.name} 구단`}>
+              {leagueClubs.map((v) => (
+                <button
+                  key={v.id}
+                  aria-pressed={v.id === cid}
+                  className={`ui-club ${v.id === cid ? 'active' : ''}`}
+                  style={{ '--club': v.color } as CSSProperties}
+                  onClick={() => setCid(v.id)}
+                  onDoubleClick={() => setStep('manager')}
+                >
+                  <Badge club={v} size="small" />
+                  <span className="ui-club-text">
                     <strong>{v.name}</strong>
-                    <span className="club-city">{v.city}</span>
-                    {v.id === cid && <Check size={14} />}
-                  </button>
-                ))}
+                    <small>{v.city}</small>
+                  </span>
+                  {v.id === cid && <Check size={16} className="ui-club-check" />}
+                </button>
+              ))}
             </div>
-            <div className="database-note">
-              <Shield size={15} />
-              <span>실명·가상 선수 포함</span>
-              <button className="text-button" onClick={() => setHelp(true)}>
-                데이터 안내
-                <ChevronRight size={13} />
+
+            <div className="ui-action-bar">
+              <div className="ui-selected">
+                <Badge club={club} size="small" />
+                <span>
+                  <small>선택한 구단 · {league.name}</small>
+                  <strong>{club.name}</strong>
+                </span>
+              </div>
+              <button
+                className="ui-btn ui-btn-primary"
+                disabled={loading || !!error}
+                onClick={() => setStep('manager')}
+              >
+                {club.name} 선택하고 계속
+                <ChevronRight size={18} />
               </button>
             </div>
           </section>
-          <aside className="club-picker">
-            <div className="chosen-club" style={{ '--club': c.color } as CSSProperties}>
-              <Badge club={c} size="large" />
-              <div>
-                <small>{l.name}</small>
-                <h2>{c.name}</h2>
-                <span>{c.city}</span>
-              </div>
+        ) : (
+          <section className="ui-step-body" aria-labelledby="ui-step2-title">
+            <div className="ui-step-title">
+              <button className="ui-back" onClick={() => setStep('club')}>
+                <ArrowLeft size={15} />
+                구단 다시 선택
+              </button>
+              <h1 id="ui-step2-title">감독과 시즌을 설정하세요</h1>
+              <p>여기서 정한 시즌 길이와 규칙은 커리어 시작 후 바꿀 수 없습니다.</p>
             </div>
-            <div className="club-facts">
-              <div>
-                <span>운영 예산</span>
-                <strong>{money(teamBudget(lid))}</strong>
-              </div>
-              <div>
-                <span>선수단</span>
-                <strong>{roster.length}명</strong>
-              </div>
-              <div>
-                <span>실명 선수</span>
-                <strong>{roster.filter((p) => p.real).length}명</strong>
-              </div>
-            </div>
-            <div className="key-players">
-              <div className="selector-heading">
-                <h2>주요 선수</h2>
-                <span>능력</span>
-              </div>
-              {featured.map((p) => (
-                <div className="setup-player" key={p.id}>
-                  <span className="position-code">{p.pos}</span>
-                  <span>
-                    {p.name}
+
+            <div className="ui-setup-grid">
+              <aside className="ui-club-card" style={{ '--club': club.color } as CSSProperties}>
+                <div className="ui-club-card-head">
+                  <Badge club={club} size="large" />
+                  <div>
                     <small>
-                      {p.real ? '실명' : '가상'} · {p.ageEstimated ? '게임 나이 ' : ''}
-                      {p.age}세
+                      {league.flag} {league.name} · {league.country}
                     </small>
-                  </span>
-                  <Rating value={overall(p)} player={p} />
+                    <h2>{club.name}</h2>
+                    <span>{club.city}</span>
+                  </div>
                 </div>
-              ))}
+                <dl className="ui-facts">
+                  <div>
+                    <dt>운영 예산</dt>
+                    <dd>{money(teamBudget(lid))}</dd>
+                  </div>
+                  <div>
+                    <dt>선수단</dt>
+                    <dd>{roster.length}명</dd>
+                  </div>
+                  <div>
+                    <dt>실명 선수</dt>
+                    <dd>{roster.filter((p) => p.real).length}명</dd>
+                  </div>
+                </dl>
+                <button
+                  className="ui-disclosure"
+                  aria-expanded={showPlayers}
+                  onClick={() => setShowPlayers((v) => !v)}
+                >
+                  주요 선수 {featured.length}명
+                  <ChevronDown size={15} className={showPlayers ? 'open' : ''} />
+                </button>
+                {showPlayers && (
+                  <ul className="ui-player-list">
+                    {featured.map((p) => (
+                      <li key={p.id}>
+                        <span className="ui-pos">{p.pos}</span>
+                        <span className="ui-player-text">
+                          <strong>{p.name}</strong>
+                          <small>
+                            {p.real ? '실명' : '가상'} · {p.ageEstimated ? '게임 나이 ' : ''}
+                            {p.age}세
+                          </small>
+                        </span>
+                        <Rating value={overall(p)} player={p} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="ui-note">
+                  실명·가상 선수 포함.{' '}
+                  <button className="ui-link" onClick={() => setHelp(true)}>
+                    데이터 안내
+                  </button>
+                </p>
+              </aside>
+
+              <form
+                className="ui-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!disabled) start();
+                }}
+              >
+                <label className="ui-field">
+                  <span className="ui-field-label">감독 이름</span>
+                  <input
+                    className="ui-input"
+                    maxLength={24}
+                    placeholder={DEFAULT_MANAGER}
+                    autoComplete="off"
+                    value={manager}
+                    onChange={(e) => setManager(e.target.value)}
+                  />
+                  <small>비워 두면 &lsquo;{DEFAULT_MANAGER}&rsquo;으로 표시됩니다.</small>
+                </label>
+
+                <fieldset className="ui-field">
+                  <legend className="ui-field-label">시즌 길이</legend>
+                  <div className="ui-option-row">
+                    {[
+                      ['short', '단축 시즌', '상대별 2경기 · 2연전'],
+                      ['full', '정규 길이', `${league.name} 기준 약 ${league.games}경기`],
+                    ].map(([value, title, desc]) => (
+                      <label key={value} className={`ui-option ${mode === value ? 'active' : ''}`}>
+                        <input
+                          type="radio"
+                          name="mode"
+                          value={value}
+                          checked={mode === value}
+                          onChange={() => setMode(value)}
+                        />
+                        <strong>{title}</strong>
+                        <small>{desc}</small>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <fieldset className="ui-field">
+                  <legend className="ui-field-label">시작 규칙</legend>
+                  <div className="ui-rule">
+                    <strong>프리시즌 4주부터 시작</strong>
+                    <small>연습경기 4회 · 전술 훈련 · 선수단 정비 후 개막</small>
+                  </div>
+                  <label className={`ui-check ${ban ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={ban}
+                      onChange={(e) => setBan(e.target.checked)}
+                    />
+                    <span>
+                      <strong>첫 시즌 외부 선수 영입 금지</strong>
+                      <small>FA 포함 · 재계약, 매각, 코치 선임은 가능</small>
+                    </span>
+                  </label>
+                  <label className={`ui-check ${reveal ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={reveal}
+                      onChange={(e) => setReveal(e.target.checked)}
+                    />
+                    <span>
+                      <strong>잠재력 공개</strong>
+                      <small>기본은 숨김 · 시작 후 변경 불가</small>
+                    </span>
+                  </label>
+                </fieldset>
+
+                <div className="ui-form-actions">
+                  <button
+                    className="ui-btn ui-btn-primary ui-btn-lg"
+                    type="submit"
+                    disabled={disabled}
+                  >
+                    {busy || loading ? (
+                      <LoaderCircle size={18} className="spin" />
+                    ) : (
+                      <>
+                        {club.name} 감독으로 취임
+                        <ChevronRight size={18} />
+                      </>
+                    )}
+                  </button>
+                  <small>경기와 계약은 자동 저장됩니다.</small>
+                </div>
+              </form>
             </div>
-            <div className="career-fields">
-              <label htmlFor="manager">
-                감독 이름
-                <input
-                  id="manager"
-                  maxLength={24}
-                  value={manager}
-                  onChange={(e) => setManager(e.target.value)}
-                />
-              </label>
-              <label>
-                시즌 길이
-                <Choice
-                  value={mode}
-                  onChange={setMode}
-                  label="시즌 길이"
-                  items={[
-                    { value: 'short', label: '단축 · 상대별 2경기 / 2연전' },
-                    { value: 'full', label: `정규 길이 · 약 ${l.games}경기` },
-                  ]}
-                />
-              </label>
-            </div>
-            <div className="preseason-settings">
-              <strong>프리시즌부터 시작 · 4주</strong>
-              <p>연습경기 4회 · 전술 훈련 · 선수단 정비</p>
-              <label>
-                <input type="checkbox" checked={ban} onChange={(e) => setBan(e.target.checked)} />첫
-                시즌 외부 선수 영입 금지
-              </label>
-              <small>FA 포함 · 재계약, 매각, 코치 선임 가능</small>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={reveal}
-                  onChange={(e) => setReveal(e.target.checked)}
-                />
-                잠재력 공개
-              </label>
-              <small>기본은 숨김 · 이 커리어를 시작한 뒤에는 변경할 수 없습니다.</small>
-            </div>
-            <button
-              className="button primary start-button"
-              disabled={busy || loading || !!error}
-              onClick={() => onStart(cid, manager, mode, ban, reveal)}
-            >
-              {busy || loading ? (
-                <LoaderCircle size={16} className="spin" />
-              ) : (
-                <>
-                  <span>{c.short} 감독으로 취임</span>
-                  <ChevronRight size={18} />
-                </>
-              )}
-            </button>
-            <p className="tiny text-center">경기와 계약은 자동 저장됩니다.</p>
-          </aside>
-        </div>
-        <div className="setup-bottom">
-          <span>2026 시즌 · {clubs.length}개 구단</span>
-          <button className="text-button" onClick={() => setHelp(true)}>
-            게임 규칙
+          </section>
+        )}
+
+        <footer className="ui-setup-foot">
+          <span>
+            2026 시즌 · {leagues.length}개 리그 · {clubs.length}개 구단
+          </span>
+          <button className="ui-link" onClick={() => setHelp(true)}>
+            게임 규칙과 도움말
           </button>
-        </div>
+        </footer>
       </main>
       <Help open={help} close={() => setHelp(false)} />
     </div>

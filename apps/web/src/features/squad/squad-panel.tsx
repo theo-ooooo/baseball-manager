@@ -8,7 +8,8 @@ import { PlayerTable } from '../players/player-table';
 export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => void }) {
   const [filter, setFilter] = useState('all'),
     [query, setQuery] = useState(''),
-    [sort, setSort] = useState('rating');
+    [sort, setSort] = useState('rating'),
+    [detailed, setDetailed] = useState(false);
   const list = g.roster
     .filter(
       (p) =>
@@ -43,6 +44,13 @@ export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
         </Tabs>
         <div className="toolbar-controls">
           <SearchBox value={query} onChange={setQuery} />
+          <button
+            className="button secondary compact"
+            aria-pressed={detailed}
+            onClick={() => setDetailed((value) => !value)}
+          >
+            {detailed ? '핵심만 보기' : '상세 열 보기'}
+          </button>
           <Choice
             label="선수 정렬"
             value={sort}
@@ -55,7 +63,7 @@ export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
           />
         </div>
       </div>
-      <PlayerTable players={list} onPlayer={onPlayer} g={g} />
+      <PlayerTable players={list} onPlayer={onPlayer} g={g} compact={!detailed} />
       {!list.length && <Empty text="조건에 맞는 선수가 없습니다." />}
       <div className="panel-foot">
         {list.length}명 · 실명 {list.filter((p) => p.real).length}명 / 가상{' '}
