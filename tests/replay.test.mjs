@@ -86,3 +86,48 @@ test('Home runs round the bases and caught stealing is an out rather than a phan
     { id: 'a', name: '', from: 1, to: 2, out: true },
   );
 });
+
+test('Mobile readout shows only consumed outcomes and applies substitutions at their saved cursor', async () => {
+  const target = join(tmpdir(), 'dugout-readout-tests.cjs');
+  buildSync({
+    entryPoints: ['apps/web/src/features/matches/match-readout.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: target,
+  });
+  const { matchReadout } = createRequire(import.meta.url)(target);
+  let g = e.newGame('kbo-lotte', 'Mobile replay', 'full', 402);
+  g = e.applyAction(g, { type: 'continue' });
+  g = e.applyAction(g, { type: 'startMatch' });
+  const result = g.liveMatch.timeline;
+  const before = matchReadout(result, 0);
+  assert.deepEqual(before.score, [0, 0]);
+  assert.ok(
+    before.teams.every((team) => team.lineup.every((p) => !p.outcomes.length && !p.active)),
+  );
+  const consumed = matchReadout(result, 5);
+  const altered = structuredClone(result);
+  for (let i = 5; i < altered.log.length; i++) {
+    altered.log[i].text = '미래 홈런';
+    altered.log[i].score = [99, 99];
+  }
+  assert.deepEqual(matchReadout(altered, 5), consumed);
+  assert.equal(consumed.teams.flatMap((t) => t.lineup).filter((p) => p.active).length, 1);
+  const side = result.home === g.club ? 1 : 0,
+    team = result.replayTeams[side];
+  const sub = g.roster.find((p) => p.pos !== 'P' && !team.lineup.includes(p.id));
+  const lineup = [...team.lineup];
+  lineup[0] = sub.id;
+  const changes = [
+    {
+      cursor: 8,
+      lineup,
+      pitcher: team.defense.P,
+      defense: { ...team.defense, DH: sub.id },
+      instructions: { steal: 50, patience: 50, power: 50, depth: 50 },
+    },
+  ];
+  assert.equal(matchReadout(result, 7, side, changes).teams[side].lineup[0].id, team.lineup[0]);
+  assert.equal(matchReadout(result, 8, side, changes).teams[side].lineup[0].id, sub.id);
+});

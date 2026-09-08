@@ -11,6 +11,7 @@ import '../styles/negotiations.css';
 import '../styles/development.css';
 import '../styles/contracts.css';
 import '../styles/inbox.css';
+import '../styles/mobile-match.css';
 
 export const metadata: Metadata = {
   title: 'DUGOUT | 월드 베이스볼 매니저',
