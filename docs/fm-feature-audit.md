@@ -13,7 +13,7 @@ FM 공식 자료의 [영입과 선수단 계획](https://www.footballmanager.com
 | 영역 | 상태 | 현재 동작 | 남은 핵심 기능 | 코드 근거 |
 | --- | --- | --- | --- | --- |
 | 날짜 진행 | 구현 | 하루별 서버 저장, 이동 달력, 경기·새 보고·면담·시즌 변화에서 정지, 진행 중 멈추기 | 보고 종류별 정지 설정, 목표 날짜·휴가 설정 | `calendar-progression.ts`, `calendar-progress.tsx` |
-| 수신함·결정 | 부분 | 경기·훈련·협상·성장 보고, 출전 불만 답변, 관련 화면 이동 | 구독·필터·중요도와 처리 기한, 더 다양한 선택과 장기 결과 | `club-dynamics.ts`, `inbox-panel.tsx` |
+| 수신함·결정 | 부분 | 경기·훈련·협상·성장 보고, 출전 불만 답변, 관련 화면 이동 | 구독·필터·중요도와 처리 기한, 더 다양한 선택과 장기 결과 | `club-dynamics.ts`, `clubs/club-panels.tsx`의 `InboxPanel` |
 | 1군·2군 등록 | 구현 | 승격·말소, 정원이 찼을 때 동시 교체, 타순·보직 보존 | 리그별 등록 기간·재등록 제한 | `roster-moves.ts`, `reserve-panel.tsx` |
 | 투수 보직 | 구현 | 선발 순서, 일반 불펜·필승조·추격조·마무리 및 자동 등판 판단 | 경기 중 직접 불펜 준비·등판 지시, 상황별 상세 운용 정책 | `pitching.ts`, `relief-selection.ts`, `pitching-decisions.ts` |
 | 경기 전 전술 | 부분 | 타순·수비 위치·팀 지시·전술 저장·포지션 숙련 | 선수별 상황 지시와 상대별 작전 계획 | `squad-management.ts`, `match-simulation.ts` |
