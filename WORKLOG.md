@@ -177,3 +177,11 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - Final lint review caught the schedule module's client directive below a newly added import. Restored the directive to the first statement and made lint warnings fail the local/CI check.
 - The prior full build and 47 tests passed, including GitHub Actions on `7312295`; validation of the final directive change follows below.
+
+## 2026-09-08 — Codex: final continuation validation and handoff
+
+- Completed the requested implementation on `codex/handoff-2026-09-08` in separate rating migration, build tooling, live match/pitching, player profile, readability, logo and regression-fix commits. Updated README and the handoff's current-status section while preserving the original checkpoint history.
+- Final application source `04ef3c1`: production NestJS/Vinext Worker build, all 47 tests, TypeScript, ESLint with zero warnings allowed, and Prettier checks pass locally. Archived official evidence reconstructs all 3,398 committed records. Actual Worker tests cover D1 migration, identity, concurrency, accounting, live PA persistence/reload/completion, SSR and all 134 logo asset responses/hashes.
+- GitHub Actions on `7312295` independently passed all checks: https://github.com/theo-ooooo/baseball-manager/actions/runs/34189810224. The final client-directive/strict-lint commit and this documentation update run the same workflow; check their exact head results before publication.
+- Confirmed byte-identical historical migrations/snapshots 0000–0008 and unchanged `.openai/hosting.json`. Upgrade regressions preserve existing career JSON/relational rows, and read-time model refresh preserves contracts, ownership, season stats and fractional development. No operating career data was downloaded, replaced or committed.
+- Remaining validation/publication scope: browser interaction, mobile visual/accessibility QA, production load and production persistence have not been tested. The three unavailable official logos use abbreviations; league/scorer/contract simplifications remain documented in README. No Site deployment, personal Cloudflare migration or production D1 migration was performed. GitHub push alone does not publish the existing Sites-managed Cloudflare application.

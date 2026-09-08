@@ -1,6 +1,31 @@
 # Codex 인수인계 — DUGOUT / baseball-manager
 
-기준: 2026-09-08. 사용자가 **남은 개발을 취소하고 Codex로 이관**하도록 요청했다. 이 문서는 완료 선언이 아니라 현재 상태를 보존한 인계서다. 이관 후 새 사용자의 지시를 받고 개발을 재개한다.
+## Codex 후속 작업 — 2026-09-08 현재
+
+사용자가 이 브랜치에서 남은 개발·DB 마이그레이션·검증·기능별 커밋/푸시와 가독성 개선을 요청하여 작업을 재개했다. **아래 과거 WIP 기록에 앞서 이 절과 최신 WORKLOG를 적용한다.** GitHub 브랜치에 후속 구현을 완료했으며 운영 사이트/main은 변경하지 않았다.
+
+| 인계 항목 | 후속 구현 |
+| --- | --- |
+| 선발·불펜·마무리 | 수동/기존 선발 보존, 저장 전술 보직, 더블헤더 선발, 승·세이브·홀드 분리. 뒤 투수의 역전 허용에도 앞 투수의 홀드 유지 |
+| 타석 단위 경기·2D | D1 재개, 중복 요청/동시 revision, 완료 원자성, 더블헤더/포스트시즌 검증. 타석 저장은 전체 관계형 데이터를 다시 쓰지 않음. 최종 타석 장면 유지 |
+| 잠재력 | 선수/시장/협상/이적/API 충돌 응답에 숨김 적용, 서버 원본·가격 보존, 기존 커리어 기본 숨김 |
+| 능력·타순 | 세부 능력·미평가·타순 추천 이유 연결. v1→v2 소수점 성장분과 계약·소유권·성적 보존 |
+| 선수 페이지 | `/players/[id]`, `/?view=...`, 복귀 링크, 누락 선수 처리, 프로필/성적/계약·에이전트 연결 |
+| 로고 | 공식 원본 134/137개, 출처·해시 포함. Collecchio·Neptunus·Tucson은 약칭 대체 |
+| D1 | 0009 성적 v2, 0010 로고 컬럼, 0011 로고·catalog v7. 0000–0008과 기존 커리어 행 보존 |
+| 코드 정리 | 기능별 화면, 서버 시뮬레이션/진행 명령 분리, 소스 포맷·미사용 코드·React 상태 정리, lint/format CI 추가 |
+
+검증은 생산용 Worker 번들의 격리된 Miniflare/D1 실행, SQL 업그레이드, 게임 규칙, SSR·자산 응답, React 정적 렌더링을 포함한다. 최종 테스트 수와 GitHub CI 결과는 최신 `WORKLOG.md`에 기록한다. 브라우저 조작/시각 QA·운영 부하·운영 DB 변경은 수행하지 않았다.
+
+Cloudflare Workers + D1 구성을 유지하며 `.openai/hosting.json`의 기존 프로젝트 ID와 DB 바인딩도 보존했다. 이번 후속 지시는 코드 작업과 GitHub 푸시이며 배포를 요청하지 않았다. 운영 사이트는 기존 Sites 관리형 Cloudflare 배포 상태이고, 개인 계정 이전/운영 마이그레이션 적용은 미수행이다. 개인 계정 이전에는 D1 데이터 export/import와 인증 교체가 필요하며 기존 DB를 초기화하면 안 된다.
+
+현재 실행 방법·모듈 위치는 `README.md`를 참고한다. 아래는 인계 당시의 배포/WIP 상황을 보존한 기록이다.
+
+---
+
+## 최초 인계 기록 — 2026-09-08
+
+당시 사용자는 남은 개발을 중단하고 Codex로 이관하도록 요청했다. 아래 항목은 **후속 작업 이전**의 상태다.
 
 ## 먼저 확인할 위치
 
@@ -123,12 +148,12 @@ npm test
 npm run dev
 ```
 
-Node >=22.13, bash/flock/GNU timeout 사용. npm lockfile 유지. `npm test`는 빌드 후 실제 Worker + 격리된 Miniflare D1 테스트를 실행한다. 인증 없는 로컬 브라우저는 커리어 API에 접근하지 못할 수 있다. 테스트용 헤더 허용을 공개 운영 코드에 넣지 말 것.
+Node >=22.13, bash 사용. 후속 작업에서 빌드의 GNU timeout 의존성을 제거했으며 macOS/Linux에서 `npm ci`로 설치한다. 선택적인 `install:ci` 도우미만 Linux/flock 전용이다. npm lockfile 유지. `npm test`는 빌드 후 실제 Worker + 격리된 Miniflare D1 테스트를 실행한다. 처음 체크아웃했다면 API 번들이 필요한 타입 검사 전에 `npm test` 또는 `npm run build`를 실행한다. 테스트용 헤더 허용을 공개 운영 코드에 넣지 말 것.
 
 | 영역 | 위치 |
 | --- | --- |
 | Vinext 페이지/레이아웃 | `app/` |
-| 프론트 | `apps/web/game.tsx`, `management-panels.tsx`, `club-panels.tsx`, `schedule-panel.tsx`, `stadium-replay.tsx` |
+| 프론트 | `apps/web/game.tsx` 조립/요청, 기능별 `*-panel.tsx`, `player-profile.tsx`, `game-sidebar.tsx`, `stadium-replay.tsx` |
 | NestJS API | `apps/api/src/app.controller.ts`, `services/`, `repositories/` |
 | 게임 규칙 | `apps/api/src/domain/` |
 | 공통 계약·조회·계산 | `packages/shared/src/` |
@@ -159,4 +184,4 @@ Node >=22.13, bash/flock/GNU timeout 사용. npm lockfile 유지. `npm test`는 
 
 ## 사용자와 일하는 방식
 
-한국어로 간결하게 진행 상태를 알리고, 이미 허용한 통상 작업을 반복 확인하지 않는다. 세션마다 의미 단위 커밋과 GitHub push를 요청했다. 완료·미완료·실제 배포 여부를 구분한다. 사용자의 최신 지시는 **남은 작업 취소 + Codex 인계**이므로 이 브랜치를 만들면서 추가 개발·수정·배포를 진행하지 않았다.
+한국어로 간결하게 진행 상태를 알리고, 이미 허용한 통상 작업을 반복 확인하지 않는다. 세션마다 의미 단위 커밋과 GitHub push를 요청했다. 완료·미완료·실제 배포 여부를 구분한다. 최초 인계 시에는 개발을 중단했지만 이후 사용자 지시로 이 브랜치에서 후속 개발을 재개했다. 현재 상태는 문서 첫 절과 최신 WORKLOG가 우선한다.
