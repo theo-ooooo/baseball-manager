@@ -1,21 +1,19 @@
 'use client';
-import { ratingText, potentialText } from '@dugout/shared/ratings';
+import { ratingText } from '@dugout/shared/ratings';
 import { lineupReason } from '@dugout/shared/player-attributes';
 import { PitchingPanel } from './pitching-panel';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import type { DefensivePosition, GameState, Player, TeamInstructions } from '@dugout/shared/types';
-import { blankStats, coachRoles, money, overall } from '@dugout/shared/game-view';
+import { coachRoles, money } from '@dugout/shared/game-view';
 import {
-  dayLabel,
   defaults,
   defenseFor,
   defensivePositions,
   familiarity,
   firstTeam,
   positionLabels,
-  reserveTeam,
 } from '@dugout/shared/management';
 import { useWorld } from '../career/world-context';
 
@@ -409,158 +407,6 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
         <PitchingPanel g={g} act={act} busy={busy} onPlayer={onPlayer} />
       </TabsContent>
     </Tabs>
-  );
-}
-export function ReservePanel({ g, act, busy, onPlayer }: Props) {
-  const { getClub } = useWorld();
-  const [tab, setTab] = useState('reserve'),
-    [query, setQuery] = useState('');
-  const active = firstTeam(g),
-    reserve = reserveTeam(g),
-    r = g.reserve;
-  const list = (tab === 'reserve' ? reserve : active)
-    .filter((p) => p.name.includes(query))
-    .sort((a, b) => overall(b) - overall(a));
-  return (
-    <>
-      <div className="metrics">
-        <div className="metric">
-          <div className="metric-top">1군 등록</div>
-          <div className="metric-value">
-            {active.length}
-            <small> / 28명</small>
-          </div>
-          <span>정규시즌 · 연습경기 출전</span>
-        </div>
-        <div className="metric">
-          <div className="metric-top">2군 선수단</div>
-          <div className="metric-value">{reserve.length}명</div>
-          <span>3일마다 육성 경기 자동 진행</span>
-        </div>
-        <div className="metric">
-          <div className="metric-top">2군 성적</div>
-          <div className="metric-value">
-            {r?.w || 0}승 {r?.l || 0}패
-          </div>
-          <span>{r?.d || 0}무 · 1군 성적과 별도</span>
-        </div>
-      </div>
-      <section className="panel">
-        <div className="panel-header">
-          <div className="preset-buttons">
-            <button
-              className={tab === 'reserve' ? 'selected' : ''}
-              onClick={() => setTab('reserve')}
-            >
-              2군 · 육성
-            </button>
-            <button className={tab === 'first' ? 'selected' : ''} onClick={() => setTab('first')}>
-              1군 · 등록 관리
-            </button>
-          </div>
-          <input
-            aria-label="등록 선수 검색"
-            placeholder="선수 검색"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <div className="management-table-wrap">
-          <table className="management-table">
-            <thead>
-              <tr>
-                <th>선수</th>
-                <th>{g.rules?.revealPotential ? '능력 / 잠재력' : '능력'}</th>
-                <th>컨디션</th>
-                <th>2군 출전</th>
-                <th>AVG / ERA</th>
-                <th>개인 훈련</th>
-                <th>등록</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p) => {
-                const s = p.reserveStats || blankStats();
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      <button className="text-button" onClick={() => onPlayer(p)}>
-                        {p.name}
-                      </button>
-                      <small>
-                        {p.pos} · {p.real ? '실명' : '가상'} · {p.ageEstimated ? '게임 나이 ' : ''}
-                        {p.age}세
-                      </small>
-                    </td>
-                    <td>
-                      {ratingText(p)}
-                      {g.rules?.revealPotential && <> / {potentialText(p)}</>}
-                    </td>
-                    <td>{Math.round(p.condition)}%</td>
-                    <td>{s.g}경기</td>
-                    <td>
-                      {p.pos === 'P'
-                        ? s.outs
-                          ? ((s.er * 27) / s.outs).toFixed(2)
-                          : '–'
-                        : s.ab
-                          ? (s.h / s.ab).toFixed(3)
-                          : '–'}
-                    </td>
-                    <td>
-                      <PositionTraining p={p} act={act} busy={busy} />
-                    </td>
-                    <td>
-                      <button
-                        className="button secondary compact"
-                        disabled={busy}
-                        onClick={() =>
-                          void act({
-                            type: 'squad',
-                            id: p.id,
-                            value: p.squad === 'reserve' ? 'first' : 'reserve',
-                          })
-                        }
-                      >
-                        {p.squad === 'reserve' ? '1군 등록 ↑' : '2군 이동 ↓'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <p className="panel-content tiny">
-          게임 공통 규칙: 1군 최대 28명. 포지션별 최소 인원을 유지해야 합니다. 2군 경기는 별도 육성
-          일정이며 실제 퓨처스·마이너리그 운영 규정과는 다릅니다. 출전한 유망주는 코치 지도에 따라
-          성장합니다.
-        </p>
-      </section>
-      <section className="panel training-block">
-        <div className="panel-header">
-          <h2>2군 경기 결과</h2>
-          <span>최근 {r?.history.length || 0}경기</span>
-        </div>
-        {r?.history.length ? (
-          r.history.slice(0, 12).map((m) => (
-            <div className="reserve-result" key={m.day}>
-              <span>{dayLabel(m.day)}</span>
-              <strong>{getClub(g.club).short} 2군</strong>
-              <b>
-                {m.own} : {m.against}
-              </b>
-              <strong>{getClub(m.opponent).short} 2군</strong>
-              <small>{m.played.length}명 출전</small>
-            </div>
-          ))
-        ) : (
-          <p className="panel-content muted">
-            날짜를 진행하면 2군 경기 결과와 선수 기록이 쌓입니다. 타자 9명과 투수가 필요합니다.
-          </p>
-        )}
-      </section>
-    </>
   );
 }
 export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {

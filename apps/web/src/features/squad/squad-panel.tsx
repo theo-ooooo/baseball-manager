@@ -5,6 +5,8 @@ import { type GameState, type Player, overall } from '@dugout/shared/game-view';
 import { Choice, SearchBox, Empty } from '../../components/game-ui';
 import { PlayerTable } from '../players/player-table';
 import { pitchingAssignment, roleNames, type PitchingAssignment } from './pitching-panel';
+import { useRosterMoves } from './roster-moves';
+import type { Act } from '../career/game-contracts';
 
 const roleFilters: Exclude<PitchingAssignment, ''>[] = [
   'starter',
@@ -15,7 +17,18 @@ const roleFilters: Exclude<PitchingAssignment, ''>[] = [
   'reserve',
 ];
 
-export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => void }) {
+export function Squad({
+  g,
+  onPlayer,
+  act,
+  busy,
+}: {
+  g: GameState;
+  onPlayer: (p: Player) => void;
+  act: Act;
+  busy: boolean;
+}) {
+  const moves = useRosterMoves({ g, act, busy });
   const [filter, setFilter] = useState('all'),
     [role, setRole] = useState('all'),
     [query, setQuery] = useState(''),
@@ -104,7 +117,15 @@ export function Squad({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
           ))}
         </div>
       )}
-      <PlayerTable players={list} onPlayer={onPlayer} g={g} compact={!detailed} />
+      <PlayerTable
+        players={list}
+        onPlayer={onPlayer}
+        g={g}
+        compact={!detailed}
+        onMove={moves.move}
+        busy={busy}
+      />
+      {moves.dialog}
       {!list.length && <Empty text="조건에 맞는 선수가 없습니다." />}
       <div className="panel-foot">
         {list.length}명 · 실명 {list.filter((p) => p.real).length}명 / 가상{' '}

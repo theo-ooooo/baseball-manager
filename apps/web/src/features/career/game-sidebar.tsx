@@ -34,12 +34,11 @@ export function AppSidebar({
   const club = getClub(g.club);
   const groups = [
     {
-      label: '자주 쓰는 메뉴',
-      ids: ['home', 'inbox', 'squad', 'tactics', 'schedule'],
-      primary: true,
+      label: '내 구단',
+      ids: ['home', 'inbox'],
     },
-    { label: '선수 관리', ids: ['dynamics', 'reserves', 'staff'] },
-    { label: '구단 운영 · 리그', ids: ['market', 'agents', 'finance', 'world'] },
+    { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'dynamics'] },
+    { label: '시즌 · 운영', ids: ['schedule', 'world', 'market', 'agents', 'finance'] },
   ];
   return (
     <Sidebar className="app-sidebar">
@@ -56,7 +55,6 @@ export function AppSidebar({
           <span>
             DUGOUT<i>BASEBALL MANAGEMENT</i>
           </span>
-          <b className="edition-number">26</b>
         </div>
         <div className="sidebar-club" style={{ '--club': club.color } as CSSProperties}>
           <Badge club={club} />
@@ -70,12 +68,8 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         {groups.map((group) => (
-          <details
-            className="sidebar-section"
-            key={group.label}
-            open={group.primary || group.ids.includes(view)}
-          >
-            <summary>{group.label}</summary>
+          <section className="sidebar-section" key={group.label}>
+            <h2>{group.label}</h2>
             <SidebarGroup>
               <SidebarMenu>
                 {group.ids.map((id) => {
@@ -104,7 +98,7 @@ export function AppSidebar({
                 })}
               </SidebarMenu>
             </SidebarGroup>
-          </details>
+          </section>
         ))}
       </SidebarContent>
       <SidebarFooter>

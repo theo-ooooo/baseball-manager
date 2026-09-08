@@ -30,6 +30,7 @@ import {
 import { useWorld } from '../career/world-context';
 import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
 import { PositionTraining } from '../squad/management-panels';
+import { RosterMoveControl } from '../squad/roster-moves';
 
 type Props = {
   player: Player;
@@ -307,19 +308,7 @@ export function PlayerProfile(props: Props) {
                 </p>
               )}
               <PositionTraining p={player} act={act} busy={busy} />
-              <button
-                className="button secondary compact"
-                disabled={busy}
-                onClick={() =>
-                  void act({
-                    type: 'squad',
-                    id: player.id,
-                    value: player.squad === 'reserve' ? 'first' : 'reserve',
-                  })
-                }
-              >
-                {player.squad === 'reserve' ? '1군 등록' : '2군 이동'}
-              </button>
+              <RosterMoveControl player={player} g={game} act={act} busy={busy} />
               <dl className="profile-stat-grid">
                 {defensivePositions
                   .filter((pos) => (pos === 'P') === (player.pos === 'P'))

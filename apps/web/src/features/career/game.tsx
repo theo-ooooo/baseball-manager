@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ReservePanel } from '../squad/reserve-panel';
 import { useRouter } from 'next/navigation';
 import { PlayerProfile } from '../players/player-profile';
 import { useState, useEffect, useRef, type CSSProperties } from 'react';
@@ -32,12 +33,12 @@ import { InboxPanel, DynamicsPanel } from '../clubs/club-panels';
 import { SchedulePanel } from '../schedule/schedule-panel';
 import { dateLabel } from '@dugout/shared/calendar';
 import { StadiumReplay, LiveMatchScreen } from '../matches/stadium-replay';
-import { TacticalBoard, ReservePanel, CoachPanel } from '../squad/management-panels';
+import { TacticalBoard, CoachPanel } from '../squad/management-panels';
 import { Badge } from '../../components/game-ui';
 import { nav } from './game-navigation';
 import type { Act, CareerData } from './game-contracts';
 import { NewCareer } from './career-setup';
-import { Dashboard } from '../clubs/club-overview';
+import { Dashboard } from './dashboard';
 import { Squad } from '../squad/squad-panel';
 import { World } from '../clubs/world-panel';
 import { Market } from '../market/market-panel';
@@ -310,7 +311,7 @@ export function GameScreen({
               </button>
             </div>
           )}
-          {g.phase === 'preseason' && view !== 'home' && (
+          {g.phase === 'preseason' && view === 'tactics' && (
             <div className="preseason-banner">
               <strong>정규시즌 개막까지 {-g.day}일</strong>
               <span>
@@ -320,26 +321,22 @@ export function GameScreen({
               <button onClick={() => setView('tactics')}>전술 준비 →</button>
             </div>
           )}
-          <div className="page-title">
-            <h1>
-              {view === 'home'
-                ? '감독 사무실'
-                : view === 'player'
-                  ? '선수 상세'
-                  : nav.find((n) => n.id === view)?.label}
-            </h1>
-            <p>
-              {view === 'home'
-                ? `${g.manager} · ${club.name}`
-                : view === 'squad'
+          {view !== 'home' && (
+            <div className="page-title">
+              <h1>{view === 'player' ? '선수 상세' : nav.find((n) => n.id === view)?.label}</h1>
+              <p>
+                {view === 'squad'
                   ? `${g.roster.length}명 등록`
-                  : view === 'agents'
-                    ? `${g.deals.length}건의 협상`
-                    : view === 'staff'
-                      ? `${g.staff.length}명의 코칭 스태프`
-                      : league.name}
-            </p>
-          </div>
+                  : view === 'reserves'
+                    ? '명단을 확인하고 등록 선수를 교체하세요'
+                    : view === 'agents'
+                      ? `${g.deals.length}건의 협상`
+                      : view === 'staff'
+                        ? `${g.staff.length}명의 코칭 스태프`
+                        : league.name}
+              </p>
+            </div>
+          )}
           {view === 'player' && (
             <>
               <Link
@@ -381,7 +378,7 @@ export function GameScreen({
           )}
           {view === 'inbox' && <InboxPanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
-          {view === 'squad' && <Squad g={g} onPlayer={setPlayer} />}
+          {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}

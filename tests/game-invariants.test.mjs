@@ -264,3 +264,101 @@ test('Official KBO additions include Jeon Min-jae and distinguish same-name play
   const g = e.newGame('kbo-lotte', 'Real coaches', 'short', 10);
   assert.ok(g.staff.every((c) => c.real && c.sourceClub === g.club));
 });
+
+test('Full-roster exchanges preserve batting order, defense, contracts and accumulated stats', () => {
+  let g = e.newGame('kbo-lotte', 'Exchange', 'short', 81);
+  g = e.applyAction(g, { type: 'lineup', ids: [...g.lineup].reverse() });
+  const outgoing = g.roster.find((p) => p.id === g.lineup[2]);
+  const incoming = g.roster.find((p) => p.squad === 'reserve' && p.pos === outgoing.pos);
+  incoming.stats.h = 9;
+  incoming.reserveStats = { ...incoming.stats, h: 21 };
+  const before = structuredClone(g);
+  const changed = e.applyAction(g, {
+    type: 'squad',
+    id: incoming.id,
+    value: 'first',
+    replaceId: outgoing.id,
+  });
+  assert.equal(changed.roster.filter((p) => p.squad !== 'reserve').length, 28);
+  assert.equal(changed.roster.find((p) => p.id === outgoing.id).squad, 'reserve');
+  assert.deepEqual(
+    changed.lineup,
+    g.lineup.map((id) => (id === outgoing.id ? incoming.id : id)),
+  );
+  assert.deepEqual(
+    changed.defense,
+    Object.fromEntries(
+      Object.entries(g.defense).map(([pos, id]) => [pos, id === outgoing.id ? incoming.id : id]),
+    ),
+  );
+  assert.deepEqual(changed.pitching, g.pitching);
+  for (const p of changed.roster) {
+    const old = before.roster.find((player) => player.id === p.id);
+    for (const key of ['stats', 'reserveStats', 'salary', 'years', 'condition'])
+      assert.deepEqual(p[key], old[key]);
+  }
+  assert.deepEqual(g, before);
+});
+
+test('Pitcher exchanges keep rotation slots, selected starter and relief group assignments', () => {
+  const g = e.newGame('kbo-lotte', 'Pitcher exchange', 'short', 81);
+  const incoming = g.roster.find((p) => p.squad === 'reserve' && p.pos === 'P');
+  for (const outgoing of [
+    g.starter,
+    g.pitching.closer,
+    g.pitching.setup[0],
+    g.pitching.chase[0],
+  ].filter(Boolean)) {
+    const changed = e.applyAction(g, {
+      type: 'squad',
+      id: outgoing,
+      value: 'reserve',
+      replaceId: incoming.id,
+    });
+    const replace = (id) => (id === outgoing ? incoming.id : id);
+    for (const key of ['rotation', 'bullpen', 'setup', 'chase'])
+      assert.deepEqual(changed.pitching[key], g.pitching[key].map(replace));
+    assert.equal(changed.pitching.closer, replace(g.pitching.closer));
+    assert.equal(changed.starter, replace(g.starter));
+    assert.deepEqual(changed.lineup, g.lineup);
+  }
+});
+
+test('Exchanges allow the last catcher replacement and reject invalid targets without partial changes', () => {
+  let g = e.newGame('kbo-lotte', 'Minimums', 'short', 81);
+  const catchers = g.roster.filter((p) => p.pos === 'C' && p.squad !== 'reserve');
+  for (const p of catchers.slice(1))
+    g = e.applyAction(g, { type: 'squad', id: p.id, value: 'reserve' });
+  const outgoing = catchers[0];
+  const incoming = g.roster.find((p) => p.pos === 'C' && p.squad === 'reserve');
+  assert.throws(
+    () => e.applyAction(g, { type: 'squad', id: outgoing.id, value: 'reserve' }),
+    /포수/,
+  );
+  const changed = e.applyAction(g, {
+    type: 'squad',
+    id: outgoing.id,
+    value: 'reserve',
+    replaceId: incoming.id,
+  });
+  assert.equal(changed.roster.find((p) => p.id === incoming.id).squad, 'first');
+  const invalid = [
+    outgoing.id,
+    'missing-player',
+    g.roster.find((p) => p.squad === 'reserve' && p.pos === 'P').id,
+  ];
+  const before = structuredClone(g);
+  for (const replaceId of invalid)
+    assert.throws(() =>
+      e.applyAction(g, { type: 'squad', id: outgoing.id, value: 'reserve', replaceId }),
+    );
+  assert.deepEqual(g, before);
+  const bench = g.roster.find(
+    (p) => p.pos !== 'P' && p.squad !== 'reserve' && !g.lineup.includes(p.id),
+  );
+  if (bench) {
+    const demoted = e.applyAction(g, { type: 'squad', id: bench.id, value: 'reserve' });
+    assert.deepEqual(demoted.lineup, g.lineup);
+    assert.deepEqual(demoted.defense, g.defense);
+  }
+});

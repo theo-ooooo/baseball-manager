@@ -10,7 +10,8 @@
 - GitHub 배포 자격증명을 등록했고 `main` 검증 후 같은 산출물로 자동배포한다. 로컬 Wrangler OAuth 오류가 있어 배포는 GitHub의 별도 토큰을 사용한다.
 - 공개 Worker 주소는 `https://baseball-manager.kkwondev.workers.dev`다. 첫 `main` 자동배포(run `34196591204`)와 12개 마이그레이션 적용을 확인했고, 기존 커리어 revision 42와 선수·계약·성적·기록을 복사·검증했다. 원본 DB/비공개 백업은 보존했고 임시 이전 키는 제거했다. 이후 배포 버전은 최신 WORKLOG를 확인한다.
 - 투수 운용은 전술 화면의 별도 탭이며 필승조·추격조·일반 불펜을 추가했다. 기존 진행 경기는 시작 당시 교체 규칙으로 재개한다. 상세 검증과 적용 범위는 최신 WORKLOG를 따른다.
-- 사용자 선택으로 화면을 그라데이션 없는 밝은 단색 배경·진한 글자·파란 동작 버튼으로 통일했다. 공통 색상은 `apps/web/styles/globals.css`의 `:root`에서 관리한다. 어두운 메뉴와 구장 점수판은 별도의 밝은 글자색을 사용한다. 앞으로 커밋 메시지와 PR 제목·설명은 한글로 작성한다.
+- 사용자 피드백으로 화면 구조를 다시 설계했다. 메뉴와 카드는 흰색, 바탕은 그라데이션 없는 회색 단색이며 다음 경기·선수 관리·처리할 일을 중심으로 보여준다. 홈은 `features/career/dashboard.tsx`와 `styles/dashboard.css`에서 관리한다. 공통 색상은 `globals.css`의 `:root`, 어두운 구장 점수판 글자는 별도 `--stadium-fg`를 사용한다. 앞으로 커밋 메시지와 PR 제목·설명은 한글로 작성한다.
+- 1군·2군 등록 화면은 `features/squad/reserve-panel.tsx`로 분리했다. 28명 정원이나 포지션 최소 인원 때문에 단순 이동이 막히면 같은 화면에서 교체 선수를 고른다. `squad` 명령의 선택적 `replaceId`로 한 번에 저장하고, 나머지 타순·수비·투수 보직을 유지한다. 상세 설명과 검증 결과는 최신 WORKLOG를 따른다.
 
 > 폴더 재구성 후 현재 경로는 `docs/architecture.md`를 참고한다. 아래 과거 기록의 루트 `app/`, `db/`, `drizzle/`는 각각 `apps/web/app/`, `apps/api/db/`, `apps/api/drizzle/`로 이동했다.
 

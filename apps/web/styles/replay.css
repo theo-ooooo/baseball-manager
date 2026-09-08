@@ -70,7 +70,7 @@
   display: flex;
   align-items: stretch;
   background: #161a24ed;
-  color: var(--nav-fg);
+  color: var(--stadium-fg);
   border: 1px solid #74788877;
   border-radius: 3px;
   box-shadow: 0 5px 22px #0007;
@@ -187,7 +187,7 @@
   padding: 10px 16px;
   border-left: 3px solid #bfafd6;
   background: #151924ec;
-  color: var(--nav-fg);
+  color: var(--stadium-fg);
   box-shadow: 0 5px 20px #0006;
   display: grid;
   gap: 4px;

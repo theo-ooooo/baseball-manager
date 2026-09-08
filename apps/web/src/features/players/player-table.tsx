@@ -1,5 +1,5 @@
 'use client';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDown, ArrowUp } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -22,12 +22,16 @@ export function PlayerTable({
   kind = 'squad',
   compact = false,
   g,
+  onMove,
+  busy = false,
 }: {
   players: Player[];
   onPlayer: (p: Player) => void;
   kind?: string;
   compact?: boolean;
   g: GameState;
+  onMove?: (p: Player) => void;
+  busy?: boolean;
 }) {
   const { getClub } = useWorld();
   const own = new Set(g.roster.map((p) => p.id));
@@ -62,7 +66,7 @@ export function PlayerTable({
               <TableHead className="player-secondary-column">연봉</TableHead>
             </>
           )}
-          <TableHead />
+          <TableHead>{onMove ? '등록' : ''}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -148,13 +152,25 @@ export function PlayerTable({
                 </>
               )}
               <TableCell>
-                <button
-                  className="icon-button"
-                  aria-label={`${p.name} 상세 보기`}
-                  onClick={() => onPlayer(p)}
-                >
-                  <ArrowUpRight size={17} />
-                </button>
+                {onMove ? (
+                  <button
+                    className="roster-move"
+                    disabled={busy}
+                    aria-label={`${p.name} ${p.squad === 'reserve' ? '1군 등록' : '2군 이동'}`}
+                    onClick={() => onMove(p)}
+                  >
+                    {p.squad === 'reserve' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                    {p.squad === 'reserve' ? '1군' : '2군'}
+                  </button>
+                ) : (
+                  <button
+                    className="icon-button"
+                    aria-label={`${p.name} 상세 보기`}
+                    onClick={() => onPlayer(p)}
+                  >
+                    <ArrowUpRight size={17} />
+                  </button>
+                )}
               </TableCell>
             </TableRow>
           );

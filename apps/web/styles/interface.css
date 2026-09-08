@@ -1,6 +1,5 @@
 /* Setup, dashboard and management surfaces share the global light palette. */
 .ui-setup,
-.ui-home,
 .ui-scope {
   /* Mapped onto the global light tokens defined in globals.css :root. */
   --ui-bg: var(--bg);
@@ -19,13 +18,11 @@
   font-size: 15px;
   line-height: 1.5;
 }
-.ui-setup *,
-.ui-home * {
+.ui-setup * {
   box-sizing: border-box;
   min-width: 0;
 }
 .ui-setup button,
-.ui-home button,
 .ui-setup input {
   font: inherit;
   color: inherit;
@@ -33,25 +30,18 @@
 .ui-setup h1,
 .ui-setup h2,
 .ui-setup h3,
-.ui-home h2,
-.ui-home h3,
 .ui-setup p,
-.ui-home p,
 .ui-setup dl,
-.ui-home dl,
 .ui-setup ul,
-.ui-home ul,
 .ui-setup ol {
   margin: 0;
 }
 .ui-setup ul,
-.ui-setup ol,
-.ui-home ul {
+.ui-setup ol {
   padding: 0;
   list-style: none;
 }
-.ui-setup small,
-.ui-home small {
+.ui-setup small {
   font-size: 12.5px;
   color: var(--ui-muted);
   font-weight: 400;
@@ -550,8 +540,7 @@
 .ui-option:has(input:focus-visible),
 .ui-check:has(input:focus-visible),
 .ui-club:focus-visible,
-.ui-league:focus-visible,
-.ui-stat:focus-visible {
+.ui-league:focus-visible {
   outline: 2px solid var(--ui-brand);
   outline-offset: 2px;
 }
@@ -606,253 +595,14 @@
   color: var(--ui-muted);
 }
 
-/* ---------- Home dashboard ---------- */
-.ui-home {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.ui-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-.ui-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: left;
-  padding: 16px 18px;
-  border-radius: var(--ui-radius);
-  border: 1px solid var(--ui-line);
-  background: var(--ui-panel);
-  cursor: pointer;
-}
-.ui-stat:hover {
-  border-color: var(--line-strong);
-}
-.ui-stat-label {
-  font-size: 12.5px;
-  color: var(--ui-muted);
-  font-weight: 700;
-}
-.ui-stat-value {
-  font-size: 26px;
-  line-height: 1.2;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-}
-.ui-stat-value small {
-  font-size: 14px;
-  margin-left: 4px;
-}
-.ui-stat-sub {
-  font-size: 12.5px;
-  color: var(--ui-muted);
-}
 .ui-warn {
   color: var(--ui-warn);
 }
 .ui-danger {
   color: var(--ui-danger);
 }
-.ui-home-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-.ui-side {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.ui-card {
-  border-radius: var(--ui-radius);
-  border: 1px solid var(--ui-line);
-  background: var(--ui-panel);
-  overflow: hidden;
-}
-.ui-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--ui-line);
-}
-.ui-card-head h2 {
-  font-size: 15px;
-}
-.ui-next {
-  background: var(--ui-panel);
-}
-.ui-next-meta {
-  padding: 14px 18px 0;
-  font-size: 13px;
-  color: var(--ui-muted);
-}
-.ui-matchup {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 18px 8px;
-}
-.ui-matchup > div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-  padding: 12px 8px;
-  border-radius: 8px;
-}
-.ui-matchup > div.own {
-  background: var(--ui-brand-soft);
-}
-.ui-matchup strong {
-  font-size: 16px;
-}
-.ui-vs {
-  font-weight: 700;
-  color: var(--ui-muted);
-  font-size: 13px;
-}
-.ui-next-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding: 8px 18px 16px;
-}
-.ui-next-facts dt {
-  font-size: 12px;
-  color: var(--ui-muted);
-}
-.ui-next-facts dd {
-  margin: 2px 0 0;
-  font-weight: 700;
-  font-size: 14px;
-}
-.ui-next-facts .ui-link {
-  font-size: 14px;
-}
-.ui-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-  padding: 32px 22px 20px;
-  color: var(--ui-muted);
-}
-.ui-empty svg {
-  color: var(--ui-brand);
-}
-.ui-empty h3 {
-  font-size: 18px;
-  color: var(--ui-text);
-}
-.ui-empty p {
-  max-width: 460px;
-  font-size: 14px;
-}
-.ui-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 14px 18px 18px;
-  border-top: 1px solid var(--ui-line);
-}
-.ui-card-actions .ui-btn-primary {
-  flex: 1 1 200px;
-}
-.ui-todo li + li,
-.ui-recent li + li {
-  border-top: 1px solid var(--ui-line);
-}
-.ui-todo button,
-.ui-recent button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  font-size: 14px;
-  cursor: pointer;
-}
-.ui-todo button:hover,
-.ui-recent button:hover {
-  background: var(--ui-panel-2);
-}
-.ui-todo button > span {
-  flex: 1;
-}
-.ui-todo button > b {
-  color: var(--ui-brand);
-  font-variant-numeric: tabular-nums;
-}
-.ui-todo button.urgent > b {
-  color: var(--ui-warn);
-}
-.ui-todo button.quiet {
-  color: var(--ui-muted);
-}
-.ui-todo button.quiet > b {
-  color: var(--ui-muted);
-  font-weight: 400;
-}
-.ui-todo svg,
-.ui-recent svg {
-  color: var(--ui-muted);
-  flex: 0 0 auto;
-}
-.ui-result {
-  width: 30px;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 13px;
-  flex: 0 0 auto;
-  background: var(--ui-panel-2);
-  color: var(--ui-muted);
-}
-.ui-result.W {
-  background: var(--ok-bg);
-  color: var(--ok-text);
-}
-.ui-result.L {
-  background: var(--danger-bg);
-  color: var(--danger-text);
-}
-.ui-recent-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-}
-.ui-recent-text strong {
-  font-size: 14.5px;
-  font-variant-numeric: tabular-nums;
-}
-.ui-quiet {
-  padding: 18px;
-  font-size: 14px;
-  color: var(--ui-muted);
-}
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1100px) {
-  .ui-home-grid {
-    grid-template-columns: 1fr;
-  }
-}
 @media (max-width: 860px) {
   .ui-setup-grid {
     grid-template-columns: 1fr;
@@ -911,36 +661,6 @@
   .ui-setup-foot {
     flex-direction: column;
     gap: 6px;
-  }
-  .ui-stats {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .ui-stat {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: baseline;
-    column-gap: 10px;
-    padding: 12px 14px;
-  }
-  .ui-stat-label {
-    flex: 1 0 100%;
-  }
-  .ui-stat-value {
-    font-size: 22px;
-  }
-  .ui-matchup {
-    gap: 6px;
-    padding: 14px 10px 4px;
-  }
-  .ui-matchup strong {
-    font-size: 14px;
-  }
-  .ui-next-facts {
-    grid-template-columns: 1fr;
-  }
-  .ui-card-actions .ui-btn {
-    flex: 1 1 100%;
   }
 }
 
