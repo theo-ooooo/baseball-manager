@@ -5,27 +5,27 @@
   overflow: auto;
   padding: 0 !important;
   gap: 0;
-  border: 1px solid #56515f;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: #23232b;
-  color: #e9e7ed;
-  box-shadow: 0 25px 100px #000b;
+  background: var(--surface-1);
+  color: var(--text);
+  box-shadow: 0 25px 100px rgba(29, 78, 216, 0.16);
 }
 .stadium-replay-header {
   padding: 19px 54px 18px 22px;
-  border-bottom: 1px solid #403b49;
+  border-bottom: 1px solid var(--line);
 }
 .stadium-replay-header [data-slot='dialog-title'] {
   font-size: 18px;
   line-height: 1.4;
 }
 .stadium-replay-header [data-slot='dialog-title'] span {
-  color: #8e849b;
+  color: var(--text-3);
   font-size: 13px;
   margin: 0 8px;
 }
 .stadium-replay-header [data-slot='dialog-description'] {
-  color: #aca6b5;
+  color: var(--text-2);
   font-size: 13px;
   margin-top: 4px;
 }
@@ -39,7 +39,7 @@
 }
 .stadium-main {
   min-width: 0;
-  background: #17181c;
+  background: var(--bg);
 }
 .stadium-stage {
   position: relative;
@@ -70,6 +70,7 @@
   display: flex;
   align-items: stretch;
   background: #161a24ed;
+  color: var(--nav-fg);
   border: 1px solid #74788877;
   border-radius: 3px;
   box-shadow: 0 5px 22px #0007;
@@ -112,7 +113,7 @@
   border: 0 !important;
   padding: 0 !important;
   font-size: 10px !important;
-  color: #b1acbd;
+  color: #d7dbe6;
 }
 .stadium-inning i {
   display: inline-block;
@@ -186,6 +187,7 @@
   padding: 10px 16px;
   border-left: 3px solid #bfafd6;
   background: #151924ec;
+  color: var(--nav-fg);
   box-shadow: 0 5px 20px #0006;
   display: grid;
   gap: 4px;
@@ -222,8 +224,8 @@
 }
 .stadium-transport {
   padding: 16px 20px;
-  background: #282730;
-  border-top: 1px solid #504957;
+  background: var(--surface-1);
+  border-top: 1px solid var(--line);
 }
 .stadium-timeline {
   display: flex;
@@ -234,16 +236,16 @@
   flex: 1;
 }
 .stadium-timeline [data-slot='slider-range'] {
-  background: #a090ba;
+  background: var(--brand);
 }
 .stadium-timeline [data-slot='slider-thumb'] {
-  background: #e4dced;
-  border-color: #9785ac;
+  background: var(--surface-1);
+  border-color: var(--brand);
 }
 .stadium-timeline > span {
   font-size: 12px;
   white-space: nowrap;
-  color: #b5afbe;
+  color: var(--text-2);
 }
 .stadium-controls {
   display: flex;
@@ -256,7 +258,7 @@
   height: 34px;
   display: grid;
   place-items: center;
-  color: #c1b8cc;
+  color: var(--text-2);
 }
 .replay-play {
   display: flex;
@@ -265,8 +267,9 @@
   gap: 8px;
   min-width: 110px;
   height: 37px;
-  background: #786194;
-  border: 1px solid #a088b8;
+  background: var(--brand);
+  color: var(--brand-fg);
+  border: 1px solid var(--brand);
   border-radius: 3px;
   font-size: 14px;
   font-weight: 600;
@@ -274,10 +277,10 @@
 .replay-select {
   width: 100px !important;
   height: 34px !important;
-  background: #35303f;
-  border-color: #5a4d67;
+  background: var(--surface-2);
+  border-color: var(--line);
   font-size: 13px;
-  color: #e7ddf0;
+  color: var(--text);
 }
 .replay-finish {
   margin-left: auto;
@@ -285,23 +288,23 @@
   gap: 6px;
   align-items: center;
   font-size: 12px;
-  color: #b9afc6;
+  color: var(--text-2);
 }
 .stadium-controls button:disabled {
-  opacity: 0.4;
+  opacity: 0.6;
 }
 .stadium-controls button:focus-visible,
 .replay-innings button:focus-visible,
 .replay-events button:focus-visible {
-  outline: 2px solid #cbb7e5;
+  outline: 2px solid var(--brand);
   outline-offset: 3px;
 }
 .stadium-match-report {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border-left: 1px solid #494150;
-  background: #292630;
+  border-left: 1px solid var(--line);
+  background: var(--surface-1);
   padding: 18px 15px;
   max-height: 760px;
 }
@@ -309,7 +312,7 @@
   padding: 0 3px 17px;
 }
 .replay-duel small {
-  color: #aa9eb8;
+  color: var(--text-2);
   font-size: 12px;
 }
 .replay-duel h3 {
@@ -319,26 +322,26 @@
 }
 .replay-duel p {
   font-size: 13px;
-  color: #c3b7cf;
+  color: var(--text-2);
 }
 .replay-innings {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   padding: 12px 0;
-  border-block: 1px solid #48404f;
+  border-block: 1px solid var(--line);
 }
 .replay-innings button {
   font-size: 12px;
   min-width: 35px;
   min-height: 31px;
   border-radius: 2px;
-  border: 1px solid #4a4056;
+  border: 1px solid var(--line);
 }
 .replay-innings button.selected {
-  background: #61516f;
-  color: #fff;
-  border-color: #a090b1;
+  background: var(--brand);
+  color: var(--brand-fg);
+  border-color: var(--brand);
 }
 .replay-events {
   flex: 1;
@@ -353,13 +356,13 @@
   width: 100%;
   padding: 11px 8px;
   text-align: left;
-  border-bottom: 1px solid #423a49;
+  border-bottom: 1px solid var(--line);
   border-left: 2px solid transparent;
   font-size: 13px;
   line-height: 1.45;
 }
 .replay-events button small {
-  color: #a798b7;
+  color: var(--text-2);
   font-size: 11px;
 }
 .replay-events button > span {
@@ -367,17 +370,17 @@
 }
 .replay-events button b {
   font-size: 12px;
-  color: #b9a9c8;
+  color: var(--text-2);
   font-weight: 500;
 }
 .replay-events button.current {
-  background: #463a51;
-  border-left-color: #bb9cda;
+  background: var(--brand-soft);
+  border-left-color: var(--brand);
 }
 .replay-note {
   font-size: 12px;
   line-height: 1.65;
-  color: #a89cb5;
+  color: var(--text-2);
   padding: 14px 2px;
 }
 .stadium-match-report > .button {
@@ -473,7 +476,7 @@
   .stadium-match-report {
     max-height: 390px;
     border-left: 0;
-    border-top: 1px solid #494150;
+    border-top: 1px solid var(--line);
     padding: 14px;
   }
   .replay-duel {
@@ -516,16 +519,16 @@
   flex-wrap: wrap;
 }
 .live-controls select {
-  background: #302c39;
+  background: var(--surface-2);
   padding: 8px;
-  border: 1px solid #655773;
+  border: 1px solid var(--line);
 }
 .live-log {
-  border-bottom: 1px solid #493f53;
+  border-bottom: 1px solid var(--line);
   padding: 10px 0;
 }
 .live-log small {
-  color: #b7a9c6;
+  color: var(--text-2);
 }
 .live-log p {
   font-size: 13px;
@@ -540,7 +543,7 @@
 }
 .preview-lineup p {
   font-size: 12px;
-  color: #d1c0df;
+  color: var(--text);
 }
 .preview-lineup small {
   font-size: 12px;

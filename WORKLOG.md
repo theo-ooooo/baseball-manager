@@ -267,4 +267,22 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - GitHub PR #1 was merged at main `1714297`. Its automatic test and production jobs both succeeded (Actions run `34196591204`), applying all 12 migrations and publishing `https://baseball-manager.kkwondev.workers.dev` on the verified personal Cloudflare account. Live health reports Vinext/NestJS/D1 and catalog v7.
 - Downloaded a raw owner-scoped backup from the existing private Site, stored it and the new guest recovery key with private filesystem permissions outside Git, and imported into the separately provisioned D1. The importer compared every value in all ten tables after changing only the owner ID: 1 career, 42 players, 42 contracts, 5 staff, 137 standings, 5 archived matches, 18 finance entries and 28 action records; negotiations and transfers were empty.
 - Independently opened the new guest career through the normal API and verified revision 42, budget, date, year, club, complete history, lineup, selected starter, player stats and contracts against the original backup. The source database remains intact. Temporary transfer values were removed from both environments; the public Worker's secret list is empty. Backup/recovery values are not in Git.
-- The private Site's source `ac74a36` (version 6) deployed successfully with the raw-export restriction and environment revision 2. Pitcher-group and development follow-up commits are awaiting their own validated release; the first successful main deployment above does not yet contain them.
+- The private Site's source `ac74a36` (version 6) deployed successfully with the raw-export restriction and environment revision 2. Pitcher-group and development follow-up changes use the same validated automatic main release workflow; the first successful main deployment above predates those follow-up changes.
+
+## 2026-09-08 — 한글 작업 지침과 최종 배포 검증
+
+- 사용자 요청에 따라 앞으로의 커밋 메시지와 PR 제목·설명은 한글로 작성하도록 AGENTS.md에 기록했다. 열려 있는 PR #2의 제목·설명도 한글로 바꿨다.
+- 투수 보직 후속 소스 `ed56e16`의 GitHub 브랜치 검증(run `34198942712`)이 성공했다. 최종 운영 번들에서도 별도 테스트 게스트의 첫 선발은 박세웅, 마무리는 김원중으로 분리되고, 필승조 2명·추격조 4명이 표시되는 것을 확인했다. 기존 커리어의 선택은 그대로 보존한다.
+- 후속 Sites 버전 7을 검증된 소스·아카이브로 저장하고 기존 소유자 전용 범위에 배포를 시작했다. 공개 Worker는 PR 검증 통과 후 main 병합으로 자동배포한다. 인증·D1 이전은 완료되어 추가적인 계정 설정이나 데이터 이전 차단 요인은 없다. 배포 결과는 각 배포 상태와 GitHub Actions 기록으로 확인한다.
+
+## 2026-09-08 — 투수 보직 운영 배포 확인
+
+- PR #2가 main `3104fc2`에 병합됐고 자동 검증·Cloudflare 배포(run `34199197135`)가 모두 성공했다. 공개 API에서 catalog v7과 기존 커리어 revision 42, 필승조·추격조 배열을 확인했다. 기존 선발·타순·예산·날짜·경기 기록은 보존됐다.
+- 원본 소유자 전용 Sites 버전 7도 배포 `appgdep_6a9fb838406081918ce0c7f863b42d4e`가 성공했다. 기존 프로젝트 identity, 비공개 접근 범위와 환경 revision 2를 유지했다.
+
+## 2026-09-08 — 밝은 테마와 화면별 글자 대비 개선
+
+- 사용자 추천안 선택에 따라 회색 배경·흰색 카드·진한 남색 글자·파란 동작 버튼으로 전환했다. 겹쳐 있던 전역 팔레트를 `globals.css`의 공통 변수로 정리하고 관리 화면·입력·상태 배지·알림·경기 창에 연결했다. 메뉴와 구장 점수판에는 어두운 배경용 밝은 글자를 명시했다.
+- 개발 브라우저에서 주요 14개 화면의 직접 텍스트 2,341개를 검사했고, 설정 2단계·선수 상세/성적·도움말·투수 운용·모바일 선수단과 실제 타석 진행 화면도 확인했다. 마지막 경기 점수판 수정 후 해당 화면의 텍스트 대비 위반이 검출되지 않았다. 이 검사는 SVG·이미지를 포함한 전체 접근성 인증이 아니며, 구장과 390px/1440px 화면은 별도로 눈으로 확인했다.
+- 모바일 설정·선수단·선수 상세·투수 운용·경기 창에서 페이지 전체 가로 넘침이 없고, 별도 로컬 게스트로 타석 진행과 경기 창을 확인했다. 운영 커리어를 진행하거나 데이터를 초기화하지 않았다. 테마 변경에는 DB 마이그레이션이 필요하지 않다.
+- 최종 운영 빌드와 63개 테스트, TypeScript, 경고 없는 lint, 포맷 검증이 통과했다. 배포는 검증된 소스를 한글 PR로 main에 연결하고 자동배포 결과를 확인하며, 기존 비공개 Site에도 별도 버전을 발행한다. 계정·이전 차단 요인은 없다.

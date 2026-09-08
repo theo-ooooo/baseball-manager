@@ -1,19 +1,19 @@
-/* Scoped interface for the career setup flow (.ui-setup) and the home dashboard (.ui-home).
-   Calm navy surfaces with a teal accent. Nothing here targets global element selectors. */
+/* Setup, dashboard and management surfaces share the global light palette. */
 .ui-setup,
 .ui-home,
 .ui-scope {
-  --ui-bg: #0f1520;
-  --ui-panel: #151d2c;
-  --ui-panel-2: #1b2638;
-  --ui-line: #26324a;
-  --ui-text: #e7ecf4;
-  --ui-muted: #94a1ba;
-  --ui-teal: #2fd3c0;
-  --ui-teal-ink: #062a27;
-  --ui-teal-soft: rgba(47, 211, 192, 0.14);
-  --ui-warn: #f2c56b;
-  --ui-danger: #f0868d;
+  /* Mapped onto the global light tokens defined in globals.css :root. */
+  --ui-bg: var(--bg);
+  --ui-panel: var(--surface-1);
+  --ui-panel-2: var(--surface-2);
+  --ui-line: var(--line);
+  --ui-text: var(--text);
+  --ui-muted: var(--text-3);
+  --ui-brand: var(--brand);
+  --ui-brand-ink: var(--brand-fg);
+  --ui-brand-soft: var(--brand-soft);
+  --ui-warn: var(--warn-text);
+  --ui-danger: var(--danger-text);
   --ui-radius: 10px;
   color: var(--ui-text);
   font-size: 15px;
@@ -77,16 +77,16 @@
     border-color 0.15s;
 }
 .ui-btn:disabled {
-  opacity: 0.55;
+  opacity: 0.6;
   cursor: default;
 }
-.ui-btn-primary {
-  background: var(--ui-teal);
-  border-color: var(--ui-teal);
-  color: var(--ui-teal-ink);
+.ui-btn.ui-btn-primary {
+  background: var(--ui-brand);
+  border-color: var(--ui-brand);
+  color: var(--ui-brand-ink);
 }
 .ui-btn-primary:hover:not(:disabled) {
-  background: #5ce3d3;
+  background: var(--brand-hover);
 }
 .ui-btn-ghost {
   background: transparent;
@@ -107,7 +107,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--ui-teal);
+  color: var(--ui-brand);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -136,8 +136,8 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
-  background: var(--ui-teal-soft);
-  color: var(--ui-teal);
+  background: var(--ui-brand-soft);
+  color: var(--ui-brand);
   white-space: nowrap;
 }
 .ui-alert {
@@ -147,17 +147,17 @@
   gap: 12px;
   padding: 12px 16px;
   margin-bottom: 20px;
-  border: 1px solid #6b3a40;
+  border: 1px solid #efb3b3;
   border-radius: var(--ui-radius);
-  background: #2b1a1e;
-  color: #ffc9cd;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 /* ---------- Setup page ---------- */
 .ui-setup {
   min-height: 100vh;
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(47, 211, 192, 0.08), transparent 50%), var(--ui-bg);
+    radial-gradient(ellipse at 20% 0%, rgba(29, 78, 216, 0.08), transparent 50%), var(--ui-bg);
 }
 .ui-setup-header {
   height: 72px;
@@ -198,11 +198,11 @@
 }
 .ui-steps li.current {
   color: var(--ui-text);
-  border-color: var(--ui-teal);
-  background: var(--ui-teal-soft);
+  border-color: var(--ui-brand);
+  background: var(--ui-brand-soft);
 }
 .ui-steps li.done {
-  color: var(--ui-teal);
+  color: var(--ui-brand);
 }
 .ui-step-no {
   width: 22px;
@@ -215,8 +215,8 @@
   font-size: 12px;
 }
 .ui-steps li.current .ui-step-no {
-  background: var(--ui-teal);
-  color: var(--ui-teal-ink);
+  background: var(--ui-brand);
+  color: var(--ui-brand-ink);
 }
 .ui-step-title {
   margin-bottom: 20px;
@@ -266,8 +266,8 @@
 }
 .ui-chip.active {
   color: var(--ui-text);
-  border-color: var(--ui-teal);
-  background: var(--ui-teal-soft);
+  border-color: var(--ui-brand);
+  background: var(--ui-brand-soft);
 }
 .ui-league-row {
   display: flex;
@@ -292,8 +292,8 @@
   cursor: pointer;
 }
 .ui-league.active {
-  border-color: var(--ui-teal);
-  background: var(--ui-teal-soft);
+  border-color: var(--ui-brand);
+  background: var(--ui-brand-soft);
 }
 .ui-league-flag {
   grid-row: span 2;
@@ -337,12 +337,12 @@
     background 0.15s;
 }
 .ui-club:hover {
-  border-color: #3b4a68;
+  border-color: var(--line-strong);
 }
 .ui-club.active {
-  border-color: var(--ui-teal);
-  background: var(--ui-teal-soft);
-  box-shadow: inset 3px 0 0 var(--club, var(--ui-teal));
+  border-color: var(--ui-brand);
+  background: var(--ui-brand-soft);
+  box-shadow: inset 3px 0 0 var(--club, var(--ui-brand));
 }
 .ui-club-text {
   display: flex;
@@ -357,7 +357,7 @@
 }
 .ui-club-check {
   margin-left: auto;
-  color: var(--ui-teal);
+  color: var(--ui-brand);
   flex: 0 0 auto;
 }
 .ui-action-bar {
@@ -372,9 +372,9 @@
   padding: 14px 18px;
   border-radius: var(--ui-radius);
   border: 1px solid var(--ui-line);
-  background: rgba(21, 29, 44, 0.96);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(8px);
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 -8px 30px rgba(23, 43, 68, 0.12);
 }
 .ui-selected {
   display: flex;
@@ -399,7 +399,7 @@
 .ui-club-card {
   border-radius: var(--ui-radius);
   border: 1px solid var(--ui-line);
-  border-top: 4px solid var(--club, var(--ui-teal));
+  border-top: 4px solid var(--club, var(--ui-brand));
   background: var(--ui-panel);
   padding: 20px;
 }
@@ -524,7 +524,7 @@
   font-weight: 700;
 }
 .ui-input:focus {
-  outline: 2px solid var(--ui-teal);
+  outline: 2px solid var(--ui-brand);
   outline-offset: 1px;
 }
 .ui-option-row {
@@ -553,13 +553,13 @@
 .ui-club:focus-visible,
 .ui-league:focus-visible,
 .ui-stat:focus-visible {
-  outline: 2px solid var(--ui-teal);
+  outline: 2px solid var(--ui-brand);
   outline-offset: 2px;
 }
 .ui-option.active,
 .ui-check.active {
-  border-color: var(--ui-teal);
-  background: var(--ui-teal-soft);
+  border-color: var(--ui-brand);
+  background: var(--ui-brand-soft);
 }
 .ui-option input {
   position: absolute;
@@ -583,7 +583,7 @@
   width: 18px;
   height: 18px;
   margin: 3px 0 0;
-  accent-color: var(--ui-teal);
+  accent-color: var(--ui-brand);
   flex: 0 0 auto;
 }
 .ui-check span {
@@ -630,7 +630,7 @@
   cursor: pointer;
 }
 .ui-stat:hover {
-  border-color: #3b4a68;
+  border-color: var(--line-strong);
 }
 .ui-stat-label {
   font-size: 12.5px;
@@ -710,7 +710,7 @@
   border-radius: 8px;
 }
 .ui-matchup > div.own {
-  background: var(--ui-teal-soft);
+  background: var(--ui-brand-soft);
 }
 .ui-matchup strong {
   font-size: 16px;
@@ -748,7 +748,7 @@
   color: var(--ui-muted);
 }
 .ui-empty svg {
-  color: var(--ui-teal);
+  color: var(--ui-brand);
 }
 .ui-empty h3 {
   font-size: 18px;
@@ -793,7 +793,7 @@
   flex: 1;
 }
 .ui-todo button > b {
-  color: var(--ui-teal);
+  color: var(--ui-brand);
   font-variant-numeric: tabular-nums;
 }
 .ui-todo button.urgent > b {
@@ -825,12 +825,12 @@
   color: var(--ui-muted);
 }
 .ui-result.W {
-  background: var(--ui-teal-soft);
-  color: var(--ui-teal);
+  background: var(--ok-bg);
+  color: var(--ok-text);
 }
 .ui-result.L {
-  background: rgba(240, 134, 141, 0.14);
-  color: var(--ui-danger);
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 .ui-recent-text {
   flex: 1;
@@ -960,28 +960,28 @@
   font-weight: 700;
   line-height: 1.5;
   white-space: nowrap;
-  background: rgba(148, 161, 186, 0.16);
-  color: #c3ccdc;
+  background: var(--surface-3);
+  color: var(--text-2);
 }
 .ui-role-starter {
-  background: rgba(47, 211, 192, 0.16);
-  color: #2fd3c0;
+  background: var(--brand-soft);
+  color: var(--brand);
 }
 .ui-role-closer {
-  background: rgba(240, 134, 141, 0.16);
-  color: #f5a3a8;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 .ui-role-setup {
-  background: rgba(242, 197, 107, 0.18);
-  color: #f2c56b;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 .ui-role-chase {
-  background: rgba(134, 166, 240, 0.18);
-  color: #a9bff5;
+  background: var(--ok-bg);
+  color: var(--ok-text);
 }
 .ui-role-reserve {
-  background: rgba(148, 161, 186, 0.1);
-  color: #8e99ad;
+  background: var(--surface-3);
+  color: var(--text-3);
 }
 /* Small screens hide .player-secondary-column, so the role repeats under the name there only. */
 .ui-role-inline {
@@ -992,14 +992,14 @@
   min-height: 34px;
   padding: 4px 8px;
   border-radius: 7px;
-  border: 1px solid var(--ui-line, #26324a);
-  background: var(--ui-bg, #0f1520);
-  color: var(--ui-text, #e7ecf4);
+  border: 1px solid var(--ui-line, var(--line));
+  background: var(--surface-1);
+  color: var(--ui-text, var(--brand));
   font-size: 13px;
   font-weight: 700;
 }
 .ui-role-select:focus-visible {
-  outline: 2px solid var(--ui-teal, #2fd3c0);
+  outline: 2px solid var(--ui-brand, var(--brand));
   outline-offset: 1px;
 }
 .ui-next-tag {
@@ -1009,12 +1009,12 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: var(--ui-teal-soft, rgba(47, 211, 192, 0.14));
-  color: var(--ui-teal, #2fd3c0);
+  background: var(--ui-brand-soft, var(--brand-soft));
+  color: var(--ui-brand, var(--brand));
 }
 .ui-next-tag.ui-warn {
-  background: rgba(242, 197, 107, 0.16);
-  color: var(--ui-warn, #f2c56b);
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 .ui-role-chips {
   display: flex;
@@ -1109,8 +1109,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--ui-teal);
-  color: var(--ui-teal-ink);
+  background: var(--ui-brand);
+  color: var(--ui-brand-ink);
   font-size: 11px;
 }
 .ui-pitcher-name small {
@@ -1118,7 +1118,7 @@
   color: var(--ui-muted);
 }
 .ui-pitcher-name:hover strong {
-  color: var(--ui-teal);
+  color: var(--ui-brand);
 }
 .ui-pitcher-controls {
   display: flex;
