@@ -1,0 +1,63 @@
+.negotiation-dialog {
+  background: var(--surface-1);
+  color: var(--text);
+  max-width: 580px;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.negotiation-dialog form {
+  display: grid;
+  gap: 16px;
+}
+.negotiation-dialog input,
+.negotiation-dialog select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text);
+  min-height: 42px;
+  padding: 8px;
+}
+.negotiation-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.negotiation-history {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 12px;
+  font-size: 13px;
+}
+.negotiation-history summary {
+  cursor: pointer;
+  color: var(--text-2);
+}
+.negotiation-history ol {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 12px;
+}
+.negotiation-history small {
+  color: var(--text-3);
+}
+.negotiation-history p {
+  margin: 4px 0;
+}
+.coach-negotiations {
+  margin: 24px 0;
+}
+.coach-negotiations > h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+@media (max-width: 600px) {
+  .negotiation-dialog .contract-inputs {
+    grid-template-columns: 1fr;
+  }
+}

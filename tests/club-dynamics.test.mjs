@@ -1,3 +1,4 @@
+import { waitForReply } from './helpers/recruitment.mjs';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { buildSync } from 'esbuild';
@@ -22,6 +23,7 @@ test('A selling club protects its core player even when the agent salary offer i
     .sort((a, b) => e.overall(b) - e.overall(a))[0];
   g.budget = 1e8;
   g = e.negotiate(g, target.id, 1e5, 3);
+  g = waitForReply(e, g, g.deals[0].id);
   assert.equal(g.deals[0].seller.status, 'refused');
   assert.equal(g.deals[0].status, 'rejected');
   assert.throws(() => e.signDeal(g, g.deals[0].id));

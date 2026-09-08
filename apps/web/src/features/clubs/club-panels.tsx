@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import type { GameState, Player } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
@@ -109,6 +110,14 @@ export function InboxPanel({
             <small>{selected.date || dateLabel(g, selected.day)}</small>
             <h3>{selected.title}</h3>
             <p>{selected.body}</p>
+            {selected.actionView && (
+              <Link className="button secondary compact" href={`/?view=${selected.actionView}`}>
+                {selected.actionView === 'agents' || selected.actionView === 'staff'
+                  ? '협상 확인하기'
+                  : '선수단 확인하기'}{' '}
+                →
+              </Link>
+            )}
             {selected.playerId && g.roster.some((p) => p.id === selected.playerId) && (
               <button
                 className="text-button"

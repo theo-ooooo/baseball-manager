@@ -168,7 +168,16 @@ test('Daily calendar progression persists one date and a retried request cannot 
 test('Negotiation, signing, reselling and coaches update relational rows and accounting atomically', async () => {
   const catalog = (await call('/api/catalog')).body;
   const p = catalog.players.find((p) => p.club === 'fa');
-  const negotiated = await action({ type: 'negotiate', id: p.id, salary: p.salary * 2, years: 3 });
+  let negotiated = await action({ type: 'negotiate', id: p.id, salary: p.salary * 2, years: 3 });
+  assert.equal(negotiated.state.deals[0].status, 'pending');
+  const premature = await call('/api/career', {
+    type: 'sign',
+    id: negotiated.state.deals[0].id,
+    revision: negotiated.revision,
+  });
+  assert.equal(premature.status, 400);
+  while (negotiated.state.deals[0].status === 'pending')
+    negotiated = await action({ type: 'advance', count: 1 });
   assert.notEqual(negotiated.state.deals[0].status, 'rejected');
   const deal = negotiated.state.deals[0],
     requestId = crypto.randomUUID();
@@ -215,7 +224,19 @@ test('Negotiation, signing, reselling and coaches update relational rows and acc
     ['signing', 'sale'],
   );
   const coach = catalog.coaches.find((c) => c.role === '투수' && c.skill > 85);
-  const coached = await action({ type: 'coach', id: coach.id });
+  let coached = await action({
+    type: 'coachOffer',
+    id: coach.id,
+    salary: coach.salary * 2,
+    years: 3,
+  });
+  assert.equal(coached.state.coachDeals[0].status, 'pending');
+  const coachDealId = coached.state.coachDeals[0].id;
+  const waiting = (await call()).body;
+  assert.equal(waiting.state.coachDeals[0].id, coachDealId);
+  while (coached.state.coachDeals[0].status === 'pending')
+    coached = await action({ type: 'advance', count: 1 });
+  coached = await action({ type: 'signCoach', id: coachDealId });
   const staff = await db
     .prepare('SELECT coach_id FROM career_staff WHERE user_id=? AND role=?')
     .bind('test-owner-a', '투수')

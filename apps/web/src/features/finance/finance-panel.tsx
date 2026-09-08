@@ -70,9 +70,11 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
                     start: '구단 운영 자금',
                     advance: '경기 수입 · 급여',
                     continue: '날짜 진행 · 경기 수입 · 급여',
+                    continueDay: '날짜 진행 · 경기 수입 · 급여',
                     sign: '선수 계약',
                     sell: '선수 매각',
                     coach: '코치 계약',
+                    signCoach: '코치 계약 · 교체 보상금',
                     nextSeason: '새 시즌 지원금',
                   }[e.kind] || e.kind}
                 </TableCell>

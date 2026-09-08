@@ -56,6 +56,7 @@ export type Coach = {
   sourceClub?: string;
   source?: string;
   verifiedRole?: string;
+  contractUntil?: number;
 };
 export type Standing = {
   club: string;
@@ -84,6 +85,15 @@ export type Result = {
   date?: string;
   fixtureId?: string;
 };
+export type NegotiationStatus =
+  'pending' | 'accepted' | 'counter' | 'rejected' | 'withdrawn' | 'expired';
+export type NegotiationRound = {
+  day: number;
+  year: number;
+  salary: number;
+  years: number;
+  message: string;
+};
 export type Deal = {
   id: string;
   player: Player;
@@ -92,11 +102,31 @@ export type Deal = {
   years: number;
   fee: number;
   agentFee: number;
-  status: 'accepted' | 'counter' | 'rejected';
+  status: NegotiationStatus;
   message: string;
   day: number;
   year?: number;
   seller?: SellerDecision;
+  stage?: 'club' | 'player';
+  responseDay?: number;
+  expires?: number;
+  history?: NegotiationRound[];
+};
+export type CoachDeal = {
+  id: string;
+  coach: Coach;
+  role: string;
+  salary: number;
+  years: number;
+  day: number;
+  year: number;
+  status: NegotiationStatus;
+  message: string;
+  responseDay?: number;
+  expires?: number;
+  replacesId?: string;
+  compensation: number;
+  history: NegotiationRound[];
 };
 export type GameState = {
   version: 1;
@@ -118,6 +148,7 @@ export type GameState = {
   history: Result[];
   news: NewsItem[];
   deals: Deal[];
+  coachDeals?: CoachDeal[];
   ownership: Record<string, string>;
   transferred: Player[];
   past: { year: number; rank: number; w: number; l: number; champion: string }[];
@@ -328,6 +359,7 @@ export type NewsItem = {
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
+  actionView?: 'agents' | 'staff' | 'squad' | 'market';
 };
 export type SellerDecision = {
   club: string;
