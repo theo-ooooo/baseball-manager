@@ -29,20 +29,30 @@ export function roundPairs(ids: string[], round: number) {
   return pairs;
 }
 const winter = new Set(['lmp', 'lidom', 'lvbp', 'lbprc', 'abl']);
+const officialIndexes = new WeakMap<WorldCatalog, Map<string, Fixture[]>>();
 export function createCalendarView(world: WorldCatalog) {
+  let officialByLeague = officialIndexes.get(world);
+  if (!officialByLeague) {
+    officialByLeague = new Map();
+    for (const fixture of world.fixtures || []) {
+      const list = officialByLeague.get(fixture.league);
+      if (list) list.push(fixture);
+      else officialByLeague.set(fixture.league, [fixture]);
+    }
+    for (const list of officialByLeague.values())
+      list.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    officialIndexes.set(world, officialByLeague);
+  }
+  const officialFixtures = officialByLeague;
   const cache = new Map<string, Fixture[]>(),
     dateCache = new Map<string, Map<string, Fixture[]>>();
   const official = (g: GameState, lid: string) =>
     g.mode === 'full' &&
     g.year === world.year &&
     !g.calendar?.remaining &&
-    (world.fixtures || []).some((f) => f.league === lid);
+    officialFixtures.has(lid);
   function opening(g: GameState, lid: string) {
-    if (official(g, lid))
-      return (world.fixtures || [])
-        .filter((f) => f.league === lid)
-        .map((f) => f.date)
-        .sort()[0];
+    if (official(g, lid)) return officialFixtures.get(lid)![0].date;
     return `${g.year}-${winter.has(lid) ? '10-15' : '03-28'}`;
   }
   const key = (g: GameState, lid: string) =>
@@ -51,7 +61,7 @@ export function createCalendarView(world: WorldCatalog) {
     const k = key(g, lid);
     if (cache.has(k)) return cache.get(k)!;
     let result: Fixture[] = [];
-    if (official(g, lid)) result = (world.fixtures || []).filter((f) => f.league === lid);
+    if (official(g, lid)) return officialFixtures.get(lid)!;
     else {
       const ids = world.clubs.filter((c) => c.league === lid).map((c) => c.id),
         league = world.leagues.find((l) => l.id === lid)!;
@@ -137,6 +147,7 @@ export function createCalendarView(world: WorldCatalog) {
   return { fixtures, onDate, ownFixtures, opening, scheduleNote };
 }
 export function prepareCalendar(g: GameState, world: WorldCatalog, fresh = false) {
+  if (g.calendar) return;
   const view = createCalendarView(world),
     lid = world.clubs.find((c) => c.id === g.club)!.league;
   if (!g.calendar) {

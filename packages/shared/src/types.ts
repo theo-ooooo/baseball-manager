@@ -294,6 +294,8 @@ export type ReplayPlay = {
   before: ReplayState;
   after: ReplayState;
   steal?: { runner: string; safe: boolean };
+  /** Actual defensive alignment at this plate appearance, after substitutions. */
+  defense?: Defense;
 };
 export type ReplayTeam = {
   lineup: string[];
@@ -416,4 +418,38 @@ export type LiveMatch = {
   opponents?: Player[][];
   /** Existing matches retain their original relief decisions when resumed. */
   pitchingVersion?: 2;
+  /** Saved once per generation; playback never invokes the simulator. */
+  timeline?: Result;
+  timelineVersion?: number;
+  playbackId?: string;
+  changes?: MatchChange[];
+  /** Server-only frozen inputs and deferred effects. Never returned by the API. */
+  prepared?: {
+    input: MatchInput;
+    effects: MatchPlayerEffect[];
+  };
+};
+export type MatchInput = Pick<
+  GameState,
+  | 'year'
+  | 'day'
+  | 'club'
+  | 'roster'
+  | 'lineup'
+  | 'starter'
+  | 'staff'
+  | 'tactic'
+  | 'pitching'
+  | 'instructions'
+  | 'tacticFamiliarity'
+  | 'defense'
+  | 'calendar'
+>;
+export type MatchPlayerEffect = Pick<Player, 'id' | 'stats' | 'condition' | 'familiarity'>;
+export type MatchChange = {
+  cursor: number;
+  lineup: string[];
+  pitcher: string;
+  defense: Defense;
+  instructions: TeamInstructions;
 };

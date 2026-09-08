@@ -13,7 +13,7 @@ buildSync({
   outfile: out,
 });
 const { engine: e } = createRequire(import.meta.url)(out);
-test('Live game starts without outcomes, persists one PA at a time and commits the completed game once', () => {
+test('Prepared game keeps the visible cursor separate and commits the completed game once', () => {
   let g = e.newGame('kbo-lotte', 'Live', 'short', 321);
   g = e.applyAction(g, { type: 'continue' });
   assert.equal(g.day, -22);
@@ -34,7 +34,7 @@ test('Live game starts without outcomes, persists one PA at a time and commits t
   const restored = JSON.parse(JSON.stringify(g));
   assert.deepEqual(
     e.applyAction(restored, { type: 'stepMatch' }).liveMatch,
-    e.applyAction(g, { type: 'stepMatch' }).liveMatch,
+    JSON.parse(JSON.stringify(e.applyAction(g, { type: 'stepMatch' }).liveMatch)),
   );
   let steps = 0;
   while (!g.liveMatch.finished && steps++ < 400) g = e.applyAction(g, { type: 'stepMatch' });
@@ -50,7 +50,7 @@ test('Live game starts without outcomes, persists one PA at a time and commits t
   assert.equal(g.history[0].homeScore, final.homeScore);
   assert.equal(g.history[0].awayScore, final.awayScore);
   assert.deepEqual(g.history[0].log, final.log);
-  assert.throws(() => e.applyAction(g, { type: 'completeMatch' }), /끝까지/);
+  assert.throws(() => e.applyAction(g, { type: 'completeMatch' }), /진행 중/);
 });
 test('Pitcher roles use disjoint groups and can be reassigned', () => {
   let g = e.newGame('kbo-lotte', 'Pitching', 'short', 51);
@@ -94,7 +94,7 @@ test('Legacy/manual starters survive catalog reads, rest dates and saved tactics
   assert.ok(g.pitching.bullpen.includes(closer));
 });
 
-test('Live postseason remains deterministic through completion and does not publish a future result', () => {
+test('Prepared postseason remains deterministic through completion and keeps the visible score at the cursor', () => {
   let g = e.newGame('kbo-lotte', 'Post', 'short', 91);
   g.phase = 'final';
   g.day = 50;

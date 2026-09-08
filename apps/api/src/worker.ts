@@ -43,9 +43,16 @@ async function bootstrap() {
   if (!fetch) throw new Error('Cloudflare HTTP bridge is missing its fetch handler');
   return { app, fetch };
 }
-const ready = bootstrap();
+// SSR and static requests must not start NestJS or open the HTTP bridge.
+let ready: ReturnType<typeof bootstrap> | undefined;
+function application() {
+  return (ready ??= bootstrap().catch((error) => {
+    ready = undefined;
+    throw error;
+  }));
+}
 const hot = (import.meta as ImportMeta & { hot?: { dispose(cleanup: () => void): void } }).hot;
-if (hot) hot.dispose(() => void ready.then(({ app }) => app.close()));
+if (hot) hot.dispose(() => void ready?.then(({ app }) => app.close()));
 const worker = {
   async fetch(
     request: Request<unknown, IncomingRequestCfProperties>,
@@ -72,7 +79,7 @@ const worker = {
       }
       request = new Request<unknown, IncomingRequestCfProperties>(request, { body });
     }
-    const bridge = await ready;
+    const bridge = await application();
     const response = await bridge.fetch(request, environment, context);
     const headers = new Headers(response.headers);
     headers.set('Cache-Control', 'no-store');

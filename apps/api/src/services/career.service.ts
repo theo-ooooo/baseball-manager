@@ -9,6 +9,8 @@ import {
 import { CatalogRepository } from '../repositories/catalog.repository';
 import { CareerRepository } from '../repositories/career.repository';
 import { createGameEngine } from '../domain/game-engine';
+import { prepareSquad } from '../domain/squad-management';
+import { prepareDynamics } from '../domain/club-dynamics';
 
 @Injectable()
 export class CareerService {
@@ -18,9 +20,11 @@ export class CareerService {
   ) {}
   async read(db: D1Database, user: string) {
     const current = await this.careers.read(db, user);
-    if (current.state) {
+    if (current.state && !current.state.liveMatch) {
       const world = await this.catalog.getWorld(db);
-      current.state = createGameEngine(world).applyAction(current.state, { type: 'syncCatalog' });
+      // Repository parsing already owns this request's state; do not clone the entire save again.
+      prepareSquad(current.state, world);
+      prepareDynamics(current.state);
     }
     return current;
   }
