@@ -6,8 +6,9 @@ import { DatabaseSync } from 'node:sqlite';
 test('Forward catalog migration preserves existing career bytes, ownership, contracts and archives', () => {
   const db = new DatabaseSync(':memory:');
   try {
-    const entries = JSON.parse(readFileSync('drizzle/meta/_journal.json', 'utf8')).entries;
-    const apply = (entry) => db.exec(readFileSync('drizzle/' + entry.tag + '.sql', 'utf8'));
+    const entries = JSON.parse(readFileSync('apps/api/drizzle/meta/_journal.json', 'utf8')).entries;
+    const apply = (entry) =>
+      db.exec(readFileSync('apps/api/drizzle/' + entry.tag + '.sql', 'utf8'));
     entries.filter((e) => e.idx <= 8).forEach(apply);
     const p = db.prepare("SELECT id FROM players WHERE original='전민재'").get();
     const state = JSON.stringify({

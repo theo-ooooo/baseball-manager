@@ -1,5 +1,5 @@
-import type { Player } from './types';
-import { isUnrated } from './ratings';
+import type { Player } from '@dugout/shared/types';
+import { isUnrated } from '@dugout/shared/ratings';
 const clamp = (n: number) => Math.round(Math.max(20, Math.min(99, n)));
 export function battingProfile(p: Player) {
   const r = p.rating?.record,

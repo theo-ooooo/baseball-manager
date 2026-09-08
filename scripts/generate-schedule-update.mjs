@@ -12,7 +12,7 @@ for (let i = 0; i < rows.length; i += 25)
   );
 sql.push("UPDATE catalog_meta SET value='world-2026-09-08-v5' WHERE key='version';");
 writeFileSync(
-  'drizzle/0008_official_schedules.sql',
+  'apps/api/drizzle/0008_official_schedules.sql',
   '-- Official date fixtures snapshot; KBO preserves the initial planned dates without replaying historical rainouts.\n' +
     sql.join('\n--> statement-breakpoint\n') +
     '\n',

@@ -8,9 +8,9 @@ before(
   async () => {
     mf = await productionWorker();
     db = await mf.getD1Database('DB');
-    const journal = JSON.parse(await readFile('drizzle/meta/_journal.json', 'utf8'));
+    const journal = JSON.parse(await readFile('apps/api/drizzle/meta/_journal.json', 'utf8'));
     for (const entry of journal.entries) {
-      const sql = await readFile('drizzle/' + entry.tag + '.sql', 'utf8');
+      const sql = await readFile('apps/api/drizzle/' + entry.tag + '.sql', 'utf8');
       const statements = sql
         .split('--> statement-breakpoint')
         .map((s) => s.trim())

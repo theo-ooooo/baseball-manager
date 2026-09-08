@@ -15,4 +15,6 @@ fi
 
 echo "Running bounded vinext build..."
 node "${SITES_PROJECT_ROOT}/scripts/build-api.mjs"
+cd "${SITES_PROJECT_ROOT}/apps/web"
 node "${SITES_PROJECT_ROOT}/scripts/bounded-command.mjs" "${SITES_BUILD_TIMEOUT:-3m}" "${vinext}" build
+node "${SITES_PROJECT_ROOT}/scripts/stage-build.mjs"

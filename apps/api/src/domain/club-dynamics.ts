@@ -1,11 +1,6 @@
-import type {
-  GameState,
-  Result,
-  WorldCatalog,
-  NewsItem,
-} from '../../../../packages/shared/src/types';
-import { overall, hash, createGameView } from '../../../../packages/shared/src/game-view';
-import { gameDate, dateLabel } from '../../../../packages/shared/src/calendar';
+import type { GameState, Result, WorldCatalog, NewsItem } from '@dugout/shared/types';
+import { overall, hash, createGameView } from '@dugout/shared/game-view';
+import { gameDate, dateLabel } from '@dugout/shared/calendar';
 const limit = (n: number) => Math.max(0, Math.min(100, n));
 export function postNews(
   g: GameState,

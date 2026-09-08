@@ -1,7 +1,7 @@
 import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
 
-import { preparePitching, nextStarter } from '../../../../packages/shared/src/pitching';
+import { preparePitching, nextStarter } from '@dugout/shared/pitching';
 import {
   prepareDynamics,
   postNews,
@@ -10,14 +10,8 @@ import {
   dynamicsAction,
 } from './club-dynamics';
 import { createTransferMarket } from './transfer-market';
-import { createCalendarView, prepareCalendar } from '../../../../packages/shared/src/calendar';
-import type {
-  GameState,
-  Pos,
-  Result,
-  Deal,
-  WorldCatalog,
-} from '../../../../packages/shared/src/types';
+import { createCalendarView, prepareCalendar } from '@dugout/shared/calendar';
+import type { GameState, Pos, Result, Deal, WorldCatalog } from '@dugout/shared/types';
 import {
   blankStats,
   rng,
@@ -28,7 +22,7 @@ import {
   coachRoles,
   coachSkill,
   createGameView,
-} from '../../../../packages/shared/src/game-view';
+} from '@dugout/shared/game-view';
 import { createPlayerGenerator } from './player-generator';
 import {
   autoDefense,
@@ -37,7 +31,7 @@ import {
   firstTeam,
   preseasonFixtures,
   transfersBlocked,
-} from '../../../../packages/shared/src/management';
+} from '@dugout/shared/management';
 import { prepareSquad, managementAction, canRemove, developSquad } from './squad-management';
 export function createGameEngine(world: WorldCatalog) {
   const {

@@ -1,19 +1,13 @@
-import { preparePitching } from '../../../../packages/shared/src/pitching';
-import { prepareCalendar } from '../../../../packages/shared/src/calendar';
+import { preparePitching } from '@dugout/shared/pitching';
+import { prepareCalendar } from '@dugout/shared/calendar';
 import type {
   DefensivePosition,
   GameState,
   Player,
   TeamInstructions,
   WorldCatalog,
-} from '../../../../packages/shared/src/types';
-import {
-  blankStats,
-  coachSkill,
-  hash,
-  lineupAuto,
-  overall,
-} from '../../../../packages/shared/src/game-view';
+} from '@dugout/shared/types';
+import { blankStats, coachSkill, hash, lineupAuto, overall } from '@dugout/shared/game-view';
 import {
   autoDefense,
   defaults,
@@ -23,7 +17,7 @@ import {
   firstTeam,
   reserveTeam,
   selectFirstTeam,
-} from '../../../../packages/shared/src/management';
+} from '@dugout/shared/management';
 import { refreshRatings } from './performance-ratings';
 import { createPlayerGenerator } from './player-generator';
 

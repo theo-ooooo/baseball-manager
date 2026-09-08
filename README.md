@@ -6,15 +6,17 @@
 
 실명 선수와 생성 선수로 구단을 운영하는 한국어 야구 매니지먼트 게임입니다. 구단 선택 → 4주 프리시즌·선수단 정비 → 경기·시즌 진행 → 협상·이적 → 재계약·다음 시즌까지 플레이할 수 있습니다.
 
+폴더별 책임과 빌드 경로는 [구조 문서](docs/architecture.md)에 정리했습니다.
+
 ## 기술 구성
 
 | 영역 | 구현 | 소스 |
 | --- | --- | --- |
-| 프론트엔드 | Vinext, React 19, TypeScript, Tailwind CSS, shadcn/ui | `apps/web`; `app`은 라우팅·메타데이터 진입점 |
+| 프론트엔드 | Vinext, React 19, TypeScript, Tailwind CSS, shadcn/ui | `apps/web/app` 라우팅, `apps/web/src/features` 화면 |
 | 백엔드 | NestJS Controller → Service → Repository | `apps/api/src` |
 | 공통 타입·조회 함수 | 화면과 서버의 데이터 계약 | `packages/shared/src` |
-| 런타임 | Cloudflare Workers, Node HTTP 호환 브리지 | `worker/index.ts`, `apps/api/src/worker.ts` |
-| 데이터베이스 | Cloudflare D1 / SQLite, Drizzle 스키마·마이그레이션 | `db/schema.ts`, `drizzle` |
+| 런타임 | Cloudflare Workers, Node HTTP 호환 브리지 | `infra/cloudflare/worker/index.ts`, `apps/api/src/worker.ts` |
+| 데이터베이스 | Cloudflare D1 / SQLite, Drizzle 스키마·마이그레이션 | `apps/api/db/schema.ts`, `apps/api/drizzle` |
 
 NestJS의 기본 Express 어댑터를 Workers의 `httpServerHandler`에 연결합니다. Vinext와 NestJS는 소스·책임을 분리하고, 현재 배포에서는 같은 Worker의 `/api/*` 요청을 NestJS에 전달합니다. 별도의 상시 실행 Node 서버는 필요하지 않습니다.
 
@@ -64,7 +66,7 @@ npm run dev
 
 전체 테스트는 실제 배포 Worker 번들을 Miniflare에 올리고 D1 마이그레이션을 적용합니다. NestJS HTTP 라우팅, 사용자별 저장, 동시 명령 충돌, 중복 명령, 타석 저장·재개·완료, 계약·코치·이적·회계 행, 전체 시즌과 다음 시즌, 경기 기록 보존, 기존 DB 갱신, 선수 페이지 SSR과 모든 로고 자산 응답을 확인합니다. React 정적 렌더링으로 잠재력과 누락 로고 표시도 검사합니다. 실제 브라우저 클릭·시각 QA와 운영 부하 테스트는 수행하지 않았습니다.
 
-화면 조립과 요청 처리는 `apps/web/game.tsx`, 기능별 화면은 같은 디렉터리의 `*-panel.tsx` 및 프로필·사이드바 모듈에 있습니다. 서버의 시즌/관리 흐름은 `game-engine.ts`, 타석 계산은 `match-simulation.ts`, 진행·재개 명령은 `live-match.ts`로 분리했습니다. `npm run format`은 작성한 애플리케이션 소스에만 적용하고, 기존 마이그레이션·대량 seed·외부 UI 코드는 제외합니다.
+화면 조립과 요청 처리는 `apps/web/src/features/career/game.tsx`, 기능별 화면은 같은 디렉터리의 `*-panel.tsx` 및 프로필·사이드바 모듈에 있습니다. 서버의 시즌/관리 흐름은 `game-engine.ts`, 타석 계산은 `match-simulation.ts`, 진행·재개 명령은 `live-match.ts`로 분리했습니다. `npm run format`은 작성한 애플리케이션 소스에만 적용하고, 기존 마이그레이션·대량 seed·외부 UI 코드는 제외합니다.
 
 일반 로컬 브라우저에는 Sites 로그인 정보가 없으므로, 커리어 저장은 인증된 테스트 사이트에서 사용합니다. 통합 테스트에서만 격리된 런타임에 테스트용 인증 헤더를 주입합니다.
 
@@ -93,7 +95,7 @@ MLB·NPB 명단과 KBO 등록 명단에 실명을 사용합니다. KBO는 2026-0
 
 실명 선수 평가는 2025 KBO·MLB·NPB 공식 성적 3,398건을 바탕으로 표본 크기를 보정합니다. 전체 현재 로스터나 모든 세부 능력을 검증한 데이터베이스는 아닙니다. 미확인 성적과 미측정 능력은 미평가로 남깁니다.
 
-공개 명단 참고: [MLB 구단 명단](https://www.mlb.com/team), [NPB 등록 선수](https://npb.jp/announcement/roster/), [KBO 전체 등록 현황](https://www.koreabaseball.com/Player/RegisterAll.aspx). MLB·NPB 항목의 원문 주소는 `apps/api/seed/real-rosters.json`, KBO 원본 사실은 `apps/api/seed/kbo-register-2026-09-07.json`에 보관합니다. 구단 로고 출처·해시·권리 안내와 누락 사유는 [로고 목록](public/club-logos/manifest.json)에 있습니다. 공식 출처 확인은 재사용 허락을 의미하지 않습니다. 선수 사진은 포함하지 않습니다.
+공개 명단 참고: [MLB 구단 명단](https://www.mlb.com/team), [NPB 등록 선수](https://npb.jp/announcement/roster/), [KBO 전체 등록 현황](https://www.koreabaseball.com/Player/RegisterAll.aspx). MLB·NPB 항목의 원문 주소는 `apps/api/seed/real-rosters.json`, KBO 원본 사실은 `apps/api/seed/kbo-register-2026-09-07.json`에 보관합니다. 구단 로고 출처·해시·권리 안내와 누락 사유는 [로고 목록](apps/web/public/club-logos/manifest.json)에 있습니다. 공식 출처 확인은 재사용 허락을 의미하지 않습니다. 선수 사진은 포함하지 않습니다.
 
 ## 작업 이력
 

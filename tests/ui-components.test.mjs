@@ -13,7 +13,7 @@ const vite = await createServer({
   root,
   resolve: {
     alias: {
-      '@': root,
+      '@': fileURLToPath(new URL('../apps/web/src', import.meta.url)),
       // Use the same image implementation as the production Vinext plugin.
       'next/image': fileURLToPath(new URL('./shims/image.js', import.meta.resolve('vinext'))),
     },
@@ -26,7 +26,7 @@ after(async () => {
 });
 
 test('forwards progress semantics to the primitive', async () => {
-  const { Progress } = await vite.ssrLoadModule('/components/ui/progress.tsx');
+  const { Progress } = await vite.ssrLoadModule('/apps/web/src/components/ui/progress.tsx');
   const html = renderToStaticMarkup(React.createElement(Progress, { value: 37 }));
 
   assert.match(html, /aria-valuenow="37"/);
@@ -35,7 +35,7 @@ test('forwards progress semantics to the primitive', async () => {
 });
 
 test("emits chart themes for the starter's media dark mode", async () => {
-  const { ChartStyle } = await vite.ssrLoadModule('/components/ui/chart.tsx');
+  const { ChartStyle } = await vite.ssrLoadModule('/apps/web/src/components/ui/chart.tsx');
   const html = renderToStaticMarkup(
     React.createElement(ChartStyle, {
       id: 'contract',
@@ -51,7 +51,9 @@ test("emits chart themes for the starter's media dark mode", async () => {
 });
 
 test('renders sidebar skeletons deterministically', async () => {
-  const { SidebarMenuSkeleton } = await vite.ssrLoadModule('/components/ui/sidebar.tsx');
+  const { SidebarMenuSkeleton } = await vite.ssrLoadModule(
+    '/apps/web/src/components/ui/sidebar.tsx',
+  );
   const first = renderToStaticMarkup(React.createElement(SidebarMenuSkeleton));
   const second = renderToStaticMarkup(React.createElement(SidebarMenuSkeleton));
 
@@ -60,8 +62,12 @@ test('renders sidebar skeletons deterministically', async () => {
 });
 
 test('Dedicated player profile omits hidden potential and shows observed and unmeasured abilities', async () => {
-  const { PlayerProfile } = await vite.ssrLoadModule('/apps/web/player-profile.tsx');
-  const { WorldProvider } = await vite.ssrLoadModule('/apps/web/world-context.tsx');
+  const { PlayerProfile } = await vite.ssrLoadModule(
+    '/apps/web/src/features/players/player-profile.tsx',
+  );
+  const { WorldProvider } = await vite.ssrLoadModule(
+    '/apps/web/src/features/career/world-context.tsx',
+  );
   const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
   const { createGameEngine } = await vite.ssrLoadModule('/apps/api/src/domain/game-engine.ts');
   const { presentState, presentWorld } = await vite.ssrLoadModule(
@@ -93,7 +99,7 @@ test('Dedicated player profile omits hidden potential and shows observed and unm
 });
 
 test('Club badges render sourced assets and a labelled abbreviation when no logo is available', async () => {
-  const { ClubBadge } = await vite.ssrLoadModule('/apps/web/club-badge.tsx');
+  const { ClubBadge } = await vite.ssrLoadModule('/apps/web/src/components/club-badge.tsx');
   const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
   const world = buildSeedWorld();
   const sourced = world.clubs.find((club) => club.id === 'kbo-lotte');

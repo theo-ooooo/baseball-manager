@@ -1,5 +1,5 @@
-import type { WorldCatalog, GameState } from '../../../../packages/shared/src/types';
-import { createGameView, rng } from '../../../../packages/shared/src/game-view';
+import type { WorldCatalog, GameState } from '@dugout/shared/types';
+import { createGameView, rng } from '@dugout/shared/game-view';
 import type { createMatchSimulator } from './match-simulation';
 
 type Advance = (game: GameState, count?: number, pauseAfterOwn?: boolean) => GameState;

@@ -37,7 +37,9 @@ test(
       const favicon = await worker.dispatchFetch('http://localhost/favicon.svg');
       assert.equal(favicon.status, 200);
       assert.match(await favicon.text(), /<svg/);
-      const manifest = JSON.parse(await readFile('public/club-logos/manifest.json', 'utf8'));
+      const manifest = JSON.parse(
+        await readFile('apps/web/public/club-logos/manifest.json', 'utf8'),
+      );
       assert.equal(Object.keys(manifest.logos).length, 134);
       assert.equal(manifest.unavailable.length, 3);
       for (const logo of Object.values(manifest.logos)) {

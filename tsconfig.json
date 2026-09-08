@@ -24,7 +24,7 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "./apps/web/src/*"
       ]
     },
     "experimentalDecorators": true
@@ -40,6 +40,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    ".next"
+    "apps/web/dist",
+    ".next",
+    "apps/web/.next"
   ]
 }

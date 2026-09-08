@@ -1,6 +1,6 @@
-import type { GameState, Player, PitchingPlan } from './types';
-import { overall } from './game-view';
-import { firstTeam } from './management';
+import type { GameState, Player, PitchingPlan } from '@dugout/shared/types';
+import { overall } from '@dugout/shared/game-view';
+import { firstTeam } from '@dugout/shared/management';
 
 export function starterScore(p: Player) {
   const r = p.rating?.record;

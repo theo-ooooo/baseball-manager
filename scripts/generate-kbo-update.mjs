@@ -117,11 +117,11 @@ try {
     ]),
   );
   sql.push(`UPDATE catalog_meta SET value=${q(world.version)} WHERE key='version';`);
-  const journal = JSON.parse(readFileSync('drizzle/meta/_journal.json', 'utf8'));
+  const journal = JSON.parse(readFileSync('apps/api/drizzle/meta/_journal.json', 'utf8'));
   const entry = journal.entries.find((e) => e.tag.endsWith('_kbo_rosters_and_coaches'));
   if (!entry) throw new Error('Missing custom migration');
   writeFileSync(
-    'drizzle/' + entry.tag + '.sql',
+    'apps/api/drizzle/' + entry.tag + '.sql',
     '-- KBO official registration facts as of 2026-09-07. Existing career snapshots are preserved.\n' +
       sql.join('\n--> statement-breakpoint\n') +
       '\n',

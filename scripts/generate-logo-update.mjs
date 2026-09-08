@@ -7,7 +7,7 @@ const statements = [];
 for (const [club, logo] of Object.entries(logos)) {
   if (!/^\/club-logos\/[a-z0-9-]+\.(png|svg|gif|jpe?g|webp)$/.test(logo.path))
     throw new Error('Invalid logo path: ' + club);
-  const data = readFileSync('public' + logo.path);
+  const data = readFileSync('apps/web/public' + logo.path);
   if (createHash('sha256').update(data).digest('hex') !== logo.sha256)
     throw new Error('Logo hash mismatch: ' + club);
   statements.push(

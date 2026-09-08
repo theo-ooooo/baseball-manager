@@ -1,7 +1,7 @@
-import { battingProfile } from './player-attributes';
-import { createCalendarView } from './calendar';
-import type { WorldCatalog, GameState, Player, Stats, Pos, Coach } from './types';
-export * from './types';
+import { battingProfile } from '@dugout/shared/player-attributes';
+import { createCalendarView } from '@dugout/shared/calendar';
+import type { WorldCatalog, GameState, Player, Stats, Pos, Coach } from '@dugout/shared/types';
+export * from '@dugout/shared/types';
 export const blankStats = (): Stats => ({
   ab: 0,
   h: 0,

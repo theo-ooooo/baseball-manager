@@ -5,8 +5,8 @@ import type {
   Player,
   TeamInstructions,
   WorldCatalog,
-} from './types';
-import { hash, lineupAuto, overall } from './game-view';
+} from '@dugout/shared/types';
+import { hash, lineupAuto, overall } from '@dugout/shared/game-view';
 
 export const defensivePositions: DefensivePosition[] = [
   'P',

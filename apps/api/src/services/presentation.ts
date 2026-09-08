@@ -1,5 +1,5 @@
-import type { GameState, Player, WorldCatalog } from '../../../../packages/shared/src/types';
-import { askPrice } from '../../../../packages/shared/src/game-view';
+import type { GameState, Player, WorldCatalog } from '@dugout/shared/types';
+import { askPrice } from '@dugout/shared/game-view';
 function player(p: Player): Player {
   const next = structuredClone(p);
   next.marketValue = askPrice(p);

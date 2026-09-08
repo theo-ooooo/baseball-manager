@@ -1,5 +1,5 @@
-import type { DefensivePosition, Result } from './types';
-import { hash } from './game-view';
+import type { DefensivePosition, Result } from '@dugout/shared/types';
+import { hash } from '@dugout/shared/game-view';
 export type Point = { x: number; y: number };
 // Coordinates match the overhead stadium art. The motion illustrates logged outcomes.
 export const bases: Point[] = [

@@ -1,9 +1,5 @@
-import type {
-  Player,
-  PerformanceRecord,
-  RatingEvidence,
-} from '../../../../packages/shared/src/types';
-import { overall } from '../../../../packages/shared/src/game-view';
+import type { Player, PerformanceRecord, RatingEvidence } from '@dugout/shared/types';
+import { overall } from '@dugout/shared/game-view';
 const clampRating = (n: number) => Math.max(20, Math.min(99, n));
 const bounded = (n: number) => Math.round(clampRating(n));
 export const ratingKeys = [

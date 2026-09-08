@@ -1,9 +1,4 @@
-import type {
-  GameState,
-  Player,
-  WorldCatalog,
-  SellerDecision,
-} from '../../../../packages/shared/src/types';
+import type { GameState, Player, WorldCatalog, SellerDecision } from '@dugout/shared/types';
 import {
   createGameView,
   overall,
@@ -11,8 +6,8 @@ import {
   hash,
   teamBudget,
   money,
-} from '../../../../packages/shared/src/game-view';
-import { gameDate } from '../../../../packages/shared/src/calendar';
+} from '@dugout/shared/game-view';
+import { gameDate } from '@dugout/shared/calendar';
 import { postNews } from './club-dynamics';
 export function createTransferMarket(world: WorldCatalog) {
   const view = createGameView(world);

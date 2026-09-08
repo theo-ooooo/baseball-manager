@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 /** Append only: published migrations and their timestamps are immutable. */
 export function appendMigration(name, sql, snapshot) {
   if (!/^[a-z][a-z0-9_]+$/.test(name)) throw new Error('Invalid migration name');
-  const journalPath = 'drizzle/meta/_journal.json';
+  const journalPath = 'apps/api/drizzle/meta/_journal.json';
   const journal = JSON.parse(readFileSync(journalPath, 'utf8'));
   if (journal.entries.some((e) => e.tag.endsWith('_' + name)))
     throw new Error('Migration already exists: ' + name);
@@ -12,12 +12,15 @@ export function appendMigration(name, sql, snapshot) {
     idx = last.idx + 1;
   const number = String(idx).padStart(4, '0'),
     tag = number + '_' + name;
-  const sqlPath = 'drizzle/' + tag + '.sql',
-    snapshotPath = 'drizzle/meta/' + number + '_snapshot.json';
+  const sqlPath = 'apps/api/drizzle/' + tag + '.sql',
+    snapshotPath = 'apps/api/drizzle/meta/' + number + '_snapshot.json';
   if (existsSync(sqlPath) || existsSync(snapshotPath))
     throw new Error('Migration destination already exists');
   const previous = JSON.parse(
-    readFileSync('drizzle/meta/' + String(last.idx).padStart(4, '0') + '_snapshot.json', 'utf8'),
+    readFileSync(
+      'apps/api/drizzle/meta/' + String(last.idx).padStart(4, '0') + '_snapshot.json',
+      'utf8',
+    ),
   );
   const next = { ...(snapshot || previous), id: randomUUID(), prevId: previous.id };
   writeFileSync(sqlPath, sql, { flag: 'wx' });

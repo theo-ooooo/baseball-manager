@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { createGameView } from '../../../../packages/shared/src/game-view';
-import type {
-  GameState,
-  WorldCatalog,
-  FinanceEntry,
-  Result,
-} from '../../../../packages/shared/src/types';
+import { createGameView } from '@dugout/shared/game-view';
+import type { GameState, WorldCatalog, FinanceEntry, Result } from '@dugout/shared/types';
 
 type CareerRow = { state: string; revision: number };
 @Injectable()

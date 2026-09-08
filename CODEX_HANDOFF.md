@@ -1,5 +1,7 @@
 # Codex 인수인계 — DUGOUT / baseball-manager
 
+> 폴더 재구성 후 현재 경로는 `docs/architecture.md`를 참고한다. 아래 과거 기록의 루트 `app/`, `db/`, `drizzle/`는 각각 `apps/web/app/`, `apps/api/db/`, `apps/api/drizzle/`로 이동했다.
+
 ## Codex 후속 작업 — 2026-09-08 현재
 
 사용자가 이 브랜치에서 남은 개발·DB 마이그레이션·검증·기능별 커밋/푸시와 가독성 개선을 요청하여 작업을 재개했다. **아래 과거 WIP 기록에 앞서 이 절과 최신 WORKLOG를 적용한다.** GitHub 브랜치에 후속 구현을 완료했으며 운영 사이트/main은 변경하지 않았다.

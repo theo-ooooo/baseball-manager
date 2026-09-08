@@ -7,8 +7,8 @@ import type {
   Agent,
   Coach,
   Fixture,
-} from '../../../../packages/shared/src/types';
-import { blankStats } from '../../../../packages/shared/src/game-view';
+} from '@dugout/shared/types';
+import { blankStats } from '@dugout/shared/game-view';
 
 @Injectable()
 export class CatalogRepository {

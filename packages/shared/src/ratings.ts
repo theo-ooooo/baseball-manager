@@ -1,5 +1,5 @@
-import type { Player } from './types';
-import { overall } from './game-view';
+import type { Player } from '@dugout/shared/types';
+import { overall } from '@dugout/shared/game-view';
 export const isUnrated = (p: Player) => p.real && (!p.rating || p.rating.status === 'missing');
 export const ratingText = (p: Player) =>
   isUnrated(p) ? '미평가' : `${overall(p)}${p.rating?.status === 'provisional' ? '*' : ''}`;

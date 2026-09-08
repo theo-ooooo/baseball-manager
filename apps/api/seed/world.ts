@@ -1,14 +1,14 @@
 import logos from './club-logos.json';
-import type {ClubLogo} from '../../../packages/shared/src/types';
+import type {ClubLogo} from '@dugout/shared/types';
 import schedule from './schedule-2026.json';
 import performance from './performance-2025.json';
 import {rateRealPlayers} from '../src/domain/performance-ratings';
-import type {PerformanceRecord} from '../../../packages/shared/src/types';
+import type {PerformanceRecord} from '@dugout/shared/types';
 import registration from './kbo-register-2026-09-07.json';
 import { clubs, leagues, realRosters, rosterNote } from './catalog';
 import { createPlayerGenerator } from '../src/domain/player-generator';
-import { blankStats, coachRoles, hash, rng } from '../../../packages/shared/src/game-view';
-import type { WorldCatalog, Player, Pos, Coach } from '../../../packages/shared/src/types';
+import { blankStats, coachRoles, hash, rng } from '@dugout/shared/game-view';
+import type { WorldCatalog, Player, Pos, Coach } from '@dugout/shared/types';
 
 /** Seed input only. Runtime API code reads the catalog from D1. */
 export function buildSeedWorld(): WorldCatalog {

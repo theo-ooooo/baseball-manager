@@ -1,4 +1,4 @@
-import type { GameState, WorldCatalog, Fixture } from './types';
+import type { GameState, WorldCatalog, Fixture } from '@dugout/shared/types';
 const DAY = 86400000;
 export const addDays = (date: string, days: number) =>
   new Date(Date.parse(date + 'T12:00:00Z') + days * DAY).toISOString().slice(0, 10);

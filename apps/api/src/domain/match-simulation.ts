@@ -6,15 +6,15 @@ import type {
   Result,
   ReplayPlay,
   ReplayTeam,
-} from '../../../../packages/shared/src/types';
-import { autoPitching } from '../../../../packages/shared/src/pitching';
+} from '@dugout/shared/types';
+import { autoPitching } from '@dugout/shared/pitching';
 import {
   blankStats,
   overall,
   coachSkill,
   lineupAuto,
   createGameView,
-} from '../../../../packages/shared/src/game-view';
+} from '@dugout/shared/game-view';
 import {
   firstTeam,
   defenseFor,
@@ -23,8 +23,8 @@ import {
   defaults,
   defensivePositions,
   familiarity,
-} from '../../../../packages/shared/src/management';
-import { gameDate } from '../../../../packages/shared/src/calendar';
+} from '@dugout/shared/management';
+import { gameDate } from '@dugout/shared/calendar';
 import { pitchingDecisions } from './pitching-decisions';
 
 export function createMatchSimulator(world: WorldCatalog) {

@@ -1,5 +1,5 @@
-import type { Player, RealSeed, Pos, League, Club } from '../../../../packages/shared/src/types';
-import { blankStats, hash, rng, overall } from '../../../../packages/shared/src/game-view';
+import type { Player, RealSeed, Pos, League, Club } from '@dugout/shared/types';
+import { blankStats, hash, rng, overall } from '@dugout/shared/game-view';
 export function createPlayerGenerator(world: { clubs: Club[]; leagues: League[] }) {
   const getClub = (id: string) => world.clubs.find((c) => c.id === id)!;
   const getLeague = (id: string) => world.leagues.find((l) => l.id === id)!;
