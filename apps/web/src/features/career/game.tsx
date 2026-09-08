@@ -38,7 +38,7 @@ import { Badge } from '../../components/game-ui';
 import { nav } from './game-navigation';
 import type { Act, CareerData } from './game-contracts';
 import { NewCareer } from './career-setup';
-import { Dashboard } from '../clubs/club-overview';
+import { Dashboard } from './dashboard';
 import { Squad } from '../squad/squad-panel';
 import { World } from '../clubs/world-panel';
 import { Market } from '../market/market-panel';
@@ -311,7 +311,7 @@ export function GameScreen({
               </button>
             </div>
           )}
-          {g.phase === 'preseason' && view !== 'home' && (
+          {g.phase === 'preseason' && view === 'tactics' && (
             <div className="preseason-banner">
               <strong>정규시즌 개막까지 {-g.day}일</strong>
               <span>
@@ -321,26 +321,22 @@ export function GameScreen({
               <button onClick={() => setView('tactics')}>전술 준비 →</button>
             </div>
           )}
-          <div className="page-title">
-            <h1>
-              {view === 'home'
-                ? '감독 사무실'
-                : view === 'player'
-                  ? '선수 상세'
-                  : nav.find((n) => n.id === view)?.label}
-            </h1>
-            <p>
-              {view === 'home'
-                ? `${g.manager} · ${club.name}`
-                : view === 'squad'
+          {view !== 'home' && (
+            <div className="page-title">
+              <h1>{view === 'player' ? '선수 상세' : nav.find((n) => n.id === view)?.label}</h1>
+              <p>
+                {view === 'squad'
                   ? `${g.roster.length}명 등록`
-                  : view === 'agents'
-                    ? `${g.deals.length}건의 협상`
-                    : view === 'staff'
-                      ? `${g.staff.length}명의 코칭 스태프`
-                      : league.name}
-            </p>
-          </div>
+                  : view === 'reserves'
+                    ? '명단을 확인하고 등록 선수를 교체하세요'
+                    : view === 'agents'
+                      ? `${g.deals.length}건의 협상`
+                      : view === 'staff'
+                        ? `${g.staff.length}명의 코칭 스태프`
+                        : league.name}
+              </p>
+            </div>
+          )}
           {view === 'player' && (
             <>
               <Link

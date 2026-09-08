@@ -1,0 +1,511 @@
+.dashboard {
+  display: grid;
+  gap: 24px;
+}
+.dashboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.dashboard-heading > div > p {
+  margin: 0 0 7px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+.dashboard-heading h1 {
+  font-size: 30px;
+  line-height: 1.25;
+  letter-spacing: -1.1px;
+  margin-bottom: 8px;
+}
+.dashboard-heading > div > span {
+  font-size: 13px;
+  color: var(--text-3);
+}
+.dashboard-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.dashboard-date small {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+  color: var(--text-3);
+}
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 21px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.dashboard-stats button {
+  display: grid;
+  gap: 7px;
+  padding: 0 24px;
+  text-align: left;
+  border-right: 1px solid var(--line);
+  color: var(--text);
+  background: transparent;
+}
+.dashboard-stats button:first-child {
+  padding-left: 0;
+}
+.dashboard-stats button:last-child {
+  border-right: 0;
+}
+.dashboard-stats button > span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.dashboard-stats button > strong {
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+.dashboard-stats button small {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-3);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.dashboard-stats button > strong > small {
+  margin-left: 5px;
+  font-size: 14px;
+}
+.dashboard-grid,
+.dashboard-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.dashboard-side {
+  display: grid;
+  gap: 20px;
+}
+.dashboard-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  min-width: 0;
+  overflow: hidden;
+}
+.dashboard-card > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+}
+.dashboard-card h2 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.dashboard-card > header > span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.dashboard-tag {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.next-game-date {
+  text-align: center;
+  margin: 22px 20px 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.next-game-clubs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 26px;
+}
+.next-game-clubs > div {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+  min-width: 0;
+}
+.next-game-clubs .club-badge {
+  width: 64px;
+  height: 64px;
+}
+.next-game-clubs strong {
+  font-size: 18px;
+  letter-spacing: -0.6px;
+}
+.next-game-clubs small {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.next-game-clubs > span {
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-3);
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+.next-game-plan {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+  padding: 16px 24px;
+  gap: 16px;
+  background: var(--surface-2);
+}
+.next-game-plan > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.next-game-plan > div > span {
+  color: var(--text-3);
+}
+.next-game-plan button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  font-weight: 650;
+}
+.next-game-plan strong {
+  font-size: 12px;
+  font-weight: 650;
+}
+.next-game-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 18px 22px;
+  border-top: 1px solid var(--line);
+}
+.next-game-actions .button {
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.next-game-actions .dashboard-link {
+  margin-left: auto;
+}
+.dashboard-link {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-3);
+  background: transparent;
+  padding: 3px 0;
+}
+.dashboard-link:hover {
+  color: var(--brand);
+}
+.dashboard-rest {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 38px 24px;
+  text-align: center;
+}
+.dashboard-rest > svg {
+  color: var(--text-3);
+}
+.dashboard-rest h3 {
+  font-size: 19px;
+}
+.dashboard-rest p {
+  font-size: 13px;
+  color: var(--text-3);
+  max-width: 400px;
+  line-height: 1.7;
+}
+.dashboard-task-list,
+.dashboard-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dashboard-task-list button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 17px 20px;
+  gap: 9px;
+  text-align: left;
+  font-size: 12px;
+}
+.dashboard-task-list li + li,
+.dashboard-results li + li {
+  border-top: 1px solid var(--line);
+}
+.dashboard-task-list button > span:nth-child(2) {
+  flex: 1;
+}
+.dashboard-task-list b {
+  font-size: 12px;
+  font-weight: 600;
+}
+.task-dot {
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.task-dot.urgent {
+  background: var(--warn-text);
+}
+.dashboard-count {
+  padding: 3px 7px;
+  background: var(--surface-3);
+  border-radius: 4px;
+}
+.dashboard-empty {
+  margin: 0;
+  padding: 26px 22px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.dashboard-shortcuts > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 20px;
+  text-align: left;
+}
+.dashboard-shortcuts > button + button {
+  border-top: 1px solid var(--line);
+}
+.dashboard-shortcuts > button > span:nth-child(2) {
+  flex: 1;
+}
+.dashboard-shortcuts strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+.dashboard-shortcuts small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.shortcut-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--text-2);
+}
+.dashboard-shortcuts > button:hover,
+.dashboard-task-list button:hover,
+.dashboard-results button:hover {
+  background: var(--surface-2);
+}
+.dashboard-standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-standings th {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 500;
+  text-align: right;
+}
+.dashboard-standings td {
+  padding: 11px 12px;
+  border-top: 1px solid var(--line);
+  text-align: right;
+}
+.dashboard-standings th:first-child,
+.dashboard-standings td:first-child {
+  text-align: center;
+  width: 50px;
+  color: var(--text-3);
+}
+.dashboard-standings th:nth-child(2) {
+  text-align: left;
+}
+.dashboard-standings td:nth-child(2) {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  text-align: left;
+}
+.dashboard-standings .own {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 600;
+}
+.dashboard-results button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 20px;
+  width: 100%;
+  text-align: left;
+}
+.dashboard-results button > span:nth-child(2) {
+  flex: 1;
+}
+.dashboard-results strong {
+  display: block;
+  font-size: 13px;
+}
+.dashboard-results small {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+  color: var(--text-3);
+}
+.dashboard-results b {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-result {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.dashboard-result.W {
+  color: var(--ok-text);
+  background: var(--ok-bg);
+}
+.dashboard-result.L {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+}
+.dashboard-empty-results {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  padding: 46px 22px;
+  color: var(--text-3);
+}
+.dashboard-empty-results strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.dashboard-empty-results p {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.6;
+}
+@media (max-width: 1200px) {
+  .dashboard-grid,
+  .dashboard-bottom {
+    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr);
+    gap: 16px;
+  }
+  .next-game-plan > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  .next-game-actions .dashboard-link {
+    margin-left: 0;
+  }
+}
+@media (max-width: 1000px) {
+  .dashboard-grid,
+  .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-side {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+}
+@media (max-width: 600px) {
+  .dashboard {
+    gap: 20px;
+  }
+  .dashboard-heading h1 {
+    font-size: 26px;
+  }
+  .dashboard-date {
+    display: none;
+  }
+  .dashboard-stats {
+    gap: 0;
+    padding: 16px 0;
+  }
+  .dashboard-stats button {
+    padding: 0 10px;
+  }
+  .dashboard-stats button > strong {
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+  .dashboard-stats button > small {
+    display: none;
+  }
+  .dashboard-stats button > span {
+    font-size: 10px;
+  }
+  .dashboard-card > header {
+    padding: 16px;
+  }
+  .dashboard-side {
+    grid-template-columns: 1fr;
+  }
+  .next-game-clubs {
+    padding: 20px 12px 24px;
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr);
+  }
+  .next-game-clubs strong {
+    font-size: 15px;
+  }
+  .next-game-clubs .club-badge {
+    width: 56px;
+    height: 56px;
+  }
+  .next-game-actions {
+    padding: 16px;
+  }
+  .next-game-actions .button {
+    flex: 1;
+  }
+  .next-game-actions .dashboard-link {
+    width: 100%;
+    justify-content: center;
+    margin-top: 3px;
+  }
+  .dashboard-standings th,
+  .dashboard-standings td {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}

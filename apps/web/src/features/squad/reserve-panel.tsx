@@ -18,6 +18,7 @@ type Props = { g: GameState; act: Act; busy: boolean; onPlayer: (p: Player) => v
 export function ReservePanel({ g, act, busy, onPlayer }: Props) {
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState('all');
+  const [mobileSquad, setMobileSquad] = useState('reserve');
   const moves = useRosterMoves({ g, act, busy });
   const active = firstTeam(g),
     reserve = reserveTeam(g);
@@ -64,13 +65,25 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
               ))}
             </div>
           </div>
-          <div className="roster-columns">
+          <div className="roster-mobile-switch" role="group" aria-label="볼 선수단 선택">
+            <button aria-pressed={mobileSquad === 'first'} onClick={() => setMobileSquad('first')}>
+              1군 <b>{active.length}</b>
+            </button>
+            <button
+              aria-pressed={mobileSquad === 'reserve'}
+              onClick={() => setMobileSquad('reserve')}
+            >
+              2군 <b>{reserve.length}</b>
+            </button>
+          </div>
+          <div className="roster-columns" data-mobile-squad={mobileSquad}>
             {[
               { title: '1군', subtitle: '경기에 출전하는 선수', squad: active, first: true },
               { title: '2군', subtitle: '육성과 회복이 필요한 선수', squad: reserve, first: false },
             ].map((group) => (
               <section
                 className="roster-column"
+                data-squad={group.first ? 'first' : 'reserve'}
                 key={group.title}
                 aria-label={`${group.title} 선수 명단`}
               >
