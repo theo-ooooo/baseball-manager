@@ -4,7 +4,13 @@ export const blankStats=():Stats=>({ab:0,h:0,hr:0,rbi:0,bb:0,k:0,outs:0,er:0,win
 export function hash(s:string){let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;}
 export function rng(seed:number){let a=seed;return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
 export function overall(p:Player){return Math.round(p.pos==='P'?p.stuff*.58+p.control*.42:p.contact*.40+p.power*.30+p.speed*.12+p.field*.18);}
-export function money(n:number){return n>=100?`$${(n/100).toFixed(2)}M`:`$${Math.round(n*10)}K`;}
+// Persisted amounts retain their original unit (USD 10,000) for save compatibility.
+// Display and contract inputs use KRW at a fixed game conversion, never a live FX quote.
+export const GAME_KRW_PER_USD=1400;
+export const toManwon=(amount:number)=>Math.round(amount*GAME_KRW_PER_USD);
+export const fromManwon=(amount:number)=>amount/GAME_KRW_PER_USD;
+export function money(n:number){const won=Math.round(n*10000*GAME_KRW_PER_USD),abs=Math.abs(won),sign=won<0?'−':'';if(abs>=100000000)return `${sign}${(abs/100000000).toLocaleString('ko-KR',{maximumFractionDigits:2})}억 원`;if(abs>=10000)return `${sign}${(abs/10000).toLocaleString('ko-KR',{maximumFractionDigits:0})}만 원`;return `${sign}${abs.toLocaleString('ko-KR')}원`;}
+
 export function teamBudget(league:string){return league==='mlb'?18000:league==='npb'?6000:league==='kbo'?3500:['cpbl','lmb','lidom'].includes(league)?1600:800;}
 export function lineupAuto(roster:Player[]){const sorted=[...roster].filter(p=>p.pos!=='P').sort((a,b)=>(overall(b)*b.condition)-(overall(a)*a.condition));const chosen:Player[]=[];for(const [pos,n] of [['C',1],['IF',4],['OF',3]] as [Pos,number][]){chosen.push(...sorted.filter(p=>p.pos===pos).slice(0,n));}for(const p of sorted)if(chosen.length<9&&!chosen.includes(p))chosen.push(p);return chosen.sort((a,b)=>b.contact+b.speed*.4-a.contact-a.speed*.4).map(p=>p.id);}
 export const coachRoles=['타격','투수','수비','체력','스카우트'];
