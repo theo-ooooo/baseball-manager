@@ -64,6 +64,13 @@
       "when": 1788839182025,
       "tag": "0008_official_schedules",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788842283590,
+      "tag": "0009_performance_2025_v2",
+      "breakpoints": true
     }
   ]
 }
