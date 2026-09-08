@@ -62,6 +62,6 @@ export async function authenticateRequest(request: Request, env: AuthEnvironment
   }
   if (user) headers.set('x-dugout-user-id', user);
   if (token) headers.set('x-dugout-session-token', token);
-  if (transfer && importRequest) headers.set('x-dugout-transfer', 'import');
+  if (transfer) headers.set('x-dugout-transfer', importRequest ? 'import' : 'export');
   return { request: new Request(request, { headers }), user, token, newSession };
 }

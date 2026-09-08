@@ -243,3 +243,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - `npm run dev` now applies append-only migrations to the Vite plugin's isolated local D1 before starting. It uses the same placeholder binding and persistence directory and never targets the remote database. Generated local configuration remains under ignored infrastructure build output.
 - Verified local development serves the v7 D1 health response and browser setup. Large authorized imports retain a conflict response for duplicate historic IDs. The local Wrangler OAuth currently fails personal D1 authentication; the connected Cloudflare API still verifies the target database as empty, and GitHub's separate scoped deployment token is registered. Remote migrations will run through the main deployment workflow.
+
+## 2026-09-08 — Limit unmasked backups to migration credentials
+
+- Final public-route review restricted raw backup exports to the expiring migration credential. Ordinary guest API calls cannot use this route to reveal hidden potential or server-only simulation inputs. Recovery keys still reopen the saved career through the normal masked API.
+- The original owner backup was already verified and retained outside Git; the original Site's temporary environment values were removed and revision 2 was deployed successfully. Its database is preserved.
