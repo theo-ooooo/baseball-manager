@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { Miniflare } from 'miniflare';
 import { meteredD1 } from './helpers/d1-meter.mjs';
 
 test('D1 catalog pages preserve career bytes, match canonical rows and fall back on version changes', async () => {
+  await mkdir(resolve('work'), { recursive: true });
   const directory = await mkdtemp(resolve('work/catalog-test-'));
   const mf = new Miniflare({
     modules: true,
