@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ReservePanel } from '../squad/reserve-panel';
 import { useRouter } from 'next/navigation';
 import { PlayerProfile } from '../players/player-profile';
 import { useState, useEffect, useRef, type CSSProperties } from 'react';
@@ -32,7 +33,7 @@ import { InboxPanel, DynamicsPanel } from '../clubs/club-panels';
 import { SchedulePanel } from '../schedule/schedule-panel';
 import { dateLabel } from '@dugout/shared/calendar';
 import { StadiumReplay, LiveMatchScreen } from '../matches/stadium-replay';
-import { TacticalBoard, ReservePanel, CoachPanel } from '../squad/management-panels';
+import { TacticalBoard, CoachPanel } from '../squad/management-panels';
 import { Badge } from '../../components/game-ui';
 import { nav } from './game-navigation';
 import type { Act, CareerData } from './game-contracts';
@@ -381,7 +382,7 @@ export function GameScreen({
           )}
           {view === 'inbox' && <InboxPanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
-          {view === 'squad' && <Squad g={g} onPlayer={setPlayer} />}
+          {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}

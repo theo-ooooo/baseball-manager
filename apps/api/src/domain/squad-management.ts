@@ -20,6 +20,7 @@ import {
 } from '@dugout/shared/management';
 import { refreshRatings } from './performance-ratings';
 import { createPlayerGenerator } from './player-generator';
+import { changeSquad } from './roster-moves';
 
 export function prepareSquad(g: GameState, world: WorldCatalog) {
   // A live game's inputs remain frozen until its result has committed.
@@ -86,12 +87,6 @@ function activePlayer(g: GameState, id: unknown) {
   if (!p) throw new Error('1군에 등록된 선수를 선택해 주세요.');
   return p;
 }
-function repair(g: GameState) {
-  g.lineup = lineupAuto(firstTeam(g));
-  if (!firstTeam(g).some((p) => p.id === g.starter))
-    g.starter = firstTeam(g).find((p) => p.pos === 'P')!.id;
-  g.defense = autoDefense(g);
-}
 export function canRemove(g: GameState, p: Player) {
   if (p.squad === 'reserve') return;
   const active = firstTeam(g);
@@ -150,19 +145,8 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
       g.pitching!.next = Math.max(0, ids.indexOf(g.starter));
       return g;
     }
-    case 'squad': {
-      const p = g.roster.find((p) => p.id === a.id);
-      if (!p || !['first', 'reserve'].includes(String(a.value)))
-        throw new Error('선수와 등록 구분을 확인해 주세요.');
-      if ((p.squad || 'first') === a.value) return g;
-      if (a.value === 'first' && firstTeam(g).length >= 28)
-        throw new Error('1군 정원은 28명입니다. 먼저 한 명을 2군으로 내려 주세요.');
-      if (a.value === 'reserve') canRemove(g, p);
-      p.squad = a.value as 'first' | 'reserve';
-      repair(g);
-      preparePitching(g);
-      return g;
-    }
+    case 'squad':
+      return changeSquad(g, a);
     case 'defense': {
       const p = activePlayer(g, a.id),
         pos = String(a.position) as DefensivePosition;

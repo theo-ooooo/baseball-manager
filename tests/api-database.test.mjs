@@ -45,6 +45,66 @@ async function action(payload, user = 'test-owner-a') {
   return result.body;
 }
 
+test('D1 commits a full-roster exchange once and rejected exchanges leave both players unchanged', async () => {
+  const user = 'roster-exchange';
+  const before = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Exchange', mode: 'short' },
+    user,
+  );
+  const incoming = before.state.roster.find((p) => p.squad === 'reserve' && p.pos === 'P');
+  const outgoing = before.state.starter;
+  const command = {
+    type: 'squad',
+    id: incoming.id,
+    value: 'first',
+    replaceId: outgoing,
+    revision: before.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const changed = await call('/api/career', command, user);
+  assert.equal(changed.status, 201);
+  assert.equal(changed.body.revision, before.revision + 1);
+  assert.equal(changed.body.state.starter, incoming.id);
+  assert.equal(changed.body.state.roster.filter((p) => p.squad !== 'reserve').length, 28);
+  const reloaded = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(reloaded.state, changed.body.state);
+  for (const [id, squad] of [
+    [incoming.id, 'first'],
+    [outgoing, 'reserve'],
+  ]) {
+    const row = await db
+      .prepare('SELECT data FROM career_players WHERE user_id=? AND player_id=?')
+      .bind(user, id)
+      .first();
+    assert.equal(JSON.parse(row.data).squad, squad);
+  }
+  const repeated = await call('/api/career', command, user);
+  assert.equal(repeated.body.revision, reloaded.revision);
+  const rejected = await call(
+    '/api/career',
+    {
+      type: 'squad',
+      id: outgoing,
+      value: 'first',
+      replaceId: 'not-our-player',
+      revision: reloaded.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(rejected.status, 400);
+  const after = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(after, reloaded);
+  assert.deepEqual(after.state.history, before.state.history);
+  assert.equal(after.state.budget, before.state.budget);
+  for (const p of after.state.roster) {
+    const old = before.state.roster.find((v) => v.id === p.id);
+    assert.deepEqual(p.stats, old.stats);
+    assert.equal(p.salary, old.salary);
+    assert.equal(p.years, old.years);
+  }
+});
+
 test('Workers runs NestJS with migrated D1 catalog and protects career identity', async () => {
   const health = await call('/api/health');
   assert.equal(health.status, 200);

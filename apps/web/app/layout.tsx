@@ -3,6 +3,7 @@ import '../styles/globals.css';
 import '../styles/management.css';
 import '../styles/replay.css';
 import '../styles/interface.css';
+import '../styles/roster.css';
 
 export const metadata: Metadata = {
   title: 'DUGOUT | 월드 베이스볼 매니저',
