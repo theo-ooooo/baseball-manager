@@ -85,6 +85,13 @@
       "when": 1788843864424,
       "tag": "0011_club_logo_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1788872908147,
+      "tag": "0012_catalog_chunks",
+      "breakpoints": true
     }
   ]
 }

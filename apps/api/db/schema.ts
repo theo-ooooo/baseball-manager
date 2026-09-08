@@ -260,3 +260,15 @@ export const fixtures = sqliteTable(
   },
   (t) => [index('idx_fixtures_date_league').on(t.date, t.league)],
 );
+
+// Derived solely from the canonical D1 catalog by forward migrations.
+export const catalogChunks = sqliteTable(
+  'catalog_chunks',
+  {
+    version: text('version').notNull(),
+    section: text('section').notNull(),
+    chunk: integer('chunk').notNull(),
+    payload: text('payload').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.version, t.section, t.chunk] })],
+);
