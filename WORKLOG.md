@@ -45,3 +45,13 @@ Known product limits from the initial session remain: partial real rosters outsi
 The native Sites deployment completed successfully at https://dugout-world-manager.kkwondev.chatgpt.site. Access remains owner-private on managed Cloudflare infrastructure. Published application source: `016e04949ef6b8c5c7d1275171a98963ca291fe8`.
 
 GitHub Actions independently completed build, all 14 tests and typechecking successfully: https://github.com/theo-ooooo/baseball-manager/actions/runs/34142177139. The publication record adds documentation only; it does not change the deployed application. No browser or live persistence verification is claimed.
+
+## 2026-09-08 — Football Manager interface revision
+
+Replaced the large onboarding cards with a league/club database browser. Rebuilt the management shell with a fixed club sidebar, persistent game clock and continue control, compact section tabs, denser data tables, three-column club overview, selectable club reports and contract status. Applied graphite and muted violet styling throughout the roster, market, tactics, coaching and finance screens. Fixed archived match loading from the schedule and ensured compact standings include the managed club outside the leading positions.
+
+Validation: production build, TypeScript check and actual Worker SSR/assets test passed. No browser visual verification has been performed.
+
+Follow-up scope authorized during this session: four-week preseason with friendlies; optional first-season recruitment ban; saved custom tactics; position familiarity and draggable defensive assignments; a second-team system with promotions/demotions; missing real players including Lotte Jeon Min-jae; verified real coaches. These systems are not yet included in this interface checkpoint.
+
+The user reports connecting Cloudflare. Discovery in this conversation still returns no callable Cloudflare account/deployment tools, and local Cloudflare authentication is absent. Continue implementation and prepare a safe direct-account deployment path; do not describe Sites deployment as personal-account deployment.
