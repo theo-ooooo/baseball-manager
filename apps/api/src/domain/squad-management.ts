@@ -21,6 +21,7 @@ import {
 import { refreshRatings } from './performance-ratings';
 import { createPlayerGenerator } from './player-generator';
 import { changeSquad } from './roster-moves';
+import { prepareDevelopment } from './player-development';
 
 export function prepareSquad(g: GameState, world: WorldCatalog) {
   // A live game's inputs remain frozen until its result has committed.
@@ -81,6 +82,7 @@ export function prepareSquad(g: GameState, world: WorldCatalog) {
   g.tacticBook ??= [];
   g.defense = defenseFor(g);
   preparePitching(g);
+  prepareDevelopment(g);
 }
 function activePlayer(g: GameState, id: unknown) {
   const p = firstTeam(g).find((p) => p.id === id);
@@ -315,15 +317,6 @@ export function developSquad(g: GameState, random: () => number, opponents: stri
       p.familiarity[pos] = Math.min(100, familiarity(p, pos) + 0.2);
     }
   }
-  for (const p of played)
-    if (p.age < 28 && g.training !== 'rest') {
-      const skill = p.pos === 'P' ? 'stuff' : 'contact';
-      if (p[skill] < p.potential)
-        p[skill] = Math.min(
-          p.potential,
-          p[skill] + 0.08 + coachSkill(g, p.pos === 'P' ? '투수' : '타격') / 600,
-        );
-    }
   if (own > against) g.reserve.w++;
   else if (own < against) g.reserve.l++;
   else g.reserve.d++;

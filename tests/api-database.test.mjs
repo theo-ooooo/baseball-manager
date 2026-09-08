@@ -163,6 +163,19 @@ test('Daily calendar progression persists one date and a retried request cannot 
   assert.equal(stale.status, 409);
   const loaded = (await call('/api/career', undefined, user)).body;
   assert.deepEqual(loaded.state, saved.body.state);
+  const raw = await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first();
+  const stored = JSON.parse(raw.state);
+  assert.ok(stored.roster.every((p) => p.development.curve && p.development.lastTrained));
+  assert.ok(loaded.state.roster.every((p) => !p.development.curve));
+  const player = loaded.state.roster[0];
+  const row = await db
+    .prepare('SELECT data FROM career_players WHERE user_id=? AND player_id=?')
+    .bind(user, player.id)
+    .first();
+  assert.deepEqual(
+    JSON.parse(row.data).development,
+    stored.roster.find((p) => p.id === player.id).development,
+  );
 });
 
 test('Negotiation, signing, reselling and coaches update relational rows and accounting atomically', async () => {

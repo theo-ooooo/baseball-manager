@@ -1,0 +1,145 @@
+import type { GameState, Player, PlayerDevelopment } from '@dugout/shared/types';
+import { coachSkill, hash } from '@dugout/shared/game-view';
+import { gameDate, daysBetween } from '@dugout/shared/calendar';
+import { abilityKeys, abilityAverage, growthLabels } from '@dugout/shared/development';
+import { postNews } from './club-dynamics';
+
+function curveFor(p: Player): Pick<PlayerDevelopment, 'pattern' | 'curve'> {
+  const seed = hash(`${p.id}:development-v1`);
+  const pattern = (['early', 'steady', 'late', 'durable'] as const)[seed % 4];
+  const offset = (Math.floor(seed / 4) % 3) - 1;
+  const peak =
+    { early: 24, steady: 27, late: 30, durable: 27 }[pattern] + offset + (p.pos === 'P' ? 1 : 0);
+  return {
+    pattern,
+    curve: {
+      peak,
+      decline: peak + { early: 5, steady: 6, late: 5, durable: 10 }[pattern],
+      growth: 2.6 + (Math.floor(seed / 13) % 25) / 10,
+      durability: 0.7 + (Math.floor(seed / 97) % 7) / 10,
+    },
+  };
+}
+function stage(p: Player) {
+  const c = p.development!.curve!;
+  return p.age < c.peak ? 'growth' : p.age < c.decline ? 'peak' : 'decline';
+}
+function snapshot(g: GameState, p: Player) {
+  return {
+    date: gameDate(g),
+    age: p.age,
+    overall: abilityAverage(p),
+    abilities: Object.fromEntries(abilityKeys.map((k) => [k, p[k]])) as Record<
+      (typeof abilityKeys)[number],
+      number
+    >,
+  };
+}
+export function prepareDevelopment(g: GameState) {
+  if (g.liveMatch) return;
+  for (const p of g.roster) {
+    if (!p.development) {
+      const traits = curveFor(p);
+      p.development = {
+        version: 1,
+        ...traits,
+        stage: 'growth',
+        history: [snapshot(g, p)],
+        lastGames: { year: g.year, first: p.stats.g, reserve: p.reserveStats?.g || 0 },
+      };
+    }
+    p.development.curve ??= curveFor(p).curve;
+    p.development.stage = stage(p);
+  }
+}
+export function developPlayers(g: GameState) {
+  prepareDevelopment(g);
+  const date = gameDate(g),
+    seasonDays = Math.max(60, g.rounds + (g.rules?.preseason ? 28 : 0));
+  for (const p of g.roster) {
+    const d = p.development!,
+      c = d.curve!;
+    if (d.lastTrained === date) continue;
+    const previous = d.lastGames;
+    const appeared =
+      previous.year === g.year &&
+      (p.stats.g > previous.first || (p.reserveStats?.g || 0) > previous.reserve);
+    d.lastGames = { year: g.year, first: p.stats.g, reserve: p.reserveStats?.g || 0 };
+    d.lastTrained = date;
+    const workload = appeared ? 1.25 : p.squad === 'reserve' ? 0.7 : 0.5;
+    const freshness = 0.35 + Math.max(0, Math.min(100, p.condition)) / 150;
+    const training =
+      g.training === 'rest'
+        ? 0.12
+        : g.training === 'intense'
+          ? p.condition >= 65
+            ? 1.2
+            : 0.55
+          : 1;
+    for (const key of abilityKeys) {
+      if (
+        (p.pos === 'P' && ['contact', 'power'].includes(key)) ||
+        (p.pos !== 'P' && ['stuff', 'control'].includes(key))
+      )
+        continue;
+      const role =
+        key === 'stuff' || key === 'control'
+          ? '투수'
+          : key === 'field'
+            ? '수비'
+            : key === 'speed'
+              ? '체력'
+              : '타격';
+      const coaching = 0.55 + coachSkill(g, role) / 120;
+      const focus =
+        (g.training === 'power' && key === 'power') ||
+        (g.training === 'pitching' && ['stuff', 'control'].includes(key)) ||
+        (g.training === 'defense' && key === 'field')
+          ? 1.4
+          : 1;
+      const individual = 0.85 + (hash(`${p.id}:${key}`) % 31) / 100;
+      let delta = 0;
+      if (d.stage === 'growth')
+        delta =
+          (c.growth * coaching * workload * freshness * training * focus * individual) / seasonDays;
+      else if (d.stage === 'peak')
+        delta = (0.35 * coaching * workload * training * focus) / seasonDays;
+      else {
+        const ageLoss = (1 + (p.age - c.decline) * 0.3) * c.durability;
+        const physical =
+          key === 'speed' ? 1.6 : key === 'stuff' ? 1.1 : key === 'control' ? 0.45 : 0.8;
+        const care =
+          1 - Math.min(0.3, coachSkill(g, '체력') / 400 + (g.training === 'rest' ? 0.08 : 0));
+        delta = (-ageLoss * physical * care * individual) / seasonDays;
+      }
+      if (delta > 0) delta = Math.min(delta, Math.max(0, p.potential - p[key]));
+      p[key] = Math.max(20, Math.min(99, p[key] + delta));
+    }
+  }
+}
+export function developmentReports(g: GameState) {
+  const reviewed: { p: Player; change: number }[] = [];
+  for (const p of g.roster) {
+    const d = p.development;
+    if (!d) continue;
+    const last = d.history.at(-1);
+    if (!last || daysBetween(last.date, gameDate(g)) < 28) continue;
+    const now = snapshot(g, p);
+    reviewed.push({ p, change: now.overall - last.overall });
+    d.history = [...d.history, now].slice(-18);
+  }
+  if (!reviewed.length) return;
+  const growing = [...reviewed].filter((x) => x.change >= 0.1).sort((a, b) => b.change - a.change);
+  const declining = [...reviewed]
+    .filter((x) => x.change <= -0.1)
+    .sort((a, b) => a.change - b.change);
+  const lines = [
+    `최근 4주 · 성장 ${growing.length}명 · 유지 ${reviewed.length - growing.length - declining.length}명 · 하락 ${declining.length}명.`,
+  ];
+  for (const { p, change } of [...growing.slice(0, 3), ...declining.slice(0, 3)])
+    lines.push(
+      `${p.name} (${growthLabels[p.development!.stage]}) ${change >= 0 ? '+' : ''}${change.toFixed(1)}`,
+    );
+  lines.push('선수 상세의 성장 기록에서 능력 변화와 육성 방향을 확인하세요.');
+  postNews(g, '선수 성장·하락 보고', lines.join('\n'), 'development', { actionView: 'squad' });
+}

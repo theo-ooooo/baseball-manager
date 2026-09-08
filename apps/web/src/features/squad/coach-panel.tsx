@@ -204,8 +204,8 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
           ))}
         </div>
         <p className="panel-content tiny">
-          타격·투수 코치는 해당 능력 성장, 수비 코치는 수비와 포지션 숙련도, 체력 코치는 회복,
-          스카우트는 잠재력 평가에 영향을 줍니다.
+          타격·투수·수비 코치는 담당 능력 성장과 훈련에 영향을 줍니다. 체력 코치는 회복과 하락기
+          관리에 도움이 됩니다. 선수별 성장 기록에서 변화를 확인하세요.
         </p>
       </section>
     </>

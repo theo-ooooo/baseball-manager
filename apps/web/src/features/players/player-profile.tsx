@@ -31,6 +31,7 @@ import { useWorld } from '../career/world-context';
 import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
 import { PositionTraining } from '../squad/management-panels';
 import { RosterMoveControl } from '../squad/roster-moves';
+import { DevelopmentPanel } from './development-panel';
 
 type Props = {
   player: Player;
@@ -258,7 +259,8 @@ export function PlayerProfile(props: Props) {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="profile-tabs" variant="line">
           <TabsTrigger value="profile">프로필 · 세부 능력</TabsTrigger>
-          <TabsTrigger value="records">성적 · 성장</TabsTrigger>
+          <TabsTrigger value="records">성적</TabsTrigger>
+          {own && <TabsTrigger value="development">성장 기록</TabsTrigger>}
           <TabsTrigger value="contract">{own ? '계약 · 이적' : '계약 협상'}</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
@@ -367,6 +369,11 @@ export function PlayerProfile(props: Props) {
         <TabsContent value="contract">
           <ContractPanel {...props} />
         </TabsContent>
+        {own && (
+          <TabsContent value="development">
+            <DevelopmentPanel player={player} game={game} />
+          </TabsContent>
+        )}
       </Tabs>
     </article>
   );

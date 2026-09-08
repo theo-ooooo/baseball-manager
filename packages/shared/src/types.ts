@@ -44,6 +44,25 @@ export type Player = {
   ageEstimated?: boolean;
   rating?: RatingEvidence;
   mood?: PlayerMood;
+  development?: PlayerDevelopment;
+};
+export type AbilityKey = 'contact' | 'power' | 'speed' | 'field' | 'stuff' | 'control';
+export type GrowthStage = 'growth' | 'peak' | 'decline';
+export type GrowthSnapshot = {
+  date: string;
+  age: number;
+  overall: number;
+  abilities: Record<AbilityKey, number>;
+};
+export type PlayerDevelopment = {
+  version: 1;
+  pattern: 'early' | 'steady' | 'late' | 'durable';
+  stage: GrowthStage;
+  // Simulation parameters are server-only, including when potential is revealed.
+  curve?: { peak: number; decline: number; growth: number; durability: number };
+  history: GrowthSnapshot[];
+  lastTrained?: string;
+  lastGames: { year: number; first: number; reserve: number };
 };
 export type Coach = {
   id: string;

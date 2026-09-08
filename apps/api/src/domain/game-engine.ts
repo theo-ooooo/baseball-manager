@@ -2,6 +2,7 @@ import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
 import { createCalendarProgression } from './calendar-progression';
 import { createRecruitment } from './recruitment';
+import { developPlayers, developmentReports } from './player-development';
 
 import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
 import {
@@ -299,6 +300,7 @@ export function createGameEngine(world: WorldCatalog) {
         r,
         clubs.filter((c) => c.league === ownLeague && c.id !== g.club).map((c) => c.id),
       );
+      developPlayers(g);
       g.day++;
       for (const p of g.roster) {
         p.condition = clamp(
@@ -309,19 +311,6 @@ export function createGameEngine(world: WorldCatalog) {
           20,
           100,
         );
-        if (g.training !== 'rest' && p.age < 31 && r() < 0.08) {
-          const skill =
-            g.training === 'pitching' || (g.training === 'balanced' && p.pos === 'P')
-              ? 'stuff'
-              : g.training === 'defense'
-                ? 'field'
-                : g.training === 'power'
-                  ? 'power'
-                  : 'contact';
-          const role = skill === 'stuff' ? '투수' : skill === 'field' ? '수비' : '타격';
-          if (p[skill] < p.potential)
-            p[skill] = clamp(p[skill] + coachSkill(g, role) / 140, 20, p.potential);
-        }
       }
       const salary =
         (g.roster.reduce((s, p) => s + p.salary, 0) + g.staff.reduce((s, c) => s + c.salary, 0)) /
@@ -332,6 +321,7 @@ export function createGameEngine(world: WorldCatalog) {
       dailyReports(g, world);
       transfers.offerTick(g);
       recruitment.tick(g);
+      developmentReports(g);
       if (g.phase === 'preseason' && g.day === 0) {
         g.phase = 'regular';
         news(
@@ -438,12 +428,6 @@ export function createGameEngine(world: WorldCatalog) {
       }
       p.stats = blankStats();
       p.reserveStats = blankStats();
-      if (p.age >= 34) {
-        p.contact = clamp(p.contact - 1.5, 20, 99);
-        p.power = clamp(p.power - 1, 20, 99);
-        p.speed = clamp(p.speed - 2, 20, 99);
-        p.stuff = clamp(p.stuff - 1.5, 20, 99);
-      }
       if (p.years <= 0) departed.push(p.id);
     }
     g.transferred = [

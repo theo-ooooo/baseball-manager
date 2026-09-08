@@ -11,6 +11,7 @@ import {
 import { transfersBlocked } from '@dugout/shared/management';
 import { postNews } from './club-dynamics';
 import { createTransferMarket } from './transfer-market';
+import { prepareDevelopment } from './player-development';
 
 type Offer = Deal | CoachDeal;
 function terms(salary: number, years: number) {
@@ -213,6 +214,7 @@ export function createRecruitment(world: WorldCatalog) {
       g.ownership[p.id] = g.club;
       g.transferred = g.transferred.filter((v) => v.id !== p.id);
     }
+    prepareDevelopment(g);
     g.deals = g.deals.filter((old) => old.player.id !== p.id);
     postNews(
       g,
