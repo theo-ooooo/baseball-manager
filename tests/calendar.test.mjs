@@ -1,7 +1,56 @@
-import {strict as assert} from 'node:assert';import {test} from 'node:test';import {buildSync} from 'esbuild';import {createRequire} from 'node:module';import {tmpdir} from 'node:os';import {join} from 'node:path';
-const out=join(tmpdir(),'dugout-calendar-test.cjs');buildSync({entryPoints:['tests/fixtures/engine.ts'],bundle:true,platform:'node',format:'cjs',outfile:out});const {world:w,engine:e}=createRequire(import.meta.url)(out);
-test('Official calendar has the correct club totals, rest dates and distinct fixture identities',()=>{for(const [lid,games] of [['kbo',144],['mlb',162],['npb',143]]){const fs=w.fixtures.filter(f=>f.league===lid);assert.equal(new Set(fs.map(f=>f.id)).size,fs.length);for(const c of w.clubs.filter(c=>c.league===lid))assert.equal(fs.filter(f=>f.home===c.id||f.away===c.id).length,games,c.id);}
- const g=e.newGame('kbo-lotte','Calendar','full',3);assert.equal(e.nextFixture({...g,phase:'regular',day:0})[0],'kbo-samsung');assert.equal(e.onDate(g,'kbo',2).length,0);assert.equal(e.ownFixtures(g,3)[0].away,'kbo-lotte');
+import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
+import { buildSync } from 'esbuild';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const out = join(tmpdir(), 'dugout-calendar-test.cjs');
+buildSync({
+  entryPoints: ['tests/fixtures/engine.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'cjs',
+  outfile: out,
 });
-test('Generated calendars satisfy every club game count, including odd-team leagues',()=>{for(const l of w.leagues){const g=e.newGame(w.clubs.find(c=>c.league===l.id).id,'Future','full',3);g.year=2027;g.calendar=undefined;const fs=e.fixtures(g,l.id);for(const c of w.clubs.filter(c=>c.league===l.id))assert.equal(fs.filter(f=>f.home===c.id||f.away===c.id).length,l.games,c.id);}});
-test('Rest day advances the date without creating a match; league games share the same date',()=>{let g=e.newGame('kbo-lotte','Calendar','full',3);while(g.phase==='preseason')g=e.advance(g,7);g=e.advance(g,2);const count=g.history.length,budget=g.budget;g=e.advance(g,1);assert.equal(g.history.length,count);assert.equal(g.day,3);assert.ok(g.budget<budget);assert.equal(g.worldResults.filter(r=>r.date==='2026-03-28'&&r.home.startsWith('kbo-')).length,5);});
+const { world: w, engine: e } = createRequire(import.meta.url)(out);
+test('Official calendar has the correct club totals, rest dates and distinct fixture identities', () => {
+  for (const [lid, games] of [
+    ['kbo', 144],
+    ['mlb', 162],
+    ['npb', 143],
+  ]) {
+    const fs = w.fixtures.filter((f) => f.league === lid);
+    assert.equal(new Set(fs.map((f) => f.id)).size, fs.length);
+    for (const c of w.clubs.filter((c) => c.league === lid))
+      assert.equal(fs.filter((f) => f.home === c.id || f.away === c.id).length, games, c.id);
+  }
+  const g = e.newGame('kbo-lotte', 'Calendar', 'full', 3);
+  assert.equal(e.nextFixture({ ...g, phase: 'regular', day: 0 })[0], 'kbo-samsung');
+  assert.equal(e.onDate(g, 'kbo', 2).length, 0);
+  assert.equal(e.ownFixtures(g, 3)[0].away, 'kbo-lotte');
+});
+test('Generated calendars satisfy every club game count, including odd-team leagues', () => {
+  for (const l of w.leagues) {
+    const g = e.newGame(w.clubs.find((c) => c.league === l.id).id, 'Future', 'full', 3);
+    g.year = 2027;
+    g.calendar = undefined;
+    const fs = e.fixtures(g, l.id);
+    for (const c of w.clubs.filter((c) => c.league === l.id))
+      assert.equal(fs.filter((f) => f.home === c.id || f.away === c.id).length, l.games, c.id);
+  }
+});
+test('Rest day advances the date without creating a match; league games share the same date', () => {
+  let g = e.newGame('kbo-lotte', 'Calendar', 'full', 3);
+  while (g.phase === 'preseason') g = e.advance(g, 7);
+  g = e.advance(g, 2);
+  const count = g.history.length,
+    budget = g.budget;
+  g = e.advance(g, 1);
+  assert.equal(g.history.length, count);
+  assert.equal(g.day, 3);
+  assert.ok(g.budget < budget);
+  assert.equal(
+    g.worldResults.filter((r) => r.date === '2026-03-28' && r.home.startsWith('kbo-')).length,
+    5,
+  );
+});

@@ -1,0 +1,98 @@
+'use client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { useWorld } from './world-context';
+
+export function Help({ open, close }: { open: boolean; close: () => void }) {
+  const { rosterNote } = useWorld();
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) close();
+      }}
+    >
+      <DialogContent className="game-dialog help-dialog">
+        <DialogHeader>
+          <DialogTitle>DUGOUT 플레이 가이드</DialogTitle>
+          <DialogDescription>구단 선택부터 챔피언십까지</DialogDescription>
+        </DialogHeader>
+        <div className="help-copy">
+          <h3>프리시즌 · 전술</h3>
+          <p>
+            새 커리어는 개막 4주 전 시작합니다. 주 1회 연습경기는 정규 성적에 포함되지 않습니다.
+            전술 화면에서 수비 선수를 드래그하거나 클릭해 배치하고, 팀 지시와 타순을 이름 붙여
+            저장할 수 있습니다. 포지션 숙련도는 수비력에 영향을 줍니다. 첫 시즌 영입 금지 옵션은
+            FA를 포함하며, 다음 해에 해제됩니다.
+          </p>
+          <h3>시즌 진행</h3>
+          <p>
+            타순과 선발, 공격 전술을 정한 뒤 경기를 진행하세요. 선수 능력과 컨디션, 코칭이 경기와
+            성장에 반영됩니다. 경기 결과는 리플레이에서 이닝별로 확인할 수 있습니다.
+          </p>
+          <h3>영입 · 이적 · 에이전트</h3>
+          <p>
+            시장에서 선수를 선택해 계약을 제안하고, 에이전트 메뉴에서 합의나 역제안에 서명하세요.
+            소속 구단이 주전 역할·대체 전력·잔여 계약·순위 경쟁을 검토해 이적을 거절하거나 높은
+            이적료를 요구할 수 있습니다. 내 선수는 이적 명단에 올린 뒤 실제로 도착한 구단 제안만
+            수락할 수 있습니다. 단축 시즌의 구단 간 이적은 시즌 80%에서 마감됩니다. 다음 시즌 전
+            계약 잔여 1년인 선수를 확인하세요.
+          </p>
+          <h3>수신함 · 선수단 분위기</h3>
+          <p>
+            경기 날짜에 맞춰 시리즈 분석, 훈련과 계약 보고가 도착합니다. 출전 부족·경기 결과·약속
+            이행이 선수 사기에 반영되며, 면담이 새로 생기면 여러 날 진행이 멈춥니다. 수신함에서
+            답변하거나 선수단 분위기에서 원인을 확인하세요. 선수의 감정과 발언은 게임 내 가상
+            상태입니다.
+          </p>
+          <h3>코치 · 가상 신인</h3>
+          <p>
+            KBO 실명 코치와 가상 코치를 5개 분야에 선임할 수 있습니다. 2군에서 별도 경기와 훈련을
+            통해 선수를 육성하고 1군으로 올릴 수 있습니다. 시즌을 넘기면 나이와 계약 기간이 변하고
+            가상 신인이 입단합니다. 실명 선수와 가상 선수는 배지로 구분합니다.
+          </p>
+          <h3>리그와 게임 규칙</h3>
+          <p>
+            13개 리그의 구단으로 플레이할 수 있습니다. 2026 MLB·NPB는 공식 날짜와 대진을 사용합니다.
+            KBO는 최초 편성 675경기와 공식 잔여 대진 45경기를 조합한 144경기 일정이며 우천 취소는
+            재현하지 않습니다. 그 외 리그·다음 시즌·단축 모드는 연전과 휴식일을 포함해 편성합니다.
+            단축 모드는 상대별 2경기입니다. 모든 리그에 통합 순위와 상위 4팀 플레이오프(준결승 3전
+            2선승, 결승 5전 3선승)를 적용합니다. 실제 지구별 진출·전후기·포스팅·외국인 제한·국가별
+            2군 운영·국제대회 규정은 아직 적용하지 않았습니다.
+          </p>
+          <h3>선수 데이터</h3>
+          <p>
+            {rosterNote} MLB·NPB는 공개 등록 명단, KBO는 10개 구단의 9월 7일 1군 등록 명단과 기존
+            실명 명단을 반영했으며, 전체 소속 선수 명단과 차이가 있을 수 있습니다. 기타 리그는 일부
+            실명 선수를 반영했습니다. 겨울 리그는 2025–26 구성 기준입니다. 정보 확인일: 2026-09-07.
+          </p>
+          <p>
+            에이전트는 가상 인물입니다. 실명 코치의 이름과 등록 소속은 공식 명단 기준이며
+            능력·연봉·게임 담당 보직은 게임 설정입니다. 실제 인물이나 소속사의 계약 조건을 재현하지
+            않습니다. 선수 이적은 국가별 법적 절차를 생략한 게임 규칙으로 처리합니다.
+          </p>
+          <div className="source-links">
+            <a
+              href="https://www.koreabaseball.com/Record/Player/HitterBasic/Basic1.aspx"
+              target="_blank"
+              rel="noreferrer"
+            >
+              KBO 선수 기록 ↗
+            </a>
+            <a href="https://www.mlb.com/dodgers/roster" target="_blank" rel="noreferrer">
+              MLB 공개 로스터 ↗
+            </a>
+            <a href="https://npb.jp/bis/eng/teams/rst_g.html" target="_blank" rel="noreferrer">
+              NPB 등록 명단 ↗
+            </a>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

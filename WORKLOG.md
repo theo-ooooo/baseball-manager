@@ -149,3 +149,10 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Replaced PlayerModal with `/players/[id]` routes and URL-addressed management sections. Player entry points, direct access, return links and missing-player states use the same persisted career. Contract offers stay on the page and link to final signing.
 - Added separate profile, official/game-stat and contract sections, observed detailed attributes with missing-data labels, game morale, position familiarity, pitcher-role links and first/reserve registration. Potential visibility applies to the entire profile, including pitchers. Fixed market memo dependencies so catalog and ownership changes refresh listings.
 - Validation: TypeScript and production build pass; real Worker SSR serves direct player/section routes; rendered React profile tests confirm the independent page, missing-attribute labels and hidden/revealed potential. These checks do not claim browser navigation or visual QA. No deployment performed.
+
+## 2026-09-08 — Codex: readable modules and clean checks
+
+- Split the monolithic game screen into setup, sidebar, overview, squad, player-table, world, market, agent, finance and help modules with shared display primitives. Split server PA simulation and live-match commands out of the season/management engine. No browser mutation logic was introduced.
+- Expanded authored TypeScript, JSX, CSS and tests using the pinned formatter. Removed unused imports/state, replaced effect-driven tactic drafts with keyed drafts, and moved media preferences to an external-store hook. Animation callbacks update after commit; PA completion is derived from the completed log count.
+- Lint now excludes generated bundles/caches. The handoff branch's GitHub workflow runs format, lint, production tests and typecheck.
+- Validation: production build, all 43 tests, TypeScript, ESLint (zero warnings/errors) and format check pass. Earlier feature-level test results remain applicable; no browser interaction or production publication is claimed.

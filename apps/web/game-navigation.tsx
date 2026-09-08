@@ -1,0 +1,29 @@
+'use client';
+import {
+  Activity,
+  ArrowUpRight,
+  ClipboardList,
+  Globe2,
+  Handshake,
+  House,
+  Users,
+  Wallet,
+  CalendarDays,
+  MessageSquare,
+  GraduationCap,
+} from 'lucide-react';
+
+export const nav = [
+  { id: 'home', label: '홈', icon: House },
+  { id: 'inbox', label: '수신함', icon: MessageSquare },
+  { id: 'dynamics', label: '선수단 분위기', icon: Activity },
+  { id: 'squad', label: '선수단', icon: Users },
+  { id: 'reserves', label: '2군 · 육성', icon: GraduationCap },
+  { id: 'tactics', label: '전술 · 타순', icon: ClipboardList },
+  { id: 'schedule', label: '일정 · 결과', icon: CalendarDays },
+  { id: 'world', label: '리그 · 세계', icon: Globe2 },
+  { id: 'market', label: '영입 · 이적', icon: ArrowUpRight },
+  { id: 'agents', label: '에이전트', icon: Handshake },
+  { id: 'staff', label: '코치 · 훈련', icon: GraduationCap },
+  { id: 'finance', label: '구단 재정', icon: Wallet },
+];

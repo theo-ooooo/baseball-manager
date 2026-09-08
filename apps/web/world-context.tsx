@@ -3,8 +3,8 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { createGameView } from '../../packages/shared/src/game-view';
 import type { WorldCatalog } from '../../packages/shared/src/types';
 const WorldContext = createContext<ReturnType<typeof createGameView> | null>(null);
-export function WorldProvider({world,children}:{world:WorldCatalog;children:ReactNode}) {
-  const value = useMemo(()=>createGameView(world),[world]);
+export function WorldProvider({ world, children }: { world: WorldCatalog; children: ReactNode }) {
+  const value = useMemo(() => createGameView(world), [world]);
   return <WorldContext.Provider value={value}>{children}</WorldContext.Provider>;
 }
 export function useWorld() {

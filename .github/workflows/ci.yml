@@ -2,7 +2,7 @@ name: Validate baseball manager
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/handoff-2026-09-08]
   pull_request:
 
 permissions:
@@ -19,5 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
       - run: npm test
       - run: npm run typecheck
