@@ -128,3 +128,9 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Added `0009_performance_2025_v2`, updating only catalog ratings/evidence and catalog version. Migrations 0000–0008 remain byte-identical; career snapshots, contracts, ownership, match archives and finance are not migration targets.
 - Replaced the old overwrite generator with append-only migration tooling that refuses an existing migration name. Added an offline, portable reconstruction of the archived official 2025 performance data.
 - Validation: archived source reconstruction matches all committed evidence records; SQLite upgrade regression preserves preexisting career/contract/archive rows byte-for-byte; rating identity and career upgrade regressions pass. Full Worker validation follows the remaining implementation. No production database change or publication performed.
+
+## 2026-09-08 — Codex: portable build and formatting tools
+
+- The checked-out project now builds on macOS as well as Linux: the build timeout uses a bounded Node child process instead of GNU timeout. Project-local caches/logs remain isolated without repurposing the user's HOME.
+- Added pinned Prettier tooling and format/check commands for authored application code, excluding historical migrations, seed snapshots and vendored components. A separate source-formatting commit will follow feature fixes, per the user's readability request.
+- Validation: production NestJS/Vinext Worker build succeeds on Node 24/macOS; typecheck succeeds after API bundle generation. The baseline whole-suite run exposed a WIP pitcher home-run/stat invariant failure, being fixed in the pitching unit. Publication has not been requested in this continuation; production remains unchanged.
