@@ -29,7 +29,8 @@ export class CareerTransferController {
       return await importCareer(env.DB, request.body, userId(request));
     } catch (error) {
       if (error instanceof CareerImportError) {
-        if (error.code === 'target_exists') throw new ConflictException(error.message);
+        if (error.code === 'target_exists' || error.code === 'id_conflict')
+          throw new ConflictException(error.message);
         if (error.code === 'invalid_backup') throw new BadRequestException(error.message);
       }
       throw error;

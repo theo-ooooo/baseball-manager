@@ -7,7 +7,7 @@
   },
   "scripts": {
     "install:ci": "bash scripts/install-ci.sh",
-    "dev": "npm run build:api && npm run dev --workspace @dugout/web",
+    "dev": "npm run db:migrate:local && npm run build:api && npm run dev --workspace @dugout/web",
     "build": "bash scripts/build-verified.sh",
     "start": "npm run start --workspace @dugout/web",
     "test": "npm run build && node --test tests/*.test.mjs",
@@ -20,7 +20,8 @@
     "db:seed:generate": "node scripts/generate-world-seed.mjs",
     "format": "prettier --write \"{apps/web/app,apps/web/src/features,apps/web/src/hooks,apps/web/styles,apps/api/src,apps/api/db,packages/shared/src,infra,scripts,tests}/**/*.{ts,tsx,mjs,css}\" \"apps/web/src/components/{game-ui,club-badge}.tsx\"",
     "format:check": "prettier --check \"{apps/web/app,apps/web/src/features,apps/web/src/hooks,apps/web/styles,apps/api/src,apps/api/db,packages/shared/src,infra,scripts,tests}/**/*.{ts,tsx,mjs,css}\" \"apps/web/src/components/{game-ui,club-badge}.tsx\"",
-    "deploy:cloudflare": "node scripts/deploy-cloudflare.mjs"
+    "deploy:cloudflare": "node scripts/deploy-cloudflare.mjs",
+    "db:migrate:local": "node scripts/migrate-local.mjs"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
