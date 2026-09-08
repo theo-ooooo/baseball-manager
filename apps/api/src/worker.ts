@@ -10,37 +10,71 @@ class ApiExceptionFilter implements ExceptionFilter {
     const response = host.switchToHttp().getResponse();
     const status = error instanceof HttpException ? error.getStatus() : 503;
     const detail = error instanceof HttpException ? error.getResponse() : null;
-    const body = typeof detail === 'object' && detail ? detail as Record<string,unknown> : {};
-    const message = typeof detail === 'string' ? detail : body.message || body.error || '저장 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.';
-    if (status === 503) console.error('API operation failed', error instanceof Error ? error.message : 'Unknown database failure');
-    response.status(status).json({ ...body, error: body.state !== undefined ? body.error : message });
+    const body = typeof detail === 'object' && detail ? (detail as Record<string, unknown>) : {};
+    const message =
+      typeof detail === 'string'
+        ? detail
+        : body.message ||
+          body.error ||
+          '저장 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    if (status === 503)
+      console.error(
+        'API operation failed',
+        error instanceof Error ? error.message : 'Unknown database failure',
+      );
+    response
+      .status(status)
+      .json({ ...body, error: body.state !== undefined ? body.error : message });
   }
 }
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule,new ExpressAdapter(),{logger:false,bodyParser:false});
-  app.useBodyParser('json',{limit:'12kb'});
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, new ExpressAdapter(), {
+    logger: false,
+    bodyParser: false,
+  });
+  // Requests are authenticated and byte-limited before entering the HTTP bridge.
+  app.useBodyParser('json', { limit: '8mb' });
   app.useGlobalFilters(new ApiExceptionFilter());
   await app.listen(3000);
   return app;
 }
 const ready = bootstrap();
-const bridge = httpServerHandler({port:3000});
-export default {
-  async fetch(request: Request, environment?: unknown, context?: unknown): Promise<Response> {
+const bridge = httpServerHandler({ port: 3000 });
+const bridgeFetch = bridge.fetch;
+if (!bridgeFetch) throw new Error('Cloudflare HTTP bridge is missing its fetch handler');
+const worker = {
+  async fetch(
+    request: Request<unknown, IncomingRequestCfProperties>,
+    environment: unknown,
+    context: ExecutionContext,
+  ): Promise<Response> {
     const origin = request.headers.get('origin');
-    if (request.method !== 'GET' && origin && origin !== new URL(request.url).origin) return Response.json({error:'요청 출처를 확인할 수 없습니다.'},{status:403});
+    if (request.method !== 'GET' && origin && origin !== new URL(request.url).origin)
+      return Response.json({ error: '요청 출처를 확인할 수 없습니다.' }, { status: 403 });
     if (request.method === 'POST') {
-      if (!request.headers.get('content-type')?.includes('application/json')) return Response.json({error:'JSON 요청이 필요합니다.'},{status:415});
+      if (!request.headers.get('content-type')?.includes('application/json'))
+        return Response.json({ error: 'JSON 요청이 필요합니다.' }, { status: 415 });
       const body = await request.text();
-      if (new TextEncoder().encode(body).byteLength > 12000) return Response.json({error:'요청이 너무 큽니다.'},{status:413});
-      try { JSON.parse(body); } catch { return Response.json({error:'요청 형식이 올바르지 않습니다.'},{status:400}); }
-      request = new Request(request,{body});
+      const isTransfer =
+        new URL(request.url).pathname === '/api/career/import' &&
+        request.headers.get('x-dugout-transfer') === 'import';
+      const limit = isTransfer ? 8 * 1024 * 1024 : 12000;
+      if (new TextEncoder().encode(body).byteLength > limit)
+        return Response.json({ error: '요청이 너무 큽니다.' }, { status: 413 });
+      try {
+        JSON.parse(body);
+      } catch {
+        return Response.json({ error: '요청 형식이 올바르지 않습니다.' }, { status: 400 });
+      }
+      request = new Request<unknown, IncomingRequestCfProperties>(request, { body });
     }
     await ready;
-    const response = await bridge.fetch(request,environment,context);
+    const response = await bridgeFetch(request, environment, context);
     const headers = new Headers(response.headers);
-    headers.set('Cache-Control','no-store');
-    headers.set('X-Content-Type-Options','nosniff');
-    return new Response(response.body,{status:response.status,headers});
+    headers.set('Cache-Control', 'no-store');
+    headers.set('X-Content-Type-Options', 'nosniff');
+    return new Response(response.body, { status: response.status, headers });
   },
 };
+
+export default worker;

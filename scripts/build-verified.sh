@@ -7,11 +7,6 @@ if [[ "${SITES_ENV_READY:-}" != "1" ]]; then
   exec "${script_dir}/sites-env.sh" -- "$0" "$@"
 fi
 
-command -v timeout || {
-  echo "build-verified.sh requires GNU timeout." >&2
-  exit 69
-}
-
 vinext="${SITES_PROJECT_ROOT}/node_modules/.bin/vinext"
 if [[ ! -x "${vinext}" ]]; then
   echo "vinext is unavailable. Run npm run install:ci and wait for it to finish before building." >&2
@@ -19,9 +14,9 @@ if [[ ! -x "${vinext}" ]]; then
 fi
 
 echo "Running bounded vinext build..."
+mkdir -p "${SITES_PROJECT_ROOT}/infra/cloudflare/.build"
+"${SITES_PROJECT_ROOT}/node_modules/.bin/wrangler" types "${SITES_PROJECT_ROOT}/infra/cloudflare/.build/worker-configuration.d.ts" --config "${SITES_PROJECT_ROOT}/infra/cloudflare/wrangler.jsonc" --strict-vars false
 node "${SITES_PROJECT_ROOT}/scripts/build-api.mjs"
-timeout \
-  --signal=TERM \
-  --kill-after="${SITES_BUILD_KILL_AFTER:-10s}" \
-  "${SITES_BUILD_TIMEOUT:-3m}" \
-  "${vinext}" build
+cd "${SITES_PROJECT_ROOT}/apps/web"
+node "${SITES_PROJECT_ROOT}/scripts/bounded-command.mjs" "${SITES_BUILD_TIMEOUT:-3m}" "${vinext}" build
+node "${SITES_PROJECT_ROOT}/scripts/stage-build.mjs"

@@ -1,9 +1,10 @@
-name: Validate baseball manager
+name: Validate and deploy baseball manager
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/handoff-2026-09-08]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,5 +20,52 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
       - run: npm test
       - run: npm run typecheck
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          name: verified-worker
+          path: dist/
+          include-hidden-files: true
+          retention-days: 3
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: cloudflare-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://baseball-manager.kkwondev.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-worker
+          path: dist/
+      - name: Skip deployment if a newer main commit exists
+        id: head
+        shell: bash
+        run: |
+          latest="$(git ls-remote origin refs/heads/main | cut -f1)"
+          test -n "$latest"
+          if [[ "$latest" == "$GITHUB_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Apply forward migrations and publish verified Worker
+        if: steps.head.outputs.current == 'true'
+        run: npm run deploy:cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

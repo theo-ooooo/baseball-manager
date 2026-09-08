@@ -112,3 +112,134 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Continue skips idle dates until the next match, phase transition, player concern or buyer offer, while processing each day's wages, recovery and world fixtures. The separate seven-day action remains available.
 - TypeScript, production build, and all 32 tests passed, including the actual NestJS Worker with migrated D1, atomic accounting, archive retrieval and production HTML/assets. No browser interaction or visual QA was performed because it was not requested.
 - Further user additions queued: official team logos (52 major-league assets verified so far), hidden potential with a new-career option, dedicated player pages, detailed attributes and role-aware lineup recommendations.
+
+## 2026-09-08 — 사용자 요청으로 개발 중단, Codex 인계
+
+- 운영 852348dc7939c9b2b3106eb0530e5086ffc8bdf3의 Sites 배포 성공 확인. 이후 미완성 변경은 미배포.
+- 사용자가 남은 작업을 취소하고 Codex 이관을 요청했다. 추가 개발·수정·배포를 중단했다.
+- `codex/handoff-2026-09-08`에 투수 보직, 타석 단위 경기 진행, 2D 구장, 잠재력 마스킹, 상세 능력/타순 추천의 WIP를 보존한다. 선수 페이지·DB v2 migration·팀 로고 통합은 미완료.
+- 최신 WIP 타입 검사 통과. 초기 경기/투수 단위 테스트 5개 통과 후 추가 변경이 있었으며 최신 전체 테스트/빌드/브라우저 검증은 미실행.
+- `CODEX_HANDOFF.md`에 배포 기준, 변경 파일, 미완료 부분, 알려진 위험, 실행·DB·배포·인증 이전 방법을 기록했다.
+- 공식 구단 로고 52개와 추가 2025 성적 자료/수집 스크립트는 `handoff/research-assets.zip`에 보존. 개인정보/credential/운영 세이브/의존성/빌드 산출물은 포함하지 않는다.
+
+## 2026-09-08 — Codex: forward performance migration
+
+- Checked out the authorized `codex/handoff-2026-09-08` branch and resumed the six unfinished feature areas.
+- Added `0009_performance_2025_v2`, updating only catalog ratings/evidence and catalog version. Migrations 0000–0008 remain byte-identical; career snapshots, contracts, ownership, match archives and finance are not migration targets.
+- Replaced the old overwrite generator with append-only migration tooling that refuses an existing migration name. Added an offline, portable reconstruction of the archived official 2025 performance data.
+- Validation: archived source reconstruction matches all committed evidence records; SQLite upgrade regression preserves preexisting career/contract/archive rows byte-for-byte; rating identity and career upgrade regressions pass. Full Worker validation follows the remaining implementation. No production database change or publication performed.
+
+## 2026-09-08 — Codex: portable build and formatting tools
+
+- The checked-out project now builds on macOS as well as Linux: the build timeout uses a bounded Node child process instead of GNU timeout. Project-local caches/logs remain isolated without repurposing the user's HOME.
+- Added pinned Prettier tooling and format/check commands for authored application code, excluding historical migrations, seed snapshots and vendored components. A separate source-formatting commit will follow feature fixes, per the user's readability request.
+- Validation: production NestJS/Vinext Worker build succeeds on Node 24/macOS; typecheck succeeds after API bundle generation. The baseline whole-suite run exposed a WIP pitcher home-run/stat invariant failure, being fixed in the pitching unit. Publication has not been requested in this continuation; production remains unchanged.
+
+## 2026-09-08 — Codex: durable live games and pitching decisions
+
+- Live PA commands now update only the career snapshot and revision/request log; they do not rewrite player, contract, staff, negotiation, standing or financial projections. Completion still commits results, archives and all accounting atomically.
+- Frozen opponent inputs remain server-only, and catalog upgrades wait while a match is active. Potential is masked in roster, transferred-player, negotiation, catalog and conflict responses; hidden values remain intact in D1. New-career replacement is blocked during a live match.
+- Manual/legacy starters survive reads and rest dates. Saved tactics include pitching plans; role changes and reserve moves repair the plan. Watched doubleheaders stop between games, rotate the starter and apply daily wages/recovery only after the second game.
+- Separated pitcher home runs allowed from batting home runs. Wins, saves and holds use separate decisions, including the five-inning starter threshold and win/save exclusion. Short-start winner selection uses a documented game effectiveness heuristic; full official scorer discretion and earned-run rules remain simplified.
+- Preserved the last PA scene across finalization so its completed animation is not restarted.
+- Validation: seven actual production Worker/D1 API tests passed, including PA reload, concurrent revisions, duplicate requests, zero projection writes during PA steps, deferred accounting, archive ownership and potential masking. Live engine regressions cover preseason, saved plans, postseason and doubleheaders; dedicated pitching decision regressions pass. No production DB mutation, deployment, load test or browser interaction performed.
+
+## 2026-09-08 — Codex: dedicated player profiles
+
+- Replaced PlayerModal with `/players/[id]` routes and URL-addressed management sections. Player entry points, direct access, return links and missing-player states use the same persisted career. Contract offers stay on the page and link to final signing.
+- Added separate profile, official/game-stat and contract sections, observed detailed attributes with missing-data labels, game morale, position familiarity, pitcher-role links and first/reserve registration. Potential visibility applies to the entire profile, including pitchers. Fixed market memo dependencies so catalog and ownership changes refresh listings.
+- Validation: TypeScript and production build pass; real Worker SSR serves direct player/section routes; rendered React profile tests confirm the independent page, missing-attribute labels and hidden/revealed potential. These checks do not claim browser navigation or visual QA. No deployment performed.
+
+## 2026-09-08 — Codex: readable modules and clean checks
+
+- Split the monolithic game screen into setup, sidebar, overview, squad, player-table, world, market, agent, finance and help modules with shared display primitives. Split server PA simulation and live-match commands out of the season/management engine. No browser mutation logic was introduced.
+- Expanded authored TypeScript, JSX, CSS and tests using the pinned formatter. Removed unused imports/state, replaced effect-driven tactic drafts with keyed drafts, and moved media preferences to an external-store hook. Animation callbacks update after commit; PA completion is derived from the completed log count.
+- Lint now excludes generated bundles/caches. The handoff branch's GitHub workflow runs format, lint, production tests and typecheck.
+- Validation: production build, all 43 tests, TypeScript, ESLint (zero warnings/errors) and format check pass. Earlier feature-level test results remain applicable; no browser interaction or production publication is claimed.
+
+## 2026-09-08 — Codex: official club marks in D1 and the interface
+
+- Added 134 verified original club marks with source pages, source URLs, SHA-256 hashes and rights notes. The 52 inherited KBO/MLB/NPB assets and 82 additional official assets retain their original bytes. Collecchio, Neptunus and Tucson sources could not be retrieved/verified; their badges use labelled club abbreviations.
+- Added forward-only migrations 0010 (nullable club logo metadata) and 0011 (catalog assets/version v7). Runtime badge metadata comes from D1, and static image files are packaged with the Worker. A shared badge component covers setup, sidebar, club overview, standings, schedules, match scorebugs and player profiles, with an image-error fallback.
+- Validation: production build, Worker responses and exact hashes/MIME types for all 134 packaged assets, migrated D1 catalog provenance, legacy career byte preservation, and rendered React profile/logo/fallback tests pass. The component harness now resolves the actual Vinext image shim used in production. All images were visually inspected as contact sheets; no browser interaction or production publication performed. Official sources establish provenance, not reuse permission.
+
+## 2026-09-08 — Codex: retain setup holds after a later blown lead
+
+- Final rule review found that a team's eventual loss/draw discarded eligible earlier setup holds. Compute holds independently of final win/save awards, following the [MLB hold definition](https://www.mlb.com/glossary/standard-stats/hold).
+- Validation: all eight targeted pitching/live-game tests pass, including the new late blown-lead regression. Inning-boundary changes and simplified scorer discretion remain the documented simulation scope.
+
+## 2026-09-08 — Codex: preserve fractional development during rating upgrades
+
+- A new explicit v1-to-v2 regression exposed rounding of accumulated training growth during catalog refresh. Preserve fractional growth when applying the new base rating; initial catalog grades remain rounded.
+- Validation: four rating tests pass, covering roster, pending offer and sold-player upgrades; preserved contracts, match statistics, budget and transfer ownership; repeated upgrade idempotence; missing measurements versus generated attributes; and distinct leadoff/cleanup strengths in legal lineups. Full-suite validation follows below.
+
+## 2026-09-08 — Codex: enforce a clean client boundary and lint gate
+
+- Final lint review caught the schedule module's client directive below a newly added import. Restored the directive to the first statement and made lint warnings fail the local/CI check.
+- The prior full build and 47 tests passed, including GitHub Actions on `7312295`; validation of the final directive change follows below.
+
+## 2026-09-08 — Codex: final continuation validation and handoff
+
+- Completed the requested implementation on `codex/handoff-2026-09-08` in separate rating migration, build tooling, live match/pitching, player profile, readability, logo and regression-fix commits. Updated README and the handoff's current-status section while preserving the original checkpoint history.
+- Final application source `04ef3c1`: production NestJS/Vinext Worker build, all 47 tests, TypeScript, ESLint with zero warnings allowed, and Prettier checks pass locally. Archived official evidence reconstructs all 3,398 committed records. Actual Worker tests cover D1 migration, identity, concurrency, accounting, live PA persistence/reload/completion, SSR and all 134 logo asset responses/hashes.
+- GitHub Actions on `7312295` independently passed all checks: https://github.com/theo-ooooo/baseball-manager/actions/runs/34189810224. The final client-directive/strict-lint commit and this documentation update run the same workflow; check their exact head results before publication.
+- Confirmed byte-identical historical migrations/snapshots 0000–0008 and unchanged `.openai/hosting.json`. Upgrade regressions preserve existing career JSON/relational rows, and read-time model refresh preserves contracts, ownership, season stats and fractional development. No operating career data was downloaded, replaced or committed.
+- Remaining validation/publication scope: browser interaction, mobile visual/accessibility QA, production load and production persistence have not been tested. The three unavailable official logos use abbreviations; league/scorer/contract simplifications remain documented in README. No Site deployment, personal Cloudflare migration or production D1 migration was performed. GitHub push alone does not publish the existing Sites-managed Cloudflare application.
+
+## 2026-09-08 — Git identity correction and deployment trigger check
+
+- Set repository-local Git identity to `theo-ooooo <kkw.theo@gmail.com>` at the user's request. Rewrote the author and committer of the ten continuation commits after `90c631c`; preserved every commit's tree, message and timestamps. Earlier history remains unchanged. The previous final head `f817027` maps to `9309bce`; hashes in earlier validation entries describe their original checked heads.
+- Validation: the rewritten application tree is identical to the previously tested source. No application tests rerun for this metadata-only correction. Remote replacement uses an explicit force-with-lease against the last verified branch head.
+- Checked the live GitHub workflow inventory, repository webhooks, recent deployments and main checks. Only the validation workflow is configured; no deployment workflow, repository webhook or GitHub deployment record was returned. Merging to main runs validation and does not publish the existing Sites-managed Cloudflare site.
+
+## 2026-09-08 — Single web workspace and application-owned directories
+
+- Consolidated all frontend routes, features, UI primitives, hooks, styles, static assets and Vite configuration under `apps/web`; removed root frontend entrypoints. Added npm workspaces with application-owned runtime dependencies and `@dugout/shared/*` exports.
+- Grouped web features by career, players, squad, clubs, matches, schedule, market and finance. Moved schema/migrations under `apps/api`, and Worker/Sites infrastructure under `infra`. The existing Sites identity remains intact; build staging still supplies root `dist` for Worker tests and Sites packaging.
+- Validation: relocated production build, TypeScript, zero-warning lint and all 47 tests pass. Existing migration SQL/snapshots and official asset bytes are preserved; no career data was modified. Personal Cloudflare account access is now verified, and a separate empty target D1 was provisioned for the requested migration. Authentication, data transfer and automatic deployment follow in separate units.
+
+## 2026-09-08 — Remove unused starter code
+
+- Removed the unused D1 notes example, its unused Drizzle helper, unused Sites auth helper, 46 unreachable starter UI components, three placeholder SVGs and the replaced stadium raster. Removed the old starter-chart-only test alongside that unused component.
+- Removed empty root directories left by the web/API/infrastructure moves. Kept the 15 UI primitives reached by the application and their dependencies. Typecheck and lint verify the remaining imports; the full build and gameplay tests continue with the authentication/deployment unit.
+
+## 2026-09-08 — Keep only used dependencies and place vendor styles with the web app
+
+- Moved third-party CSS and its license into `apps/web/styles/vendor`; preserved the original files and excluded them from authored-code formatting. Removed 13 unused frontend dependencies left behind by the deleted starter components.
+- Kept `packages/shared` for real cross-application contracts and pure calculations, and `scripts` for active build/data/deployment tools. Cloudflare generated declarations are being moved under infrastructure with the following authentication/build unit.
+- Validation: production build and 48 tests, TypeScript, format and zero-warning lint pass with the relocated CSS and reduced dependency manifest. No database change.
+
+## 2026-09-08 — Preserve career rows during the Cloudflare transfer
+
+- Added raw owner-scoped backup and schema-checked import for all ten career tables. Imports bind large values, change only `user_id`, refuse existing targets and conflicting historical IDs, and write one atomic D1 batch. Read-back comparisons verify every preserved value and row count.
+- Validation: six isolated D1 tests pass for a 600 KB snapshot, all tables, original/other-user preservation, competing imports, duplicate historical IDs, failed-constraint rollback, unknown fields, mixed ownership and schema drift. No production career has been changed.
+
+## 2026-09-08 — Guest saves and separate NestJS controllers
+
+- Per user decision, the public Worker uses browser guest saves without Cloudflare Access. A random 256-bit HttpOnly/Secure host cookie identifies each guest by its hash; caller-supplied identity headers are discarded and cross-origin mutations are rejected. `/saves` provides the private recovery key and opens a saved career without replacing either career.
+- Replaced AppController with health, catalog, career, career-transfer and session controllers. All API endpoints, including guest recovery, now live in NestJS. Worker code handles authentication and routing; game commands remain in backend services/domain.
+- Added expiring, owner-fixed transfer credentials restricted to the export/import endpoints. Only authorized imports can exceed the normal 12 KB API request limit. Generated Worker declarations now live in ignored `infra/cloudflare/.build`; removed the root types directory. The pinned runtime and deployment use their verified supported compatibility date, 2026-05-22.
+- Validation: production build, TypeScript and zero-warning lint pass. Three actual Worker authentication/transfer tests and six importer tests pass, including a 600 KB transfer through NestJS, cookie isolation/recovery, forged headers, cross-site changes, owner scoping and overwrite refusal. The subsequent UI unit will rerun the full suite. Browser smoke has created a separate local guest career successfully; no production data change yet.
+
+## 2026-09-08 — Cloudflare automatic deployment workflow
+
+- Added deployment after successful main validation, using the exact tested Worker artifact. Feature branch/PR runs only validate; production jobs serialize and skip an older main commit. The deployment records a D1 Time Travel bookmark, applies forward migrations, publishes the Worker and verifies the live catalog health response.
+- Verified the personal Cloudflare account and target D1, and verified GitHub contains the scoped Cloudflare API secret and account variable. Worker upload dry-run passes with the guest provider, correct D1 binding, assets and Images binding. Actual deployment and career transfer follow final UI/browser validation; no Zero Trust plan was activated.
+
+## 2026-09-08 — Restore automatic position training
+
+- Browser play-through found that choosing an individual training position could never return to automatic training. Enabled the automatic option and added a backend command to clear the override while preserving familiarity and statistics.
+- The actual Worker/D1 regression verifies persisted removal, unchanged accumulated training and season stats. All 55 tests pass, with production build, TypeScript, format and zero-warning lint.
+
+## 2026-09-08 — Simpler setup, management overview and browser-tested controls
+
+- Replaced the dense three-column setup with club selection then manager/season settings; removed the real-name default, retained every league/club and rule option, and kept the selected club and next action visible. The home view now shows three key metrics, the actual next schedule/action, items needing attention and three recent results. Detailed lineups, standings and inbox reading remain in their own screens.
+- Removed duplicate navigation, grouped secondary sidebar menus, added mobile close/open labels, adopted navy/teal surfaces and clearer spacing, and added a summary/detail toggle for the squad table. Failed saves are now visible instead of reverting to a misleading saved label.
+- Added manual one-PA progression and persisted playback speed. Reopening an active match shows its last saved scene immediately; the completed play button says the match has ended. The normal command/revision and backend rules remain unchanged.
+- Browser checks on the real production Worker: new guest career, rest-day progression, full friendly, pause/reload/resume, exactly one manual PA, persisted 8x speed, player search/direct profile/reload, reserve move, and guest recovery after cookie removal. Desktop 1440px and mobile 390px setup/home/squad were inspected; home and squad have no page-wide horizontal overflow. Production load and exhaustive accessibility/league parity are not claimed.
+- Validation: all 55 production/domain/D1/component tests, TypeScript, zero-warning lint and format checks pass. Final build repeats after the last accessibility labels/semantics. No production career changed yet.
+
+## 2026-09-08 — Initialize a usable local guest environment
+
+- `npm run dev` now applies append-only migrations to the Vite plugin's isolated local D1 before starting. It uses the same placeholder binding and persistence directory and never targets the remote database. Generated local configuration remains under ignored infrastructure build output.
+- Verified local development serves the v7 D1 health response and browser setup. Large authorized imports retain a conflict response for duplicate historic IDs. The local Wrangler OAuth currently fails personal D1 authentication; the connected Cloudflare API still verifies the target database as empty, and GitHub's separate scoped deployment token is registered. Remote migrations will run through the main deployment workflow.

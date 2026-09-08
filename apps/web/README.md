@@ -1,7 +1,7 @@
-# Vinext frontend
+# Web application
 
-`game.tsx` contains the management screens. `world-context.tsx` supplies read-only views of the catalog fetched from NestJS. `globals.css` owns the application styles. Root `app/page.tsx` and `app/layout.tsx` remain the thin Vinext routing and metadata entrypoints.
+This npm workspace owns the complete Vinext/React frontend. `app/` defines routes and the root layout; `src/features/` contains the corresponding game screens. Reusable UI lives in `src/components`, hooks in `src/hooks`, styles in `styles`, and static files in `public`. There is no frontend entrypoint at the repository root.
 
-The frontend reads `/api/catalog` and `/api/career` together, then sends commands with the current revision and a unique request ID. It never decides transfer charges, match results, identity or saved state. Mutations and persistence belong to NestJS.
+Run `npm run dev` or `npm run build` from the repository root. The root build bundles NestJS first, builds this workspace, and stages the combined Cloudflare Worker in root `dist/`.
 
-Reusable shadcn components remain in the root `components` directory; shared data contracts and selectors are in `packages/shared/src`.
+The frontend reads the D1-backed catalog and career from `/api/*`. It sends commands with a revision and request ID; identity, simulation, transfers, accounting and persistence belong to the backend. Shared contracts and read-only selectors are imported from `@dugout/shared/*`.

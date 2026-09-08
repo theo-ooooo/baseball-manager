@@ -1,0 +1,32 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "baseball-manager",
+  "account_id": "1cc9031d5b3bd949d6bad8f935d5d378",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-05-22",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "binding": "ASSETS"
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "AUTH_PROVIDER": "guest"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "baseball-manager",
+      "database_id": "d84dea55-6483-4183-b617-c98cf18a6614",
+      "migrations_dir": "../../apps/api/drizzle"
+    }
+  ]
+}

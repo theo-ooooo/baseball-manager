@@ -1,12 +1,14 @@
+import logos from './club-logos.json';
+import type {ClubLogo} from '@dugout/shared/types';
 import schedule from './schedule-2026.json';
 import performance from './performance-2025.json';
 import {rateRealPlayers} from '../src/domain/performance-ratings';
-import type {PerformanceRecord} from '../../../packages/shared/src/types';
+import type {PerformanceRecord} from '@dugout/shared/types';
 import registration from './kbo-register-2026-09-07.json';
 import { clubs, leagues, realRosters, rosterNote } from './catalog';
 import { createPlayerGenerator } from '../src/domain/player-generator';
-import { blankStats, coachRoles, hash, rng } from '../../../packages/shared/src/game-view';
-import type { WorldCatalog, Player, Pos, Coach } from '../../../packages/shared/src/types';
+import { blankStats, coachRoles, hash, rng } from '@dugout/shared/game-view';
+import type { WorldCatalog, Player, Pos, Coach } from '@dugout/shared/types';
 
 /** Seed input only. Runtime API code reads the catalog from D1. */
 export function buildSeedWorld(): WorldCatalog {
@@ -42,7 +44,7 @@ export function buildSeedWorld(): WorldCatalog {
       style: ['기본기', '유망주 육성', '실전 중심', '데이터 분석'][n] };
   }));
   coaches.push(...registration.teams.flatMap(t=>t.coaches.map(c=>({id:`coach-real-${t.club}-${c.number}`,name:c.name,role:'코치',skill:65+hash(t.club+c.name)%24,salary:30+hash(c.name)%50,style:'선수 육성',real:true,sourceClub:t.club,source:registration.source,verifiedRole:'코치'}))));
-  return { version: 'world-2026-09-08-v5', year: 2026, clubs, leagues, players, coaches, rosterNote, fixtures:schedule.fixtures,
+  return { version: 'world-2026-09-08-v7', year: 2026, clubs:clubs.map(club=>({...club,logo:(logos as Record<string,ClubLogo>)[club.id]})), leagues, players, coaches, rosterNote, fixtures:schedule.fixtures,
     agents: [
       { id: 'agent-0', name: '박준혁', agency: 'BASE Sports', fee: .05, priority: '안정적인 장기 계약' },
       { id: 'agent-1', name: 'Daniel Cruz', agency: 'Diamond Agency', fee: .08, priority: '연봉 우선' },
