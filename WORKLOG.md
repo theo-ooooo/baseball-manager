@@ -162,3 +162,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Added 134 verified original club marks with source pages, source URLs, SHA-256 hashes and rights notes. The 52 inherited KBO/MLB/NPB assets and 82 additional official assets retain their original bytes. Collecchio, Neptunus and Tucson sources could not be retrieved/verified; their badges use labelled club abbreviations.
 - Added forward-only migrations 0010 (nullable club logo metadata) and 0011 (catalog assets/version v7). Runtime badge metadata comes from D1, and static image files are packaged with the Worker. A shared badge component covers setup, sidebar, club overview, standings, schedules, match scorebugs and player profiles, with an image-error fallback.
 - Validation: production build, Worker responses and exact hashes/MIME types for all 134 packaged assets, migrated D1 catalog provenance, legacy career byte preservation, and rendered React profile/logo/fallback tests pass. The component harness now resolves the actual Vinext image shim used in production. All images were visually inspected as contact sheets; no browser interaction or production publication performed. Official sources establish provenance, not reuse permission.
+
+## 2026-09-08 — Codex: retain setup holds after a later blown lead
+
+- Final rule review found that a team's eventual loss/draw discarded eligible earlier setup holds. Compute holds independently of final win/save awards, following the [MLB hold definition](https://www.mlb.com/glossary/standard-stats/hold).
+- Validation: all eight targeted pitching/live-game tests pass, including the new late blown-lead regression. Inning-boundary changes and simplified scorer discretion remain the documented simulation scope.

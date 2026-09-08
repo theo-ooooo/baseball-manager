@@ -8,7 +8,8 @@ export type PitchingAppearance = {
 
 /** Decisions for the game's inning-boundary pitching changes.
  * A short-start win uses a deterministic effectiveness score in place of an
- * official scorer's discretion. Sources: MLB glossary win/save/hold.
+ * official scorer's discretion. Sources: MLB glossary win/save/hold:
+ * https://www.mlb.com/glossary/standard-stats/hold
  */
 export function pitchingDecisions(
   appearances: PitchingAppearance[],
@@ -17,24 +18,26 @@ export function pitchingDecisions(
   won: boolean,
 ) {
   const awards = { winner: '', save: '', holds: [] as string[] };
-  if (!won) return awards;
-  let winner = appearances.find((p) => p.id === pitcherOfRecord);
-  if (!winner || (winner.id === starter && winner.outs < 15)) {
-    winner = appearances
-      .filter((p) => p.id !== starter && p.outs > 0)
-      .sort((a, b) => b.outs - b.runs * 3 - (a.outs - a.runs * 3))[0];
-  }
-  awards.winner = winner?.id || '';
   const last = appearances.at(-1);
-  if (
-    last &&
-    last.id !== starter &&
-    last.id !== awards.winner &&
-    last.entryLead > 0 &&
-    last.keptLead &&
-    ((last.entryLead <= 3 && last.outs >= 3) || last.outs >= 9)
-  )
-    awards.save = last.id;
+  if (won) {
+    let winner = appearances.find((p) => p.id === pitcherOfRecord);
+    if (!winner || (winner.id === starter && winner.outs < 15)) {
+      winner = appearances
+        .filter((p) => p.id !== starter && p.outs > 0)
+        .sort((a, b) => b.outs - b.runs * 3 - (a.outs - a.runs * 3))[0];
+    }
+    awards.winner = winner?.id || '';
+    if (
+      last &&
+      last.id !== starter &&
+      last.id !== awards.winner &&
+      last.entryLead > 0 &&
+      last.keptLead &&
+      ((last.entryLead <= 3 && last.outs >= 3) || last.outs >= 9)
+    )
+      awards.save = last.id;
+  }
+  // A later reliever blowing the lead does not remove an earlier pitcher's hold.
   awards.holds = appearances
     .filter(
       (p) =>

@@ -57,3 +57,13 @@ test('Walkoff winner cannot earn a save and a short starter cannot earn a win', 
   assert.equal(blown.winner, 'closer');
   assert.equal(blown.save, '');
 });
+
+test('A setup hold survives a later blown save and team loss or draw', () => {
+  const awards = pitchingDecisions(
+    [appearance('starter', 18, 0), appearance('setup', 6), appearance('closer', 2, 2, 3, false)],
+    'starter',
+    'starter',
+    false,
+  );
+  assert.deepEqual(awards, { winner: '', save: '', holds: ['setup'] });
+});
