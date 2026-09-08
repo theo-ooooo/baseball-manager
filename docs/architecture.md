@@ -10,9 +10,8 @@ apps/
       components/          shared game displays and shadcn/ui
       hooks/               React hooks
       lib/                 UI utilities
-    styles/                application styles
+    styles/                application styles; vendor/ preserves external CSS licenses
     public/                static assets and verified club logos
-    vendor/                third-party styles and licenses
     vite.config.ts         frontend build configuration
   api/                     @dugout/api: NestJS backend
     src/                   controllers, services, repositories, domain

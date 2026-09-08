@@ -202,3 +202,9 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - Removed the unused D1 notes example, its unused Drizzle helper, unused Sites auth helper, 46 unreachable starter UI components, three placeholder SVGs and the replaced stadium raster. Removed the old starter-chart-only test alongside that unused component.
 - Removed empty root directories left by the web/API/infrastructure moves. Kept the 15 UI primitives reached by the application and their dependencies. Typecheck and lint verify the remaining imports; the full build and gameplay tests continue with the authentication/deployment unit.
+
+## 2026-09-08 — Keep only used dependencies and place vendor styles with the web app
+
+- Moved third-party CSS and its license into `apps/web/styles/vendor`; preserved the original files and excluded them from authored-code formatting. Removed 13 unused frontend dependencies left behind by the deleted starter components.
+- Kept `packages/shared` for real cross-application contracts and pure calculations, and `scripts` for active build/data/deployment tools. Cloudflare generated declarations are being moved under infrastructure with the following authentication/build unit.
+- Validation: production build and 48 tests, TypeScript, format and zero-warning lint pass with the relocated CSS and reduced dependency manifest. No database change.
