@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import type { AddressInfo } from 'node:net';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter, type NestExpressApplication } from '@nestjs/platform-express';
 import { HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
@@ -35,13 +36,16 @@ async function bootstrap() {
   // Requests are authenticated and byte-limited before entering the HTTP bridge.
   app.useBodyParser('json', { limit: '8mb' });
   app.useGlobalFilters(new ApiExceptionFilter());
-  await app.listen(3000);
-  return app;
+  // Workers uses this as a routing key. A fresh key also isolates Vite module reloads.
+  await app.listen(0);
+  const { port } = app.getHttpServer().address() as AddressInfo;
+  const fetch = httpServerHandler({ port }).fetch;
+  if (!fetch) throw new Error('Cloudflare HTTP bridge is missing its fetch handler');
+  return { app, fetch };
 }
 const ready = bootstrap();
-const bridge = httpServerHandler({ port: 3000 });
-const bridgeFetch = bridge.fetch;
-if (!bridgeFetch) throw new Error('Cloudflare HTTP bridge is missing its fetch handler');
+const hot = (import.meta as ImportMeta & { hot?: { dispose(cleanup: () => void): void } }).hot;
+if (hot) hot.dispose(() => void ready.then(({ app }) => app.close()));
 const worker = {
   async fetch(
     request: Request<unknown, IncomingRequestCfProperties>,
@@ -68,8 +72,8 @@ const worker = {
       }
       request = new Request<unknown, IncomingRequestCfProperties>(request, { body });
     }
-    await ready;
-    const response = await bridgeFetch(request, environment, context);
+    const bridge = await ready;
+    const response = await bridge.fetch(request, environment, context);
     const headers = new Headers(response.headers);
     headers.set('Cache-Control', 'no-store');
     headers.set('X-Content-Type-Options', 'nosniff');
