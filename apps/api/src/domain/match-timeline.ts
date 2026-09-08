@@ -1,4 +1,5 @@
 import type {
+  Defense,
   GameState,
   LiveMatch,
   MatchChange,
@@ -7,7 +8,7 @@ import type {
   TeamInstructions,
 } from '@dugout/shared/types';
 import { rng } from '@dugout/shared/game-view';
-import { defenseFor, firstTeam } from '@dugout/shared/management';
+import { defenseFor, defensivePositions, firstTeam } from '@dugout/shared/management';
 import type { createMatchSimulator } from './match-simulation';
 
 // Even adversarial random streams cannot create an unbounded Worker request.
@@ -184,12 +185,36 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
     if (pitcher !== currentPitcher && live.timeline!.log[cursor]?.half === ownHalf)
       throw new Error('투수 교체는 우리 팀 수비 타석 직전에 확정해 주세요.');
   }
-  const defense = { ...(previous?.defense || input.defense!) };
-  for (const pos of Object.keys(defense) as (keyof typeof defense)[]) {
-    const slot = priorLineup.indexOf(defense[pos]);
-    if (slot >= 0 && !lineup.includes(defense[pos])) defense[pos] = lineup[slot];
+  let defense: Defense;
+  if (a.defense !== undefined) {
+    const requested = a.defense as Defense;
+    if (
+      !requested ||
+      typeof requested !== 'object' ||
+      Array.isArray(requested) ||
+      Object.keys(requested).length !== defensivePositions.length ||
+      requested.P !== pitcher ||
+      new Set(Object.values(requested)).size !== 10 ||
+      defensivePositions.some(
+        (pos) =>
+          typeof requested[pos] !== 'string' || (pos !== 'P' && !lineup.includes(requested[pos])),
+      )
+    )
+      throw new Error('타순의 야수 9명과 선택한 투수를 수비 위치에 중복 없이 배치해 주세요.');
+    defense = { ...requested };
+  } else {
+    // Older clients omit defense. Retain existing fielders and fill vacated positions once.
+    defense = { ...(previous?.defense || input.defense!) };
+    const retained = new Set(Object.values(defense).filter((id) => lineup.includes(id)));
+    const remaining = lineup.filter((id) => !retained.has(id));
+    for (const pos of defensivePositions.filter((p) => p !== 'P')) {
+      if (lineup.includes(defense[pos])) continue;
+      const candidate = lineup[priorLineup.indexOf(defense[pos])];
+      const index = Math.max(0, remaining.indexOf(candidate));
+      defense[pos] = remaining.splice(index, 1)[0];
+    }
+    defense.P = pitcher;
   }
-  defense.P = pitcher;
   const change: MatchChange = {
     cursor,
     lineup: [...lineup],

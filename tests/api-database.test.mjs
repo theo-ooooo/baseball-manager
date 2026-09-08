@@ -67,6 +67,18 @@ test('D1 timeline revisions preserve consumed events, hide inputs and commit a s
     revision: initial.revision,
     requestId: crypto.randomUUID(),
   };
+  command.defense = { ...live.timeline.replayTeams[side].defense, P: command.pitcher };
+  const invalidDefense = await call(
+    '/api/career',
+    {
+      ...command,
+      defense: { ...command.defense, LF: command.defense.CF },
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(invalidDefense.status, 400);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, initial);
   const changed = await call('/api/career', command, user);
   assert.equal(changed.status, 201);
   assert.equal(changed.body.state.liveMatch.timelineVersion, 2);
