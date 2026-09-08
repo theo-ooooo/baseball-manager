@@ -63,7 +63,10 @@ test('Negotiation, signing, reselling and coaches update relational rows and acc
   const recorded=await db.prepare('SELECT request_id FROM career_actions WHERE user_id=? AND revision=?').bind('test-owner-a',winning.revision).first();
   const replayed=await call('/api/career',{...command,requestId:recorded.request_id});
   assert.equal(replayed.body.state.budget,currentBalance);
-  await action({type:'sell',id:p.id});
+  await action({type:'listPlayer',id:p.id});
+  const marketUpdate=await action({type:'advance',count:3});
+  const buyer=marketUpdate.state.saleOffers.find(o=>o.playerId===p.id);assert.ok(buyer);
+  await action({type:'sell',id:p.id,offerId:buyer.id});
   const sold=await db.prepare('SELECT club_id FROM career_players WHERE user_id=? AND player_id=?').bind('test-owner-a',p.id).first();
   assert.notEqual(sold.club_id,'kbo-lg');
   const transfers=await db.prepare('SELECT kind FROM transfers WHERE user_id=? AND player_id=? ORDER BY revision').bind('test-owner-a',p.id).all();
