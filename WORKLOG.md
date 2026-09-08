@@ -213,3 +213,10 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - Added raw owner-scoped backup and schema-checked import for all ten career tables. Imports bind large values, change only `user_id`, refuse existing targets and conflicting historical IDs, and write one atomic D1 batch. Read-back comparisons verify every preserved value and row count.
 - Validation: six isolated D1 tests pass for a 600 KB snapshot, all tables, original/other-user preservation, competing imports, duplicate historical IDs, failed-constraint rollback, unknown fields, mixed ownership and schema drift. No production career has been changed.
+
+## 2026-09-08 — Guest saves and separate NestJS controllers
+
+- Per user decision, the public Worker uses browser guest saves without Cloudflare Access. A random 256-bit HttpOnly/Secure host cookie identifies each guest by its hash; caller-supplied identity headers are discarded and cross-origin mutations are rejected. `/saves` provides the private recovery key and opens a saved career without replacing either career.
+- Replaced AppController with health, catalog, career, career-transfer and session controllers. All API endpoints, including guest recovery, now live in NestJS. Worker code handles authentication and routing; game commands remain in backend services/domain.
+- Added expiring, owner-fixed transfer credentials restricted to the export/import endpoints. Only authorized imports can exceed the normal 12 KB API request limit. Generated Worker declarations now live in ignored `infra/cloudflare/.build`; removed the root types directory. The pinned runtime and deployment use their verified supported compatibility date, 2026-05-22.
+- Validation: production build, TypeScript and zero-warning lint pass. Three actual Worker authentication/transfer tests and six importer tests pass, including a 600 KB transfer through NestJS, cookie isolation/recovery, forged headers, cross-site changes, owner scoping and overwrite refusal. The subsequent UI unit will rerun the full suite. Browser smoke has created a separate local guest career successfully; no production data change yet.

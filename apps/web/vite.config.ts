@@ -13,6 +13,8 @@ const { d1, r2 } = hostingConfig;
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
+  compatibility_date: "2026-05-22",
+  vars: { AUTH_PROVIDER: 'guest' },
   main: "../../infra/cloudflare/worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1

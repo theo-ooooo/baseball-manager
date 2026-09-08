@@ -5,6 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  { settings: { next: { rootDir: "apps/web/" } } },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -17,6 +18,7 @@ const eslintConfig = defineConfig([
     ".sites-runtime/**",
     "**/.wrangler/**",
     "outputs/**",
+    "work/**",
   ]),
   {
     files: ["apps/web/src/components/ui/**/*.{ts,tsx}", "apps/web/src/hooks/use-mobile.ts"],

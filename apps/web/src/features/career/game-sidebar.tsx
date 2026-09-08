@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { type CSSProperties } from 'react';
 import { RotateCcw, UserRound, CircleDot as Baseball } from 'lucide-react';
 import {
@@ -88,6 +89,9 @@ export function AppSidebar({
         ))}
       </SidebarContent>
       <SidebarFooter>
+        <Link className="new-career" href="/saves">
+          저장 관리 · 복구
+        </Link>
         <button className="new-career" onClick={onNew}>
           <RotateCcw size={14} />새 커리어
         </button>

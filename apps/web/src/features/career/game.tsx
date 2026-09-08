@@ -179,6 +179,9 @@ export function GameScreen({
             }
           }}
         />
+        <Link className="setup-save-link text-button" href="/saves">
+          저장 관리 · 복구
+        </Link>
         <Toaster theme="dark" position="bottom-right" />
       </>
     );

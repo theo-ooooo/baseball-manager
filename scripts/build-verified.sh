@@ -14,6 +14,8 @@ if [[ ! -x "${vinext}" ]]; then
 fi
 
 echo "Running bounded vinext build..."
+mkdir -p "${SITES_PROJECT_ROOT}/infra/cloudflare/.build"
+"${SITES_PROJECT_ROOT}/node_modules/.bin/wrangler" types "${SITES_PROJECT_ROOT}/infra/cloudflare/.build/worker-configuration.d.ts" --config "${SITES_PROJECT_ROOT}/infra/cloudflare/wrangler.jsonc" --strict-vars false
 node "${SITES_PROJECT_ROOT}/scripts/build-api.mjs"
 cd "${SITES_PROJECT_ROOT}/apps/web"
 node "${SITES_PROJECT_ROOT}/scripts/bounded-command.mjs" "${SITES_BUILD_TIMEOUT:-3m}" "${vinext}" build

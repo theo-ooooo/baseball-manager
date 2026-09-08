@@ -5,15 +5,19 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ]
   },
   "include": [
     "app/**/*.ts",
     "app/**/*.tsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "vite.config.ts",
-    "../../types/**/*.d.ts"
+    "vite.config.ts"
   ],
   "exclude": [
     "dist",
