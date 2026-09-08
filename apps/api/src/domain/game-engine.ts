@@ -137,6 +137,7 @@ export function createGameEngine(world: WorldCatalog) {
       '세계 선수 시장에서 실명 선수와 가상 유망주를 확인할 수 있습니다. 에이전트에게 계약 조건을 제안하세요.',
       'scout',
     );
+    dailyReports(g, world);
     return g;
   }
   function teamStrength(g: GameState, id: string) {
@@ -373,6 +374,29 @@ export function createGameEngine(world: WorldCatalog) {
       `${res.friendly ? '연습경기 · ' : ''}${own === opp ? '무승부' : own > opp ? '승리' : '패배'} · ${getClub(res.away).short} ${res.awayScore} : ${res.homeScore} ${getClub(res.home).short}`,
       `경기 MVP ${res.mvp} · 경기 수입 ${money(earned)}`,
       'match',
+      {
+        sender: { name: '수석 코치', role: '경기 후 보고' },
+        actionView: 'squad',
+        report: {
+          facts: [
+            { label: '안타', value: `${res.hits[home ? 1 : 0]}개` },
+            { label: '실책', value: `${res.errors[home ? 1 : 0]}개` },
+            { label: '경기 MVP', value: res.mvp },
+            { label: '경기 수입', value: money(earned) },
+          ],
+          sections: [
+            {
+              title: '경기 평가',
+              body:
+                own > opp
+                  ? '승리를 거뒀습니다. 다음 경기 선발과 오늘 등판한 불펜의 컨디션을 점검해 좋은 흐름을 이어가세요.'
+                  : own === opp
+                    ? '승부를 가리지 못했습니다. 득점 기회에서의 결과와 투수진의 피로를 함께 점검하세요.'
+                    : '패배했습니다. 주요 실점 이닝과 수비 배치를 복기하고 다음 경기의 선발·불펜 운용을 준비하세요.',
+            },
+          ],
+        },
+      },
     );
   }
   function sellPlayer(g: GameState, id: string, offerId?: string) {

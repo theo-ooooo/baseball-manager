@@ -29,7 +29,9 @@ import { toast } from 'sonner';
 import { WorldProvider, useWorld } from './world-context';
 import type { WorldCatalog } from '@dugout/shared/types';
 import { type GameState, type Player, type Result } from '@dugout/shared/game-view';
-import { InboxPanel, DynamicsPanel } from '../clubs/club-panels';
+import { DynamicsPanel } from '../clubs/club-panels';
+import { InboxPanel } from '../inbox/inbox-panel';
+import { PlayerContractDialog } from '../contracts/player-contract-room';
 import { SchedulePanel } from '../schedule/schedule-panel';
 import { dateLabel } from '@dugout/shared/calendar';
 import { StadiumReplay } from '../matches/stadium-replay';
@@ -81,6 +83,7 @@ export function GameScreen({
     [replay, setReplay] = useState<Result | null>(null),
     [help, setHelp] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
+  const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
   const locked = useRef(false);
   const revision = useRef(initial.revision);
   const [ledger, setLedger] = useState(initial.ledger);
@@ -400,10 +403,11 @@ export function GameScreen({
           )}
           {view === 'inbox' && (
             <InboxPanel
-              key={g.progress?.newsIds.join(',')}
+              key={g.news[0]?.id}
+              onNegotiate={setContractPlayer}
               g={g}
               act={act}
-              busy={busy}
+              busy={busy || contractPlayer !== null}
               onPlayer={setPlayer}
             />
           )}
@@ -414,7 +418,9 @@ export function GameScreen({
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
           {view === 'world' && <World g={g} onPlayer={setPlayer} />}
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
-          {view === 'agents' && <Agents g={g} act={act} busy={busy} onPlayer={setPlayer} />}
+          {view === 'agents' && (
+            <Agents g={g} busy={busy} onPlayer={setPlayer} onNegotiate={setContractPlayer} />
+          )}
           {view === 'staff' && <CoachPanel g={g} act={act} busy={busy} />}
           {view === 'finance' && <Finance g={g} ledger={ledger} />}
         </div>
@@ -429,6 +435,15 @@ export function GameScreen({
       </main>
       <>{g.liveMatch && <LiveMatchScreen g={g} act={act} busy={busy} />}</>
       <StadiumReplay result={replay} close={() => setReplay(null)} />
+      {contractPlayer && (
+        <PlayerContractDialog
+          player={g.roster.find((p) => p.id === contractPlayer.id) || contractPlayer}
+          g={g}
+          act={act}
+          busy={busy}
+          close={() => setContractPlayer(null)}
+        />
+      )}
       <Help open={help} close={() => setHelp(false)} />
       <AlertDialog open={newConfirm} onOpenChange={setNewConfirm}>
         <AlertDialogContent className="confirm-dialog">

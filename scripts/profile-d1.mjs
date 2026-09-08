@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { Miniflare } from 'miniflare';
 import { meteredD1 } from '../tests/helpers/d1-meter.mjs';
@@ -10,6 +10,7 @@ const baseline = process.argv[2];
 if (!baseline || !/^[a-f0-9]{40}$/.test(baseline))
   throw new Error('Pass the full baseline commit SHA');
 // Keep temporary bundles under the checkout so external NestJS imports resolve normally.
+await mkdir(resolve('work'), { recursive: true });
 const directory = await mkdtemp(resolve('work/d1-profile-'));
 const require = createRequire(import.meta.url);
 const mf = new Miniflare({

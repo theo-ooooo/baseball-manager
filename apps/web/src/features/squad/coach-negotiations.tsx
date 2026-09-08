@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { ContractSigning } from '../contracts/contract-signing';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -8,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import type { Coach, GameState } from '@dugout/shared/types';
+import type { Coach, CoachDeal, GameState } from '@dugout/shared/types';
 import { coachRoles, fromManwon, money, toManwon } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
 import { NegotiationHistory, negotiationLabels } from '../market/negotiation-details';
@@ -134,12 +135,13 @@ export function CoachNegotiations({
   busy,
   onOffer,
 }: Props & { onOffer: (coach: Coach) => void }) {
-  if (!g.coachDeals?.length) return null;
+  const [signing, setSigning] = useState<CoachDeal | null>(null);
+  if (!g.coachDeals?.length && !signing) return null;
   return (
     <section className="coach-negotiations">
       <h2>코치 협상</h2>
       <div className="deal-grid">
-        {g.coachDeals.map((d) => {
+        {g.coachDeals?.map((d) => {
           const expired =
             d.year !== g.year || g.day > (d.expires ?? d.day + 14) || d.status === 'expired';
           return (
@@ -192,12 +194,9 @@ export function CoachNegotiations({
                   <button
                     className="button primary full-width"
                     disabled={busy}
-                    onClick={async () => {
-                      if (await act({ type: 'signCoach', id: d.id }))
-                        toast.success('코치 계약을 체결했습니다.');
-                    }}
+                    onClick={() => setSigning(d)}
                   >
-                    최종 계약 체결
+                    계약서 검토 · 서명
                   </button>
                 )}
                 <div className="negotiation-actions">
@@ -226,6 +225,25 @@ export function CoachNegotiations({
           );
         })}
       </div>
+      {signing && (
+        <ContractSigning
+          key={signing.id}
+          agreement={{
+            name: signing.coach.name,
+            role: `${signing.role} 코치`,
+            salary: signing.salary,
+            years: signing.years,
+            costs: [
+              { label: '계약금 · 연봉의 50%', amount: signing.salary * 0.5 },
+              { label: '기존 코치 계약 보상금', amount: signing.compensation },
+            ],
+          }}
+          g={g}
+          busy={busy}
+          sign={async () => !!(await act({ type: 'signCoach', id: signing.id }))}
+          close={() => setSigning(null)}
+        />
+      )}
     </section>
   );
 }

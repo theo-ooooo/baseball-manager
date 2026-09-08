@@ -11,6 +11,8 @@ import {
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { useWorld } from '../career/world-context';
+import { useIsMobile } from '../../hooks/use-mobile';
+import { MobileMatchView, MatchAtBat } from './mobile-match-view';
 import { useReducedMotion } from '../../hooks/use-reduced-motion';
 import { StadiumScene } from './stadium-replay';
 import { MatchPlanEditor } from './match-plan-editor';
@@ -71,14 +73,16 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
     result = live.timeline!,
     length = result.log.length;
   const { getClub } = useWorld(),
-    reduced = useReducedMotion();
+    reduced = useReducedMotion(),
+    mobile = useIsMobile();
   const storageKey = `dugout:playback:${live.playbackId}:${live.timelineVersion}`;
   const [cursor, setCursor] = useState(() => readCursor(storageKey, live.cursor, length));
   const [playing, setPlaying] = useState(false),
     [settled, setSettled] = useState(true),
-    [editor, setEditor] = useState(cursor === 0),
+    [editorOverride, setEditor] = useState<boolean | null>(null),
     [planDirty, setPlanDirty] = useState(false),
     [speed, setSpeed] = useState(readSpeed);
+  const editor = editorOverride ?? (cursor === 0 && !mobile);
   const finished = cursor >= length;
   const event = result.log[cursor - 1];
   useEffect(() => {
@@ -116,11 +120,18 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
     setPlaying(false);
     setSettled(true);
   }
+  function finishPlay() {
+    if (playing && cursor < length) setCursor(cursor + 1);
+    else {
+      setPlaying(false);
+      setSettled(true);
+    }
+  }
   const sceneResult = cursor === 0 ? { ...result, log: [], homeScore: 0, awayScore: 0 } : result;
   return (
     <Dialog open>
       <DialogContent
-        className="stadium-replay-dialog live-match-dialog"
+        className={`stadium-replay-dialog live-match-dialog ${mobile && !editor ? 'mobile-live-layout' : ''}`}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
@@ -137,6 +148,12 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                 : `${event?.inning}회 ${event?.half ? '말' : '초'}`}
           </DialogDescription>
         </DialogHeader>
+        {editor && !finished && mobile && (
+          <details className="mobile-preview-teams">
+            <summary>홈 · 원정 선발 명단 비교</summary>
+            <MobileMatchView g={g} cursor={cursor} />
+          </details>
+        )}
         {editor && !finished && (
           <MatchPlanEditor
             key={`${cursor}:${live.timelineVersion}`}
@@ -159,23 +176,30 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
 
         <div className={`stadium-replay-layout ${editor && !finished ? 'is-planning' : ''}`}>
           <div className="stadium-main">
-            {!editor && (
-              <StadiumScene
-                key={`${cursor}:${settled}`}
-                result={sceneResult}
-                index={Math.max(0, cursor - 1)}
-                playing={!settled && cursor > 0}
-                speed={Number(speed)}
-                reduced={reduced || settled}
-                onEnd={() => {
-                  if (playing && cursor < length) setCursor(cursor + 1);
-                  else {
-                    setPlaying(false);
-                    setSettled(true);
-                  }
-                }}
-              />
-            )}
+            {!editor &&
+              (mobile ? (
+                <MobileMatchView
+                  g={g}
+                  cursor={cursor}
+                  playing={!settled && cursor > 0}
+                  speed={Number(speed)}
+                  reduced={reduced}
+                  onEnd={finishPlay}
+                />
+              ) : (
+                <>
+                  <MatchAtBat result={result} cursor={cursor} />
+                  <StadiumScene
+                    key={`${cursor}:${settled}`}
+                    result={sceneResult}
+                    index={Math.max(0, cursor - 1)}
+                    playing={!settled && cursor > 0}
+                    speed={Number(speed)}
+                    reduced={reduced || settled}
+                    onEnd={finishPlay}
+                  />
+                </>
+              ))}
             <div className="stadium-controls live-controls" hidden={editor}>
               <button
                 className="replay-play"
@@ -222,7 +246,9 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               <span className="tiny">
                 {planDirty
                   ? '선수·전술 변경을 적용하거나 취소해 주세요.'
-                  : '경기 기록 저장됨 · 재생 위치는 이 기기에 저장'}
+                  : cursor === 0
+                    ? '선수·전술에서 경기 계획을 준비하세요.'
+                    : '일시정지하면 선수 교체와 전술 변경을 할 수 있습니다.'}
               </span>
               {finished && (
                 <button
@@ -241,7 +267,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               )}
             </div>
           </div>
-          {!editor && (
+          {!editor && !mobile && (
             <aside className="stadium-match-report">
               <>
                 <h3>경기 중계</h3>

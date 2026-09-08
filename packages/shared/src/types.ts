@@ -381,6 +381,14 @@ export type NewsItem = {
   choice?: string;
   response?: string;
   actionView?: 'agents' | 'staff' | 'squad' | 'market';
+  sender?: { name: string; role: string };
+  dealId?: string;
+  report?: {
+    purpose?: 'contractReview' | 'squadReview';
+    facts?: { label: string; value: string }[];
+    sections?: { title: string; body: string }[];
+    players?: { id: string; name: string; detail: string; salary?: number; years?: number }[];
+  };
 };
 export type SellerDecision = {
   club: string;
