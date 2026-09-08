@@ -4,7 +4,8 @@ import type {
   RatingEvidence,
 } from '../../../../packages/shared/src/types';
 import { overall } from '../../../../packages/shared/src/game-view';
-const bounded = (n: number) => Math.round(Math.max(20, Math.min(99, n)));
+const clampRating = (n: number) => Math.max(20, Math.min(99, n));
+const bounded = (n: number) => Math.round(clampRating(n));
 export const ratingKeys = [
   'contact',
   'power',
@@ -105,7 +106,8 @@ export function refreshRatings(player: Player, catalog: Player) {
   if (!player.real || !catalog.rating || player.rating?.version === catalog.rating.version) return;
   for (const k of ratingKeys) {
     const growth = player.rating?.base[k] === undefined ? 0 : player[k] - player.rating.base[k]!;
-    player[k] = bounded(catalog[k] + growth);
+    // Training accumulates fractional growth; only the catalog's initial grade is rounded.
+    player[k] = clampRating(catalog[k] + growth);
   }
   player.potential = Math.max(overall(player), player.potential);
   player.rating = structuredClone(catalog.rating);
