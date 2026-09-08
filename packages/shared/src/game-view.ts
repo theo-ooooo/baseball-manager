@@ -113,19 +113,36 @@ export function askPrice(p: Player) {
       : Math.round(p.salary * (1.2 + p.years * 0.45) + (p.potential - overall(p)) * 3))
   );
 }
+// Only immutable catalog indexes are shared. Career rosters and yearly copies stay local.
+const catalogIndexes = new WeakMap<
+  WorldCatalog,
+  {
+    clubMap: Map<string, WorldCatalog['clubs'][number]>;
+    leagueMap: Map<string, WorldCatalog['leagues'][number]>;
+    byClub: Map<string, Player[]>;
+  }
+>();
 export function createGameView(world: WorldCatalog) {
   const { clubs, leagues, rosterNote } = world;
   const calendar = createCalendarView(world);
-  const clubMap = new Map(clubs.map((c) => [c.id, c])),
-    leagueMap = new Map(leagues.map((l) => [l.id, l]));
+  let index = catalogIndexes.get(world);
+  if (!index) {
+    const byClub = new Map<string, Player[]>();
+    for (const p of world.players) {
+      const list = byClub.get(p.club);
+      if (list) list.push(p);
+      else byClub.set(p.club, [p]);
+    }
+    index = {
+      clubMap: new Map(clubs.map((c) => [c.id, c])),
+      leagueMap: new Map(leagues.map((l) => [l.id, l])),
+      byClub,
+    };
+    catalogIndexes.set(world, index);
+  }
+  const { clubMap, leagueMap, byClub } = index;
   const getClub = (id: string) => clubMap.get(id)!;
   const getLeague = (id: string) => leagueMap.get(id)!;
-  const byClub = new Map<string, Player[]>();
-  for (const p of world.players) {
-    const list = byClub.get(p.club) || [];
-    list.push(p);
-    byClub.set(p.club, list);
-  }
   const cached = new Map<string, Player[]>();
   function baseRoster(club: string, year = world.year) {
     const key = club + ':' + year;
@@ -140,9 +157,7 @@ export function createGameView(world: WorldCatalog) {
       );
     return cached.get(key)!;
   }
-  const realRosters = Object.fromEntries(
-    clubs.map((c) => [c.id, baseRoster(c.id).filter((p) => p.real)]),
-  );
+  let realRosters: Record<string, Player[]> | undefined;
   function coachPool(year = world.year): Coach[] {
     return world.coaches.map((c) => ({
       ...c,
@@ -230,7 +245,11 @@ export function createGameView(world: WorldCatalog) {
     getClub,
     getLeague,
     rosterNote,
-    realRosters,
+    get realRosters() {
+      return (realRosters ??= Object.fromEntries(
+        clubs.map((c) => [c.id, baseRoster(c.id).filter((p) => p.real)]),
+      ));
+    },
     baseRoster,
     coachPool,
     agentFor,

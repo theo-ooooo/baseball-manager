@@ -64,6 +64,7 @@ export function createMatchSimulator(world: WorldCatalog) {
       innings: (number | null)[][] = [[], []],
       log: Result['log'] = [];
     const order = [0, 0];
+    const battingParticipants = lineups.map((lineup) => new Set(lineup));
     const performance = new Map<string, number>();
     const replayTeams = rosters.map((roster, side) => {
       const lineup = lineups[side].map((p) => p.id),
@@ -99,6 +100,39 @@ export function createMatchSimulator(world: WorldCatalog) {
     };
     pitchingStats(0);
     pitchingStats(1);
+    let changeIndex = 0;
+    let manualPitcherCursor = -1;
+    const applyChanges = (inning: number, bases?: (Player | null)[]) => {
+      let changed = false;
+      const changes = g.liveMatch?.changes || [];
+      while (changeIndex < changes.length && changes[changeIndex].cursor === log.length) {
+        const change = changes[changeIndex++],
+          side = home === g.club ? 1 : 0;
+        if (bases && (side ? home : away) === g.club) {
+          for (let base = 0; base < bases.length; base++) {
+            const slot = lineups[side].findIndex((p) => p.id === bases[base]?.id);
+            if (slot >= 0) bases[base] = g.roster.find((p) => p.id === change.lineup[slot])!;
+          }
+        }
+        lineups[side] = change.lineup.map((id) => g.roster.find((p) => p.id === id)!);
+        for (const p of lineups[side]) {
+          battingParticipants[side].add(p);
+          if (!replayTeams[side].players.some((v) => v.id === p.id))
+            replayTeams[side].players.push({ id: p.id, name: p.name, number: p.number });
+        }
+        g.lineup = [...change.lineup];
+        g.defense = { ...change.defense };
+        g.instructions = { ...change.instructions };
+        if (pitchers[side].id !== change.pitcher) {
+          pitchers[side] = g.roster.find((p) => p.id === change.pitcher)!;
+          entered[side] = inning;
+          pitchingStats(side);
+          manualPitcherCursor = log.length;
+        }
+        changed = true;
+      }
+      return changed;
+    };
     const snapshot = (): Result => ({
       id: `${g.year}-${g.day}-${home}-${away}`,
       day: g.day,
@@ -122,6 +156,7 @@ export function createMatchSimulator(world: WorldCatalog) {
           innings[1].push(null);
           break;
         }
+        applyChanges(inn);
         const defending = 1 - side,
           plan = plans[defending],
           current = pitchers[defending],
@@ -144,9 +179,10 @@ export function createMatchSimulator(world: WorldCatalog) {
             ),
           );
         if (
-          (isStarter && (currentStats.outs >= target || (currentStats.er >= 5 && inn >= 3))) ||
-          (!isStarter && (inn - entered[defending] >= 1 || currentStats.outs >= 6)) ||
-          (closing && current.id !== plan.closer)
+          !(manualPitcherCursor === log.length && (defending ? home : away) === g.club) &&
+          ((isStarter && (currentStats.outs >= target || (currentStats.er >= 5 && inn >= 3))) ||
+            (!isStarter && (inn - entered[defending] >= 1 || currentStats.outs >= 6)) ||
+            (closing && current.id !== plan.closer))
         ) {
           const available = selectReliever({
             plan,
@@ -170,18 +206,24 @@ export function createMatchSimulator(world: WorldCatalog) {
         let appearances = 0;
         const ownBat = (side ? home : away) === g.club;
         const ownPitch = (side ? away : home) === g.club;
-        const pitcher = pitchers[1 - side];
-        const pStrength =
-          overall(pitcher) * (0.75 + pitcher.condition / 400) +
-          ((pitcher.mood?.value ?? 65) - 65) * 0.08 +
-          (ownPitch ? (coachSkill(g, '투수') - 50) / 6 : 0);
-        const defense =
-          (ownPitch
-            ? defenseStrength(g)
-            : rosters[1 - side].filter((p) => p.pos !== 'P').reduce((s, p) => s + p.field, 0) /
-              Math.max(1, rosters[1 - side].filter((p) => p.pos !== 'P').length)) +
-          (ownPitch ? (coachSkill(g, '수비') - 50) / 5 : 0);
+        const context = () => {
+          const pitcher = pitchers[1 - side];
+          const pStrength =
+            overall(pitcher) * (0.75 + pitcher.condition / 400) +
+            ((pitcher.mood?.value ?? 65) - 65) * 0.08 +
+            (ownPitch ? (coachSkill(g, '투수') - 50) / 6 : 0);
+          const defense =
+            (ownPitch
+              ? defenseStrength(g)
+              : rosters[1 - side].filter((p) => p.pos !== 'P').reduce((s, p) => s + p.field, 0) /
+                Math.max(1, rosters[1 - side].filter((p) => p.pos !== 'P').length)) +
+            (ownPitch ? (coachSkill(g, '수비') - 50) / 5 : 0);
+          return { pitcher, pStrength, defense };
+        };
+        let { pitcher, pStrength, defense } = context();
         while (outs < 3 && appearances++ < 120) {
+          if (applyChanges(inn, ownBat ? bases : undefined))
+            ({ pitcher, pStrength, defense } = context());
           const p = lineups[side][order[side]++ % lineups[side].length];
           const play: ReplayPlay = {
             batter: p.id,
@@ -189,6 +231,8 @@ export function createMatchSimulator(world: WorldCatalog) {
             before: { outs, bases: bases.map((p) => p?.id || null), score: [...score] },
             after: { outs: 0, bases: [], score: [] },
           };
+          if (changeIndex)
+            play.defense = { ...(ownPitch ? g.defense! : replayTeams[1 - side].defense) };
           const stats = ownBat ? p.stats : blankStats();
           let runs = 0;
           let event = '';
@@ -383,7 +427,7 @@ export function createMatchSimulator(world: WorldCatalog) {
           100,
         );
       }
-      for (const p of lineups[side]) {
+      for (const p of battingParticipants[side]) {
         p.stats.g++;
         p.condition = clamp(p.condition - 6, 25, 100);
       }

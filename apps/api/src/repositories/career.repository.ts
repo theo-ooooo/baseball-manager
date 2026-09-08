@@ -5,6 +5,15 @@ import type { GameState, WorldCatalog, FinanceEntry, Result } from '@dugout/shar
 type CareerRow = { state: string; revision: number };
 @Injectable()
 export class CareerRepository {
+  async revealsPotential(db: D1Database, user: string) {
+    const row = await db
+      .prepare(
+        "SELECT json_extract(state,'$.rules.revealPotential') AS reveal FROM careers WHERE user_id=?",
+      )
+      .bind(user)
+      .first<{ reveal: number | null }>();
+    return row?.reveal === 1;
+  }
   async read(db: D1Database, user: string) {
     const row = await db
       .prepare('SELECT state,revision FROM careers WHERE user_id=?')
@@ -112,7 +121,7 @@ export class CareerRepository {
         clear(table);
     // A PA only changes liveMatch. Keep all projections and accounting intact.
     // Revision and request-id are still committed atomically with the snapshot.
-    if (kind === 'stepMatch' && before?.liveMatch) {
+    if (['stepMatch', 'matchCursor', 'prepareMatch'].includes(kind) && before?.liveMatch) {
       insert(
         'career_actions',
         ['revision', 'kind', 'request_id', 'created_at'],

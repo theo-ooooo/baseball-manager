@@ -1,6 +1,7 @@
 import type { WorldCatalog, GameState } from '@dugout/shared/types';
-import { createGameView, rng } from '@dugout/shared/game-view';
+import { createGameView } from '@dugout/shared/game-view';
 import type { createMatchSimulator } from './match-simulation';
+import { generateTimeline, reviseTimeline, validateCursor, visibleResult } from './match-timeline';
 
 type Advance = (game: GameState, count?: number, pauseAfterOwn?: boolean) => GameState;
 export function createLiveMatchActions(
@@ -14,16 +15,7 @@ export function createLiveMatchActions(
       if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
       const pair = nextFixture(g);
       if (!pair) throw new Error('오늘 경기가 없습니다. 계속 진행으로 다음 일정으로 이동하세요.');
-      const [home, away] = pair,
-        iterator = simulateMatch(
-          structuredClone(g),
-          home,
-          away,
-          rng(g.seed),
-          !['regular', 'preseason'].includes(g.phase),
-        );
-      const result = iterator.next().value;
-      result.friendly = g.phase === 'preseason';
+      const [home, away] = pair;
       g.liveMatch = {
         home,
         away,
@@ -31,42 +23,58 @@ export function createLiveMatchActions(
         pitchingVersion: 2,
         cursor: 0,
         finished: false,
-        result,
-        opponents: JSON.parse(
-          JSON.stringify([
-            away === g.club ? [] : rosterFor(g, away),
-            home === g.club ? [] : rosterFor(g, home),
-          ]),
-        ),
+        result: {
+          id: '',
+          day: g.day,
+          home,
+          away,
+          homeScore: 0,
+          awayScore: 0,
+          innings: [],
+          hits: [],
+          errors: [],
+          log: [],
+          mvp: '',
+        },
+        opponents: structuredClone([
+          away === g.club ? [] : rosterFor(g, away),
+          home === g.club ? [] : rosterFor(g, home),
+        ]),
       };
+      generateTimeline(g, simulateMatch);
       return g;
     }
-    if (a.type === 'stepMatch') {
+    if (a.type === 'prepareMatch' || a.type === 'stepMatch' || a.type === 'matchCursor') {
       const live = g.liveMatch;
-      if (!live || live.finished) return g;
-      const iterator = simulateMatch(
-        structuredClone(g),
-        live.home,
-        live.away,
-        rng(live.seed),
-        !['regular', 'preseason'].includes(g.phase),
-      );
-      let step = iterator.next();
-      for (let i = 0; i <= live.cursor && !step.done; i++) step = iterator.next();
-      live.cursor++;
-      live.finished = !!step.done;
-      live.result = step.value;
-      live.result.friendly = g.phase === 'preseason';
+      if (!live) throw new Error('진행 중인 경기가 없습니다.');
+      // Upgrade an old partial game once, on an explicit command, never while reading/SSR.
+      if (!live.timeline || !live.prepared) generateTimeline(g, simulateMatch);
+      if (a.type === 'prepareMatch') return g;
+      const cursor =
+        a.type === 'stepMatch'
+          ? Math.min(live.cursor + 1, live.timeline!.log.length)
+          : validateCursor(live, a);
+      live.cursor = cursor;
+      live.finished = cursor >= live.timeline!.log.length;
+      live.result = visibleResult(live, cursor);
       return g;
+    }
+    if (a.type === 'reviseMatch') {
+      if (!g.liveMatch) throw new Error('진행 중인 경기가 없습니다.');
+      return reviseTimeline(g, a, simulateMatch);
     }
     if (a.type === 'completeMatch') {
-      if (!g.liveMatch?.finished) throw new Error('경기를 끝까지 진행해 주세요.');
+      const live = g.liveMatch;
+      if (!live) throw new Error('진행 중인 경기가 없습니다.');
+      if (!live.timeline || !live.prepared) generateTimeline(g, simulateMatch);
+      const cursor = validateCursor(live, a);
+      if (cursor < live.timeline!.log.length) throw new Error('경기를 끝까지 진행해 주세요.');
+      live.finished = true;
       return advance(g, 1, true);
     }
     if (g.liveMatch && a.type !== 'syncCatalog')
       throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
     return null;
   }
-
   return liveAction;
 }

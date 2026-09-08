@@ -1,5 +1,11 @@
 # Codex 인수인계 — DUGOUT / baseball-manager
 
+## 최신 후속 구현 — 2026-09-08 Worker 성능·경기 프리뷰
+
+- [docs/worker-performance.md](docs/worker-performance.md)에 1102 조사 범위·CPU 반복 경로·현재 처리·한계를 기록했다. `startMatch`가 타임라인과 성적 반영분을 D1에 준비하고, `completeMatch`는 이를 한 번 반영한다. `stepMatch`는 이전 클라이언트용 위치 이동이며 재계산하지 않는다. 오래된 미완료 경기는 `prepareMatch`로 한 번 변환한다.
+- `live-match-screen.tsx`는 저장 이벤트만 재생하며 매 타석 POST하지 않는다. 위치는 기기별 localStorage에 저장한다. `match-plan-editor.tsx`에서 프리뷰 타순/선발/팀 전술과 경기 중 벤치 선수/투수/전술을 바꾼다. `reviseMatch`는 이전 이벤트·revision·타임라인 버전을 검증하고 이후 결과를 다시 준비한다. 원본 입력·성적 반영분은 API에 공개하지 않는다.
+- SSR/API 초기화를 분리하고 카탈로그 조회의 커리어 전체 읽기·세계 명단 반복 복사를 줄였다. SQL 변경이나 DB 초기화는 없다. 아래의 오래된 ‘타석마다 서버 계산·저장’, ‘경기 중 수동 교체 미구현’ 설명보다 이 절과 최신 WORKLOG를 우선한다.
+
 ## 최신 후속 구현 — 2026-09-08 날짜 진행·협상·육성
 
 - FM 기능 대조와 미구현 우선순위는 [docs/fm-feature-audit.md](docs/fm-feature-audit.md)를 참고한다. FM 전체 구현으로 설명하지 않는다.

@@ -56,8 +56,12 @@ export function replayScene(result: Result, index: number) {
     target.y -= kind === 'homeRun' ? 155 : 70;
     target.x += (seed % 2 ? 1 : -1) * 45;
   }
-  const batting = result.replayTeams?.[event?.half || 0],
-    defending = result.replayTeams?.[event?.half === 0 ? 1 : 0];
+  const batting = result.replayTeams?.[event?.half || 0];
+  const originalDefense = result.replayTeams?.[event?.half === 1 ? 0 : 1];
+  const defending =
+    originalDefense && play?.defense
+      ? { ...originalDefense, defense: play.defense }
+      : originalDefense;
   const playerName = (id: string) =>
     batting?.players.find((p) => p.id === id)?.name ||
     defending?.players.find((p) => p.id === id)?.name ||

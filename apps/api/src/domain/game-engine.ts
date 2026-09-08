@@ -1,5 +1,6 @@
 import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
+import { applyMatchEffects, runMatch } from './match-timeline';
 import { createCalendarProgression } from './calendar-progression';
 import { createRecruitment } from './recruitment';
 import { developPlayers, developmentReports } from './player-development';
@@ -151,11 +152,11 @@ export function createGameEngine(world: WorldCatalog) {
   ): Result {
     const live = g.liveMatch,
       matching = live && live.home === home && live.away === away;
+    if (matching && live.prepared && live.timeline) return applyMatchEffects(g);
     const iterator = simulateMatch(g, home, away, matching ? rng(live.seed) : random, post);
-    let step = iterator.next();
-    while (!step.done) step = iterator.next();
+    const result = runMatch(iterator);
     if (matching) delete g.liveMatch;
-    return step.value;
+    return result;
   }
   function record(g: GameState, res: Result, league: string) {
     for (const side of [0, 1]) {
@@ -502,7 +503,10 @@ export function createGameEngine(world: WorldCatalog) {
     return g;
   }
   function applyAction(g: GameState, a: Record<string, unknown>) {
-    const s = structuredClone(g);
+    const s =
+      g.liveMatch?.prepared && ['stepMatch', 'matchCursor'].includes(String(a.type))
+        ? { ...g, liveMatch: { ...g.liveMatch } }
+        : structuredClone(g);
     if (!s.liveMatch) {
       prepareSquad(s, world);
       prepareDynamics(s);

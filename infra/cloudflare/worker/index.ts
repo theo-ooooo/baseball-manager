@@ -5,7 +5,6 @@ import {
   DEFAULT_IMAGE_SIZES,
 } from 'vinext/server/image-optimization';
 import handler from 'vinext/server/app-router-entry';
-import api from '../../../apps/api/.build/worker.mjs';
 import { authenticateRequest, type AuthEnvironment } from '../auth';
 import { guestCookie, isSameOriginMutation } from '../../../apps/api/src/auth/guest-session';
 
@@ -34,7 +33,10 @@ const worker = {
       return Response.json({ error: '저장 서비스가 설정되지 않았습니다.' }, { status: 503 });
 
     const respond = async () => {
-      if (url.pathname.startsWith('/api/')) return api.fetch(request, env, ctx);
+      if (url.pathname.startsWith('/api/')) {
+        const { default: api } = await import('../../../apps/api/.build/worker.mjs');
+        return api.fetch(request, env, ctx);
+      }
 
       if (url.pathname === '/_vinext/image') {
         const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];

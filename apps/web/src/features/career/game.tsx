@@ -32,7 +32,8 @@ import { type GameState, type Player, type Result } from '@dugout/shared/game-vi
 import { InboxPanel, DynamicsPanel } from '../clubs/club-panels';
 import { SchedulePanel } from '../schedule/schedule-panel';
 import { dateLabel } from '@dugout/shared/calendar';
-import { StadiumReplay, LiveMatchScreen } from '../matches/stadium-replay';
+import { StadiumReplay } from '../matches/stadium-replay';
+import { LiveMatchScreen } from '../matches/live-match-screen';
 import { TacticalBoard } from '../squad/management-panels';
 import { CoachPanel } from '../squad/coach-panel';
 import { Badge } from '../../components/game-ui';

@@ -45,6 +45,71 @@ async function action(payload, user = 'test-owner-a') {
   return result.body;
 }
 
+test('D1 timeline revisions preserve consumed events, hide inputs and commit a saved result once', async () => {
+  const user = 'timeline-revision';
+  await action({ type: 'start', club: 'kbo-lotte', manager: 'Timeline DB', mode: 'short' }, user);
+  await action({ type: 'continue' }, user);
+  const initial = await action({ type: 'startMatch' }, user);
+  const live = initial.state.liveMatch,
+    cursor = 12,
+    side = live.home === initial.state.club ? 1 : 0;
+  const command = {
+    type: 'reviseMatch',
+    cursor,
+    timelineVersion: live.timelineVersion,
+    lineup: initial.state.lineup,
+    pitcher:
+      live.timeline.log
+        .slice(0, cursor)
+        .filter((e) => e.half !== side && e.play)
+        .at(-1)?.play.pitcher || initial.state.starter,
+    instructions: { ...initial.state.instructions, power: 100 },
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const changed = await call('/api/career', command, user);
+  assert.equal(changed.status, 201);
+  assert.equal(changed.body.state.liveMatch.timelineVersion, 2);
+  assert.equal(changed.body.state.liveMatch.prepared, undefined);
+  assert.deepEqual(
+    changed.body.state.liveMatch.timeline.log.slice(0, cursor),
+    live.timeline.log.slice(0, cursor),
+  );
+  assert.deepEqual(changed.body.state.roster, initial.state.roster);
+  assert.equal(changed.body.state.budget, initial.state.budget);
+  const duplicate = await call('/api/career', command, user);
+  assert.equal(duplicate.body.revision, changed.body.revision);
+  assert.equal(duplicate.body.state.liveMatch.timelineVersion, 2);
+  const rejected = await call(
+    '/api/career',
+    { ...command, revision: changed.body.revision, requestId: crypto.randomUUID() },
+    user,
+  );
+  assert.equal(rejected.status, 400);
+  const afterReject = (await call('/api/career', undefined, user)).body;
+  assert.equal(afterReject.revision, changed.body.revision);
+  assert.deepEqual(afterReject.state.liveMatch.timeline, changed.body.state.liveMatch.timeline);
+  const complete = {
+    type: 'completeMatch',
+    cursor: afterReject.state.liveMatch.timeline.log.length,
+    timelineVersion: 2,
+    revision: afterReject.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const finished = await call('/api/career', complete, user);
+  assert.equal(finished.status, 201);
+  assert.equal(finished.body.state.history.length, 1);
+  const repeated = await call('/api/career', complete, user);
+  assert.equal(repeated.body.revision, finished.body.revision);
+  assert.equal(repeated.body.state.history.length, 1);
+  const record = await call(
+    '/api/career/matches/' + encodeURIComponent(finished.body.state.history[0].id),
+    undefined,
+    user,
+  );
+  assert.deepEqual(record.body.log, afterReject.state.liveMatch.timeline.log);
+});
+
 test('D1 commits a full-roster exchange once and rejected exchanges leave both players unchanged', async () => {
   const user = 'roster-exchange';
   const before = await action(
@@ -396,6 +461,9 @@ test(
     saved = await action({ type: 'startMatch' }, user);
     assert.equal(saved.state.liveMatch.result.log.length, 0);
     assert.equal(saved.state.liveMatch.opponents, undefined);
+    assert.equal(saved.state.liveMatch.prepared, undefined);
+    assert.ok(saved.state.liveMatch.timeline.log.length > 20);
+    const generatedTimeline = saved.state.liveMatch.timeline;
     const baseline = {
       budget: saved.state.budget,
       day: saved.state.day,
@@ -440,6 +508,8 @@ test(
     );
     assert.ok(raw.roster.some((p) => p.potential > 0));
     assert.ok(raw.liveMatch.opponents.flat().some((p) => p.potential > 0));
+    assert.ok(raw.liveMatch.prepared.input.roster.some((p) => p.potential > 0));
+    assert.deepEqual(raw.liveMatch.timeline, generatedTimeline);
     assert.deepEqual(
       {
         budget: saved.state.budget,
@@ -455,9 +525,11 @@ test(
       user,
     );
     assert.equal(denied.status, 400);
-    let steps = 0;
-    while (!saved.state.liveMatch.finished && steps++ < 400)
-      saved = await action({ type: 'stepMatch' }, user);
+    saved = await action(
+      { type: 'matchCursor', cursor: generatedTimeline.log.length, timelineVersion: 1 },
+      user,
+    );
+    assert.deepEqual(saved.state.liveMatch.timeline, generatedTimeline);
     assert.ok(saved.state.liveMatch.finished);
     assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM projection_probe').first()).n, 0);
     const final = saved.state.liveMatch.result;
