@@ -47,6 +47,14 @@ export class CareerRepository {
     };
     const replace = (table: string, fields: string[], rows: Record<string, unknown>[]) => { clear(table); insert(table, fields, rows); };
     if (resetting) for (const table of ['career_matches', 'transfers', 'finance_entries', 'career_actions']) clear(table);
+    // A PA only changes liveMatch. Keep all projections and accounting intact.
+    // Revision and request-id are still committed atomically with the snapshot.
+    if (kind === 'stepMatch' && before?.liveMatch) {
+      insert('career_actions', ['revision','kind','request_id','created_at'], [{revision,kind,request_id:requestId,created_at:now}]);
+      const result = await db.batch(statements);
+      if (result[0].meta.changes !== 1) return null;
+      return {state, revision, ledger: await this.ledger(db,user)};
+    }
     const { agentFor } = createGameView(world);
     const allPlayers = [...new Map([...state.transferred, ...state.roster].map(p => [p.id, p])).values()];
     replace('career_players', ['player_id','club_id','position','name','data'], allPlayers.map(p => ({player_id:p.id,club_id:p.club,position:p.pos,name:p.name,data:JSON.stringify(p)})));

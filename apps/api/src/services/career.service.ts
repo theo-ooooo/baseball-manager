@@ -27,6 +27,7 @@ export class CareerService {
     let next;
     try {
       if (action.type === 'start') {
+        if(current.state?.liveMatch)throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
         if (current.state && action.replace !== true) throw new Error('기존 커리어 교체를 확인해 주세요.');
         if (!world.clubs.some(c => c.id === action.club)) throw new Error('구단을 선택해 주세요.');
         if (action.mode !== 'short' && action.mode !== 'full') throw new Error('시즌 길이를 선택해 주세요.');

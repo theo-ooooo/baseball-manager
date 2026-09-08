@@ -11,13 +11,18 @@ export function autoPitching(players:Player[]):PitchingPlan{
 }
 export function preparePitching(g:GameState){
  const active=firstTeam(g).filter(p=>p.pos==='P'),valid=new Set(active.map(p=>p.id));
- if(!g.pitching){g.pitching=autoPitching(active);g.starter=g.pitching.rotation[0]||g.starter;}
+ if(!g.pitching){
+  g.pitching=autoPitching(active);
+  // Preserve a legacy save's explicitly chosen starter.
+  if(valid.has(g.starter)&&!g.pitching.rotation.includes(g.starter))g.pitching.rotation=[g.starter,...g.pitching.rotation.slice(0,4)];
+  if(g.pitching.rotation.includes(g.pitching.closer))g.pitching.closer=active.filter(p=>!g.pitching!.rotation.includes(p.id)).sort((a,b)=>(b.rating?.record?.sv||0)-(a.rating?.record?.sv||0)||overall(b)-overall(a))[0]?.id||'';
+  g.pitching.next=Math.max(0,g.pitching.rotation.indexOf(g.starter));
+ }
  const plan=g.pitching;plan.rotation=plan.rotation.filter(id=>valid.has(id));
  if(!plan.rotation.length)plan.rotation=[autoPitching(active).rotation[0]].filter(Boolean);
  if(!valid.has(plan.closer)||plan.rotation.includes(plan.closer))plan.closer='';
  plan.bullpen=active.filter(p=>!plan.rotation.includes(p.id)&&p.id!==plan.closer).map(p=>p.id);
- if(!plan.closer&&plan.bullpen.length>1)plan.closer=plan.bullpen.shift()!;
- plan.next%=Math.max(1,plan.rotation.length);
+ plan.next=Math.max(0,Math.floor(plan.next||0))%Math.max(1,plan.rotation.length);
  if(!valid.has(g.starter))g.starter=plan.rotation[plan.next];
  if(g.defense)g.defense.P=g.starter;
 }

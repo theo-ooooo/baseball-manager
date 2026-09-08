@@ -24,3 +24,43 @@ test('Pitcher roles use disjoint groups and can be reassigned',()=>{
  const next=p.bullpen[0],old=p.closer;g=e.applyAction(g,{type:'pitchingRole',id:next,role:'closer'});assert.equal(g.pitching.closer,next);assert.ok(g.pitching.bullpen.includes(old));
  assert.throws(()=>e.applyAction(g,{type:'pitchingRole',id:g.lineup[0],role:'starter'}),/보직/);
 });
+
+test('Legacy/manual starters survive catalog reads, rest dates and saved tactics',()=>{
+ let g=e.newGame('kbo-lotte','Starter','short',82);
+ const chosen=g.pitching.bullpen[0];g.starter=chosen;delete g.pitching;
+ g=e.applyAction(g,{type:'syncCatalog'});assert.equal(g.starter,chosen);
+ g=e.applyAction(g,{type:'saveTactic',name:'선발 고정'});
+ const saved=g.tacticBook[0];
+ g=e.applyAction(g,{type:'starter',id:g.pitching.rotation.find(id=>id!==chosen)});
+ g=e.applyAction(g,{type:'loadTactic',id:saved.id});assert.equal(g.starter,chosen);assert.deepEqual(g.pitching,saved.pitching);
+ g=e.applyAction(g,{type:'advance',count:1});assert.equal(g.starter,chosen);
+ const closer=g.pitching.closer;g=e.applyAction(g,{type:'pitchingRole',id:closer,role:'bullpen'});assert.equal(g.pitching.closer,'');assert.ok(g.pitching.bullpen.includes(closer));
+});
+
+test('Live postseason remains deterministic through completion and does not publish a future result',()=>{
+ let g=e.newGame('kbo-lotte','Post','short',91);g.phase='final';g.day=50;g.series=[{a:g.club,b:'kbo-lg',aw:0,bw:0}];
+ g=e.applyAction(g,{type:'startMatch'});assert.equal(g.liveMatch.result.log.length,0);
+ let steps=0;while(!g.liveMatch.finished&&steps++<1000)g=e.applyAction(g,{type:'stepMatch'});
+ assert.ok(g.liveMatch.finished);const log=g.liveMatch.result.log;
+ g=e.applyAction(g,{type:'completeMatch'});assert.deepEqual(g.history[0].log,log);assert.equal(g.series[0].aw+g.series[0].bw,1);
+});
+
+test('Doubleheaders stop after the watched first game and commit distinct fixtures without duplicate wages',()=>{
+ const {world}=createRequire(import.meta.url)(out);
+ const cloned=structuredClone(world);
+ cloned.fixtures=[
+  {id:'double-a',date:'2026-03-28',league:'kbo',home:'kbo-lotte',away:'kbo-lg'},
+  {id:'double-b',date:'2026-03-28',league:'kbo',home:'kbo-lotte',away:'kbo-lg'},
+ ];
+ // Full mode uses the fixture catalog. Isolated fixture list makes the doubleheader reproducible.
+ const {buildSync}=createRequire(import.meta.url)('esbuild');
+ const enginePath=join(tmpdir(),'dugout-double-engine.cjs');buildSync({entryPoints:['apps/api/src/domain/game-engine.ts'],bundle:true,platform:'node',format:'cjs',outfile:enginePath});
+ const engine=createRequire(import.meta.url)(enginePath).createGameEngine(cloned);
+ let g=engine.newGame('kbo-lotte','Double','full',51);g.phase='regular';g.day=0;
+ const originalDay=g.day;
+ function finish(){g=engine.applyAction(g,{type:'startMatch'});for(let n=0;!g.liveMatch.finished&&n<500;n++)g=engine.applyAction(g,{type:'stepMatch'});assert.ok(g.liveMatch.finished);g=engine.applyAction(g,{type:'completeMatch'});}
+ finish();assert.equal(g.day,originalDay);assert.equal(g.history.length,1);assert.equal(g.history[0].fixtureId,'double-a');
+ const firstStarter=g.history[0].replayTeams[1].defense.P;
+ finish();assert.equal(g.day,originalDay+1);assert.equal(g.history.length,2);assert.equal(g.history[0].fixtureId,'double-b');assert.notEqual(g.history[0].replayTeams[1].defense.P,firstStarter);
+ assert.equal(g.standings.kbo.find(s=>s.club===g.club).w+g.standings.kbo.find(s=>s.club===g.club).l+g.standings.kbo.find(s=>s.club===g.club).d,2);
+});

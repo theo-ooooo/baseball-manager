@@ -126,3 +126,49 @@ test('Changing a catalog row and revision changes API data without changing sour
   assert.equal(world.clubs.find(c=>c.id==='kbo-lg').name,'DB 원본 확인');
   assert.equal(world.version,'test-revision');
 });
+
+test('Live D1 saves resume, deduplicate concurrent steps and defer all projection/accounting writes until completion',async()=>{
+ const user='live-d1';let saved=await action({type:'start',club:'kbo-lotte',manager:'Live DB',mode:'short'},user);
+ saved=await action({type:'continue'},user);saved=await action({type:'startMatch'},user);
+ assert.equal(saved.state.liveMatch.result.log.length,0);assert.equal(saved.state.liveMatch.opponents,undefined);
+ const baseline={budget:saved.state.budget,day:saved.state.day,history:saved.state.history,standings:saved.state.standings};
+ await db.batch([
+  db.prepare('CREATE TABLE projection_probe (event TEXT)'),
+  db.prepare("CREATE TRIGGER observe_player_projection AFTER INSERT ON career_players BEGIN INSERT INTO projection_probe VALUES('player'); END"),
+  db.prepare("CREATE TRIGGER observe_contract_projection AFTER DELETE ON contracts BEGIN INSERT INTO projection_probe VALUES('contract'); END"),
+ ]);
+ const requestId=crypto.randomUUID(),command={type:'stepMatch',revision:saved.revision,requestId};
+ const race=await Promise.all([call('/api/career',command,user),call('/api/career',{...command,requestId:crypto.randomUUID()},user)]);
+ assert.equal(race.filter(r=>r.status<300).length,1);assert.equal(race.filter(r=>r.status===409).length,1);
+ saved=(await call('/api/career',undefined,user)).body;assert.equal(saved.state.liveMatch.cursor,1);
+ const winningId=(await db.prepare('SELECT request_id FROM career_actions WHERE user_id=? AND revision=?').bind(user,saved.revision).first()).request_id;
+ const duplicate=await call('/api/career',{...command,requestId:winningId},user);assert.equal(duplicate.body.revision,saved.revision);assert.equal(duplicate.body.state.liveMatch.cursor,1);
+ assert.ok(saved.state.roster.every(p=>p.potential===0&&!('potential' in (p.rating?.base||{}))));
+ const raw=JSON.parse((await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state);
+ assert.ok(raw.roster.some(p=>p.potential>0));assert.ok(raw.liveMatch.opponents.flat().some(p=>p.potential>0));
+ assert.deepEqual({budget:saved.state.budget,day:saved.state.day,history:saved.state.history,standings:saved.state.standings},baseline);
+ const denied=await call('/api/career',{type:'start',club:'kbo-lg',mode:'short',replace:true,revision:saved.revision},user);
+ assert.equal(denied.status,400);
+ let steps=0;while(!saved.state.liveMatch.finished&&steps++<400)saved=await action({type:'stepMatch'},user);
+ assert.ok(saved.state.liveMatch.finished);assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM projection_probe').first()).n,0);
+ const final=saved.state.liveMatch.result;saved=await action({type:'completeMatch'},user);
+ assert.equal(saved.state.liveMatch,undefined);assert.deepEqual(saved.state.history[0].log,final.log);
+ assert.equal(saved.state.day,baseline.day+1);
+ const archive=await call('/api/career/matches/'+encodeURIComponent(saved.state.history[0].id),undefined,user);assert.deepEqual(archive.body.log,final.log);
+ assert.ok((await db.prepare('SELECT COUNT(*) AS n FROM projection_probe').first()).n>0);
+ const ledger=await db.prepare('SELECT SUM(amount) AS n FROM finance_entries WHERE user_id=?').bind(user).first();assert.ok(Math.abs(ledger.n-saved.state.budget)<1e-7);
+ await db.batch([db.prepare('DROP TRIGGER observe_player_projection'),db.prepare('DROP TRIGGER observe_contract_projection'),db.prepare('DROP TABLE projection_probe')]);
+},{timeout:60000});
+
+test('Potential visibility follows each career on catalog, negotiation and conflict responses',async()=>{
+ const user='visibility';let saved=await action({type:'start',club:'kbo-lotte',mode:'short',revealPotential:true},user);
+ assert.ok(saved.state.roster.some(p=>p.potential>0));assert.ok((await call('/api/catalog',undefined,user)).body.players.some(p=>p.potential>0));
+ saved=await action({type:'start',club:'kbo-lg',mode:'short',replace:true},user);
+ const catalog=(await call('/api/catalog',undefined,user)).body;assert.ok(catalog.players.every(p=>p.potential===0));
+ const p=catalog.players.find(p=>p.club==='fa');saved=await action({type:'negotiate',id:p.id,salary:p.salary*2,years:3},user);
+ assert.equal(saved.state.deals[0].player.potential,0);
+ const conflict=await call('/api/career',{type:'training',value:'rest',revision:0},user);
+ assert.equal(conflict.status,409);assert.ok(conflict.body.state.roster.every(p=>p.potential===0));
+ const raw=JSON.parse((await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state);
+ assert.ok(raw.deals[0].player.potential>0);
+});

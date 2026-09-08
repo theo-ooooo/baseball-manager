@@ -7,6 +7,8 @@ import {refreshRatings} from './performance-ratings';
 import {createPlayerGenerator} from './player-generator';
 
 export function prepareSquad(g:GameState,world:WorldCatalog){
+ // A live game's inputs remain frozen until its result has committed.
+ if(g.liveMatch)return;
  prepareCalendar(g,world);
  if(g.catalogVersion!==world.version){
   const catalog=new Map(world.players.map(p=>[p.id,p]));
@@ -47,15 +49,15 @@ export function managementAction(g:GameState,a:Record<string,unknown>):GameState
    if(plan.rotation.includes(p.id)&&a.role!=='starter'&&plan.rotation.length<=1)throw new Error('선발투수는 최소 1명이 필요합니다.');
    if(a.role==='starter'&&!plan.rotation.includes(p.id)&&plan.rotation.length>=6)throw new Error('선발 로테이션은 최대 6명입니다.');
    plan.rotation=plan.rotation.filter(id=>id!==p.id);plan.bullpen=plan.bullpen.filter(id=>id!==p.id);if(plan.closer===p.id)plan.closer='';
-   if(a.role==='starter')plan.rotation.push(p.id);else if(a.role==='closer')plan.closer=p.id;else plan.bullpen.push(p.id);preparePitching(g);return g;
+   if(a.role==='starter')plan.rotation.push(p.id);else if(a.role==='closer')plan.closer=p.id;else plan.bullpen.push(p.id);if(g.starter===p.id&&a.role!=='starter')g.starter=plan.rotation[0];preparePitching(g);return g;
   }
-  case 'rotationOrder':{preparePitching(g);const ids=a.ids as string[],old=g.pitching!.rotation;if(!Array.isArray(ids)||ids.length!==old.length||new Set(ids).size!==ids.length||ids.some(id=>!old.includes(id)))throw new Error('선발 순서를 확인해 주세요.');g.pitching!.rotation=ids;g.pitching!.next=0;return g;}
+  case 'rotationOrder':{preparePitching(g);const ids=a.ids as string[],old=g.pitching!.rotation;if(!Array.isArray(ids)||ids.length!==old.length||new Set(ids).size!==ids.length||ids.some(id=>!old.includes(id)))throw new Error('선발 순서를 확인해 주세요.');g.pitching!.rotation=ids;g.pitching!.next=Math.max(0,ids.indexOf(g.starter));return g;}
   case 'squad':{
    const p=g.roster.find(p=>p.id===a.id);if(!p||!['first','reserve'].includes(String(a.value)))throw new Error('선수와 등록 구분을 확인해 주세요.');
    if((p.squad||'first')===a.value)return g;
    if(a.value==='first'&&firstTeam(g).length>=28)throw new Error('1군 정원은 28명입니다. 먼저 한 명을 2군으로 내려 주세요.');
    if(a.value==='reserve')canRemove(g,p);
-   p.squad=a.value as 'first'|'reserve';repair(g);return g;
+   p.squad=a.value as 'first'|'reserve';repair(g);preparePitching(g);return g;
   }
   case 'defense':{
    const p=activePlayer(g,a.id),pos=String(a.position) as DefensivePosition;
@@ -84,12 +86,13 @@ export function managementAction(g:GameState,a:Record<string,unknown>):GameState
    const name=typeof a.name==='string'?a.name.trim().slice(0,30):'';if(!name)throw new Error('전술 이름을 입력해 주세요.');
    const book=g.tacticBook||[];const old=book.find(t=>t.name===name);
    if(!old&&book.length>=5)throw new Error('전술은 5개까지 저장할 수 있습니다. 기존 전술을 삭제하거나 같은 이름으로 저장하세요.');
-   const saved={id:old?.id||`tactic-${g.year}-${hash(name)}`,name,tactic:g.tactic,lineup:[...g.lineup],starter:g.starter,defense:{...defenseFor(g)},instructions:{...(g.instructions||defaults(g.tactic))}};
+   const saved={id:old?.id||`tactic-${g.year}-${hash(name)}`,name,tactic:g.tactic,lineup:[...g.lineup],starter:g.starter,defense:{...defenseFor(g)},instructions:{...(g.instructions||defaults(g.tactic))},pitching:structuredClone(g.pitching)};
    g.tacticBook=[...book.filter(t=>t.name!==name),saved];return g;
   }
   case 'loadTactic':{
    const t=g.tacticBook?.find(t=>t.id===a.id);if(!t)throw new Error('저장한 전술을 찾을 수 없습니다.');
    for(const id of [...t.lineup,t.starter])activePlayer(g,id);
+   if(t.pitching){for(const id of [...t.pitching.rotation,...t.pitching.bullpen,t.pitching.closer].filter(Boolean))activePlayer(g,id);g.pitching=structuredClone(t.pitching);}
    g.lineup=[...t.lineup];g.starter=t.starter;g.defense={...t.defense};g.tactic=t.tactic;g.instructions={...t.instructions};g.tacticFamiliarity=Math.max(20,(g.tacticFamiliarity||55)-8);return g;
   }
   case 'deleteTactic':g.tacticBook=(g.tacticBook||[]).filter(t=>t.id!==a.id);return g;

@@ -1,5 +1,5 @@
 export type Pos='P'|'C'|'IF'|'OF'|'DH';
-export type Stats={ab:number;h:number;hr:number;rbi:number;bb:number;k:number;outs:number;er:number;wins:number;g:number;saves?:number;holds?:number};
+export type Stats={ab:number;h:number;hr:number;rbi:number;bb:number;k:number;outs:number;er:number;wins:number;g:number;saves?:number;holds?:number;hrAllowed?:number};
 export type Player={id:string;name:string;original:string;club:string;pos:Pos;age:number;real:boolean;country:string;number:number;contact:number;power:number;speed:number;field:number;stuff:number;control:number;potential:number;condition:number;marketValue?:number;salary:number;years:number;stats:Stats;squad?:'first'|'reserve';familiarity?:Partial<Record<DefensivePosition,number>>;positionTraining?:DefensivePosition;reserveStats?:Stats;source?:string;ageEstimated?:boolean;rating?:RatingEvidence;mood?:PlayerMood};
 export type Coach={id:string;name:string;role:string;skill:number;salary:number;style:string;real?:boolean;sourceClub?:string;source?:string;verifiedRole?:string};
 export type Standing={club:string;w:number;l:number;d:number;rf:number;ra:number;form:string[]};
@@ -16,7 +16,7 @@ export type FinanceEntry={id:string;revision:number;year:number;day:number;kind:
 export type DefensivePosition='P'|'C'|'1B'|'2B'|'3B'|'SS'|'LF'|'CF'|'RF'|'DH';
 export type Defense=Record<DefensivePosition,string>;
 export type TeamInstructions={steal:number;patience:number;power:number;depth:number};
-export type SavedTactic={id:string;name:string;tactic:string;lineup:string[];starter:string;defense:Defense;instructions:TeamInstructions};
+export type SavedTactic={id:string;name:string;tactic:string;lineup:string[];starter:string;defense:Defense;instructions:TeamInstructions;pitching?:PitchingPlan};
 export type ReserveResult={day:number;opponent:string;own:number;against:number;played:string[]};
 
 export type ReplayState={outs:number;bases:(string|null)[];score:number[]};
@@ -34,4 +34,4 @@ export type SellerDecision={club:string;status:'accepted'|'counter'|'refused';ro
 export type SaleOffer={id:string;playerId:string;club:string;fee:number;day:number;expires:number;year:number};
 
 export type PitchingPlan={rotation:string[];bullpen:string[];closer:string;next:number};
-export type LiveMatch={home:string;away:string;seed:number;cursor:number;finished:boolean;result:Result};
+export type LiveMatch={home:string;away:string;seed:number;cursor:number;finished:boolean;result:Result;opponents?:Player[][]};
