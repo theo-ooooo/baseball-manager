@@ -32,10 +32,44 @@ function record(g: GameState, d: Offer, message: string) {
     { day: g.day, year: g.year, salary: d.salary, years: d.years, message },
   ].slice(-12);
 }
-function notify(g: GameState, d: Offer, subject: string) {
+function notify(g: GameState, d: Offer, subject: string, senderName?: string) {
   const coach = 'coach' in d;
   postNews(g, `${coach ? d.coach.name : d.player.name} · ${subject}`, d.message, 'transfer', {
     actionView: coach ? 'staff' : 'agents',
+    dealId: d.id,
+    sender: {
+      name: coach ? d.coach.name : senderName || '선수 에이전트',
+      role: coach
+        ? `${d.role} 코치 후보`
+        : d.stage === 'club'
+          ? '소속 구단 협의'
+          : '개인 조건 협의',
+    },
+    report: {
+      facts: [
+        { label: '연봉', value: money(d.salary) },
+        { label: '기간', value: `${d.years}년` },
+        {
+          label: '서명 시 지출',
+          value: money(
+            coach ? d.salary * 0.5 + d.compensation : d.fee + d.agentFee + d.salary * 0.15,
+          ),
+        },
+      ],
+      sections: [
+        {
+          title: '다음 단계',
+          body:
+            d.status === 'accepted'
+              ? '조건에 합의했습니다. 계약서를 열어 최종 내용을 확인하고 서명하면 계약이 체결됩니다.'
+              : d.status === 'counter'
+                ? '상대가 수정 조건을 보내왔습니다. 역제안을 수락하거나 연봉과 기간을 조정해 다시 제안하세요.'
+                : d.status === 'pending'
+                  ? '개인 계약 조건을 검토하고 있습니다. 날짜를 진행하면 답변이 도착합니다.'
+                  : '기존 협상이 종료되었습니다. 선수 또는 코치의 현재 상태를 확인한 뒤 새 조건을 제안할 수 있습니다.',
+        },
+      ],
+    },
     ...(!coach ? { playerId: d.player.id } : {}),
   });
 }
@@ -172,7 +206,12 @@ export function createRecruitment(world: WorldCatalog) {
       d.responseDay = undefined;
       d.expires = g.day + 7;
     }
-    notify(g, d, d.status === 'pending' ? '구단 합의 · 개인 조건 검토' : '협상 답변 도착');
+    notify(
+      g,
+      d,
+      d.status === 'pending' ? '구단 합의 · 개인 조건 검토' : '협상 답변 도착',
+      view.agentFor(d.player).name,
+    );
   }
   function signDeal(g: GameState, id: string) {
     const d = g.deals.find((d) => d.id === id);

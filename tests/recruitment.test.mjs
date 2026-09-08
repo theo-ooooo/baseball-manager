@@ -109,7 +109,8 @@ test('Expired and withdrawn offers cannot sign or produce late replies', () => {
   g = e.advance(g, 3);
   assert.equal(g.coachDeals[0].status, 'withdrawn');
   assert.equal(g.deals[0].status, 'withdrawn');
-  assert.ok(!g.news.some((n) => n.actionView === 'agents' || n.actionView === 'staff'));
+  // Opening contract reviews are valid; withdrawn negotiations must not receive replies.
+  assert.ok(!g.news.some((n) => n.dealId === id || n.dealId === coachId));
   g = e.negotiate(g, p.id, p.salary * 2, 3);
   g = waitForReply(e, g, g.deals[0].id);
   g.day = g.deals[0].expires + 1;

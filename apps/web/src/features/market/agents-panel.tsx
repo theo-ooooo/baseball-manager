@@ -1,25 +1,21 @@
 'use client';
-import { Check, Handshake, UserRound } from 'lucide-react';
-import { toast } from 'sonner';
-import Link from 'next/link';
+import { Handshake, UserRound } from 'lucide-react';
 import { dateLabel } from '@dugout/shared/calendar';
 import { NegotiationHistory, negotiationLabels } from './negotiation-details';
 import { useWorld } from '../career/world-context';
 import { type GameState, type Player, overall, money } from '@dugout/shared/game-view';
-import { transfersBlocked } from '@dugout/shared/management';
 import { Rating, PlayerName } from '../../components/game-ui';
-import type { Act } from '../career/game-contracts';
 
 export function Agents({
   g,
-  act,
   busy,
   onPlayer,
+  onNegotiate,
 }: {
   g: GameState;
-  act: Act;
   busy: boolean;
   onPlayer: (p: Player) => void;
+  onNegotiate: (p: Player) => void;
 }) {
   const { agentFor } = useWorld();
   return (
@@ -34,6 +30,36 @@ export function Agents({
           </p>
         </div>
       </div>
+      {g.roster.some((p) => p.years === 1) && (
+        <details className="contract-renewals" open={g.deals.length === 0}>
+          <summary>
+            이번 시즌 계약 만료 예정 · {g.roster.filter((p) => p.years === 1).length}명
+          </summary>
+          <div className="contract-renewal-grid">
+            {g.roster
+              .filter((p) => p.years === 1)
+              .map((p) => (
+                <div key={p.id}>
+                  <div>
+                    <button className="text-button" onClick={() => onPlayer(p)}>
+                      {p.name}
+                    </button>
+                    <small>
+                      {p.pos} · {p.age}세 · 연봉 {money(p.salary)}
+                    </small>
+                  </div>
+                  <button
+                    className="button secondary compact"
+                    disabled={busy}
+                    onClick={() => onNegotiate(p)}
+                  >
+                    {g.deals.some((d) => d.player.id === p.id) ? '협상 이어가기' : '재계약 협상'}
+                  </button>
+                </div>
+              ))}
+          </div>
+        </details>
+      )}
       {g.deals.length ? (
         <div className="deal-grid">
           {g.deals.map((d) => {
@@ -102,47 +128,17 @@ export function Agents({
                     <span>지금 지출 · 계약금 15% + 수수료 + 이적료</span>
                     <strong>{money(d.fee + d.agentFee + d.salary * 0.15)}</strong>
                   </div>
-                  {d.status === 'counter' && !expired && (
-                    <button
-                      className="button primary full-width"
-                      disabled={busy}
-                      onClick={() => void act({ type: 'acceptDealCounter', id: d.id })}
-                    >
-                      {d.stage === 'club' ? '이적료 동의 · 개인 조건 협상' : '역제안 수락'}
-                    </button>
-                  )}
-                  {d.status === 'accepted' && (
-                    <button
-                      className="button primary full-width"
-                      disabled={busy || expired || (d.type === 'buy' && transfersBlocked(g))}
-                      onClick={async () => {
-                        if (await act({ type: 'sign', id: d.id }))
-                          toast.success('계약에 서명했습니다. 선수단에서 확인하세요.');
-                      }}
-                    >
-                      {expired ? '제안 만료' : '최종 계약 체결'}
-                      <Check size={16} />
-                    </button>
-                  )}
-                  <div className="negotiation-actions">
-                    {d.status !== 'pending' && (
-                      <Link
-                        className="text-button"
-                        href={`/players/${encodeURIComponent(d.player.id)}?from=agents`}
-                      >
-                        조건 수정 · 다시 제안
-                      </Link>
-                    )}
-                    {!['withdrawn', 'expired'].includes(d.status) && (
-                      <button
-                        className="text-button"
-                        disabled={busy}
-                        onClick={() => void act({ type: 'withdrawDeal', id: d.id })}
-                      >
-                        협상 철회
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    className="button primary full-width"
+                    disabled={busy}
+                    onClick={() => onNegotiate(d.player)}
+                  >
+                    {d.status === 'accepted' && !expired
+                      ? '계약서 검토 · 서명'
+                      : d.status === 'counter' && !expired
+                        ? '역제안 확인 · 재협상'
+                        : '협상실 열기'}
+                  </button>
                   <NegotiationHistory history={d.history} g={g} />
                 </div>
               </section>

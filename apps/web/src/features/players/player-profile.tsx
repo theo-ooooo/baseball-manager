@@ -3,21 +3,14 @@ import { ClubBadge } from '../../components/club-badge';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { GameState, Player, Stats } from '@dugout/shared/types';
-import { askPrice, fromManwon, money, toManwon } from '@dugout/shared/game-view';
+import { money } from '@dugout/shared/game-view';
+import { PlayerContractRoom } from '../contracts/player-contract-room';
 import { potentialText, ratingText } from '@dugout/shared/ratings';
 import { detailedAttributes, lineupReason } from '@dugout/shared/player-attributes';
-import { defensivePositions, familiarity, transfersBlocked } from '@dugout/shared/management';
+import { defensivePositions, familiarity } from '@dugout/shared/management';
 import {
   LOW_CONDITION,
   REPLACEMENT_NOTE,
@@ -107,120 +100,12 @@ function PerformanceEvidence({ player }: { player: Player }) {
 }
 
 function ContractPanel({ player, game, busy, act }: Props) {
-  const { agentFor } = useWorld();
-  const agent = agentFor(player),
-    own = game.roster.some((p) => p.id === player.id);
-  const [salary, setSalary] = useState(String(toManwon(player.salary * 1.1)));
-  const [years, setYears] = useState('3');
-  const [fee, setFee] = useState(String(toManwon(askPrice(player))));
-  const amount = fromManwon(Number(salary) || 0);
-  const blocked = !own && transfersBlocked(game);
-  const deal = game.deals.find((d) => d.player.id === player.id);
-  async function negotiate() {
-    const next = await act({
-      type: 'negotiate',
-      id: player.id,
-      salary: amount,
-      years: Number(years),
-      renew: own,
-      fee: fromManwon(Number(fee)),
-    });
-    if (next)
-      toast(next.deals.find((d) => d.player.id === player.id)?.message || '제안을 보냈습니다.');
-  }
+  const own = game.roster.some((p) => p.id === player.id);
   return (
-    <section className="profile-contract">
-      <div className="agent-contact">
-        <div>
-          <strong>
-            {agent.name} <span className="gen-tag">가상 에이전트</span>
-          </strong>
-          <small>
-            {agent.agency} · {agent.priority}
-          </small>
-        </div>
-        <span className="pill">수수료 {(agent.fee * 100).toFixed(0)}%</span>
-      </div>
-      {blocked && <p className="rule-notice">첫 시즌 영입 금지 조건으로 협상할 수 없습니다.</p>}
-      <div className="contract-inputs">
-        {!own && player.club !== 'fa' && deal?.stage !== 'player' && (
-          <label>
-            제안 이적료 (만 원)
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={fee}
-              onChange={(e) => setFee(e.target.value)}
-            />
-            <small>{money(fromManwon(Number(fee) || 0))} · 소속 구단과 먼저 협상</small>
-          </label>
-        )}
-        <label>
-          제안 연봉 (만 원)
-          <input
-            type="number"
-            min="1"
-            max="140000000"
-            step="1"
-            value={salary}
-            onChange={(e) => setSalary(e.target.value)}
-          />
-          <small>{money(amount)} / 시즌</small>
-        </label>
-        <label>
-          계약 기간
-          <Select value={years} onValueChange={setYears}>
-            <SelectTrigger aria-label="계약 기간">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}년
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-      </div>
-      <div className="contract-costs">
-        <div>
-          <span>예상 이적료 · 구단 판단 후 변동</span>
-          <strong>{money(own ? 0 : askPrice(player))}</strong>
-        </div>
-        <div>
-          <span>에이전트 수수료</span>
-          <strong>{money(amount * agent.fee)}</strong>
-        </div>
-        <div>
-          <span>계약금 · 첫해 연봉의 15%</span>
-          <strong>{money(amount * 0.15)}</strong>
-        </div>
-        <div>
-          <span>구단 예산</span>
-          <strong>{money(game.budget)}</strong>
-        </div>
-      </div>
-      <button
-        className="button primary"
-        disabled={
-          busy || blocked || deal?.status === 'pending' || !Number.isFinite(amount) || amount <= 0
-        }
-        onClick={() => void negotiate()}
-      >
-        {deal?.status === 'pending' ? '상대 답변 대기 중' : '조건 제안하기'}
-      </button>
-      {deal && (
-        <div className="rule-notice" role="status">
-          <p>{deal.message}</p>
-          <Link className="text-button" href="/?view=agents">
-            협상 경과 · 답변 확인 →
-          </Link>
-        </div>
-      )}
+    <>
+      <PlayerContractRoom player={player} g={game} act={act} busy={busy} />
       {own && <OutgoingTransferPanel p={player} g={game} act={act} busy={busy} />}
-    </section>
+    </>
   );
 }
 

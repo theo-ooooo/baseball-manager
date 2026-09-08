@@ -119,7 +119,7 @@ export function Dashboard({
       unit: '명',
       view: 'squad',
     },
-    { label: '계약 잔여 1년', count: expiring, unit: '명', view: 'squad' },
+    { label: '계약 잔여 1년', count: expiring, unit: '명', view: 'agents' },
     { label: '진행 중인 협상', count: g.deals.length, unit: '건', view: 'agents' },
   ];
   const tasks = checklist.filter((item) => item.count > 0);

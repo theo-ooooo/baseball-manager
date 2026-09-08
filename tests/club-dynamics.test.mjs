@@ -130,3 +130,46 @@ test('Continue stops on a rest-day report and unresolved decisions cannot be ski
     stopped.news.some((n) => n.title.includes('불이행') && stopped.progress.newsIds.includes(n.id)),
   );
 });
+
+test('Contract review reports retain player details and renewal replies link to the exact negotiation', () => {
+  let g = e.newGame('kbo-lotte', 'Contract report', 'full', 401);
+  const expiring = g.roster.filter((p) => p.years === 1);
+  assert.ok(expiring.length);
+  g.day = -15;
+  g = e.advance(g, 1);
+  const report = g.news.find((n) => n.report?.purpose === 'contractReview');
+  assert.ok(report);
+  assert.deepEqual(report.report.players.map((p) => p.id).sort(), expiring.map((p) => p.id).sort());
+  assert.ok(report.report.facts.length >= 2);
+  const original = structuredClone(report);
+  const p = g.roster.find((p) => p.id === expiring[0].id);
+  g.reputation = 99;
+  g = e.applyAction(g, {
+    type: 'negotiate',
+    id: p.id,
+    renew: true,
+    salary: p.salary * 0.85,
+    years: 1,
+  });
+  const id = g.deals[0].id;
+  g = waitForReply(e, g, id);
+  const reply = g.news.find((n) => n.dealId === id);
+  assert.ok(reply);
+  assert.equal(reply.playerId, p.id);
+  assert.equal(reply.actionView, 'agents');
+  assert.equal(g.deals[0].status, 'counter');
+  g = e.applyAction(g, { type: 'acceptDealCounter', id });
+  const before = structuredClone(g);
+  g = e.applyAction(g, { type: 'sign', id });
+  assert.deepEqual(
+    g.news.find((n) => n.id === original.id),
+    original,
+    'Historical contract report must not change after signing',
+  );
+  assert.deepEqual(
+    g.roster.find((v) => v.id === p.id).stats,
+    before.roster.find((v) => v.id === p.id).stats,
+  );
+  assert.equal(g.roster.find((v) => v.id === p.id).years, 2);
+  assert.throws(() => e.applyAction(g, { type: 'sign', id }));
+});
