@@ -172,3 +172,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - A new explicit v1-to-v2 regression exposed rounding of accumulated training growth during catalog refresh. Preserve fractional growth when applying the new base rating; initial catalog grades remain rounded.
 - Validation: four rating tests pass, covering roster, pending offer and sold-player upgrades; preserved contracts, match statistics, budget and transfer ownership; repeated upgrade idempotence; missing measurements versus generated attributes; and distinct leadoff/cleanup strengths in legal lineups. Full-suite validation follows below.
+
+## 2026-09-08 — Codex: enforce a clean client boundary and lint gate
+
+- Final lint review caught the schedule module's client directive below a newly added import. Restored the directive to the first statement and made lint warnings fail the local/CI check.
+- The prior full build and 47 tests passed, including GitHub Actions on `7312295`; validation of the final directive change follows below.

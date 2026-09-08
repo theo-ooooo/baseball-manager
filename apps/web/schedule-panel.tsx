@@ -1,5 +1,5 @@
+'use client';
 import { ClubBadge } from './club-badge';
-('use client');
 import { useState } from 'react';
 import type { GameState, Result } from '../../packages/shared/src/types';
 import { addDays, daysBetween, gameDate, dateLabel } from '../../packages/shared/src/calendar';
