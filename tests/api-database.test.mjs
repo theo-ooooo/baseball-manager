@@ -33,8 +33,8 @@ test('Workers runs NestJS with migrated D1 catalog and protects career identity'
   assert.equal((await call('/api/career',undefined,null)).status,401);
   const catalog=await call('/api/catalog');assert.equal(catalog.status,200);
   assert.equal(catalog.body.leagues.length,13);assert.equal(catalog.body.clubs.length,137);
-  assert.equal(catalog.body.players.length,4362);assert.equal(catalog.body.players.filter(p=>p.real).length,1812);
-  assert.equal(new Set(catalog.body.players.map(p=>p.id)).size,4362);
+  assert.equal(catalog.body.players.length,4503);assert.equal(catalog.body.players.filter(p=>p.real).length,2042);
+  assert.equal(new Set(catalog.body.players.map(p=>p.id)).size,4503);
   const g=await action({type:'start',club:'kbo-lg',manager:'DB Test',mode:'short'});
   assert.equal(g.revision,1);assert.equal(g.state.staff.length,5);
   const rows=await db.prepare('SELECT COUNT(*) AS n FROM career_players WHERE user_id=?').bind('test-owner-a').first();
@@ -94,6 +94,28 @@ test('Complete season persists standings, archived replays and the following sea
   const contracts=await db.prepare('SELECT COUNT(*) AS n FROM contracts WHERE user_id=? AND club_id=?').bind('test-owner-a',saved.state.club).first();
   assert.equal(contracts.n,saved.state.roster.length);
 },{timeout:60000});
+
+test('D1 persists defensive swaps, tactic books, reserve development and real coach metadata',async()=>{
+ const user='management-test';let saved=await action({type:'start',club:'kbo-lotte',manager:'Management',mode:'short',firstSeasonTransferBan:true},user);
+ assert.equal(saved.state.phase,'preseason');assert.equal(saved.state.day,-28);
+ assert.ok(saved.state.roster.some(p=>p.name==='전민재'&&p.real));
+ const d=saved.state.defense;const a=d.LF,b=d.SS;
+ saved=await action({type:'defense',id:a,position:'SS'},user);assert.equal(saved.state.defense.LF,b);
+ saved=await action({type:'saveTactic',name:'수비 교체'},user);
+ const id=saved.state.tacticBook[0].id;
+ saved=await action({type:'tactic',value:'power'},user);saved=await action({type:'loadTactic',id},user);
+ assert.equal(saved.state.defense.SS,a);
+ const reserve=saved.state.roster.find(p=>p.squad==='reserve'&&p.pos==='IF');
+ saved=await action({type:'positionTraining',id:reserve.id,position:'SS'},user);
+ saved=await action({type:'advance',count:7},user);
+ const reloaded=(await call('/api/career',undefined,user)).body;
+ assert.deepEqual(reloaded.state.reserve,saved.state.reserve);assert.ok(reloaded.state.reserve.history.length>0);
+ const projected=await db.prepare('SELECT data FROM career_players WHERE user_id=? AND player_id=?').bind(user,reserve.id).first();
+ assert.ok(JSON.parse(projected.data).familiarity.SS>0);
+ const staff=await db.prepare('SELECT is_real,source_club FROM career_staff WHERE user_id=?').bind(user).all();assert.ok(staff.results.every(c=>c.is_real===1&&c.source_club==='kbo-lotte'));
+ const p=(await call('/api/catalog')).body.players.find(p=>p.club==='fa');
+ const rejected=await call('/api/career',{type:'negotiate',id:p.id,salary:p.salary*2,years:3,revision:saved.revision},user);assert.equal(rejected.status,400);assert.equal((await call('/api/career',undefined,user)).body.revision,saved.revision);
+});
 
 test('Changing a catalog row and revision changes API data without changing source files',async()=>{
   await db.batch([db.prepare('UPDATE clubs SET name=? WHERE id=?').bind('DB 원본 확인','kbo-lg'),db.prepare("UPDATE catalog_meta SET value='test-revision' WHERE key='version'")]);

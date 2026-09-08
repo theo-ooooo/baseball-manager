@@ -22,6 +22,20 @@
       "when": 1788796021480,
       "tag": "0002_world_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788832250923,
+      "tag": "0003_material_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788832359853,
+      "tag": "0004_kbo_rosters_and_coaches",
+      "breakpoints": true
     }
   ]
 }

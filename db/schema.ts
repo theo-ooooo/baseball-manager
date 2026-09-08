@@ -21,7 +21,7 @@ export const players = sqliteTable('players', {
   country: text('country').notNull(), number: integer('number').notNull(), contact: real('contact').notNull(),
   power: real('power').notNull(), speed: real('speed').notNull(), fielding: real('fielding').notNull(),
   stuff: real('stuff').notNull(), control: real('control').notNull(), potential: real('potential').notNull(),
-  salary: real('salary').notNull(), years: integer('years').notNull(), source: text('source'),
+  salary: real('salary').notNull(), years: integer('years').notNull(), source: text('source'), ageEstimated: integer('age_estimated', {mode:'boolean'}).notNull().default(false),
   sortOrder: integer('sort_order').notNull(),
 }, t => [index('idx_players_club').on(t.clubId), index('idx_players_name').on(t.name)]);
 export const agents = sqliteTable('agents', {
@@ -30,7 +30,8 @@ export const agents = sqliteTable('agents', {
 });
 export const coachCandidates = sqliteTable('coach_candidates', {
   id: text('id').primaryKey(), name: text('name').notNull(), role: text('role').notNull(),
-  skill: integer('skill').notNull(), salary: real('salary').notNull(), style: text('style').notNull(),
+  skill: integer('skill').notNull(), salary: real('salary').notNull(), style: text('style').notNull(), real: integer('is_real', {mode:'boolean'}).notNull().default(false),
+  sourceClub: text('source_club'), source: text('source'), verifiedRole: text('verified_role'),
   sortOrder: integer('sort_order').notNull(),
 });
 export const careers = sqliteTable('careers', {
@@ -52,7 +53,8 @@ export const contracts = sqliteTable('contracts', {
 export const careerStaff = sqliteTable('career_staff', {
   userId: text('user_id').notNull().references(() => careers.userId, { onDelete: 'cascade' }),
   role: text('role').notNull(), coachId: text('coach_id').notNull(), name: text('name').notNull(),
-  skill: integer('skill').notNull(), salary: real('salary').notNull(), style: text('style').notNull(),
+  skill: integer('skill').notNull(), salary: real('salary').notNull(), style: text('style').notNull(), real: integer('is_real', {mode:'boolean'}).notNull().default(false),
+  sourceClub: text('source_club'), source: text('source'), verifiedRole: text('verified_role'),
 }, t => [primaryKey({ columns: [t.userId, t.role] })]);
 export const negotiations = sqliteTable('negotiations', {
   userId: text('user_id').notNull().references(() => careers.userId, { onDelete: 'cascade' }),

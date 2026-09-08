@@ -21,14 +21,14 @@ export class CatalogRepository {
     const [leagueRows, clubRows, playerRows, agentRows, coachRows] = await db.batch([
       db.prepare('SELECT id,name,country,flag,region,label,games,level,source,season FROM leagues ORDER BY sort_order'),
       db.prepare('SELECT id,league_id AS league,name,short,color,city,division FROM clubs ORDER BY sort_order'),
-      db.prepare("SELECT id,COALESCE(club_id,'fa') AS club,name,original,position AS pos,age,is_real AS real,country,number,contact,power,speed,fielding AS field,stuff,control,potential,salary,years,source FROM players ORDER BY sort_order"),
+      db.prepare("SELECT id,COALESCE(club_id,'fa') AS club,name,original,position AS pos,age,is_real AS real,country,number,contact,power,speed,fielding AS field,stuff,control,potential,salary,years,source,age_estimated AS ageEstimated FROM players ORDER BY sort_order"),
       db.prepare('SELECT id,name,agency,fee,priority FROM agents ORDER BY sort_order'),
-      db.prepare('SELECT id,name,role,skill,salary,style FROM coach_candidates ORDER BY sort_order'),
+      db.prepare('SELECT id,name,role,skill,salary,style,is_real AS real,source_club AS sourceClub,source,verified_role AS verifiedRole FROM coach_candidates ORDER BY sort_order'),
     ]);
-    const players = (playerRows.results as unknown as Player[]).map(p => ({ ...p, real: Boolean(p.real), condition: 100, stats: blankStats(), source: p.source || undefined }));
+    const players = (playerRows.results as unknown as Player[]).map(p => ({ ...p, real: Boolean(p.real), ageEstimated:Boolean(p.ageEstimated), condition: 100, stats: blankStats(), source: p.source || undefined }));
     if (!leagueRows.results.length || !clubRows.results.length || !players.length || !agentRows.results.length) throw new Error('World database is incomplete');
     return { version: meta.version, year: Number(meta.year), rosterNote: meta.roster_note,
       leagues: leagueRows.results as unknown as League[], clubs: clubRows.results as unknown as Club[], players,
-      agents: agentRows.results as unknown as Agent[], coaches: coachRows.results as unknown as Coach[] };
+      agents: agentRows.results as unknown as Agent[], coaches: (coachRows.results as unknown as Coach[]).map(c=>({...c,real:Boolean(c.real)})) };
   }
 }

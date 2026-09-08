@@ -1,0 +1,2116 @@
+{
+  "source": "https://www.koreabaseball.com/Player/RegisterAll.aspx",
+  "asOf": "2026-09-07",
+  "teams": [
+    {
+      "club": "kbo-samsung",
+      "coaches": [
+        {
+          "name": "박한이",
+          "number": 33
+        },
+        {
+          "name": "손주인",
+          "number": 76
+        },
+        {
+          "name": "이흥련",
+          "number": 78
+        },
+        {
+          "name": "최일언",
+          "number": 81
+        },
+        {
+          "name": "무라카미",
+          "number": 85
+        },
+        {
+          "name": "박석진",
+          "number": 89
+        },
+        {
+          "name": "정병곤",
+          "number": 92
+        },
+        {
+          "name": "이종욱",
+          "number": 93
+        },
+        {
+          "name": "채상병",
+          "number": 98
+        }
+      ],
+      "players": [
+        {
+          "name": "원태인",
+          "number": 18,
+          "pos": "P"
+        },
+        {
+          "name": "최원태",
+          "number": 20,
+          "pos": "P"
+        },
+        {
+          "name": "이승현",
+          "number": 26,
+          "pos": "P"
+        },
+        {
+          "name": "김태훈",
+          "number": 27,
+          "pos": "P"
+        },
+        {
+          "name": "이승민",
+          "number": 28,
+          "pos": "P"
+        },
+        {
+          "name": "임기영",
+          "number": 38,
+          "pos": "P"
+        },
+        {
+          "name": "양창섭",
+          "number": 42,
+          "pos": "P"
+        },
+        {
+          "name": "배찬승",
+          "number": 55,
+          "pos": "P"
+        },
+        {
+          "name": "이승현",
+          "number": 57,
+          "pos": "P"
+        },
+        {
+          "name": "페덱",
+          "number": 59,
+          "pos": "P"
+        },
+        {
+          "name": "장찬희",
+          "number": 60,
+          "pos": "P"
+        },
+        {
+          "name": "김재윤",
+          "number": 62,
+          "pos": "P"
+        },
+        {
+          "name": "김백산",
+          "number": 63,
+          "pos": "P"
+        },
+        {
+          "name": "사토시",
+          "number": 74,
+          "pos": "P"
+        },
+        {
+          "name": "후라도",
+          "number": 75,
+          "pos": "P"
+        },
+        {
+          "name": "김재성",
+          "number": 2,
+          "pos": "C"
+        },
+        {
+          "name": "강민호",
+          "number": 47,
+          "pos": "C"
+        },
+        {
+          "name": "박세혁",
+          "number": 52,
+          "pos": "C"
+        },
+        {
+          "name": "디아즈",
+          "number": 0,
+          "pos": "IF"
+        },
+        {
+          "name": "류지혁",
+          "number": 16,
+          "pos": "IF"
+        },
+        {
+          "name": "김영웅",
+          "number": 30,
+          "pos": "IF"
+        },
+        {
+          "name": "이창용",
+          "number": 50,
+          "pos": "IF"
+        },
+        {
+          "name": "양우현",
+          "number": 53,
+          "pos": "IF"
+        },
+        {
+          "name": "전병우",
+          "number": 61,
+          "pos": "IF"
+        },
+        {
+          "name": "이재현",
+          "number": 7,
+          "pos": "IF"
+        },
+        {
+          "name": "박계범",
+          "number": 9,
+          "pos": "IF"
+        },
+        {
+          "name": "김태훈",
+          "number": 25,
+          "pos": "OF"
+        },
+        {
+          "name": "김헌곤",
+          "number": 32,
+          "pos": "OF"
+        },
+        {
+          "name": "최형우",
+          "number": 34,
+          "pos": "OF"
+        },
+        {
+          "name": "김성윤",
+          "number": 39,
+          "pos": "OF"
+        },
+        {
+          "name": "구자욱",
+          "number": 5,
+          "pos": "OF"
+        },
+        {
+          "name": "김지찬",
+          "number": 58,
+          "pos": "OF"
+        },
+        {
+          "name": "이진용",
+          "number": 64,
+          "pos": "OF"
+        },
+        {
+          "name": "박승규",
+          "number": 66,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-kt",
+      "coaches": [
+        {
+          "name": "김강",
+          "number": 72
+        },
+        {
+          "name": "박경수",
+          "number": 73
+        },
+        {
+          "name": "장재중",
+          "number": 75
+        },
+        {
+          "name": "박기혁",
+          "number": 76
+        },
+        {
+          "name": "김태한",
+          "number": 77
+        },
+        {
+          "name": "김호",
+          "number": 78
+        },
+        {
+          "name": "유한준",
+          "number": 81
+        },
+        {
+          "name": "제춘모",
+          "number": 82
+        },
+        {
+          "name": "최만호",
+          "number": 84
+        },
+        {
+          "name": "전병두",
+          "number": 87
+        }
+      ],
+      "players": [
+        {
+          "name": "고영표",
+          "number": 1,
+          "pos": "P"
+        },
+        {
+          "name": "스기모토",
+          "number": 11,
+          "pos": "P"
+        },
+        {
+          "name": "우규민",
+          "number": 12,
+          "pos": "P"
+        },
+        {
+          "name": "문용익",
+          "number": 18,
+          "pos": "P"
+        },
+        {
+          "name": "배제성",
+          "number": 19,
+          "pos": "P"
+        },
+        {
+          "name": "이정현",
+          "number": 21,
+          "pos": "P"
+        },
+        {
+          "name": "전용주",
+          "number": 29,
+          "pos": "P"
+        },
+        {
+          "name": "소형준",
+          "number": 30,
+          "pos": "P"
+        },
+        {
+          "name": "대니엘",
+          "number": 36,
+          "pos": "P"
+        },
+        {
+          "name": "주권",
+          "number": 38,
+          "pos": "P"
+        },
+        {
+          "name": "손동현",
+          "number": 41,
+          "pos": "P"
+        },
+        {
+          "name": "로건",
+          "number": 43,
+          "pos": "P"
+        },
+        {
+          "name": "오원석",
+          "number": 47,
+          "pos": "P"
+        },
+        {
+          "name": "박영현",
+          "number": 60,
+          "pos": "P"
+        },
+        {
+          "name": "김정운",
+          "number": 61,
+          "pos": "P"
+        },
+        {
+          "name": "조대현",
+          "number": 42,
+          "pos": "C"
+        },
+        {
+          "name": "한승택",
+          "number": 45,
+          "pos": "C"
+        },
+        {
+          "name": "강현우",
+          "number": 55,
+          "pos": "C"
+        },
+        {
+          "name": "허경민",
+          "number": 13,
+          "pos": "IF"
+        },
+        {
+          "name": "힐리어드",
+          "number": 34,
+          "pos": "IF"
+        },
+        {
+          "name": "오윤석",
+          "number": 4,
+          "pos": "IF"
+        },
+        {
+          "name": "권동진",
+          "number": 52,
+          "pos": "IF"
+        },
+        {
+          "name": "장준원",
+          "number": 56,
+          "pos": "IF"
+        },
+        {
+          "name": "손민석",
+          "number": 57,
+          "pos": "IF"
+        },
+        {
+          "name": "김상수",
+          "number": 7,
+          "pos": "IF"
+        },
+        {
+          "name": "류현인",
+          "number": 9,
+          "pos": "IF"
+        },
+        {
+          "name": "김현수",
+          "number": 10,
+          "pos": "OF"
+        },
+        {
+          "name": "안현민",
+          "number": 23,
+          "pos": "OF"
+        },
+        {
+          "name": "배정대",
+          "number": 27,
+          "pos": "OF"
+        },
+        {
+          "name": "최원준",
+          "number": 3,
+          "pos": "OF"
+        },
+        {
+          "name": "장진혁",
+          "number": 51,
+          "pos": "OF"
+        },
+        {
+          "name": "김민혁",
+          "number": 53,
+          "pos": "OF"
+        },
+        {
+          "name": "유준규",
+          "number": 67,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-lg",
+      "coaches": [
+        {
+          "name": "김일경",
+          "number": 73
+        },
+        {
+          "name": "송지만",
+          "number": 74
+        },
+        {
+          "name": "김용의",
+          "number": 75
+        },
+        {
+          "name": "윤진호",
+          "number": 76
+        },
+        {
+          "name": "김정준",
+          "number": 81
+        },
+        {
+          "name": "최경철",
+          "number": 82
+        },
+        {
+          "name": "정수성",
+          "number": 83
+        },
+        {
+          "name": "장진용",
+          "number": 93
+        },
+        {
+          "name": "모창민",
+          "number": 97
+        },
+        {
+          "name": "김광삼",
+          "number": 99
+        }
+      ],
+      "players": [
+        {
+          "name": "임찬규",
+          "number": 1,
+          "pos": "P"
+        },
+        {
+          "name": "고우석",
+          "number": 19,
+          "pos": "P"
+        },
+        {
+          "name": "우강훈",
+          "number": 20,
+          "pos": "P"
+        },
+        {
+          "name": "이우찬",
+          "number": 21,
+          "pos": "P"
+        },
+        {
+          "name": "배재준",
+          "number": 25,
+          "pos": "P"
+        },
+        {
+          "name": "손주영",
+          "number": 29,
+          "pos": "P"
+        },
+        {
+          "name": "톨허스트",
+          "number": 30,
+          "pos": "P"
+        },
+        {
+          "name": "이정용",
+          "number": 31,
+          "pos": "P"
+        },
+        {
+          "name": "조원태",
+          "number": 38,
+          "pos": "P"
+        },
+        {
+          "name": "이상영",
+          "number": 39,
+          "pos": "P"
+        },
+        {
+          "name": "김진수",
+          "number": 45,
+          "pos": "P"
+        },
+        {
+          "name": "김윤식",
+          "number": 47,
+          "pos": "P"
+        },
+        {
+          "name": "박시원",
+          "number": 58,
+          "pos": "P"
+        },
+        {
+          "name": "카라스코",
+          "number": 59,
+          "pos": "P"
+        },
+        {
+          "name": "김영우",
+          "number": 67,
+          "pos": "P"
+        },
+        {
+          "name": "케네디",
+          "number": 68,
+          "pos": "P"
+        },
+        {
+          "name": "박동원",
+          "number": 27,
+          "pos": "C"
+        },
+        {
+          "name": "김민수",
+          "number": 62,
+          "pos": "C"
+        },
+        {
+          "name": "이주헌",
+          "number": 63,
+          "pos": "C"
+        },
+        {
+          "name": "강민균",
+          "number": 0,
+          "pos": "IF"
+        },
+        {
+          "name": "오지환",
+          "number": 10,
+          "pos": "IF"
+        },
+        {
+          "name": "손용준",
+          "number": 15,
+          "pos": "IF"
+        },
+        {
+          "name": "문보경",
+          "number": 2,
+          "pos": "IF"
+        },
+        {
+          "name": "오스틴",
+          "number": 23,
+          "pos": "IF"
+        },
+        {
+          "name": "신민재",
+          "number": 4,
+          "pos": "IF"
+        },
+        {
+          "name": "천성호",
+          "number": 53,
+          "pos": "IF"
+        },
+        {
+          "name": "문정빈",
+          "number": 56,
+          "pos": "IF"
+        },
+        {
+          "name": "구본혁",
+          "number": 6,
+          "pos": "IF"
+        },
+        {
+          "name": "이영빈",
+          "number": 7,
+          "pos": "IF"
+        },
+        {
+          "name": "박해민",
+          "number": 17,
+          "pos": "OF"
+        },
+        {
+          "name": "최원영",
+          "number": 3,
+          "pos": "OF"
+        },
+        {
+          "name": "홍창기",
+          "number": 51,
+          "pos": "OF"
+        },
+        {
+          "name": "송찬의",
+          "number": 55,
+          "pos": "OF"
+        },
+        {
+          "name": "김현종",
+          "number": 66,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-kia",
+      "coaches": [
+        {
+          "name": "손승락",
+          "number": 68
+        },
+        {
+          "name": "고영민",
+          "number": 73
+        },
+        {
+          "name": "박기남",
+          "number": 74
+        },
+        {
+          "name": "김연훈",
+          "number": 75
+        },
+        {
+          "name": "김주찬",
+          "number": 76
+        },
+        {
+          "name": "김지용",
+          "number": 84
+        },
+        {
+          "name": "이동걸",
+          "number": 85
+        },
+        {
+          "name": "이해창",
+          "number": 87
+        },
+        {
+          "name": "조승범",
+          "number": 89
+        }
+      ],
+      "players": [
+        {
+          "name": "곽도규",
+          "number": 0,
+          "pos": "P"
+        },
+        {
+          "name": "김태형",
+          "number": 10,
+          "pos": "P"
+        },
+        {
+          "name": "조상우",
+          "number": 11,
+          "pos": "P"
+        },
+        {
+          "name": "올러",
+          "number": 33,
+          "pos": "P"
+        },
+        {
+          "name": "네일",
+          "number": 40,
+          "pos": "P"
+        },
+        {
+          "name": "황동하",
+          "number": 41,
+          "pos": "P"
+        },
+        {
+          "name": "이태양",
+          "number": 44,
+          "pos": "P"
+        },
+        {
+          "name": "이의리",
+          "number": 48,
+          "pos": "P"
+        },
+        {
+          "name": "김범수",
+          "number": 49,
+          "pos": "P"
+        },
+        {
+          "name": "전상현",
+          "number": 51,
+          "pos": "P"
+        },
+        {
+          "name": "홍건희",
+          "number": 52,
+          "pos": "P"
+        },
+        {
+          "name": "양현종",
+          "number": 54,
+          "pos": "P"
+        },
+        {
+          "name": "한재승",
+          "number": 55,
+          "pos": "P"
+        },
+        {
+          "name": "정해영",
+          "number": 62,
+          "pos": "P"
+        },
+        {
+          "name": "시라카와",
+          "number": 63,
+          "pos": "P"
+        },
+        {
+          "name": "성영탁",
+          "number": 65,
+          "pos": "P"
+        },
+        {
+          "name": "주효상",
+          "number": 22,
+          "pos": "C"
+        },
+        {
+          "name": "한준수",
+          "number": 25,
+          "pos": "C"
+        },
+        {
+          "name": "김태군",
+          "number": 42,
+          "pos": "C"
+        },
+        {
+          "name": "정현창",
+          "number": 12,
+          "pos": "IF"
+        },
+        {
+          "name": "박민",
+          "number": 2,
+          "pos": "IF"
+        },
+        {
+          "name": "변우혁",
+          "number": 29,
+          "pos": "IF"
+        },
+        {
+          "name": "김선빈",
+          "number": 3,
+          "pos": "IF"
+        },
+        {
+          "name": "하주석",
+          "number": 30,
+          "pos": "IF"
+        },
+        {
+          "name": "이호연",
+          "number": 36,
+          "pos": "IF"
+        },
+        {
+          "name": "김도영",
+          "number": 5,
+          "pos": "IF"
+        },
+        {
+          "name": "박상준",
+          "number": 50,
+          "pos": "IF"
+        },
+        {
+          "name": "박정우",
+          "number": 1,
+          "pos": "OF"
+        },
+        {
+          "name": "박재현",
+          "number": 15,
+          "pos": "OF"
+        },
+        {
+          "name": "카스트로",
+          "number": 26,
+          "pos": "OF"
+        },
+        {
+          "name": "김호령",
+          "number": 27,
+          "pos": "OF"
+        },
+        {
+          "name": "김민규",
+          "number": 37,
+          "pos": "OF"
+        },
+        {
+          "name": "나성범",
+          "number": 47,
+          "pos": "OF"
+        },
+        {
+          "name": "고종욱",
+          "number": 57,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-doosan",
+      "coaches": [
+        {
+          "name": "손시헌",
+          "number": 73
+        },
+        {
+          "name": "조인성",
+          "number": 74
+        },
+        {
+          "name": "이진영",
+          "number": 75
+        },
+        {
+          "name": "정재훈",
+          "number": 76
+        },
+        {
+          "name": "홍원기",
+          "number": 78
+        },
+        {
+          "name": "손지환",
+          "number": 79
+        },
+        {
+          "name": "조중근",
+          "number": 86
+        },
+        {
+          "name": "고토",
+          "number": 88
+        },
+        {
+          "name": "임재현",
+          "number": 89
+        },
+        {
+          "name": "가득염",
+          "number": 90
+        }
+      ],
+      "players": [
+        {
+          "name": "박치국",
+          "number": 1,
+          "pos": "P"
+        },
+        {
+          "name": "타카다",
+          "number": 12,
+          "pos": "P"
+        },
+        {
+          "name": "김정우",
+          "number": 16,
+          "pos": "P"
+        },
+        {
+          "name": "김영현",
+          "number": 20,
+          "pos": "P"
+        },
+        {
+          "name": "최승용",
+          "number": 28,
+          "pos": "P"
+        },
+        {
+          "name": "잭로그",
+          "number": 39,
+          "pos": "P"
+        },
+        {
+          "name": "서준오",
+          "number": 41,
+          "pos": "P"
+        },
+        {
+          "name": "이용찬",
+          "number": 45,
+          "pos": "P"
+        },
+        {
+          "name": "곽빈",
+          "number": 47,
+          "pos": "P"
+        },
+        {
+          "name": "박신지",
+          "number": 49,
+          "pos": "P"
+        },
+        {
+          "name": "이영하",
+          "number": 50,
+          "pos": "P"
+        },
+        {
+          "name": "김택연",
+          "number": 63,
+          "pos": "P"
+        },
+        {
+          "name": "윤태호",
+          "number": 65,
+          "pos": "P"
+        },
+        {
+          "name": "최민석",
+          "number": 68,
+          "pos": "P"
+        },
+        {
+          "name": "김한중",
+          "number": 95,
+          "pos": "P"
+        },
+        {
+          "name": "김기연",
+          "number": 22,
+          "pos": "C"
+        },
+        {
+          "name": "양의지",
+          "number": 25,
+          "pos": "C"
+        },
+        {
+          "name": "윤준호",
+          "number": 27,
+          "pos": "C"
+        },
+        {
+          "name": "이유찬",
+          "number": 13,
+          "pos": "IF"
+        },
+        {
+          "name": "강승호",
+          "number": 23,
+          "pos": "IF"
+        },
+        {
+          "name": "임종성",
+          "number": 3,
+          "pos": "IF"
+        },
+        {
+          "name": "세베리노",
+          "number": 36,
+          "pos": "IF"
+        },
+        {
+          "name": "박지훈",
+          "number": 37,
+          "pos": "IF"
+        },
+        {
+          "name": "박준순",
+          "number": 52,
+          "pos": "IF"
+        },
+        {
+          "name": "양석환",
+          "number": 53,
+          "pos": "IF"
+        },
+        {
+          "name": "오명진",
+          "number": 6,
+          "pos": "IF"
+        },
+        {
+          "name": "안재석",
+          "number": 62,
+          "pos": "IF"
+        },
+        {
+          "name": "박찬호",
+          "number": 7,
+          "pos": "IF"
+        },
+        {
+          "name": "류승민",
+          "number": 14,
+          "pos": "OF"
+        },
+        {
+          "name": "김민석",
+          "number": 2,
+          "pos": "OF"
+        },
+        {
+          "name": "손아섭",
+          "number": 24,
+          "pos": "OF"
+        },
+        {
+          "name": "정수빈",
+          "number": 31,
+          "pos": "OF"
+        },
+        {
+          "name": "김대한",
+          "number": 32,
+          "pos": "OF"
+        },
+        {
+          "name": "조수행",
+          "number": 51,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-nc",
+      "coaches": [
+        {
+          "name": "서재응",
+          "number": 70
+        },
+        {
+          "name": "김경태",
+          "number": 71
+        },
+        {
+          "name": "김종호",
+          "number": 73
+        },
+        {
+          "name": "이승호",
+          "number": 74
+        },
+        {
+          "name": "진종길",
+          "number": 75
+        },
+        {
+          "name": "전민수",
+          "number": 76
+        },
+        {
+          "name": "김상훈",
+          "number": 77
+        },
+        {
+          "name": "조영훈",
+          "number": 79
+        },
+        {
+          "name": "박용근",
+          "number": 84
+        },
+        {
+          "name": "이용훈",
+          "number": 99
+        }
+      ],
+      "players": [
+        {
+          "name": "토다",
+          "number": 11,
+          "pos": "P"
+        },
+        {
+          "name": "김준원",
+          "number": 15,
+          "pos": "P"
+        },
+        {
+          "name": "라일리",
+          "number": 3,
+          "pos": "P"
+        },
+        {
+          "name": "이준혁",
+          "number": 40,
+          "pos": "P"
+        },
+        {
+          "name": "류진욱",
+          "number": 41,
+          "pos": "P"
+        },
+        {
+          "name": "신영우",
+          "number": 43,
+          "pos": "P"
+        },
+        {
+          "name": "송명기",
+          "number": 45,
+          "pos": "P"
+        },
+        {
+          "name": "손주환",
+          "number": 46,
+          "pos": "P"
+        },
+        {
+          "name": "이용준",
+          "number": 48,
+          "pos": "P"
+        },
+        {
+          "name": "이재학",
+          "number": 51,
+          "pos": "P"
+        },
+        {
+          "name": "김진호",
+          "number": 54,
+          "pos": "P"
+        },
+        {
+          "name": "전사민",
+          "number": 57,
+          "pos": "P"
+        },
+        {
+          "name": "구창모",
+          "number": 59,
+          "pos": "P"
+        },
+        {
+          "name": "김태경",
+          "number": 60,
+          "pos": "P"
+        },
+        {
+          "name": "배재환",
+          "number": 61,
+          "pos": "P"
+        },
+        {
+          "name": "김태훈",
+          "number": 69,
+          "pos": "P"
+        },
+        {
+          "name": "안중열",
+          "number": 22,
+          "pos": "C"
+        },
+        {
+          "name": "김형준",
+          "number": 25,
+          "pos": "C"
+        },
+        {
+          "name": "이희성",
+          "number": 32,
+          "pos": "C"
+        },
+        {
+          "name": "홍종표",
+          "number": 10,
+          "pos": "IF"
+        },
+        {
+          "name": "김한별",
+          "number": 13,
+          "pos": "IF"
+        },
+        {
+          "name": "최정원",
+          "number": 14,
+          "pos": "IF"
+        },
+        {
+          "name": "박민우",
+          "number": 2,
+          "pos": "IF"
+        },
+        {
+          "name": "한재환",
+          "number": 35,
+          "pos": "IF"
+        },
+        {
+          "name": "김휘집",
+          "number": 44,
+          "pos": "IF"
+        },
+        {
+          "name": "서호철",
+          "number": 5,
+          "pos": "IF"
+        },
+        {
+          "name": "블레인",
+          "number": 50,
+          "pos": "IF"
+        },
+        {
+          "name": "오태양",
+          "number": 6,
+          "pos": "IF"
+        },
+        {
+          "name": "김주원",
+          "number": 7,
+          "pos": "IF"
+        },
+        {
+          "name": "천재환",
+          "number": 23,
+          "pos": "OF"
+        },
+        {
+          "name": "권희동",
+          "number": 36,
+          "pos": "OF"
+        },
+        {
+          "name": "박건우",
+          "number": 37,
+          "pos": "OF"
+        },
+        {
+          "name": "박시원",
+          "number": 53,
+          "pos": "OF"
+        },
+        {
+          "name": "이우성",
+          "number": 55,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-hanwha",
+      "coaches": [
+        {
+          "name": "강인권",
+          "number": 62
+        },
+        {
+          "name": "박승민",
+          "number": 72
+        },
+        {
+          "name": "윤규진",
+          "number": 76
+        },
+        {
+          "name": "김재걸",
+          "number": 82
+        },
+        {
+          "name": "김우석",
+          "number": 83
+        },
+        {
+          "name": "정현석",
+          "number": 85
+        },
+        {
+          "name": "김민호",
+          "number": 87
+        },
+        {
+          "name": "양승관",
+          "number": 88
+        },
+        {
+          "name": "김정민",
+          "number": 90
+        },
+        {
+          "name": "추승우",
+          "number": 91
+        }
+      ],
+      "players": [
+        {
+          "name": "짐머맨",
+          "number": 12,
+          "pos": "P"
+        },
+        {
+          "name": "왕옌청",
+          "number": 19,
+          "pos": "P"
+        },
+        {
+          "name": "화이트",
+          "number": 24,
+          "pos": "P"
+        },
+        {
+          "name": "이민우",
+          "number": 27,
+          "pos": "P"
+        },
+        {
+          "name": "장유호",
+          "number": 28,
+          "pos": "P"
+        },
+        {
+          "name": "황준서",
+          "number": 29,
+          "pos": "P"
+        },
+        {
+          "name": "박재규",
+          "number": 39,
+          "pos": "P"
+        },
+        {
+          "name": "김서현",
+          "number": 44,
+          "pos": "P"
+        },
+        {
+          "name": "강재민",
+          "number": 55,
+          "pos": "P"
+        },
+        {
+          "name": "조동욱",
+          "number": 57,
+          "pos": "P"
+        },
+        {
+          "name": "박상원",
+          "number": 58,
+          "pos": "P"
+        },
+        {
+          "name": "권민규",
+          "number": 64,
+          "pos": "P"
+        },
+        {
+          "name": "주현상",
+          "number": 66,
+          "pos": "P"
+        },
+        {
+          "name": "강건우",
+          "number": 69,
+          "pos": "P"
+        },
+        {
+          "name": "박준영",
+          "number": 96,
+          "pos": "P"
+        },
+        {
+          "name": "류현진",
+          "number": 99,
+          "pos": "P"
+        },
+        {
+          "name": "최재훈",
+          "number": 13,
+          "pos": "C"
+        },
+        {
+          "name": "장규현",
+          "number": 32,
+          "pos": "C"
+        },
+        {
+          "name": "허인서",
+          "number": 59,
+          "pos": "C"
+        },
+        {
+          "name": "이도윤",
+          "number": 5,
+          "pos": "IF"
+        },
+        {
+          "name": "강백호",
+          "number": 50,
+          "pos": "IF"
+        },
+        {
+          "name": "박정현",
+          "number": 63,
+          "pos": "IF"
+        },
+        {
+          "name": "심우준",
+          "number": 7,
+          "pos": "IF"
+        },
+        {
+          "name": "노시환",
+          "number": 8,
+          "pos": "IF"
+        },
+        {
+          "name": "최유빈",
+          "number": 93,
+          "pos": "IF"
+        },
+        {
+          "name": "황영묵",
+          "number": 95,
+          "pos": "IF"
+        },
+        {
+          "name": "배승수",
+          "number": 98,
+          "pos": "IF"
+        },
+        {
+          "name": "김태연",
+          "number": 25,
+          "pos": "OF"
+        },
+        {
+          "name": "페라자",
+          "number": 30,
+          "pos": "OF"
+        },
+        {
+          "name": "한지윤",
+          "number": 36,
+          "pos": "OF"
+        },
+        {
+          "name": "최인호",
+          "number": 41,
+          "pos": "OF"
+        },
+        {
+          "name": "문현빈",
+          "number": 51,
+          "pos": "OF"
+        },
+        {
+          "name": "이도훈",
+          "number": 60,
+          "pos": "OF"
+        },
+        {
+          "name": "유민",
+          "number": 65,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-ssg",
+      "coaches": [
+        {
+          "name": "조동화",
+          "number": 70
+        },
+        {
+          "name": "조동찬",
+          "number": 72
+        },
+        {
+          "name": "오준혁",
+          "number": 73
+        },
+        {
+          "name": "경헌호",
+          "number": 74
+        },
+        {
+          "name": "세리자와",
+          "number": 82
+        },
+        {
+          "name": "임훈",
+          "number": 83
+        },
+        {
+          "name": "윤재국",
+          "number": 86
+        },
+        {
+          "name": "송신영",
+          "number": 88
+        },
+        {
+          "name": "이승호",
+          "number": 91
+        },
+        {
+          "name": "김성현",
+          "number": 6
+        }
+      ],
+      "players": [
+        {
+          "name": "김민",
+          "number": 1,
+          "pos": "P"
+        },
+        {
+          "name": "윤태현",
+          "number": 12,
+          "pos": "P"
+        },
+        {
+          "name": "이건욱",
+          "number": 16,
+          "pos": "P"
+        },
+        {
+          "name": "조병현",
+          "number": 19,
+          "pos": "P"
+        },
+        {
+          "name": "전영준",
+          "number": 28,
+          "pos": "P"
+        },
+        {
+          "name": "최민준",
+          "number": 30,
+          "pos": "P"
+        },
+        {
+          "name": "아빌라",
+          "number": 33,
+          "pos": "P"
+        },
+        {
+          "name": "한두솔",
+          "number": 34,
+          "pos": "P"
+        },
+        {
+          "name": "김건우",
+          "number": 39,
+          "pos": "P"
+        },
+        {
+          "name": "김민준",
+          "number": 40,
+          "pos": "P"
+        },
+        {
+          "name": "문승원",
+          "number": 42,
+          "pos": "P"
+        },
+        {
+          "name": "박시후",
+          "number": 57,
+          "pos": "P"
+        },
+        {
+          "name": "김도현",
+          "number": 61,
+          "pos": "P"
+        },
+        {
+          "name": "변건우",
+          "number": 68,
+          "pos": "P"
+        },
+        {
+          "name": "이로운",
+          "number": 92,
+          "pos": "P"
+        },
+        {
+          "name": "조형우",
+          "number": 20,
+          "pos": "C"
+        },
+        {
+          "name": "신범수",
+          "number": 25,
+          "pos": "C"
+        },
+        {
+          "name": "이지영",
+          "number": 56,
+          "pos": "C"
+        },
+        {
+          "name": "안상현",
+          "number": 10,
+          "pos": "IF"
+        },
+        {
+          "name": "박성한",
+          "number": 2,
+          "pos": "IF"
+        },
+        {
+          "name": "정준재",
+          "number": 3,
+          "pos": "IF"
+        },
+        {
+          "name": "김요셉",
+          "number": 46,
+          "pos": "IF"
+        },
+        {
+          "name": "전의산",
+          "number": 47,
+          "pos": "IF"
+        },
+        {
+          "name": "안재연",
+          "number": 62,
+          "pos": "IF"
+        },
+        {
+          "name": "홍대인",
+          "number": 97,
+          "pos": "IF"
+        },
+        {
+          "name": "채현우",
+          "number": 15,
+          "pos": "OF"
+        },
+        {
+          "name": "에레디아",
+          "number": 27,
+          "pos": "OF"
+        },
+        {
+          "name": "김재환",
+          "number": 32,
+          "pos": "OF"
+        },
+        {
+          "name": "한유섬",
+          "number": 35,
+          "pos": "OF"
+        },
+        {
+          "name": "김정민",
+          "number": 48,
+          "pos": "OF"
+        },
+        {
+          "name": "최지훈",
+          "number": 54,
+          "pos": "OF"
+        },
+        {
+          "name": "임근우",
+          "number": 63,
+          "pos": "OF"
+        },
+        {
+          "name": "오시후",
+          "number": 66,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-lotte",
+      "coaches": [
+        {
+          "name": "조재영",
+          "number": 70
+        },
+        {
+          "name": "이재율",
+          "number": 71
+        },
+        {
+          "name": "이병규",
+          "number": 83
+        },
+        {
+          "name": "강석천",
+          "number": 85
+        },
+        {
+          "name": "이현곤",
+          "number": 86
+        },
+        {
+          "name": "문규현",
+          "number": 89
+        },
+        {
+          "name": "정경배",
+          "number": 90
+        },
+        {
+          "name": "용덕한",
+          "number": 93
+        },
+        {
+          "name": "이성곤",
+          "number": 94
+        },
+        {
+          "name": "김상진",
+          "number": 98
+        }
+      ],
+      "players": [
+        {
+          "name": "김태균",
+          "number": 14,
+          "pos": "P"
+        },
+        {
+          "name": "김진욱",
+          "number": 15,
+          "pos": "P"
+        },
+        {
+          "name": "현도훈",
+          "number": 17,
+          "pos": "P"
+        },
+        {
+          "name": "박세웅",
+          "number": 21,
+          "pos": "P"
+        },
+        {
+          "name": "비슬리",
+          "number": 23,
+          "pos": "P"
+        },
+        {
+          "name": "로드리게스",
+          "number": 31,
+          "pos": "P"
+        },
+        {
+          "name": "김원중",
+          "number": 34,
+          "pos": "P"
+        },
+        {
+          "name": "박정민",
+          "number": 36,
+          "pos": "P"
+        },
+        {
+          "name": "이이무라",
+          "number": 39,
+          "pos": "P"
+        },
+        {
+          "name": "이영재",
+          "number": 40,
+          "pos": "P"
+        },
+        {
+          "name": "나균안",
+          "number": 43,
+          "pos": "P"
+        },
+        {
+          "name": "이진하",
+          "number": 45,
+          "pos": "P"
+        },
+        {
+          "name": "이준서",
+          "number": 54,
+          "pos": "P"
+        },
+        {
+          "name": "최준용",
+          "number": 56,
+          "pos": "P"
+        },
+        {
+          "name": "박재엽",
+          "number": 26,
+          "pos": "C"
+        },
+        {
+          "name": "박건우",
+          "number": 69,
+          "pos": "C"
+        },
+        {
+          "name": "전민재",
+          "number": 13,
+          "pos": "IF"
+        },
+        {
+          "name": "고승민",
+          "number": 2,
+          "pos": "IF"
+        },
+        {
+          "name": "한동희",
+          "number": 25,
+          "pos": "IF"
+        },
+        {
+          "name": "이호준",
+          "number": 30,
+          "pos": "IF"
+        },
+        {
+          "name": "정대선",
+          "number": 4,
+          "pos": "IF"
+        },
+        {
+          "name": "김세민",
+          "number": 5,
+          "pos": "IF"
+        },
+        {
+          "name": "나승엽",
+          "number": 51,
+          "pos": "IF"
+        },
+        {
+          "name": "노진혁",
+          "number": 52,
+          "pos": "IF"
+        },
+        {
+          "name": "박승욱",
+          "number": 53,
+          "pos": "IF"
+        },
+        {
+          "name": "황성빈",
+          "number": 0,
+          "pos": "OF"
+        },
+        {
+          "name": "조세진",
+          "number": 12,
+          "pos": "OF"
+        },
+        {
+          "name": "레이예스",
+          "number": 29,
+          "pos": "OF"
+        },
+        {
+          "name": "김동혁",
+          "number": 50,
+          "pos": "OF"
+        },
+        {
+          "name": "장두성",
+          "number": 7,
+          "pos": "OF"
+        }
+      ]
+    },
+    {
+      "club": "kbo-kiwoom",
+      "coaches": [
+        {
+          "name": "문찬종",
+          "number": 74
+        },
+        {
+          "name": "김준완",
+          "number": 76
+        },
+        {
+          "name": "강병식",
+          "number": 77
+        },
+        {
+          "name": "박승주",
+          "number": 78
+        },
+        {
+          "name": "장영석",
+          "number": 80
+        },
+        {
+          "name": "노병오",
+          "number": 83
+        },
+        {
+          "name": "박도현",
+          "number": 89
+        },
+        {
+          "name": "박정음",
+          "number": 90
+        }
+      ],
+      "players": [
+        {
+          "name": "이강준",
+          "number": 11,
+          "pos": "P"
+        },
+        {
+          "name": "박준현",
+          "number": 18,
+          "pos": "P"
+        },
+        {
+          "name": "조영건",
+          "number": 20,
+          "pos": "P"
+        },
+        {
+          "name": "박지성",
+          "number": 37,
+          "pos": "P"
+        },
+        {
+          "name": "박진형",
+          "number": 40,
+          "pos": "P"
+        },
+        {
+          "name": "정다훈",
+          "number": 45,
+          "pos": "P"
+        },
+        {
+          "name": "유토",
+          "number": 48,
+          "pos": "P"
+        },
+        {
+          "name": "김선기",
+          "number": 49,
+          "pos": "P"
+        },
+        {
+          "name": "하영민",
+          "number": 50,
+          "pos": "P"
+        },
+        {
+          "name": "알칸타라",
+          "number": 54,
+          "pos": "P"
+        },
+        {
+          "name": "전준표",
+          "number": 62,
+          "pos": "P"
+        },
+        {
+          "name": "김연주",
+          "number": 68,
+          "pos": "P"
+        },
+        {
+          "name": "임진묵",
+          "number": 69,
+          "pos": "P"
+        },
+        {
+          "name": "윤석원",
+          "number": 95,
+          "pos": "P"
+        },
+        {
+          "name": "김건희",
+          "number": 12,
+          "pos": "C"
+        },
+        {
+          "name": "김재현",
+          "number": 32,
+          "pos": "C"
+        },
+        {
+          "name": "김동헌",
+          "number": 44,
+          "pos": "C"
+        },
+        {
+          "name": "권혁빈",
+          "number": 0,
+          "pos": "IF"
+        },
+        {
+          "name": "김웅빈",
+          "number": 10,
+          "pos": "IF"
+        },
+        {
+          "name": "서건창",
+          "number": 14,
+          "pos": "IF"
+        },
+        {
+          "name": "히우라",
+          "number": 22,
+          "pos": "IF"
+        },
+        {
+          "name": "데이비슨",
+          "number": 34,
+          "pos": "IF"
+        },
+        {
+          "name": "최재영",
+          "number": 38,
+          "pos": "IF"
+        },
+        {
+          "name": "안치홍",
+          "number": 9,
+          "pos": "IF"
+        },
+        {
+          "name": "여동욱",
+          "number": 93,
+          "pos": "IF"
+        },
+        {
+          "name": "전태현",
+          "number": 97,
+          "pos": "IF"
+        },
+        {
+          "name": "추재현",
+          "number": 27,
+          "pos": "OF"
+        },
+        {
+          "name": "이형종",
+          "number": 36,
+          "pos": "OF"
+        },
+        {
+          "name": "박찬혁",
+          "number": 43,
+          "pos": "OF"
+        },
+        {
+          "name": "박주홍",
+          "number": 57,
+          "pos": "OF"
+        },
+        {
+          "name": "박채울",
+          "number": 72,
+          "pos": "OF"
+        }
+      ]
+    }
+  ]
+}
+

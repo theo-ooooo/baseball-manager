@@ -1,3 +1,4 @@
+import registration from './kbo-register-2026-09-07.json';
 import imported from './real-rosters.json';
 export type League = { id:string; name:string; country:string; flag:string; region:string; label:string; games:number; level:number; source:string; season:string; };
 export type Club = {id:string;name:string;short:string;league:string;color:string;city:string;division:string;};
@@ -36,5 +37,15 @@ const colors=['#83c7f2','#eda357','#bf9be8','#74cfb8','#e48296','#ddc36d'];
 export const clubs:Club[] = leagues.flatMap(l=>(rows[l.id]||[]).map((row,i)=>{const [slug,name,short,color,city,division]=row.split('|');return {id:`${l.id}-${slug}`,name,short,color:color||colors[i%colors.length],city:city||l.country,division:division||l.name,league:l.id};}));
 export const getClub=(id:string)=>clubs.find(c=>c.id===id)!;
 export const getLeague=(id:string)=>leagues.find(l=>l.id===id)!;
-export const realRosters=imported as Record<string,RealSeed[]>;
+export const realRosters:Record<string,RealSeed[]>=structuredClone(imported) as Record<string,RealSeed[]>;
+const registered=registration.teams.flatMap(t=>t.players.map(p=>({...p,club:t.club})));
+for(const team of registration.teams){
+ const old=realRosters[team.club]||[];
+ // Retain players absent from the day's first-team list; remove confirmed transfers.
+ const retained=old.filter(p=>!registered.some(r=>r.name===p.name&&r.pos===p.pos));
+ realRosters[team.club]=[...retained,...team.players.map(p=>{
+  const previous=old.find(v=>v.name===p.name&&v.pos===p.pos)||Object.values(imported).flat().find(v=>v.name===p.name&&v.pos===p.pos);
+  return {...previous,...p,age:previous?.age??25,ageEstimated:!previous,source:registration.source};
+ })];
+}
 export const rosterNote='2026 공개 로스터를 바탕으로 한 실명 선수와 가상 선수의 혼합 DB입니다. 전체 공식 로스터의 완전한 복제는 아니며, 능력치·잠재력·계약·세부 수비 배치는 게임용 설정입니다.';

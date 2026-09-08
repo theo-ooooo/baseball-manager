@@ -25,7 +25,7 @@ export class CareerService {
         if (current.state && action.replace !== true) throw new Error('기존 커리어 교체를 확인해 주세요.');
         if (!world.clubs.some(c => c.id === action.club)) throw new Error('구단을 선택해 주세요.');
         if (action.mode !== 'short' && action.mode !== 'full') throw new Error('시즌 길이를 선택해 주세요.');
-        next = engine.newGame(String(action.club),String(action.manager||'감독'),action.mode);
+        next = engine.newGame(String(action.club),String(action.manager||'감독'),action.mode,Date.now(),{firstSeasonTransferBan:action.firstSeasonTransferBan===true});
       } else {
         if (!current.state) throw new Error('먼저 커리어를 시작해 주세요.');
         if (action.type === 'advance' && (!Number.isInteger(action.count) || Number(action.count)<1 || Number(action.count)>7)) throw new Error('한 번에 1~7일을 진행할 수 있습니다.');

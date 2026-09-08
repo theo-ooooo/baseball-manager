@@ -1,7 +1,8 @@
+import registration from './kbo-register-2026-09-07.json';
 import { clubs, leagues, realRosters, rosterNote } from './catalog';
 import { createPlayerGenerator } from '../src/domain/player-generator';
 import { blankStats, coachRoles, hash, rng } from '../../../packages/shared/src/game-view';
-import type { WorldCatalog, Player, Pos } from '../../../packages/shared/src/types';
+import type { WorldCatalog, Player, Pos, Coach } from '../../../packages/shared/src/types';
 
 /** Seed input only. Runtime API code reads the catalog from D1. */
 export function buildSeedWorld(): WorldCatalog {
@@ -21,7 +22,7 @@ export function buildSeedWorld(): WorldCatalog {
     for (let i = 0; i < 3; i++) roster.push(makePlayer(club.id, 200 + i));
     for (const p of roster) {
       // Same-name players in different clubs must not share a database identity.
-      if (used.has(p.id)) p.id += '-' + club.id;
+      if (used.has(p.id)) p.id += '-' + club.id + '-' + p.number;
       used.add(p.id); players.push(p);
     }
   }
@@ -29,13 +30,14 @@ export function buildSeedWorld(): WorldCatalog {
     const p = makePlayer('fa', i); p.age = 19 + i % 16;
     p.contact += i % 10; p.power += i % 8; p.stats = blankStats(); players.push(p);
   }
-  const coaches = coachRoles.flatMap((role, i) => Array.from({ length: 4 }, (_, n) => {
+  const coaches:Coach[] = coachRoles.flatMap((role, i) => Array.from({ length: 4 }, (_, n) => {
     const r = rng(hash(`coach:2026:${i}:${n}`));
     return { id: `coach-2026-${i}-${n}`, name: generatedName(n % 2 ? '미국 · 캐나다' : '대한민국', r), role,
       skill: 58 + n * 10 + Math.floor(r() * 7), salary: 12 + n * n * 12,
       style: ['기본기', '유망주 육성', '실전 중심', '데이터 분석'][n] };
   }));
-  return { version: 'world-2026-09-07-v2', year: 2026, clubs, leagues, players, coaches, rosterNote,
+  coaches.push(...registration.teams.flatMap(t=>t.coaches.map(c=>({id:`coach-real-${t.club}-${c.number}`,name:c.name,role:'코치',skill:65+hash(t.club+c.name)%24,salary:30+hash(c.name)%50,style:'선수 육성',real:true,sourceClub:t.club,source:registration.source,verifiedRole:'코치'}))));
+  return { version: 'world-2026-09-07-v3', year: 2026, clubs, leagues, players, coaches, rosterNote,
     agents: [
       { id: 'agent-0', name: '박준혁', agency: 'BASE Sports', fee: .05, priority: '안정적인 장기 계약' },
       { id: 'agent-1', name: 'Daniel Cruz', agency: 'Diamond Agency', fee: .08, priority: '연봉 우선' },

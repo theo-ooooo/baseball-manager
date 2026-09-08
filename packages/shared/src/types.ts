@@ -1,14 +1,20 @@
 export type Pos='P'|'C'|'IF'|'OF'|'DH';
 export type Stats={ab:number;h:number;hr:number;rbi:number;bb:number;k:number;outs:number;er:number;wins:number;g:number};
-export type Player={id:string;name:string;original:string;club:string;pos:Pos;age:number;real:boolean;country:string;number:number;contact:number;power:number;speed:number;field:number;stuff:number;control:number;potential:number;condition:number;salary:number;years:number;stats:Stats;source?:string};
-export type Coach={id:string;name:string;role:string;skill:number;salary:number;style:string};
+export type Player={id:string;name:string;original:string;club:string;pos:Pos;age:number;real:boolean;country:string;number:number;contact:number;power:number;speed:number;field:number;stuff:number;control:number;potential:number;condition:number;salary:number;years:number;stats:Stats;squad?:'first'|'reserve';familiarity?:Partial<Record<DefensivePosition,number>>;positionTraining?:DefensivePosition;reserveStats?:Stats;source?:string;ageEstimated?:boolean};
+export type Coach={id:string;name:string;role:string;skill:number;salary:number;style:string;real?:boolean;sourceClub?:string;source?:string;verifiedRole?:string};
 export type Standing={club:string;w:number;l:number;d:number;rf:number;ra:number;form:string[]};
-export type Result={id:string;day:number;home:string;away:string;homeScore:number;awayScore:number;innings:(number|null)[][];hits:number[];errors:number[];log:{inning:number;half:number;text:string;score:number[]}[];mvp:string;post?:boolean};
+export type Result={id:string;day:number;home:string;away:string;homeScore:number;awayScore:number;innings:(number|null)[][];hits:number[];errors:number[];log:{inning:number;half:number;text:string;score:number[]}[];mvp:string;post?:boolean;friendly?:boolean};
 export type Deal={id:string;player:Player;type:'buy'|'renew';salary:number;years:number;fee:number;agentFee:number;status:'accepted'|'counter'|'rejected';message:string;day:number};
-export type GameState={version:1;year:number;day:number;club:string;manager:string;budget:number;seed:number;rounds:number;mode:'short'|'full';roster:Player[];lineup:string[];starter:string;tactic:string;training:string;staff:Coach[];standings:Record<string,Standing[]>;history:Result[];news:{id:string;day:number;title:string;body:string;kind:string}[];deals:Deal[];ownership:Record<string,string>;transferred:Player[];past:{year:number;rank:number;w:number;l:number;champion:string}[];phase:'regular'|'semifinal'|'final'|'finished';series:{a:string;b:string;aw:number;bw:number}[];champion:string;reputation:number;income:number;expenses:number};
+export type GameState={version:1;year:number;day:number;club:string;manager:string;budget:number;seed:number;rounds:number;mode:'short'|'full';roster:Player[];lineup:string[];starter:string;tactic:string;training:string;staff:Coach[];standings:Record<string,Standing[]>;history:Result[];news:{id:string;day:number;title:string;body:string;kind:string}[];deals:Deal[];ownership:Record<string,string>;transferred:Player[];past:{year:number;rank:number;w:number;l:number;champion:string}[];phase:'preseason'|'regular'|'semifinal'|'final'|'finished';series:{a:string;b:string;aw:number;bw:number}[];champion:string;reputation:number;income:number;expenses:number;rules?:{firstSeasonTransferBan:boolean;startYear:number;preseason:boolean};defense?:Defense;tacticFamiliarity?:number;instructions?:TeamInstructions;tacticBook?:SavedTactic[];reserve?:{w:number;l:number;d:number;history:ReserveResult[]};catalogVersion?:string};
 export type League = { id:string; name:string; country:string; flag:string; region:string; label:string; games:number; level:number; source:string; season:string; };
 export type Club = {id:string;name:string;short:string;league:string;color:string;city:string;division:string;};
-export type RealSeed = {name:string;pos:string;age:number;number?:number;country?:string;rating?:number;source?:string;};
+export type RealSeed = {name:string;pos:string;age:number;number?:number;country?:string;rating?:number;ageEstimated?:boolean;source?:string;};
 export type Agent={id:string;name:string;agency:string;fee:number;priority:string};
 export type WorldCatalog={version:string;year:number;leagues:League[];clubs:Club[];players:Player[];agents:Agent[];coaches:Coach[];rosterNote:string};
 export type FinanceEntry={id:string;revision:number;year:number;day:number;kind:string;amount:number;balance:number;createdAt:string};
+
+export type DefensivePosition='P'|'C'|'1B'|'2B'|'3B'|'SS'|'LF'|'CF'|'RF'|'DH';
+export type Defense=Record<DefensivePosition,string>;
+export type TeamInstructions={steal:number;patience:number;power:number;depth:number};
+export type SavedTactic={id:string;name:string;tactic:string;lineup:string[];starter:string;defense:Defense;instructions:TeamInstructions};
+export type ReserveResult={day:number;opponent:string;own:number;against:number;played:string[]};
