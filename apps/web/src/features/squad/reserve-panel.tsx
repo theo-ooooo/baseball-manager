@@ -1,4 +1,5 @@
 'use client';
+import { DevelopmentBadge } from '../players/development-panel';
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowLeftRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -107,6 +108,7 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
                     <li key={p.id}>
                       <div className="roster-identity">
                         <PlayerName p={p} onClick={onPlayer} />
+                        <DevelopmentBadge player={p} />
                         <small>
                           {assignmentLabel(g, p) ||
                             (g.lineup.includes(p.id)

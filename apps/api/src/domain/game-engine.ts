@@ -1,5 +1,8 @@
 import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
+import { createCalendarProgression } from './calendar-progression';
+import { createRecruitment } from './recruitment';
+import { developPlayers, developmentReports } from './player-development';
 
 import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
 import {
@@ -11,7 +14,7 @@ import {
 } from './club-dynamics';
 import { createTransferMarket } from './transfer-market';
 import { createCalendarView, prepareCalendar } from '@dugout/shared/calendar';
-import type { GameState, Pos, Result, Deal, WorldCatalog } from '@dugout/shared/types';
+import type { GameState, Pos, Result, WorldCatalog } from '@dugout/shared/types';
 import {
   blankStats,
   rng,
@@ -30,7 +33,6 @@ import {
   defenseFor,
   firstTeam,
   preseasonFixtures,
-  transfersBlocked,
 } from '@dugout/shared/management';
 import { prepareSquad, managementAction, canRemove, developSquad } from './squad-management';
 export function createGameEngine(world: WorldCatalog) {
@@ -41,8 +43,6 @@ export function createGameEngine(world: WorldCatalog) {
     getLeague,
     baseRoster,
     coachPool,
-    agentFor,
-    marketPlayers,
     rosterFor,
     standings,
     nextFixture,
@@ -50,10 +50,13 @@ export function createGameEngine(world: WorldCatalog) {
   const { makePlayer } = createPlayerGenerator(world);
   const calendar = createCalendarView(world);
   const transfers = createTransferMarket(world);
+  const recruitment = createRecruitment(world);
+  const { negotiate, signDeal } = recruitment;
   const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const news = postNews;
   const simulateMatch = createMatchSimulator(world);
   const liveAction = createLiveMatchActions(world, simulateMatch, advance);
+  const progression = createCalendarProgression(nextFixture, advance);
   function newGame(
     club: string,
     manager: string,
@@ -297,6 +300,7 @@ export function createGameEngine(world: WorldCatalog) {
         r,
         clubs.filter((c) => c.league === ownLeague && c.id !== g.club).map((c) => c.id),
       );
+      developPlayers(g);
       g.day++;
       for (const p of g.roster) {
         p.condition = clamp(
@@ -307,19 +311,6 @@ export function createGameEngine(world: WorldCatalog) {
           20,
           100,
         );
-        if (g.training !== 'rest' && p.age < 31 && r() < 0.08) {
-          const skill =
-            g.training === 'pitching' || (g.training === 'balanced' && p.pos === 'P')
-              ? 'stuff'
-              : g.training === 'defense'
-                ? 'field'
-                : g.training === 'power'
-                  ? 'power'
-                  : 'contact';
-          const role = skill === 'stuff' ? '투수' : skill === 'field' ? '수비' : '타격';
-          if (p[skill] < p.potential)
-            p[skill] = clamp(p[skill] + coachSkill(g, role) / 140, 20, p.potential);
-        }
       }
       const salary =
         (g.roster.reduce((s, p) => s + p.salary, 0) + g.staff.reduce((s, c) => s + c.salary, 0)) /
@@ -329,6 +320,8 @@ export function createGameEngine(world: WorldCatalog) {
       // Rest dates retain the selected starter; afterMatch rotates only after an appearance.
       dailyReports(g, world);
       transfers.offerTick(g);
+      recruitment.tick(g);
+      developmentReports(g);
       if (g.phase === 'preseason' && g.day === 0) {
         g.phase = 'regular';
         news(
@@ -359,23 +352,6 @@ export function createGameEngine(world: WorldCatalog) {
     g.seed = Math.floor(r() * 4294967295);
     return g;
   }
-  function continueToEvent(g: GameState) {
-    if (nextFixture(g)) return advance(g, 1);
-    const initialPhase = g.phase,
-      pending = g.news.filter((n) => n.choiceKind && !n.choice).length,
-      offers = g.saleOffers?.length || 0;
-    for (let i = 0; i < 45 && g.phase !== 'finished'; i++) {
-      advance(g, 1);
-      if (
-        nextFixture(g) ||
-        g.phase !== initialPhase ||
-        g.news.filter((n) => n.choiceKind && !n.choice).length > pending ||
-        (g.saleOffers?.length || 0) > offers
-      )
-        break;
-    }
-    return g;
-  }
   function afterMatch(g: GameState, res: Result) {
     nextStarter(g, true);
     matchMorale(g, res);
@@ -397,127 +373,6 @@ export function createGameEngine(world: WorldCatalog) {
       `경기 MVP ${res.mvp} · 경기 수입 ${money(earned)}`,
       'match',
     );
-  }
-  function negotiate(
-    g: GameState,
-    playerId: string,
-    salary: number,
-    years: number,
-    type: 'buy' | 'renew' = 'buy',
-  ) {
-    if (type === 'buy' && transfersBlocked(g))
-      throw new Error('첫 시즌 외부 영입 금지 조건입니다. 재계약·매각·코치 선임은 가능합니다.');
-    const p =
-      type === 'renew'
-        ? g.roster.find((p) => p.id === playerId)
-        : marketPlayers(g).find((p) => p.id === playerId);
-    if (!p) throw new Error('해당 선수를 찾을 수 없습니다.');
-    if (
-      !Number.isFinite(salary) ||
-      salary <= 0 ||
-      years < 1 ||
-      years > 5 ||
-      !Number.isInteger(years)
-    )
-      throw new Error('유효한 연봉과 1~5년 계약을 입력해 주세요.');
-    const agent = agentFor(p);
-    const gap = Math.max(0, overall(p) - g.reputation - 4);
-    const demand = Math.max(5, Math.round(p.salary * (1.04 + gap * 0.03)));
-    const seller = type === 'renew' ? undefined : transfers.assess(g, p);
-    const fee = type === 'renew' ? 0 : seller!.fee;
-    const required = fee + salary * agent.fee + salary * 0.15;
-    const willing = gap < 18 || salary >= demand * 1.3;
-    let status: Deal['status'] =
-      salary >= demand && (years >= 2 || salary >= demand * 1.1) && willing
-        ? 'accepted'
-        : salary >= demand * 0.65
-          ? 'counter'
-          : 'rejected';
-    if (required > g.budget || seller?.status === 'refused') status = 'rejected';
-    const offered = status === 'counter' ? Math.round(demand * (years === 1 ? 1.1 : 1)) : salary;
-    const deal: Deal = {
-      id: `deal-${g.year}-${g.day}-${g.deals.length}-${playerId}`,
-      player: p,
-      type,
-      salary: offered,
-      years: status === 'counter' ? Math.max(2, years) : years,
-      fee,
-      agentFee: Math.round(offered * agent.fee),
-      status,
-      seller,
-      year: g.year,
-      message:
-        seller?.status === 'refused'
-          ? seller.reason
-          : required > g.budget
-            ? '계약금과 이적료를 감당할 예산이 부족합니다.'
-            : status === 'accepted'
-              ? '조건에 동의합니다. 최종 서명하면 계약이 완료됩니다.'
-              : status === 'counter'
-                ? `${agent.name}의 역제안: 연봉 ${money(offered)}, ${Math.max(2, years)}년 계약을 원합니다.`
-                : '현재 제안은 선수의 기대 조건에 미치지 못합니다.',
-      day: g.day,
-    };
-    g.deals = g.deals.filter((d) => d.player.id !== p.id);
-    g.deals.unshift(deal);
-    g.deals = g.deals.slice(0, 30);
-    news(
-      g,
-      `${p.name} · 계약 ${status === 'accepted' ? '합의' : status === 'counter' ? '역제안' : '거절'}`,
-      deal.message,
-      'transfer',
-    );
-    return g;
-  }
-  function signDeal(g: GameState, id: string) {
-    const d = g.deals.find((d) => d.id === id);
-    if (!d || d.status === 'rejected') throw new Error('유효한 계약 제안이 없습니다.');
-    if (d.type === 'buy' && transfersBlocked(g))
-      throw new Error('첫 시즌에는 외부 선수와 FA를 영입할 수 없습니다.');
-    if ((d.year !== undefined && d.year !== g.year) || g.day - d.day > 14)
-      throw new Error('제안 유효기간이 지났습니다. 다시 협상해 주세요.');
-    if (d.type === 'buy') {
-      const available = marketPlayers(g).find((p) => p.id === d.player.id);
-      if (!available || available.club !== d.player.club)
-        throw new Error('선수 소속이 변경됐습니다. 다시 협상하세요.');
-      const seller = transfers.assess(g, available);
-      if (seller.status === 'refused') throw new Error(seller.reason);
-      if (d.fee < seller.fee)
-        throw new Error('구단의 요구 이적료가 변경됐습니다. 다시 협상하세요.');
-    }
-    const cash = d.fee + d.agentFee + d.salary * 0.15;
-    if (g.budget < cash) throw new Error('영입 예산이 부족합니다.');
-    if (d.type === 'buy' && g.roster.length >= 85)
-      throw new Error('선수단 정원 85명입니다. 매각 후 영입해 주세요.');
-    if (d.type === 'buy' && g.roster.some((p) => p.id === d.player.id))
-      throw new Error('이미 소속된 선수입니다.');
-    g.budget -= cash;
-    g.expenses += cash;
-    const current = d.type === 'renew' ? g.roster.find((p) => p.id === d.player.id) : d.player;
-    if (!current) throw new Error('재계약 선수를 찾을 수 없습니다.');
-    const p = {
-      ...current,
-      club: g.club,
-      salary: d.salary,
-      years: d.years,
-      condition: d.type === 'buy' ? 100 : current.condition,
-      stats: d.type === 'buy' ? blankStats() : current.stats,
-    };
-    if (d.type === 'renew') g.roster = g.roster.map((old) => (old.id === p.id ? p : old));
-    else {
-      p.squad = 'reserve';
-      g.roster.push(p);
-      g.ownership[p.id] = g.club;
-      g.transferred = (g.transferred || []).filter((v) => v.id !== p.id);
-    }
-    g.deals = g.deals.filter((old) => old.player.id !== p.id);
-    news(
-      g,
-      `${p.name} ${d.type === 'buy' ? '영입' : '재계약'} 완료`,
-      `${d.years}년 · 연봉 ${money(d.salary)} · 에이전트 ${agentFor(p).name}`,
-      'transfer',
-    );
-    return g;
   }
   function sellPlayer(g: GameState, id: string, offerId?: string) {
     const p = g.roster.find((p) => p.id === id);
@@ -573,12 +428,6 @@ export function createGameEngine(world: WorldCatalog) {
       }
       p.stats = blankStats();
       p.reserveStats = blankStats();
-      if (p.age >= 34) {
-        p.contact = clamp(p.contact - 1.5, 20, 99);
-        p.power = clamp(p.power - 1, 20, 99);
-        p.speed = clamp(p.speed - 2, 20, 99);
-        p.stuff = clamp(p.stuff - 1.5, 20, 99);
-      }
       if (p.years <= 0) departed.push(p.id);
     }
     g.transferred = [
@@ -624,6 +473,20 @@ export function createGameEngine(world: WorldCatalog) {
     g.saleOffers = [];
     g.transferListed = {};
     g.deals = [];
+    g.coachDeals = [];
+    const expiredStaff = g.staff.filter(
+      (c) => c.contractUntil !== undefined && c.contractUntil <= g.year,
+    );
+    g.staff = g.staff.filter((c) => !expiredStaff.includes(c));
+    if (expiredStaff.length)
+      news(
+        g,
+        '코치 계약 만료',
+        expiredStaff.map((c) => `${c.name} (${c.role})`).join(', ') +
+          ' · 공석 보직을 확인해 주세요.',
+        'contract',
+        { actionView: 'staff' },
+      );
     g.budget += teamBudget(getClub(g.club).league) * 0.55;
     g.income = teamBudget(getClub(g.club).league) * 0.55;
     g.expenses = 0;
@@ -649,11 +512,15 @@ export function createGameEngine(world: WorldCatalog) {
     if (live) return live;
     const social = dynamicsAction(s, a);
     if (social) return social;
+    const recruited = recruitment.action(s, a);
+    if (recruited) return recruited;
     const managed = managementAction(s, a);
     if (managed) return managed;
     switch (a.type) {
       case 'continue':
-        return continueToEvent(s);
+        return progression.untilEvent(s);
+      case 'continueDay':
+        return progression.step(s, a.simulateGames === true);
       case 'advance':
         return advance(s, Number(a.count) || 1);
       case 'auto':
@@ -700,6 +567,7 @@ export function createGameEngine(world: WorldCatalog) {
           Number(a.salary),
           Number(a.years),
           a.renew ? 'renew' : 'buy',
+          a.fee === undefined ? undefined : Number(a.fee),
         );
       case 'sign':
         return signDeal(s, String(a.id));
@@ -710,27 +578,6 @@ export function createGameEngine(world: WorldCatalog) {
         return s;
       case 'sell':
         return sellPlayer(s, String(a.id), String(a.offerId || ''));
-      case 'coach': {
-        const candidate = coachPool(s.year).find((c) => c.id === a.id);
-        if (!candidate) throw new Error('코치를 찾을 수 없습니다.');
-        const role = candidate.real ? String(a.role || '타격') : candidate.role;
-        if (!coachRoles.includes(role)) throw new Error('담당 보직을 선택해 주세요.');
-        const c = { ...candidate, role };
-        if (s.staff.some((x) => x.id === c.id)) throw new Error('이미 선임된 코치입니다.');
-        const cost = c.salary * 0.5;
-        if (s.budget < cost) throw new Error('코치 선임 예산이 부족합니다.');
-        s.budget -= cost;
-        s.expenses += cost;
-        s.staff = s.staff.filter((old) => old.role !== c.role);
-        s.staff.push(c);
-        news(
-          s,
-          `${c.name} ${c.role} 코치 선임`,
-          `능력 ${c.skill} · 연봉 ${money(c.salary)} · ${c.style}`,
-          'training',
-        );
-        return s;
-      }
       case 'nextSeason':
         return nextSeason(s);
       default:

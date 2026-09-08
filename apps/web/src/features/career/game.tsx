@@ -33,7 +33,8 @@ import { InboxPanel, DynamicsPanel } from '../clubs/club-panels';
 import { SchedulePanel } from '../schedule/schedule-panel';
 import { dateLabel } from '@dugout/shared/calendar';
 import { StadiumReplay, LiveMatchScreen } from '../matches/stadium-replay';
-import { TacticalBoard, CoachPanel } from '../squad/management-panels';
+import { TacticalBoard } from '../squad/management-panels';
+import { CoachPanel } from '../squad/coach-panel';
 import { Badge } from '../../components/game-ui';
 import { nav } from './game-navigation';
 import type { Act, CareerData } from './game-contracts';
@@ -46,6 +47,7 @@ import { Agents } from '../market/agents-panel';
 import { Finance } from '../finance/finance-panel';
 import { Help } from './help-dialog';
 import { AppSidebar } from './game-sidebar';
+import { CalendarProgress, useCalendarProgress } from './calendar-progress';
 
 export function GameScreen({
   initial,
@@ -70,7 +72,6 @@ export function GameScreen({
   const setPlayer = (p: Player) =>
     router.push('/players/' + encodeURIComponent(p.id) + '?from=' + encodeURIComponent(view));
   const [g, setG] = useState<GameState | null>(initial.state),
-    [revision, setRevision] = useState(initial.revision),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
@@ -80,6 +81,7 @@ export function GameScreen({
     [help, setHelp] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
   const locked = useRef(false);
+  const revision = useRef(initial.revision);
   const [ledger, setLedger] = useState(initial.ledger);
   async function load() {
     setLoading(true);
@@ -89,7 +91,7 @@ export function GameScreen({
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || '커리어를 불러오지 못했습니다.');
       setG(d.state);
-      setRevision(d.revision);
+      revision.current = d.revision;
       setLedger(d.ledger || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : '연결하지 못했습니다.');
@@ -105,19 +107,23 @@ export function GameScreen({
       const res = await fetch('/api/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...action, revision, requestId: crypto.randomUUID() }),
+        body: JSON.stringify({
+          ...action,
+          revision: revision.current,
+          requestId: crypto.randomUUID(),
+        }),
       });
       const d = await res.json();
       if (!res.ok) {
         if (res.status === 409 && 'state' in d) {
           setG(d.state);
-          setRevision(d.revision);
+          revision.current = d.revision;
           setLedger(d.ledger || []);
         }
         throw new Error(d.error || d.message || '요청을 처리하지 못했습니다.');
       }
       setG(d.state);
-      setRevision(d.revision);
+      revision.current = d.revision;
       setLedger(d.ledger || []);
       setSaveFailed(false);
       return d.state;
@@ -130,6 +136,8 @@ export function GameScreen({
       setBusy(false);
     }
   };
+  const calendarProgress = useCalendarProgress(act);
+  const progressing = calendarProgress.journey?.running === true;
   async function openReplay(result: Result) {
     if (result.log.length) {
       setReplay(result);
@@ -147,13 +155,13 @@ export function GameScreen({
     }
   }
   async function simulate(count = 1, watch = false) {
-    if (g?.liveMatch) return;
-    if (count === 1 && watch && g && nextFixture(g)) {
+    if (!g || g.liveMatch || busy || progressing) return;
+    if (count === 1 && watch && nextFixture(g) && !g.news.some((n) => n.choiceKind && !n.choice)) {
       await act({ type: 'startMatch' });
       return;
     }
-    const next = await act(count === 1 ? { type: 'continue' } : { type: 'advance', count });
-    if (next) toast.success(`${Math.max(1, next.day - (g?.day || 0))}일 진행했습니다.`);
+    const next = await calendarProgress.run(g, count === 1 ? 45 : count, count > 1);
+    if (next?.progress?.newsIds.length) setView('inbox');
   }
   if (!g || setup)
     return (
@@ -198,9 +206,11 @@ export function GameScreen({
     : undefined;
   return (
     <SidebarProvider style={{ '--sidebar-width': '224px' } as CSSProperties}>
-      <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
+      <div style={{ display: 'contents' }} inert={progressing || undefined}>
+        <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
+      </div>
       <main className="workspace">
-        <header className="topbar">
+        <header className="topbar" inert={progressing || undefined}>
           <div className="breadcrumb">
             <SidebarTrigger className="mobile-menu" aria-label="메뉴 열기" />
             <Badge club={club} size="small" />
@@ -244,7 +254,9 @@ export function GameScreen({
                     </summary>
                     <div>
                       <strong>자동 진행</strong>
-                      <p>경기를 자동 계산하며 최대 7일 진행합니다. 중요한 일이 생기면 멈춥니다.</p>
+                      <p>
+                        경기를 자동 계산하며 최대 7일 진행합니다. 새 리포트가 도착하면 멈춥니다.
+                      </p>
                       <button
                         className="button secondary"
                         disabled={busy}
@@ -285,7 +297,16 @@ export function GameScreen({
             </div>
           </div>
         </header>
-        <div className="workspace-body">
+        {calendarProgress.journey && (
+          <CalendarProgress
+            journey={calendarProgress.journey}
+            g={g}
+            pause={calendarProgress.pause}
+            close={calendarProgress.close}
+            onReports={() => setView('inbox')}
+          />
+        )}
+        <div className="workspace-body" inert={progressing || undefined}>
           {saveFailed && (
             <div className="decision-banner" role="alert">
               <span>마지막 요청을 완료하지 못했습니다. 저장된 상태를 다시 확인해 주세요.</span>
@@ -376,7 +397,15 @@ export function GameScreen({
               replay={openReplay}
             />
           )}
-          {view === 'inbox' && <InboxPanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
+          {view === 'inbox' && (
+            <InboxPanel
+              key={g.progress?.newsIds.join(',')}
+              g={g}
+              act={act}
+              busy={busy}
+              onPlayer={setPlayer}
+            />
+          )}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
@@ -388,7 +417,7 @@ export function GameScreen({
           {view === 'staff' && <CoachPanel g={g} act={act} busy={busy} />}
           {view === 'finance' && <Finance g={g} ledger={ledger} />}
         </div>
-        <footer className="game-footer">
+        <footer className="game-footer" inert={progressing || undefined}>
           <span>
             DUGOUT <b>2026</b> · {leagues.length} 리그 · {clubs.length} 구단
           </span>

@@ -31,6 +31,7 @@ import { useWorld } from '../career/world-context';
 import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
 import { PositionTraining } from '../squad/management-panels';
 import { RosterMoveControl } from '../squad/roster-moves';
+import { DevelopmentPanel } from './development-panel';
 
 type Props = {
   player: Player;
@@ -111,6 +112,7 @@ function ContractPanel({ player, game, busy, act }: Props) {
     own = game.roster.some((p) => p.id === player.id);
   const [salary, setSalary] = useState(String(toManwon(player.salary * 1.1)));
   const [years, setYears] = useState('3');
+  const [fee, setFee] = useState(String(toManwon(askPrice(player))));
   const amount = fromManwon(Number(salary) || 0);
   const blocked = !own && transfersBlocked(game);
   const deal = game.deals.find((d) => d.player.id === player.id);
@@ -121,6 +123,7 @@ function ContractPanel({ player, game, busy, act }: Props) {
       salary: amount,
       years: Number(years),
       renew: own,
+      fee: fromManwon(Number(fee)),
     });
     if (next)
       toast(next.deals.find((d) => d.player.id === player.id)?.message || '제안을 보냈습니다.');
@@ -140,6 +143,19 @@ function ContractPanel({ player, game, busy, act }: Props) {
       </div>
       {blocked && <p className="rule-notice">첫 시즌 영입 금지 조건으로 협상할 수 없습니다.</p>}
       <div className="contract-inputs">
+        {!own && player.club !== 'fa' && deal?.stage !== 'player' && (
+          <label>
+            제안 이적료 (만 원)
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={fee}
+              onChange={(e) => setFee(e.target.value)}
+            />
+            <small>{money(fromManwon(Number(fee) || 0))} · 소속 구단과 먼저 협상</small>
+          </label>
+        )}
         <label>
           제안 연봉 (만 원)
           <input
@@ -188,16 +204,18 @@ function ContractPanel({ player, game, busy, act }: Props) {
       </div>
       <button
         className="button primary"
-        disabled={busy || blocked || !Number.isFinite(amount) || amount <= 0}
+        disabled={
+          busy || blocked || deal?.status === 'pending' || !Number.isFinite(amount) || amount <= 0
+        }
         onClick={() => void negotiate()}
       >
-        조건 제안하기
+        {deal?.status === 'pending' ? '상대 답변 대기 중' : '조건 제안하기'}
       </button>
       {deal && (
         <div className="rule-notice" role="status">
           <p>{deal.message}</p>
           <Link className="text-button" href="/?view=agents">
-            협상 결과 · 최종 서명 →
+            협상 경과 · 답변 확인 →
           </Link>
         </div>
       )}
@@ -241,7 +259,8 @@ export function PlayerProfile(props: Props) {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="profile-tabs" variant="line">
           <TabsTrigger value="profile">프로필 · 세부 능력</TabsTrigger>
-          <TabsTrigger value="records">성적 · 성장</TabsTrigger>
+          <TabsTrigger value="records">성적</TabsTrigger>
+          {own && <TabsTrigger value="development">성장 기록</TabsTrigger>}
           <TabsTrigger value="contract">{own ? '계약 · 이적' : '계약 협상'}</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
@@ -350,6 +369,11 @@ export function PlayerProfile(props: Props) {
         <TabsContent value="contract">
           <ContractPanel {...props} />
         </TabsContent>
+        {own && (
+          <TabsContent value="development">
+            <DevelopmentPanel player={player} game={game} />
+          </TabsContent>
+        )}
       </Tabs>
     </article>
   );

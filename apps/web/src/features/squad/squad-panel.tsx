@@ -7,6 +7,7 @@ import { PlayerTable } from '../players/player-table';
 import { pitchingAssignment, roleNames, type PitchingAssignment } from './pitching-panel';
 import { useRosterMoves } from './roster-moves';
 import type { Act } from '../career/game-contracts';
+import { growthLabels } from '@dugout/shared/development';
 
 const roleFilters: Exclude<PitchingAssignment, ''>[] = [
   'starter',
@@ -34,6 +35,7 @@ export function Squad({
     [query, setQuery] = useState(''),
     [sort, setSort] = useState('rating'),
     [detailed, setDetailed] = useState(false);
+  const [growth, setGrowth] = useState('all');
   const pitchers = g.roster.filter((p) => p.pos === 'P');
   const roleCount = (r: string) => pitchers.filter((p) => pitchingAssignment(g, p) === r).length;
   const list = g.roster
@@ -41,6 +43,7 @@ export function Squad({
       (p) =>
         (filter === 'all' || p.pos === filter || (filter === 'young' && p.age <= 23)) &&
         (filter !== 'P' || role === 'all' || pitchingAssignment(g, p) === role) &&
+        (growth === 'all' || p.development?.stage === growth) &&
         p.name.toLowerCase().includes(query.toLowerCase()),
     )
     .sort((a, b) =>
@@ -117,6 +120,14 @@ export function Squad({
           ))}
         </div>
       )}
+      <div className="growth-filter" role="group" aria-label="성장 단계 필터">
+        {[['all', '모든 단계'], ...Object.entries(growthLabels)].map(([key, label]) => (
+          <button key={key} aria-pressed={growth === key} onClick={() => setGrowth(key)}>
+            {label}
+            {key !== 'all' && ` ${g.roster.filter((p) => p.development?.stage === key).length}`}
+          </button>
+        ))}
+      </div>
       <PlayerTable
         players={list}
         onPlayer={onPlayer}

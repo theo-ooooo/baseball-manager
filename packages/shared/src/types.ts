@@ -44,6 +44,25 @@ export type Player = {
   ageEstimated?: boolean;
   rating?: RatingEvidence;
   mood?: PlayerMood;
+  development?: PlayerDevelopment;
+};
+export type AbilityKey = 'contact' | 'power' | 'speed' | 'field' | 'stuff' | 'control';
+export type GrowthStage = 'growth' | 'peak' | 'decline';
+export type GrowthSnapshot = {
+  date: string;
+  age: number;
+  overall: number;
+  abilities: Record<AbilityKey, number>;
+};
+export type PlayerDevelopment = {
+  version: 1;
+  pattern: 'early' | 'steady' | 'late' | 'durable';
+  stage: GrowthStage;
+  // Simulation parameters are server-only, including when potential is revealed.
+  curve?: { peak: number; decline: number; growth: number; durability: number };
+  history: GrowthSnapshot[];
+  lastTrained?: string;
+  lastGames: { year: number; first: number; reserve: number };
 };
 export type Coach = {
   id: string;
@@ -56,6 +75,7 @@ export type Coach = {
   sourceClub?: string;
   source?: string;
   verifiedRole?: string;
+  contractUntil?: number;
 };
 export type Standing = {
   club: string;
@@ -84,6 +104,15 @@ export type Result = {
   date?: string;
   fixtureId?: string;
 };
+export type NegotiationStatus =
+  'pending' | 'accepted' | 'counter' | 'rejected' | 'withdrawn' | 'expired';
+export type NegotiationRound = {
+  day: number;
+  year: number;
+  salary: number;
+  years: number;
+  message: string;
+};
 export type Deal = {
   id: string;
   player: Player;
@@ -92,11 +121,31 @@ export type Deal = {
   years: number;
   fee: number;
   agentFee: number;
-  status: 'accepted' | 'counter' | 'rejected';
+  status: NegotiationStatus;
   message: string;
   day: number;
   year?: number;
   seller?: SellerDecision;
+  stage?: 'club' | 'player';
+  responseDay?: number;
+  expires?: number;
+  history?: NegotiationRound[];
+};
+export type CoachDeal = {
+  id: string;
+  coach: Coach;
+  role: string;
+  salary: number;
+  years: number;
+  day: number;
+  year: number;
+  status: NegotiationStatus;
+  message: string;
+  responseDay?: number;
+  expires?: number;
+  replacesId?: string;
+  compensation: number;
+  history: NegotiationRound[];
 };
 export type GameState = {
   version: 1;
@@ -118,6 +167,7 @@ export type GameState = {
   history: Result[];
   news: NewsItem[];
   deals: Deal[];
+  coachDeals?: CoachDeal[];
   ownership: Record<string, string>;
   transferred: Player[];
   past: { year: number; rank: number; w: number; l: number; champion: string }[];
@@ -145,6 +195,13 @@ export type GameState = {
   pitching?: PitchingPlan;
   liveMatch?: LiveMatch;
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
+  progress?: DayProgress;
+};
+export type DayProgress = {
+  from: number;
+  to: number;
+  stop: 'fixture' | 'report' | 'decision' | 'season' | null;
+  newsIds: string[];
 };
 export type League = {
   id: string;
@@ -321,6 +378,7 @@ export type NewsItem = {
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
+  actionView?: 'agents' | 'staff' | 'squad' | 'market';
 };
 export type SellerDecision = {
   club: string;

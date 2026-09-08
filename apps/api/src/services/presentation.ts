@@ -1,10 +1,13 @@
 import type { GameState, Player, WorldCatalog } from '@dugout/shared/types';
 import { askPrice } from '@dugout/shared/game-view';
-function player(p: Player): Player {
+function player(p: Player, reveal = false): Player {
   const next = structuredClone(p);
   next.marketValue = askPrice(p);
-  next.potential = 0;
-  if (next.rating) delete next.rating.base.potential;
+  if (!reveal) {
+    next.potential = 0;
+    if (next.rating) delete next.rating.base.potential;
+  }
+  if (next.development) delete next.development.curve;
   return next;
 }
 export function presentState(state: GameState | null): GameState | null {
@@ -15,16 +18,15 @@ export function presentState(state: GameState | null): GameState | null {
     next.liveMatch = { ...state.liveMatch };
     delete next.liveMatch.opponents;
   }
-  if (!state.rules?.revealPotential) {
-    next.roster = state.roster.map(player);
-    next.transferred = state.transferred.map(player);
-    next.deals = state.deals.map((d) => ({ ...d, player: player(d.player) }));
-  }
+  const reveal = state.rules?.revealPotential === true;
+  next.roster = state.roster.map((p) => player(p, reveal));
+  next.transferred = state.transferred.map((p) => player(p, reveal));
+  next.deals = state.deals.map((d) => ({ ...d, player: player(d.player, reveal) }));
   return next;
 }
 export function presentCareer<T extends { state: GameState | null }>(career: T): T {
   return { ...career, state: presentState(career.state) };
 }
 export function presentWorld(world: WorldCatalog, reveal = false): WorldCatalog {
-  return reveal ? world : { ...world, players: world.players.map(player) };
+  return reveal ? world : { ...world, players: world.players.map((p) => player(p)) };
 }

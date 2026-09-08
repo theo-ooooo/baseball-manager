@@ -1,3 +1,4 @@
+import { waitForReply } from './helpers/recruitment.mjs';
 import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
 import { buildSync } from 'esbuild';
@@ -26,6 +27,7 @@ test('Renewals preserve performance accumulated since the offer, and catalog tem
   // Simulate the save/load boundary before another match is played.
   g = structuredClone(g);
   g = e.advance(g, 1);
+  g = waitForReply(e, g, id);
   const current = g.roster.find((p) => p.id === player.id);
   const stats = structuredClone(current.stats),
     condition = current.condition;
@@ -130,8 +132,13 @@ test('Match scoring, stats, world standings and next season remain consistent', 
 test('Agent negotiation, signing, resale and coach hiring update actual resources', () => {
   let g = e.newGame('mlb-dodgers', 'Test', 'short', 9);
   const p = e.marketPlayers(g).find((p) => p.club === 'fa');
-  const before = g.budget;
+  const submittedBudget = g.budget;
   g = e.negotiate(g, p.id, p.salary * 2, 3);
+  assert.equal(g.budget, submittedBudget);
+  assert.equal(g.deals[0].status, 'pending');
+  assert.throws(() => e.signDeal(g, g.deals[0].id), /기다려/);
+  g = waitForReply(e, g, g.deals[0].id);
+  const before = g.budget;
   assert.notEqual(g.deals[0].status, 'rejected');
   const d = g.deals[0];
   g = e.signDeal(g, d.id);
@@ -147,7 +154,11 @@ test('Agent negotiation, signing, resale and coach hiring update actual resource
   assert.ok(!g.roster.some((x) => x.id === p.id));
   assert.ok(e.marketPlayers(g).some((x) => x.id === p.id));
   const coach = e.coachPool(g.year).find((c) => c.role === '투수' && c.skill > 85);
-  g = e.applyAction(g, { type: 'coach', id: coach.id });
+  const previousStaff = structuredClone(g.staff);
+  g = e.applyAction(g, { type: 'coachOffer', id: coach.id, salary: coach.salary * 2, years: 3 });
+  assert.deepEqual(g.staff, previousStaff);
+  g = waitForReply(e, g, g.coachDeals[0].id, true);
+  g = e.applyAction(g, { type: 'signCoach', id: g.coachDeals[0].id });
   assert.equal(e.coachSkill(g, '투수'), coach.skill);
   assert.equal(g.staff.length, 5);
   assert.throws(() => e.negotiate(g, p.id, -100, 3));
@@ -182,10 +193,12 @@ test('First-year restriction blocks both offers and previously accepted external
   assert.throws(() => e.negotiate(g, external.id, external.salary * 2, 3), /첫 시즌/);
   const owned = g.roster[0];
   g = e.negotiate(g, owned.id, owned.salary * 2, 3, 'renew');
+  g = waitForReply(e, g, g.deals[0].id);
   g = e.signDeal(g, g.deals[0].id);
   const unlocked = structuredClone(g);
   unlocked.rules.firstSeasonTransferBan = false;
   e.negotiate(unlocked, external.id, external.salary * 2, 3);
+  waitForReply(e, unlocked, unlocked.deals[0].id);
   g.deals = unlocked.deals;
   assert.throws(() => e.signDeal(g, g.deals[0].id), /첫 시즌/);
   g.year++;

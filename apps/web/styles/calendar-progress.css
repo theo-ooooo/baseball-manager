@@ -1,0 +1,108 @@
+.calendar-progress {
+  margin: 20px 32px 0;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.calendar-progress-heading,
+.calendar-progress-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.calendar-progress-heading {
+  justify-content: space-between;
+  padding: 16px 20px;
+  min-height: 64px;
+}
+.calendar-progress-heading strong {
+  font-size: 14px;
+}
+.calendar-progress-heading span,
+.calendar-progress > p {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.calendar-progress-window {
+  overflow: hidden;
+  border-block: 1px solid var(--line);
+}
+.calendar-progress-track {
+  display: flex;
+  width: 100%;
+  transform: translateX(calc(var(--advanced) * -100% / 7));
+  transition: transform 360ms ease;
+}
+.calendar-progress-day {
+  flex: 0 0 calc(100% / 7);
+  min-width: 0;
+  padding: 14px 4px;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  border-right: 1px solid var(--line);
+}
+.calendar-progress-day small {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.calendar-progress-day b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.calendar-progress-day span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--text-3);
+}
+.calendar-progress-day.passed {
+  background: var(--surface-2);
+}
+.calendar-progress-day.current {
+  background: var(--brand-soft);
+  box-shadow: inset 0 -3px var(--brand);
+}
+.calendar-progress-day.current b {
+  color: var(--brand);
+}
+.calendar-progress > p {
+  padding: 10px 20px;
+  margin: 0;
+}
+@media (max-width: 700px) {
+  .calendar-progress {
+    margin: 12px 10px 0;
+  }
+  .calendar-progress-heading {
+    padding: 12px;
+    gap: 8px;
+  }
+  .calendar-progress-heading > div {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .calendar-progress-heading span {
+    display: none;
+  }
+  .calendar-progress-heading strong {
+    font-size: 12px;
+  }
+  .calendar-progress-day {
+    flex-basis: calc(100% / 3);
+  }
+  .calendar-progress-track {
+    transform: translateX(calc((var(--advanced) + 2) * -100% / 3));
+  }
+  .calendar-progress > p {
+    padding: 10px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .calendar-progress-track {
+    transition: none;
+  }
+}

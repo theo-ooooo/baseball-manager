@@ -15,6 +15,7 @@ import { potentialText } from '@dugout/shared/ratings';
 import { Mood } from '../clubs/club-panels';
 import { Rating, PlayerName, positions } from '../../components/game-ui';
 import { RoleBadge, assignmentLabel, pitchingAssignment } from '../squad/pitching-panel';
+import { DevelopmentBadge } from './development-panel';
 
 export function PlayerTable({
   players,
@@ -76,6 +77,7 @@ export function PlayerTable({
             <TableRow key={p.id}>
               <TableCell>
                 <PlayerName p={p} onClick={onPlayer} />
+                {kind !== 'market' && <DevelopmentBadge player={p} />}
                 {role && (
                   <small className="ui-role-inline">
                     <RoleBadge role={role}>{assignmentLabel(g, p)}</RoleBadge>

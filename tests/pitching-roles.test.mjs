@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -142,27 +143,10 @@ test('Choosing the next starter also updates their relief assignment without shi
 });
 
 test('A live match saved before bullpen groups reproduces its original complete result', () => {
-  let g = e.newGame('kbo-lotte', 'Legacy relief', 'short', 407);
-  // The previous new-career path selected the highest OVR pitcher, including closers.
-  g.starter = g.roster
-    .filter((p) => p.pos === 'P' && p.squad !== 'reserve')
-    .sort((a, b) => e.overall(b) - e.overall(a))[0].id;
-  delete g.pitching;
-  g = e.applyAction(g, { type: 'syncCatalog' });
-  g.pitching.bullpen = g.roster
-    .filter(
-      (p) =>
-        p.pos === 'P' &&
-        p.squad !== 'reserve' &&
-        !g.pitching.rotation.includes(p.id) &&
-        p.id !== g.pitching.closer,
-    )
-    .map((p) => p.id);
-  g = e.applyAction(g, { type: 'continue' });
-  g = e.applyAction(g, { type: 'startMatch' });
-  delete g.liveMatch.pitchingVersion;
-  delete g.pitching.setup;
-  delete g.pitching.chase;
+  // Frozen synthetic save from before growth curves; do not regenerate it with today's training rules.
+  let g = JSON.parse(
+    readFileSync(new URL('./fixtures/legacy-pitching-input.json', import.meta.url), 'utf8'),
+  ).state;
   for (let n = 0; !g.liveMatch.finished && n < 400; n++) {
     if (n === 60) g = JSON.parse(JSON.stringify(g));
     g = e.applyAction(g, { type: 'stepMatch' });
