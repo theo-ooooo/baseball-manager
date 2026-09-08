@@ -6,7 +6,11 @@ import { createGameEngine } from '../domain/game-engine';
 @Injectable()
 export class CareerService {
   constructor(@Inject(CatalogRepository) private readonly catalog: CatalogRepository, @Inject(CareerRepository) private readonly careers: CareerRepository) {}
-  read(db: D1Database, user: string) { return this.careers.read(db,user); }
+  async read(db: D1Database, user: string) {
+    const current=await this.careers.read(db,user);
+    if(current.state){const world=await this.catalog.getWorld(db);current.state=createGameEngine(world).applyAction(current.state,{type:'syncCatalog'});}
+    return current;
+  }
   async match(db: D1Database, user: string, id: string) {
     const result = await this.careers.match(db,user,id);
     if (!result) throw new NotFoundException('경기 기록을 찾을 수 없습니다.');

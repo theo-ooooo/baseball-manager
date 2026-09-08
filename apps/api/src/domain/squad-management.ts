@@ -1,10 +1,14 @@
 import type {DefensivePosition,GameState,Player,TeamInstructions,WorldCatalog} from '../../../../packages/shared/src/types';
 import {blankStats,coachSkill,hash,lineupAuto,overall} from '../../../../packages/shared/src/game-view';
 import {autoDefense,defaults,defenseFor,defensivePositions,familiarity,firstTeam,reserveTeam,selectFirstTeam} from '../../../../packages/shared/src/management';
+import {refreshRatings} from './performance-ratings';
 import {createPlayerGenerator} from './player-generator';
 
 export function prepareSquad(g:GameState,world:WorldCatalog){
  if(g.catalogVersion!==world.version){
+  const catalog=new Map(world.players.map(p=>[p.id,p]));
+  for(const p of [...g.roster,...g.transferred]){const base=catalog.get(p.id);if(base)refreshRatings(p,base);}
+  for(const d of g.deals){const base=catalog.get(d.player.id);if(base)refreshRatings(d.player,base);}
   // Add newly catalogued players without changing contracts or undoing transfers in a save.
   const known=new Set([...g.roster,...g.transferred].map(p=>p.id));
   for(const p of world.players.filter(p=>p.real&&p.club===g.club)){
@@ -103,7 +107,7 @@ export function developSquad(g:GameState,random:()=>number,opponents:string[]){
  pitcher.reserveStats??=blankStats();Object.assign(pitcher.reserveStats,{g:pitcher.reserveStats.g+1,outs:pitcher.reserveStats.outs+27,er:pitcher.reserveStats.er+against,wins:pitcher.reserveStats.wins+(own>against?1:0)});pitcher.condition=Math.max(20,pitcher.condition-42);played.push(pitcher);
  const reserveDefense=autoDefense({...g,roster,lineup:lineup.map(p=>p.id),starter:pitcher.id,defense:undefined});
  for(const pos of defensivePositions){const p=roster.find(p=>p.id===reserveDefense[pos]);if(p){p.familiarity??={};p.familiarity[pos]=Math.min(100,familiarity(p,pos)+.2);}}
- for(const p of played)if(p.age<28&&g.training!=='rest'){const skill=p.pos==='P'?'stuff':'contact';p[skill]=Math.min(p.potential,p[skill]+.08+coachSkill(g,p.pos==='P'?'투수':'타격')/600);}
+ for(const p of played)if(p.age<28&&g.training!=='rest'){const skill=p.pos==='P'?'stuff':'contact';if(p[skill]<p.potential)p[skill]=Math.min(p.potential,p[skill]+.08+coachSkill(g,p.pos==='P'?'투수':'타격')/600);}
  if(own>against)g.reserve.w++;else if(own<against)g.reserve.l++;else g.reserve.d++;
  g.reserve.history.unshift({day:g.day,opponent:opponents[Math.abs(g.day)%opponents.length],own,against,played:played.map(p=>p.id)});g.reserve.history=g.reserve.history.slice(0,60);
 }

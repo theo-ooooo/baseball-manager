@@ -1,3 +1,6 @@
+import performance from './performance-2025.json';
+import {rateRealPlayers} from '../src/domain/performance-ratings';
+import type {PerformanceRecord} from '../../../packages/shared/src/types';
 import registration from './kbo-register-2026-09-07.json';
 import { clubs, leagues, realRosters, rosterNote } from './catalog';
 import { createPlayerGenerator } from '../src/domain/player-generator';
@@ -30,6 +33,7 @@ export function buildSeedWorld(): WorldCatalog {
     const p = makePlayer('fa', i); p.age = 19 + i % 16;
     p.contact += i % 10; p.power += i % 8; p.stats = blankStats(); players.push(p);
   }
+  rateRealPlayers(players,performance.records as PerformanceRecord[]);
   const coaches:Coach[] = coachRoles.flatMap((role, i) => Array.from({ length: 4 }, (_, n) => {
     const r = rng(hash(`coach:2026:${i}:${n}`));
     return { id: `coach-2026-${i}-${n}`, name: generatedName(n % 2 ? '미국 · 캐나다' : '대한민국', r), role,
@@ -37,7 +41,7 @@ export function buildSeedWorld(): WorldCatalog {
       style: ['기본기', '유망주 육성', '실전 중심', '데이터 분석'][n] };
   }));
   coaches.push(...registration.teams.flatMap(t=>t.coaches.map(c=>({id:`coach-real-${t.club}-${c.number}`,name:c.name,role:'코치',skill:65+hash(t.club+c.name)%24,salary:30+hash(c.name)%50,style:'선수 육성',real:true,sourceClub:t.club,source:registration.source,verifiedRole:'코치'}))));
-  return { version: 'world-2026-09-07-v3', year: 2026, clubs, leagues, players, coaches, rosterNote,
+  return { version: 'world-2026-09-08-v4', year: 2026, clubs, leagues, players, coaches, rosterNote,
     agents: [
       { id: 'agent-0', name: '박준혁', agency: 'BASE Sports', fee: .05, priority: '안정적인 장기 계약' },
       { id: 'agent-1', name: 'Daniel Cruz', agency: 'Diamond Agency', fee: .08, priority: '연봉 우선' },

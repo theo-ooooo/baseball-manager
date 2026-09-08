@@ -22,6 +22,7 @@ export const players = sqliteTable('players', {
   power: real('power').notNull(), speed: real('speed').notNull(), fielding: real('fielding').notNull(),
   stuff: real('stuff').notNull(), control: real('control').notNull(), potential: real('potential').notNull(),
   salary: real('salary').notNull(), years: integer('years').notNull(), source: text('source'), ageEstimated: integer('age_estimated', {mode:'boolean'}).notNull().default(false),
+  rating: text('rating_json'),
   sortOrder: integer('sort_order').notNull(),
 }, t => [index('idx_players_club').on(t.clubId), index('idx_players_name').on(t.name)]);
 export const agents = sqliteTable('agents', {

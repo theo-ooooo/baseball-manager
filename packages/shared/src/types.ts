@@ -1,6 +1,6 @@
 export type Pos='P'|'C'|'IF'|'OF'|'DH';
 export type Stats={ab:number;h:number;hr:number;rbi:number;bb:number;k:number;outs:number;er:number;wins:number;g:number};
-export type Player={id:string;name:string;original:string;club:string;pos:Pos;age:number;real:boolean;country:string;number:number;contact:number;power:number;speed:number;field:number;stuff:number;control:number;potential:number;condition:number;salary:number;years:number;stats:Stats;squad?:'first'|'reserve';familiarity?:Partial<Record<DefensivePosition,number>>;positionTraining?:DefensivePosition;reserveStats?:Stats;source?:string;ageEstimated?:boolean};
+export type Player={id:string;name:string;original:string;club:string;pos:Pos;age:number;real:boolean;country:string;number:number;contact:number;power:number;speed:number;field:number;stuff:number;control:number;potential:number;condition:number;salary:number;years:number;stats:Stats;squad?:'first'|'reserve';familiarity?:Partial<Record<DefensivePosition,number>>;positionTraining?:DefensivePosition;reserveStats?:Stats;source?:string;ageEstimated?:boolean;rating?:RatingEvidence};
 export type Coach={id:string;name:string;role:string;skill:number;salary:number;style:string;real?:boolean;sourceClub?:string;source?:string;verifiedRole?:string};
 export type Standing={club:string;w:number;l:number;d:number;rf:number;ra:number;form:string[]};
 export type Result={id:string;day:number;home:string;away:string;homeScore:number;awayScore:number;innings:(number|null)[][];hits:number[];errors:number[];log:{inning:number;half:number;text:string;score:number[];play?:ReplayPlay}[];replayTeams?:[ReplayTeam,ReplayTeam];mvp:string;post?:boolean;friendly?:boolean};
@@ -22,3 +22,6 @@ export type ReserveResult={day:number;opponent:string;own:number;against:number;
 export type ReplayState={outs:number;bases:(string|null)[];score:number[]};
 export type ReplayPlay={batter:string;pitcher:string;before:ReplayState;after:ReplayState;steal?:{runner:string;safe:boolean}};
 export type ReplayTeam={lineup:string[];defense:Defense;players:{id:string;name:string;number:number}[]};
+
+export type PerformanceRecord={name:string;league:string;season:number;kind:'bat'|'pitch';source:string;officialId?:string;club?:string;team?:string;ambiguous?:boolean;pa?:number;ab?:number;h?:number;hr?:number;tb?:number;bb?:number;k?:number;sb?:number;g?:number;outs?:number;er?:number};
+export type RatingEvidence={version:string;status:'rated'|'provisional'|'missing';season:number;source?:string;record?:PerformanceRecord;method:string;estimatedAttributes:string[];base:Partial<Record<'contact'|'power'|'speed'|'field'|'stuff'|'control'|'potential',number>>};

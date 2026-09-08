@@ -1,0 +1,1 @@
+ALTER TABLE `players` ADD `rating_json` text;

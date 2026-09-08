@@ -92,3 +92,9 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - Replay commit `47713b7bb62ac032613ff719d193d5e0cea07580` was published successfully as Site version 3. Deployment `appgdep_6a9f7f52e318819196218ce681ce60f7` succeeded at the existing owner-private test URL.
 - All money displays now use KRW (억 원 / 만 원); contract salary inputs and fee previews use 만 원. Legacy persisted currency units are retained and converted with the explicitly labelled fixed game rate USD 1 = KRW 1,400. This is not a current exchange-rate quote.
 - TypeScript validation passed. Currency publication will accompany the next management update.
+
+### Performance-derived real-player ratings — 2026-09-08
+- Added 2025 official KBO, MLB and NPB counting-stat snapshots (3,398 batting/pitching records). The model is deterministic, removes real-player random attributes/name overrides, and regresses small samples toward the league's observed mean. Potential is an explicit age/performance estimate. Unobserved defense/speed use hidden neutral simulation values.
+- 1,075 real players have at least 100 PA / 30 IP; 530 have provisional smaller samples; 437 remain visibly ungraded. Ambiguous identities are not assigned another player's stats. Example: Lotte Jeon Min-jae is linked to his own 369 PA, 95 hits, 5 HR 2025 season.
+- D1 migrations add source/evaluation metadata and update catalog ratings. Read-time compatibility upgrades show corrected ratings immediately; the next mutation persists them with the existing revision gate. Contracts, ownership and game stats remain intact, and subsequent model refreshes retain recorded development deltas.
+- Rating identity, missing-data handling and idempotent career upgrades passed targeted tests. TypeScript passed. Publication pending the management/date-calendar update.
