@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "../apps/web/globals.css";
 import "../apps/web/management.css";
+import "../apps/web/replay.css";
 
 export const metadata: Metadata = {
   title: "DUGOUT | 월드 베이스볼 매니저",

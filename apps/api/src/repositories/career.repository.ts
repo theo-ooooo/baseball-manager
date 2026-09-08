@@ -28,7 +28,7 @@ export class CareerRepository {
     const previousMatches = new Set(resetting ? [] : before?.history.map(m => m.id) || []);
     const newMatches = next.history.filter(m => !previousMatches.has(m.id));
     // Full play-by-play belongs in the match archive; keep only five logs in the hot save.
-    const state: GameState = { ...next, history: next.history.map((m, i) => i < 5 ? m : { ...m, log: [] }) };
+    const state: GameState = { ...next, history: next.history.map((m, i) => i < 5 ? m : { ...m, log: [], replayTeams: undefined }) };
     const serialized = JSON.stringify(state);
     if (serialized.length > 1_800_000) throw new Error('커리어 저장 용량을 초과했습니다.');
     const statements: D1PreparedStatement[] = [];
