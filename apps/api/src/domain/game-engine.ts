@@ -1,5 +1,6 @@
 import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
+import { createCalendarProgression } from './calendar-progression';
 
 import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
 import {
@@ -54,6 +55,7 @@ export function createGameEngine(world: WorldCatalog) {
   const news = postNews;
   const simulateMatch = createMatchSimulator(world);
   const liveAction = createLiveMatchActions(world, simulateMatch, advance);
+  const progression = createCalendarProgression(nextFixture, advance);
   function newGame(
     club: string,
     manager: string,
@@ -359,23 +361,6 @@ export function createGameEngine(world: WorldCatalog) {
     g.seed = Math.floor(r() * 4294967295);
     return g;
   }
-  function continueToEvent(g: GameState) {
-    if (nextFixture(g)) return advance(g, 1);
-    const initialPhase = g.phase,
-      pending = g.news.filter((n) => n.choiceKind && !n.choice).length,
-      offers = g.saleOffers?.length || 0;
-    for (let i = 0; i < 45 && g.phase !== 'finished'; i++) {
-      advance(g, 1);
-      if (
-        nextFixture(g) ||
-        g.phase !== initialPhase ||
-        g.news.filter((n) => n.choiceKind && !n.choice).length > pending ||
-        (g.saleOffers?.length || 0) > offers
-      )
-        break;
-    }
-    return g;
-  }
   function afterMatch(g: GameState, res: Result) {
     nextStarter(g, true);
     matchMorale(g, res);
@@ -653,7 +638,9 @@ export function createGameEngine(world: WorldCatalog) {
     if (managed) return managed;
     switch (a.type) {
       case 'continue':
-        return continueToEvent(s);
+        return progression.untilEvent(s);
+      case 'continueDay':
+        return progression.step(s, a.simulateGames === true);
       case 'advance':
         return advance(s, Number(a.count) || 1);
       case 'auto':

@@ -73,3 +73,58 @@ test('Continue skips idle dates and stops before the next game', () => {
   assert.equal(g.history.length, 1);
   assert.ok(g.history[0].friendly);
 });
+
+test('Daily continue saves each idle date and stops for reports even with a full inbox', () => {
+  let g = e.newGame('kbo-lotte', 'Calendar', 'full', 8);
+  g.day = -20;
+  g.news = Array.from({ length: 100 }, (_, i) => ({
+    id: `old-${i}`,
+    day: -28,
+    title: 'Old',
+    body: '',
+    kind: 'club',
+    read: true,
+  }));
+  const history = structuredClone(g.history);
+  g = e.applyAction(g, { type: 'continueDay' });
+  assert.equal(g.day, -19);
+  assert.equal(g.progress.stop, null);
+  while (!g.progress.stop) g = e.applyAction(g, { type: 'continueDay' });
+  assert.equal(g.day, -15);
+  assert.equal(g.progress.stop, 'fixture');
+  assert.deepEqual(g.history, history);
+  const atGame = e.applyAction(g, { type: 'continueDay' });
+  assert.equal(atGame.day, g.day);
+  assert.deepEqual(atGame.history, history);
+  g = e.applyAction(g, { type: 'continueDay', simulateGames: true });
+  assert.equal(g.day, -14);
+  assert.equal(g.progress.stop, 'report');
+  assert.ok(
+    g.news.some((n) => n.title === '주간 선수단 보고' && g.progress.newsIds.includes(n.id)),
+  );
+  assert.equal(g.news.length, 100);
+});
+
+test('Continue stops on a rest-day report and unresolved decisions cannot be skipped', () => {
+  let g = e.newGame('kbo-lotte', 'Reports', 'full', 8);
+  g.day = -2;
+  g.roster[0].mood.value = 30;
+  const original = structuredClone(g);
+  g = e.applyAction(g, { type: 'continueDay' });
+  assert.equal(g.progress.stop, 'decision');
+  assert.equal(g.day, -1);
+  const paused = e.applyAction(g, { type: 'continueDay', simulateGames: true });
+  assert.equal(paused.day, -1);
+  assert.equal(paused.budget, g.budget);
+  assert.deepEqual(paused.history, g.history);
+  assert.equal(original.day, -2);
+  const clean = e.newGame('kbo-lotte', 'Report stop', 'full', 8);
+  clean.day = -7;
+  clean.roster[0].mood.promise = { due: -6, games: 1, startGames: 0 };
+  const stopped = e.applyAction(clean, { type: 'continue' });
+  assert.equal(stopped.day, -6);
+  assert.equal(stopped.progress.stop, 'report');
+  assert.ok(
+    stopped.news.some((n) => n.title.includes('불이행') && stopped.progress.newsIds.includes(n.id)),
+  );
+});

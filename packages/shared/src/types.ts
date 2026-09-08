@@ -145,6 +145,13 @@ export type GameState = {
   pitching?: PitchingPlan;
   liveMatch?: LiveMatch;
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
+  progress?: DayProgress;
+};
+export type DayProgress = {
+  from: number;
+  to: number;
+  stop: 'fixture' | 'report' | 'decision' | 'season' | null;
+  newsIds: string[];
 };
 export type League = {
   id: string;

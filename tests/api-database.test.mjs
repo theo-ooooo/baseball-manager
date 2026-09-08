@@ -140,6 +140,31 @@ test('Workers runs NestJS with migrated D1 catalog and protects career identity'
   assert.equal((await call()).body.revision, 1);
 });
 
+test('Daily calendar progression persists one date and a retried request cannot advance twice', async () => {
+  const user = 'calendar-progress';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Calendar', mode: 'short' },
+    user,
+  );
+  const command = {
+    type: 'continueDay',
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const saved = await call('/api/career', command, user);
+  assert.equal(saved.status, 201);
+  assert.equal(saved.body.state.day, -27);
+  assert.equal(saved.body.state.progress.to, -27);
+  assert.equal(saved.body.revision, initial.revision + 1);
+  const repeated = await call('/api/career', command, user);
+  assert.equal(repeated.body.revision, saved.body.revision);
+  assert.equal(repeated.body.state.day, -27);
+  const stale = await call('/api/career', { ...command, requestId: crypto.randomUUID() }, user);
+  assert.equal(stale.status, 409);
+  const loaded = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(loaded.state, saved.body.state);
+});
+
 test('Negotiation, signing, reselling and coaches update relational rows and accounting atomically', async () => {
   const catalog = (await call('/api/catalog')).body;
   const p = catalog.players.find((p) => p.club === 'fa');
