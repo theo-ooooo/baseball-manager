@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Play, Pause, Settings2 } from 'lucide-react';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import { StadiumScene } from './stadium-replay';
 import { MatchPlanEditor } from './match-plan-editor';
 import { MatchCommandPanel } from './match-command-panel';
 import { matchCommandLabels } from '@dugout/shared/match-commands';
+import { isSpaceShortcut } from '../career/space-shortcut';
 
 function readCursor(key: string, floor: number, length: number) {
   try {
@@ -71,6 +72,7 @@ export function LiveMatchScreen({ g, act, busy }: { g: GameState; act: Act; busy
   );
 }
 function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const live = g.liveMatch!,
     result = live.timeline!,
     length = result.log.length;
@@ -136,6 +138,28 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
   return (
     <Dialog open>
       <DialogContent
+        ref={dialogRef}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          dialogRef.current?.focus();
+        }}
+        onKeyDown={(event) => {
+          if (!isSpaceShortcut(event.nativeEvent)) return;
+          event.preventDefault();
+          if (busy) return;
+          if (editor && planDirty) {
+            dialogRef.current?.querySelector('form')?.requestSubmit();
+            return;
+          }
+          if (finished) {
+            if (settled)
+              void act({ type: 'completeMatch', cursor, timelineVersion: live.timelineVersion });
+          } else if (playing) pause();
+          else {
+            setPlaying(true);
+            next();
+          }
+        }}
         className={`stadium-replay-dialog live-match-dialog ${mobile && !editor ? 'mobile-live-layout' : ''} ${commandOpen ? 'command-open' : ''} ${queuedCommand ? 'has-queued-command' : ''}`}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -296,7 +320,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                   ? '선수·전술 변경을 적용하거나 취소해 주세요.'
                   : cursor === 0
                     ? '선수·전술에서 경기 계획을 준비하세요.'
-                    : '작전 지시나 선수·전술을 누르면 경기가 잠시 멈춥니다.'}
+                    : 'Space 재생·일시정지 · 작전 지시나 선수·전술을 누르면 잠시 멈춥니다.'}
               </span>
               {finished && (
                 <button

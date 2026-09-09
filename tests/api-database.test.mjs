@@ -265,6 +265,66 @@ test('D1 direct instructions persist once, preserve watched events and keep pres
   );
 });
 
+test('Compact mutation responses omit archived playback without changing stored match data or duplicate semantics', async () => {
+  const user = 'compact-response-career';
+  await action({ type: 'start', club: 'kbo-lotte', manager: 'Compact DB', mode: 'short' }, user);
+  await action({ type: 'continue' }, user);
+  const initial = await action({ type: 'continue' }, user);
+  assert.ok(initial.state.history[0].log.length > 0);
+  const ids = [...initial.state.lineup];
+  [ids[0], ids[1]] = [ids[1], ids[0]];
+  const command = {
+    type: 'lineup',
+    ids,
+    responseMode: 'compact',
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const saved = await call('/api/career', command, user);
+  assert.equal(saved.status, 201);
+  assert.deepEqual(saved.body.state.lineup, ids);
+  assert.equal(saved.body.state.history[0].log.length, 0);
+  assert.equal(saved.body.state.history[0].replayTeams, undefined);
+  assert.deepEqual((await call('/api/career', command, user)).body, saved.body);
+  const full = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(full.state.history, initial.state.history);
+  assert.ok(JSON.stringify(saved.body).length < JSON.stringify(full).length);
+  const archived = await call(
+    '/api/career/matches/' + encodeURIComponent(full.state.history[0].id),
+    undefined,
+    user,
+  );
+  assert.deepEqual(archived.body, initial.state.history[0]);
+  const team = await action(
+    {
+      type: 'teamInstructions',
+      preset: 'power',
+      value: { power: 85, patience: 35, steal: 15, depth: 50 },
+      responseMode: 'compact',
+    },
+    user,
+  );
+  assert.equal(team.state.tactic, 'power');
+  assert.deepEqual(team.state.instructions, { power: 85, patience: 35, steal: 15, depth: 50 });
+  assert.equal(team.revision, saved.body.revision + 1);
+  const invalid = await call(
+    '/api/career',
+    {
+      type: 'teamInstructions',
+      preset: 'unknown',
+      value: { power: 85, patience: 35, steal: 15, depth: 50 },
+      revision: team.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(invalid.status, 400);
+  const unchanged = (await call('/api/career', undefined, user)).body;
+  assert.equal(unchanged.revision, team.revision);
+  assert.deepEqual(unchanged.state.roster, initial.state.roster);
+  assert.equal(unchanged.state.budget, initial.state.budget);
+});
+
 test('D1 commits a full-roster exchange once and rejected exchanges leave both players unchanged', async () => {
   const user = 'roster-exchange';
   const before = await action(

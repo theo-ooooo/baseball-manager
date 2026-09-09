@@ -15,14 +15,36 @@ export class CareerRepository {
     return row?.reveal === 1;
   }
   async read(db: D1Database, user: string) {
-    const row = await db
-      .prepare('SELECT state,revision FROM careers WHERE user_id=?')
-      .bind(user)
-      .first<CareerRow>();
+    return (await this.snapshot(db, user)).current;
+  }
+  async actionSnapshot(db: D1Database, user: string, requestId: string) {
+    return this.snapshot(db, user, requestId);
+  }
+  private async snapshot(db: D1Database, user: string, requestId?: string) {
+    // Three bounded, indexed reads share one D1 round trip and one consistent snapshot.
+    const statements = [
+      db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user),
+      db
+        .prepare(
+          'SELECT id,revision,season AS year,day,kind,amount,balance,created_at AS createdAt FROM finance_entries WHERE user_id=? ORDER BY revision DESC LIMIT 60',
+        )
+        .bind(user),
+    ];
+    if (requestId)
+      statements.push(
+        db
+          .prepare('SELECT revision FROM career_actions WHERE user_id=? AND request_id=? LIMIT 1')
+          .bind(user, requestId),
+      );
+    const results = await db.batch(statements);
+    const row = results[0].results[0] as CareerRow | undefined;
     return {
-      state: row ? (JSON.parse(row.state) as GameState) : null,
-      revision: row?.revision || 0,
-      ledger: await this.ledger(db, user),
+      current: {
+        state: row ? (JSON.parse(row.state) as GameState) : null,
+        revision: row?.revision || 0,
+        ledger: results[1].results as FinanceEntry[],
+      },
+      seen: !!results[2]?.results.length,
     };
   }
   async ledger(db: D1Database, user: string): Promise<FinanceEntry[]> {

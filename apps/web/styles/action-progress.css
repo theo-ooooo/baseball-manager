@@ -1,0 +1,89 @@
+.action-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1000;
+  pointer-events: none;
+  color: #fff;
+}
+.action-progress-rail {
+  height: 5px;
+  overflow: hidden;
+  background: #cedbfa;
+}
+.action-progress-rail span {
+  display: block;
+  width: 36%;
+  height: 100%;
+  background: #1d4ed8;
+  animation: action-rail 1.3s ease-in-out infinite;
+}
+.action-progress-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin: 12px auto 0;
+  padding: 15px 20px;
+  border: 1px solid #7895d0;
+  border-radius: 10px;
+  background: #172e55;
+  box-shadow: 0 8px 24px #071b3c40;
+}
+.action-progress-message > svg {
+  flex-shrink: 0;
+}
+.action-progress-message strong,
+.action-progress-message small {
+  display: block;
+}
+.action-progress-message strong {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.action-progress-message small {
+  color: #d1dff7;
+  margin-top: 3px;
+  font-size: 12px;
+}
+@keyframes action-rail {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(380%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-progress-rail span {
+    animation: none;
+    width: 100%;
+  }
+  .action-progress .spin {
+    animation: none;
+  }
+}
+.lineup-draft-actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-1);
+  box-shadow: 0 4px 12px #172e5517;
+}
+.lineup-draft-actions > span {
+  color: var(--text-2);
+  font-size: 12px;
+}
+.lineup-draft-actions > div {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}

@@ -54,6 +54,8 @@ import { AppSidebar } from './game-sidebar';
 import { CalendarProgress, useCalendarProgress } from './calendar-progress';
 import { managerStep, matchReportId } from './manager-flow';
 import { MatchdayBriefing } from '../matches/matchday-briefing';
+import { ActionProgress } from './action-progress';
+import { isSpaceShortcut } from './space-shortcut';
 
 export function GameScreen({
   initial,
@@ -90,6 +92,8 @@ export function GameScreen({
     [saveFailed, setSaveFailed] = useState(false);
   const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
   const [reportEpoch, setReportEpoch] = useState(0);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [requestPhase, setRequestPhase] = useState<'request' | 'response'>('request');
   const locked = useRef(false);
   const revision = useRef(initial.revision);
   const [ledger, setLedger] = useState(initial.ledger);
@@ -113,16 +117,20 @@ export function GameScreen({
     if (locked.current) return null;
     locked.current = true;
     setBusy(true);
+    setPendingAction(String(action.type));
+    setRequestPhase('request');
     try {
       const res = await fetch('/api/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...action,
+          responseMode: 'compact',
           revision: revision.current,
           requestId: crypto.randomUUID(),
         }),
       });
+      setRequestPhase('response');
       const d = await res.json();
       if (!res.ok) {
         if (res.status === 409 && 'state' in d) {
@@ -144,6 +152,7 @@ export function GameScreen({
     } finally {
       locked.current = false;
       setBusy(false);
+      setPendingAction(null);
     }
   };
   const calendarProgress = useCalendarProgress(act);
@@ -170,6 +179,10 @@ export function GameScreen({
   }
   async function simulate(count = 1) {
     if (!g || g.liveMatch || busy || progressing) return;
+    if (document.querySelector('[data-unsaved-plan="true"]')) {
+      toast.error('변경한 타순·전술을 적용하거나 되돌린 뒤 진행해 주세요.');
+      return;
+    }
     const next = await calendarProgress.run(g, count === 1 ? 45 : count, count > 1);
     if (next?.progress?.newsIds.length) openReport(next.progress.newsIds[0]);
     else if (next?.progress?.stop === 'fixture') setView('matchday');
@@ -177,6 +190,12 @@ export function GameScreen({
   const step = g ? managerStep(g, !!nextFixture(g), view) : null;
   async function continueFlow() {
     if (!g || !step || busy || progressing || g.liveMatch) return;
+    const unsaved = document.querySelector('[data-unsaved-plan="true"]');
+    if (unsaved) {
+      unsaved.scrollIntoView({ block: 'center' });
+      toast.error('변경한 타순·전술을 적용하거나 되돌린 뒤 진행해 주세요.');
+      return;
+    }
     calendarProgress.close();
     if (step.reportId) openReport(step.reportId);
     else if (step.kind === 'matchday') {
@@ -197,21 +216,8 @@ export function GameScreen({
   };
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      if (!isSpaceShortcut(event)) return;
       if (
-        event.code !== 'Space' ||
-        event.repeat ||
-        event.defaultPrevented ||
-        event.altKey ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.shiftKey
-      )
-        return;
-      const target = event.target instanceof Element ? event.target : null;
-      if (
-        target?.closest(
-          'input,textarea,select,button,a,summary,[contenteditable="true"],[role="button"],[role="tab"],[role="combobox"],[role="listbox"],[role="option"],[role="slider"],[role="switch"],[role="checkbox"],[role="menuitem"],[role="dialog"],[role="alertdialog"]',
-        ) ||
         document.querySelector('[role="dialog"], [role="alertdialog"]') ||
         setup ||
         !g ||
@@ -228,6 +234,7 @@ export function GameScreen({
   if (!g || setup)
     return (
       <>
+        <ActionProgress action={pendingAction} phase={requestPhase} />
         <NewCareer
           loading={loading}
           error={error}
@@ -268,6 +275,7 @@ export function GameScreen({
     : undefined;
   return (
     <SidebarProvider style={{ '--sidebar-width': '224px' } as CSSProperties}>
+      <ActionProgress action={pendingAction} phase={requestPhase} />
       <div style={{ display: 'contents' }} inert={progressing || undefined}>
         <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
       </div>
@@ -334,6 +342,7 @@ export function GameScreen({
                   </details>
                   <button
                     className="button primary continue-button"
+                    aria-keyshortcuts="Space"
                     disabled={busy || !!g.liveMatch}
                     onClick={continueFlow}
                     title={step?.detail}
@@ -351,6 +360,7 @@ export function GameScreen({
               ) : (
                 <button
                   className="button primary continue-button"
+                  aria-keyshortcuts="Space"
                   disabled={busy}
                   onClick={continueFlow}
                 >

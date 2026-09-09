@@ -41,8 +41,16 @@ export function presentState(state: GameState | null): GameState | null {
   next.deals = state.deals.map((d) => ({ ...d, player: player(d.player, reveal) }));
   return next;
 }
-export function presentCareer<T extends { state: GameState | null }>(career: T): T {
-  return { ...career, state: presentState(career.state) };
+export function presentCareer<T extends { state: GameState | null }>(
+  career: T,
+  compact = false,
+): T {
+  const state = presentState(career.state);
+  // Mutation responses need scores and reports; full archived play-by-play is loaded on demand.
+  // This projection never changes the durable save or an active match's timeline.
+  if (compact && state)
+    state.history = state.history.map((result) => ({ ...result, log: [], replayTeams: undefined }));
+  return { ...career, state };
 }
 const hiddenCatalogs = new WeakMap<WorldCatalog, WorldCatalog>();
 export function presentWorld(world: WorldCatalog, reveal = false): WorldCatalog {

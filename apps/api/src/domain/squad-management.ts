@@ -182,7 +182,13 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
       p.positionTraining = pos;
       return g;
     }
+    case 'teamInstructions':
     case 'instructions': {
+      if (
+        a.type === 'teamInstructions' &&
+        !['balanced', 'power', 'smallball', 'patient'].includes(String(a.preset))
+      )
+        throw new Error('전술을 확인해 주세요.');
       const input = a.value as TeamInstructions;
       const keys = ['steal', 'patience', 'power', 'depth'] as const;
       if (!input || keys.some((k) => !Number.isFinite(input[k]) || input[k] < 0 || input[k] > 100))
@@ -193,6 +199,7 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
         keys.map((k) => [k, Math.round(input[k])]),
       ) as TeamInstructions;
       g.tacticFamiliarity = Math.max(20, (g.tacticFamiliarity || 55) - change);
+      if (a.type === 'teamInstructions') g.tactic = String(a.preset);
       return g;
     }
     case 'saveTactic': {
