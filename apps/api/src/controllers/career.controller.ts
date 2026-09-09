@@ -24,6 +24,10 @@ export class CareerController {
       body = request.body;
     if (!body || typeof body !== 'object' || Array.isArray(body))
       throw new BadRequestException('요청 형식이 올바르지 않습니다.');
-    return presentCareer(await this.careers.act(env.DB, user, body as Record<string, unknown>));
+    const action = body as Record<string, unknown>;
+    return presentCareer(
+      await this.careers.act(env.DB, user, action),
+      action.responseMode === 'compact',
+    );
   }
 }

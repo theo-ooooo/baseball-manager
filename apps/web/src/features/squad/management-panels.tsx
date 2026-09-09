@@ -1,7 +1,6 @@
 'use client';
-import { ratingText } from '@dugout/shared/ratings';
-import { lineupReason } from '@dugout/shared/player-attributes';
 import { PitchingPanel } from './pitching-panel';
+import { BattingOrderEditor } from './batting-order-editor';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -184,19 +183,20 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
     requestedPanel === 'pitching' || requestedPanel === 'library' ? requestedPanel : 'lineup';
   const [name, setName] = useState('');
   const instructionKey = JSON.stringify([g.tactic, g.instructions]);
-  const [draft, setDraft] = useState<{ key: string; value: TeamInstructions } | null>(null);
+  const [draft, setDraft] = useState<{
+    key: string;
+    value: TeamInstructions;
+    preset: string;
+  } | null>(null);
   const instructions =
     draft?.key === instructionKey ? draft.value : g.instructions || defaults(g.tactic);
-  const setInstructions = (value: TeamInstructions) => setDraft({ key: instructionKey, value });
-  const batters = g.lineup.map((id) => g.roster.find((p) => p.id === id)!).filter(Boolean),
-    active = firstTeam(g);
-  function changeBatter(index: number, id: string) {
-    const ids = [...g.lineup],
-      old = ids.indexOf(id);
-    if (old >= 0) [ids[index], ids[old]] = [ids[old], ids[index]];
-    else ids[index] = id;
-    void act({ type: 'lineup', ids });
-  }
+  const selectedPreset = draft?.key === instructionKey ? draft.preset : g.tactic;
+  const setInstructions = (value: TeamInstructions) =>
+    setDraft({ key: instructionKey, value, preset: selectedPreset });
+  const instructionsDirty =
+    selectedPreset !== g.tactic ||
+    JSON.stringify(instructions) !== JSON.stringify(g.instructions || defaults(g.tactic));
+  const active = firstTeam(g);
   return (
     <Tabs
       value={panel}
@@ -281,7 +281,10 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
                 </p>
               </div>
             </section>
-            <section className="panel training-block">
+            <section
+              className="panel training-block"
+              data-unsaved-plan={instructionsDirty || undefined}
+            >
               <div className="panel-header">
                 <h2>팀 지시</h2>
                 <span>프리셋 선택 후 조정 가능</span>
@@ -290,9 +293,11 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
                 {Object.entries(presetNames).map(([value, label]) => (
                   <button
                     key={value}
-                    className={g.tactic === value ? 'selected' : ''}
+                    className={selectedPreset === value ? 'selected' : ''}
                     disabled={busy}
-                    onClick={() => void act({ type: 'tactic', value })}
+                    onClick={() =>
+                      setDraft({ key: instructionKey, value: defaults(value), preset: value })
+                    }
                   >
                     {label}
                   </button>
@@ -329,76 +334,38 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
                 ))}
                 <button
                   className="button primary compact"
-                  disabled={busy}
-                  onClick={() => void act({ type: 'instructions', value: instructions })}
+                  disabled={busy || !instructionsDirty}
+                  onClick={() =>
+                    void act({
+                      type: 'teamInstructions',
+                      value: instructions,
+                      preset: selectedPreset,
+                    })
+                  }
                 >
-                  팀 지시 적용
+                  {busy ? '팀 지시 저장 중…' : '팀 지시 적용'}
+                </button>
+                <button
+                  className="button secondary compact"
+                  disabled={busy || !instructionsDirty}
+                  onClick={() => setDraft(null)}
+                >
+                  팀 지시 되돌리기
                 </button>
                 <p className="tiny">
-                  큰 전술 변경은 숙련도를 낮춥니다. 적용한 지시만 전술 보관함에 저장됩니다.
+                  {instructionsDirty ? '변경한 전술은 아직 저장되지 않았습니다. ' : ''}큰 전술
+                  변경은 숙련도를 낮춥니다. 적용한 지시만 전술 보관함에 저장됩니다.
                 </p>
               </div>
             </section>
           </div>
-          <section className="panel">
-            <div className="panel-header">
-              <h2>선발 타순</h2>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => void act({ type: 'auto' })}
-              >
-                코치 추천
-              </button>
-            </div>
-            <div className="management-lineup">
-              {batters.map((p, i) => (
-                <div key={p.id}>
-                  <b>{i + 1}</b>
-                  <div>
-                    <select
-                      aria-label={`${i + 1}번 타자`}
-                      value={p.id}
-                      disabled={busy}
-                      onChange={(e) => changeBatter(i, e.target.value)}
-                    >
-                      {active
-                        .filter((v) => v.pos !== 'P')
-                        .map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.name} · {v.pos}
-                          </option>
-                        ))}
-                    </select>
-                    <button className="text-button" onClick={() => onPlayer(p)}>
-                      능력 {ratingText(p)} · 컨디션 {Math.round(p.condition)}%
-                    </button>
-                    <small className="lineup-reason">{lineupReason(p, i)}</small>
-                  </div>
-                  <div className="lineup-arrows">
-                    <button
-                      aria-label={`${p.name} 타순 올리기`}
-                      disabled={busy || i === 0}
-                      onClick={() => changeBatter(i, g.lineup[i - 1])}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      aria-label={`${p.name} 타순 내리기`}
-                      disabled={busy || i === 8}
-                      onClick={() => changeBatter(i, g.lineup[i + 1])}
-                    >
-                      ↓
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="panel-content tiny">
-              타순을 바꿔도 기존 선수의 수비 위치는 유지됩니다. 벤치 선수와 교체하면 수비 배치를
-              다시 확인하세요.
-            </div>
-          </section>
+          <BattingOrderEditor
+            key={g.lineup.join(':')}
+            g={g}
+            act={act}
+            busy={busy}
+            onPlayer={onPlayer}
+          />
         </div>
       </TabsContent>
       <TabsContent value="pitching">

@@ -38,17 +38,27 @@ export class CareerService {
       typeof action.requestId === 'string' && /^[a-zA-Z0-9-]{16,80}$/.test(action.requestId)
         ? action.requestId
         : crypto.randomUUID();
-    if (await this.careers.seenRequest(db, user, requestId)) return this.read(db, user);
     // Keep the persisted snapshot as the delta baseline; the engine normalizes its own copy.
-    const current = await this.careers.read(db, user);
+    // Catalog lookup and the three bounded career reads have no data dependency.
+    const [{ current, seen }, world] = await Promise.all([
+      this.careers.actionSnapshot(db, user, requestId),
+      this.catalog.getWorld(db),
+    ]);
+    const refreshed = () => {
+      if (current.state && !current.state.liveMatch) {
+        prepareSquad(current.state, world);
+        prepareDynamics(current.state);
+      }
+      return current;
+    };
+    if (seen) return refreshed();
     const expected = Number(action.revision);
     if (!Number.isInteger(expected) || expected !== current.revision)
       throw new ConflictException({
         error: '다른 화면에서 변경됐습니다. 최신 커리어를 불러왔습니다.',
-        ...presentCareer(await this.read(db, user)),
+        ...presentCareer(refreshed()),
       });
-    const world = await this.catalog.getWorld(db),
-      engine = createGameEngine(world);
+    const engine = createGameEngine(world);
     let next;
     try {
       if (action.type === 'start') {
