@@ -5,6 +5,7 @@ import { createCalendarProgression } from './calendar-progression';
 import { createRecruitment } from './recruitment';
 import { createScouting } from './scouting';
 import { individualTrainingAction } from './individual-training';
+import { createMatchMediaActions, finishPendingConversation } from './match-media-actions';
 import { trainingRecovery } from '@dugout/shared/training-plan';
 import { developPlayers, developmentReports } from './player-development';
 
@@ -56,6 +57,7 @@ export function createGameEngine(world: WorldCatalog) {
   const transfers = createTransferMarket(world);
   const recruitment = createRecruitment(world);
   const scouting = createScouting(world);
+  const mediaAction = createMatchMediaActions(world);
   const { negotiate, signDeal } = recruitment;
   const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const news = postNews;
@@ -545,6 +547,10 @@ export function createGameEngine(world: WorldCatalog) {
     }
     const live = liveAction(s, a);
     if (live) return live;
+    const media = mediaAction(s, a);
+    if (media) return media;
+    if (['continue', 'continueDay', 'advance', 'nextSeason'].includes(String(a.type)))
+      finishPendingConversation(s);
     const social = dynamicsAction(s, a);
     if (social) return social;
     const recruited = recruitment.action(s, a);

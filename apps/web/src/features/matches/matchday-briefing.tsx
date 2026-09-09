@@ -134,9 +134,10 @@ export function MatchdayBriefing({
           <h4>오늘의 경기 흐름</h4>
           <ol className="matchday-steps">
             <li aria-current="step">선수단·전술 점검</li>
+            <li>경기 전 인터뷰 · 라커룸 대화</li>
             <li>경기장 · 최종 선수 선택</li>
             <li>플레이볼 · 경기 지휘</li>
-            <li>경기 후 보고 · 다음 일정</li>
+            <li>경기 후 보고 · 인터뷰와 팀 대화</li>
           </ol>
           <p>팀 구성을 바꾸고 이 화면으로 돌아오면 최신 명단이 반영됩니다.</p>
         </aside>

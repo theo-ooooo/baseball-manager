@@ -214,13 +214,15 @@ export function InboxReport({
             <Link className="button secondary" href={`/?view=${news.actionView}`}>
               {news.actionView === 'agents'
                 ? '전체 계약 협상'
-                : news.actionView === 'staff'
-                  ? '코치 협상 확인'
-                  : news.actionView === 'scouting'
-                    ? '관찰 보고 · 선수 비교'
-                    : news.actionView === 'market'
-                      ? '영입 대상 확인'
-                      : '선수단 확인'}
+                : news.actionView === 'media'
+                  ? '인터뷰 · 라커룸으로'
+                  : news.actionView === 'staff'
+                    ? '코치 협상 확인'
+                    : news.actionView === 'scouting'
+                      ? '관찰 보고 · 선수 비교'
+                      : news.actionView === 'market'
+                        ? '영입 대상 확인'
+                        : '선수단 확인'}
               <ArrowUpRight size={15} />
             </Link>
           )}

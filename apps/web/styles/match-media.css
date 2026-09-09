@@ -1,0 +1,347 @@
+.match-media-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+  align-items: start;
+}
+.media-room {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.media-room-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 26px;
+  background: #172e55;
+  color: #fff;
+}
+.media-room-header span {
+  color: #bdcee9;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.media-room-header h2 {
+  font-size: 23px;
+  margin: 3px 0 0;
+}
+.media-room-header > small {
+  margin-left: auto;
+  color: #d1dff7;
+}
+.media-conversation,
+.media-result,
+.media-empty {
+  padding: 26px;
+}
+.media-brief {
+  display: grid;
+  gap: 5px;
+}
+.media-brief span {
+  color: var(--text-3);
+  font-size: 11px;
+}
+.media-brief strong {
+  font-size: 14px;
+}
+.media-steps {
+  display: flex;
+  list-style: none;
+  gap: 12px;
+  padding: 17px 0;
+  margin: 12px 0 0;
+  border-block: 1px solid var(--line);
+}
+.media-steps li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.media-steps li[aria-current] {
+  color: var(--brand);
+  font-weight: 700;
+}
+.media-question {
+  padding: 25px 0 18px;
+}
+.media-question small {
+  display: block;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.media-question h3 {
+  font-size: 20px;
+  line-height: 1.7;
+  font-weight: 650;
+}
+.media-answers {
+  border: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.media-answers legend {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.media-answers label {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 17px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.media-answers label.is-selected {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.media-answers input {
+  accent-color: var(--brand);
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+}
+.media-answers label > span {
+  flex: 1;
+}
+.media-answers small {
+  display: block;
+  color: var(--text-3);
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.media-answers strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+.media-answers label > svg {
+  color: var(--brand);
+  flex-shrink: 0;
+}
+.is-team-talk .media-question {
+  border-left: 3px solid #26765b;
+  padding-left: 18px;
+  margin-top: 18px;
+  background: #f3f8f5;
+}
+.media-coach-note {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.7;
+  margin: 15px 0;
+}
+.media-conversation-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.media-delegate {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.media-delegate strong,
+.media-delegate small {
+  display: block;
+}
+.media-delegate strong {
+  font-size: 12px;
+}
+.media-delegate small {
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.media-delegate button {
+  flex-shrink: 0;
+}
+.media-complete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.media-complete > svg {
+  color: var(--ok-text);
+  flex-shrink: 0;
+}
+.media-complete h3 {
+  font-size: 18px;
+}
+.media-complete p {
+  color: var(--text-3);
+  font-size: 12px;
+  margin: 5px 0 0;
+}
+.media-reaction-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.media-reaction-summary b {
+  margin-left: 4px;
+}
+.media-result > h4 {
+  margin: 20px 0 12px;
+}
+.media-reactions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.media-reactions > div {
+  display: grid;
+  gap: 5px;
+  padding: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.media-reactions strong {
+  font-size: 13px;
+}
+.media-reactions span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.media-reactions b {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.media-reactions .positive {
+  border-left: 3px solid #228764;
+}
+.media-reactions .negative {
+  border-left: 3px solid #b7494c;
+}
+.media-transcript {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.media-transcript summary {
+  cursor: pointer;
+  font-size: 13px;
+}
+.media-transcript > div {
+  padding: 14px 0;
+}
+.media-transcript small {
+  color: var(--text-3);
+}
+.media-transcript h4,
+.media-transcript p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+.media-transcript p {
+  color: var(--text-2);
+}
+.media-journal {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-1);
+  padding: 16px;
+}
+.media-journal h3 {
+  font-size: 14px;
+}
+.media-journal p {
+  font-size: 11px;
+  color: var(--text-3);
+  margin: 6px 0 12px;
+}
+.media-journal button {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  text-align: left;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.media-journal button[aria-pressed='true'] strong {
+  color: var(--brand);
+}
+.media-journal strong {
+  font-size: 12px;
+}
+.media-journal time,
+.media-journal button span {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.media-empty {
+  display: grid;
+  gap: 16px;
+}
+.media-empty p {
+  color: var(--text-3);
+  line-height: 1.8;
+  font-size: 14px;
+}
+.media-return {
+  margin: 0 26px 26px;
+}
+@media (max-width: 1000px) {
+  .match-media-page {
+    grid-template-columns: 1fr;
+  }
+  .media-journal {
+    max-height: 300px;
+    overflow: auto;
+  }
+}
+@media (max-width: 600px) {
+  .media-room-header {
+    padding: 17px;
+  }
+  .media-room-header h2 {
+    font-size: 19px;
+  }
+  .media-room-header > small {
+    font-size: 10px;
+  }
+  .media-conversation,
+  .media-result,
+  .media-empty {
+    padding: 17px;
+  }
+  .media-question h3 {
+    font-size: 17px;
+  }
+  .media-answers label {
+    padding: 13px;
+  }
+  .media-answers strong {
+    font-size: 13px;
+  }
+  .media-reactions {
+    grid-template-columns: 1fr;
+  }
+  .media-delegate {
+    align-items: flex-start;
+  }
+  .media-delegate small {
+    max-width: 200px;
+    line-height: 1.6;
+  }
+}

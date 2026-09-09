@@ -3,6 +3,7 @@ import { createGameView } from '@dugout/shared/game-view';
 import type { createMatchSimulator } from './match-simulation';
 import { generateTimeline, reviseTimeline, validateCursor, visibleResult } from './match-timeline';
 import { matchCommandAction } from './match-command-actions';
+import { finishPendingConversation, queuePostMatchConversation } from './match-media-actions';
 
 type Advance = (game: GameState, count?: number, pauseAfterOwn?: boolean) => GameState;
 export function createLiveMatchActions(
@@ -21,6 +22,7 @@ export function createLiveMatchActions(
       const pair = nextFixture(g);
       if (!pair) throw new Error('오늘 경기가 없습니다. 계속 진행으로 다음 일정으로 이동하세요.');
       const [home, away] = pair;
+      finishPendingConversation(g);
       g.liveMatch = {
         home,
         away,
@@ -75,7 +77,11 @@ export function createLiveMatchActions(
       const cursor = validateCursor(live, a);
       if (cursor < live.timeline!.log.length) throw new Error('경기를 끝까지 진행해 주세요.');
       live.finished = true;
-      return advance(g, 1, true);
+      const before = new Set(g.history.map((result) => result.id));
+      const next = advance(g, 1, true);
+      const result = next.history.find((result) => !before.has(result.id));
+      if (result) queuePostMatchConversation(next, result, world);
+      return next;
     }
     if (g.liveMatch && a.type !== 'syncCatalog')
       throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
