@@ -5,3 +5,4 @@ export {
   developmentReports,
 } from '../../apps/api/src/domain/player-development';
 export { presentState } from '../../apps/api/src/services/presentation';
+export { gameDate } from '../../packages/shared/src/calendar';

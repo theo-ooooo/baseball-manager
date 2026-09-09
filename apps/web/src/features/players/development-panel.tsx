@@ -10,6 +10,7 @@ import {
 import { coachSkill } from '@dugout/shared/game-view';
 import { gameDate } from '@dugout/shared/calendar';
 import { isUnrated } from '@dugout/shared/ratings';
+import { detailedAttributes } from '@dugout/shared/player-attributes';
 
 const signed = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}`;
 export function DevelopmentBadge({ player }: { player: Player }) {
@@ -48,11 +49,12 @@ export function DevelopmentPanel({ player: p, game: g }: { player: Player; game:
     y: 135 - ((p.value - low) * 110) / Math.max(1, high - low),
     ...p,
   }));
-  const keys = abilityKeys.filter((k) =>
-    p.pos === 'P'
-      ? ['stuff', 'control', 'field', 'speed'].includes(k)
-      : !['stuff', 'control'].includes(k),
+  const observed = new Set(
+    detailedAttributes(p)
+      .filter((a) => a.value !== null)
+      .map((a) => a.key),
   );
+  const keys = abilityKeys.filter((k) => observed.has(k));
   const advice =
     d.stage === 'growth'
       ? '경기에 꾸준히 출전하며 주력 능력을 키울 시기입니다. 1군 출전이 적으면 2군에서 경기 경험을 쌓게 해 주세요.'

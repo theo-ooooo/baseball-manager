@@ -4,6 +4,8 @@ import { applyMatchEffects, runMatch } from './match-timeline';
 import { createCalendarProgression } from './calendar-progression';
 import { createRecruitment } from './recruitment';
 import { createScouting } from './scouting';
+import { individualTrainingAction } from './individual-training';
+import { trainingRecovery } from '@dugout/shared/training-plan';
 import { developPlayers, developmentReports } from './player-development';
 
 import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
@@ -311,6 +313,7 @@ export function createGameEngine(world: WorldCatalog) {
           p.condition +
             4 +
             coachSkill(g, '체력') * 0.09 +
+            trainingRecovery(g, p, g.day - 1) +
             (g.training === 'rest' ? 9 : g.training === 'intense' ? -5 : 0),
           20,
           100,
@@ -547,6 +550,8 @@ export function createGameEngine(world: WorldCatalog) {
     if (recruited) return recruited;
     const scouted = scouting.action(s, a);
     if (scouted) return scouted;
+    const trained = individualTrainingAction(s, a);
+    if (trained) return trained;
     const managed = managementAction(s, a);
     if (managed) return managed;
     switch (a.type) {

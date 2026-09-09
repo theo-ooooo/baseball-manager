@@ -10,6 +10,7 @@ import {
 import { detailedAttributes } from '@dugout/shared/player-attributes';
 import { isUnrated } from '@dugout/shared/ratings';
 import { postNews } from './club-dynamics';
+import { checkTrainingGoal, individualTrainingFactors } from './individual-training';
 
 function curveFor(p: Player): Pick<PlayerDevelopment, 'pattern' | 'curve'> {
   const seed = hash(`${p.id}:development-v1`);
@@ -83,6 +84,7 @@ export function developPlayers(g: GameState) {
             ? 1.2
             : 0.55
           : 1;
+    const planFactors = individualTrainingFactors(g, p);
     for (const key of abilityKeys) {
       if (
         (p.pos === 'P' && ['contact', 'power'].includes(key)) ||
@@ -105,12 +107,21 @@ export function developPlayers(g: GameState) {
           ? 1.4
           : 1;
       const individual = 0.85 + (hash(`${p.id}:${key}`) % 31) / 100;
+      const planFactor = planFactors[key];
       let delta = 0;
       if (d.stage === 'growth')
         delta =
-          (c.growth * coaching * workload * freshness * training * focus * individual) / seasonDays;
+          (c.growth *
+            coaching *
+            workload *
+            freshness *
+            training *
+            focus *
+            individual *
+            planFactor) /
+          seasonDays;
       else if (d.stage === 'peak')
-        delta = (0.35 * coaching * workload * training * focus) / seasonDays;
+        delta = (0.35 * coaching * workload * training * focus * planFactor) / seasonDays;
       else {
         const ageLoss = (1 + (p.age - c.decline) * 0.3) * c.durability;
         const physical =
@@ -122,6 +133,7 @@ export function developPlayers(g: GameState) {
       if (delta > 0) delta = Math.min(delta, Math.max(0, p.potential - p[key]));
       p[key] = Math.max(20, Math.min(99, p[key] + delta));
     }
+    checkTrainingGoal(g, p);
   }
 }
 export function developmentReports(g: GameState) {

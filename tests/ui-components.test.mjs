@@ -136,3 +136,30 @@ test('Growth arrows show observed fractional changes without exposing unknown at
   assert.equal(render(PlayerGrowth, { player: p }), '');
   assert.doesNotMatch(render(PlayerAttributes, { player: p, owned: true }), /growth-delta/);
 });
+
+test('Training and history withhold unmeasured ability goals and retain observed progress', async () => {
+  const { TrainingPlanForm } = await vite.ssrLoadModule(
+    '/apps/web/src/features/players/training-plan-form.tsx',
+  );
+  const { DevelopmentPanel } = await vite.ssrLoadModule(
+    '/apps/web/src/features/players/development-panel.tsx',
+  );
+  const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
+  const { createGameEngine } = await vite.ssrLoadModule('/apps/api/src/domain/game-engine.ts');
+  const g = createGameEngine(buildSeedWorld()).newGame('kbo-lotte', 'Training UI', 'full', 12);
+  const p = g.roster.find((p) => p.name === '김진욱');
+  p.field += 5;
+  p.stuff += 0.013;
+  const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
+  const history = render(DevelopmentPanel, { player: p, game: g });
+  assert.match(history, /<td>구위<\/td>/);
+  assert.doesNotMatch(history, /<td>수비<\/td>|\+5.00/);
+  p.trainingPlan = { focus: 'field', intensity: 'normal', restDays: [1], started: '2026-02-28' };
+  const form = render(TrainingPlanForm, { player: p, g, busy: false, act: async () => null });
+  assert.match(form, /게임 훈련 · 수치 미평가/);
+  assert.match(form, /aria-label="개인 육성 목표 수치"[^>]*disabled/);
+  p.trainingPlan = { ...p.trainingPlan, focus: 'stuff', baseline: 56, target: 57 };
+  const observed = render(TrainingPlanForm, { player: p, g, busy: false, act: async () => null });
+  assert.match(observed, /개인 육성 목표 진척/);
+  assert.doesNotMatch(observed, /aria-label="개인 육성 목표 수치"[^>]*disabled/);
+});
