@@ -35,7 +35,7 @@ export function AppSidebar({
   const groups = [
     {
       label: '내 구단',
-      ids: ['home', 'inbox', 'matchday'],
+      ids: ['home', 'inbox', 'matchday', 'media'],
     },
     { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'dynamics'] },
     { label: '시즌 · 운영', ids: ['schedule', 'world', 'market', 'scouting', 'agents', 'finance'] },

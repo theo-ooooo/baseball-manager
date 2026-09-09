@@ -56,6 +56,8 @@ import { managerStep, matchReportId } from './manager-flow';
 import { MatchdayBriefing } from '../matches/matchday-briefing';
 import { ActionProgress } from './action-progress';
 import { isSpaceShortcut } from './space-shortcut';
+import { conversationKey } from '@dugout/shared/match-media';
+import { MatchConversationPanel } from '../matches/match-conversation-panel';
 
 export function GameScreen({
   initial,
@@ -187,7 +189,19 @@ export function GameScreen({
     if (next?.progress?.newsIds.length) openReport(next.progress.newsIds[0]);
     else if (next?.progress?.stop === 'fixture') setView('matchday');
   }
-  const step = g ? managerStep(g, !!nextFixture(g), view) : null;
+  const pair = g ? nextFixture(g) : null;
+  const interviewReady = !!(g && pair && g.media?.preparedFor === conversationKey(g, pair));
+  const baseStep = g ? managerStep(g, !!pair, view) : null;
+  const step =
+    baseStep?.kind === 'matchday' && (view === 'matchday' || view === 'media') && !interviewReady
+      ? {
+          ...baseStep,
+          label: '경기 전 인터뷰',
+          detail: '기자 질문과 라커룸 대화를 마치고 경기장으로 이동하세요.',
+        }
+      : baseStep?.kind === 'matchday' && view === 'media' && interviewReady
+        ? { ...baseStep, label: '선수단 제출 · 경기장으로' }
+        : baseStep;
   async function continueFlow() {
     if (!g || !step || busy || progressing || g.liveMatch) return;
     const unsaved = document.querySelector('[data-unsaved-plan="true"]');
@@ -198,9 +212,15 @@ export function GameScreen({
     }
     calendarProgress.close();
     if (step.reportId) openReport(step.reportId);
-    else if (step.kind === 'matchday') {
-      if (view === 'matchday') await act({ type: 'startMatch' });
-      else setView('matchday');
+    else if (step.kind === 'media') {
+      if (view === 'media') toast.info('질문과 팀 대화에 답하거나 코치에게 맡겨 주세요.');
+      else setView('media');
+    } else if (step.kind === 'matchday') {
+      if (view === 'matchday' || view === 'media') {
+        if (interviewReady) await act({ type: 'startMatch' });
+        else if (view === 'media') toast.info('질문과 팀 대화에 답하거나 코치에게 맡겨 주세요.');
+        else setView('media');
+      } else setView('matchday');
     } else if (step.kind === 'season') {
       const next = await act({ type: 'nextSeason' });
       if (next) openReport(next.news[0]?.id);
@@ -502,6 +522,9 @@ export function GameScreen({
               label={step!.label}
               busy={busy}
             />
+          )}
+          {view === 'media' && (
+            <MatchConversationPanel g={g} act={act} busy={busy} onContinue={continueFlow} />
           )}
           {nextFixture(g) && ['tactics', 'reserves', 'squad', 'player'].includes(view) && (
             <Link className="button secondary matchday-return" href="/?view=matchday">

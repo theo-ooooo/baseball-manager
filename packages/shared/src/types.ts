@@ -1,6 +1,7 @@
 import type { ScoutingState } from './scouting';
 import type { TrainingPlan } from './training-plan';
 import type { MatchCommand, MatchCommandKind } from './match-commands';
+import type { MatchMediaState } from './match-media';
 export type Pos = 'P' | 'C' | 'IF' | 'OF' | 'DH';
 export type Stats = {
   ab: number;
@@ -204,6 +205,7 @@ export type GameState = {
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
   progress?: DayProgress;
   scouting?: ScoutingState;
+  media?: MatchMediaState;
 };
 export type DayProgress = {
   from: number;
@@ -392,7 +394,7 @@ export type NewsItem = {
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
-  actionView?: 'agents' | 'staff' | 'squad' | 'market' | 'scouting';
+  actionView?: 'agents' | 'staff' | 'squad' | 'market' | 'scouting' | 'media';
   sender?: { name: string; role: string };
   dealId?: string;
   report?: {

@@ -7,6 +7,7 @@ export const newsKinds: Record<string, { label: string; sender: string; role: st
   training: { label: '훈련', sender: '코칭 스태프', role: '선수단 관리' },
   development: { label: '성장 보고', sender: '육성 담당 코치', role: '성장 및 기량 변화' },
   morale: { label: '선수 면담', sender: '선수 연락 담당', role: '선수단 소통' },
+  media: { label: '인터뷰 · 팀 대화', sender: '구단 홍보 담당', role: '언론과 선수단 일정' },
   club: { label: '구단 소식', sender: '구단 사무국', role: '감독 업무 지원' },
 };
 export function newsMeta(news: NewsItem) {
@@ -20,6 +21,7 @@ export function contractReview(news: NewsItem) {
   );
 }
 export function newsNeedsAction(news: NewsItem, g: GameState) {
+  if (news.id === `media-pending:${g.media?.pending?.key}`) return true;
   if (news.choiceKind && !news.choice) return true;
   if (contractReview(news))
     return (

@@ -325,6 +325,61 @@ test('Compact mutation responses omit archived playback without changing stored 
   assert.equal(unchanged.state.budget, initial.state.budget);
 });
 
+test('D1 post-match media saves canonical messages and actual mood reactions once without rewriting the result', async () => {
+  const user = 'media-conversation-career';
+  await action({ type: 'start', club: 'kbo-lotte', manager: 'Media DB', mode: 'short' }, user);
+  await action({ type: 'continue' }, user);
+  const live = await action({ type: 'startMatch' }, user);
+  const before = await action(
+    { type: 'completeMatch', cursor: live.state.liveMatch.timeline.log.length, timelineVersion: 1 },
+    user,
+  );
+  const pending = before.state.media.pending;
+  assert.equal(pending.key, 'post:' + before.state.history[0].id);
+  const command = {
+    type: 'matchConversation',
+    stage: 'post',
+    key: pending.key,
+    answers: pending.questions.map((q) => ({
+      id: q.id,
+      choice: 'challenge',
+      text: 'forged quote',
+    })),
+    revision: before.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const result = await call('/api/career', command, user);
+  assert.equal(result.status, 201);
+  const saved = result.body,
+    record = saved.state.media.journal[0];
+  assert.equal(saved.revision, before.revision + 1);
+  assert.equal(saved.state.media.pending, undefined);
+  assert.ok(record.answers.every((a) => a.text !== 'forged quote'));
+  assert.deepEqual(saved.state.history, before.state.history);
+  assert.equal(saved.state.day, before.state.day);
+  assert.equal(saved.state.budget, before.state.budget);
+  for (const r of record.reactions) {
+    assert.ok(Math.abs(r.after - r.before) <= 2);
+    assert.equal(saved.state.roster.find((p) => p.id === r.id).mood.value, r.after);
+  }
+  const strip = (players) =>
+    players.map((p) => {
+      const copy = { ...p };
+      delete copy.mood;
+      return copy;
+    });
+  assert.deepEqual(strip(saved.state.roster), strip(before.state.roster));
+  assert.deepEqual((await call('/api/career', command, user)).body, saved);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, saved);
+  const again = await call(
+    '/api/career',
+    { ...command, revision: saved.revision, requestId: crypto.randomUUID() },
+    user,
+  );
+  assert.equal(again.status, 400);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, saved);
+});
+
 test('D1 commits a full-roster exchange once and rejected exchanges leave both players unchanged', async () => {
   const user = 'roster-exchange';
   const before = await action(

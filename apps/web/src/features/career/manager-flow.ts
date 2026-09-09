@@ -2,7 +2,7 @@ import type { GameState } from '@dugout/shared/types';
 import { newsNeedsAction } from '../inbox/inbox-model';
 
 export type ManagerStep = {
-  kind: 'decision' | 'report' | 'matchday' | 'live' | 'season' | 'continue';
+  kind: 'decision' | 'report' | 'matchday' | 'media' | 'live' | 'season' | 'continue';
   label: string;
   detail: string;
   reportId?: string;
@@ -20,6 +20,23 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
   if (decision)
     return { kind: 'decision', label: '필수 답변', detail: decision.title, reportId: decision.id };
   const unread = g.news.filter((n) => !n.read);
+  if (g.media?.pending) {
+    const matchReport = unread.find(
+      (n) => n.kind === 'match' && `post:${n.matchId}` === g.media!.pending!.key,
+    );
+    return matchReport
+      ? {
+          kind: 'report',
+          label: '경기 후 보고',
+          detail: matchReport.title,
+          reportId: matchReport.id,
+        }
+      : {
+          kind: 'media',
+          label: '경기 후 인터뷰',
+          detail: '취재진과 선수단에 경기 평가를 전하고 다음 일정을 준비하세요.',
+        };
+  }
   const report = unread.find((n) => newsNeedsAction(n, g)) || unread[0];
   if (report)
     return {
