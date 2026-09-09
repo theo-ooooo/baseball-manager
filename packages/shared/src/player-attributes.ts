@@ -1,4 +1,4 @@
-import type { Player } from '@dugout/shared/types';
+import type { AbilityKey, Player } from '@dugout/shared/types';
 import { isUnrated } from '@dugout/shared/ratings';
 const clamp = (n: number) => Math.round(Math.max(20, Math.min(99, n)));
 export function battingProfile(p: Player) {
@@ -25,26 +25,33 @@ export function battingProfile(p: Player) {
     observedOBP,
   };
 }
-export function detailedAttributes(p: Player) {
+export type DetailedAttribute = {
+  label: string;
+  value: number | null;
+  basis: string;
+  key?: AbilityKey;
+};
+export function detailedAttributes(p: Player): DetailedAttribute[] {
   const r = p.rating?.record,
     unknown = isUnrated(p),
     sample = p.pos === 'P' ? (r?.outs || 0) / 3 : r?.pa || 0,
     weight = sample / (sample + (p.pos === 'P' ? 35 : 150));
   const grade = (value: number, neutral: number, scale: number) =>
     clamp(65 + (value - neutral) * scale * weight);
-  const primary = (label: string, value: number) => ({
+  const primary = (label: string, key: AbilityKey) => ({
     label,
+    key,
     value:
       unknown || (p.real && p.rating?.estimatedAttributes.includes(label))
         ? null
-        : Math.round(value),
+        : Math.round(p[key]),
     basis: '종합 능력',
   });
   const rows =
     p.pos === 'P'
       ? [
-          primary('구위', p.stuff),
-          primary('제구', p.control),
+          primary('구위', 'stuff'),
+          primary('제구', 'control'),
           {
             label: '탈삼진',
             value:
@@ -95,12 +102,12 @@ export function detailedAttributes(p: Player) {
                   : clamp(p.stuff * 0.7 + p.control * 0.3),
             basis: '등판당 이닝',
           },
-          primary('수비', p.field),
+          primary('수비', 'field'),
           { label: '구종·구속', value: null, basis: '측정 자료 미확인' },
         ]
       : [
-          primary('컨택', p.contact),
-          primary('파워', p.power),
+          primary('컨택', 'contact'),
+          primary('파워', 'power'),
           {
             label: '선구안',
             value:
@@ -141,7 +148,7 @@ export function detailedAttributes(p: Player) {
                   : p.power,
             basis: 'ISO',
           },
-          primary('주력', p.speed),
+          primary('주력', 'speed'),
           {
             label: '도루 판단',
             value:
@@ -152,7 +159,7 @@ export function detailedAttributes(p: Player) {
                   : clamp(p.speed * 0.75 + p.contact * 0.25),
             basis: '도루 성공률',
           },
-          primary('수비', p.field),
+          primary('수비', 'field'),
           {
             label: '송구',
             value: p.real ? null : p.field,

@@ -7,7 +7,8 @@ import { PlayerTable } from '../players/player-table';
 import { pitchingAssignment, roleNames, type PitchingAssignment } from './pitching-panel';
 import { useRosterMoves } from './roster-moves';
 import type { Act } from '../career/game-contracts';
-import { growthLabels } from '@dugout/shared/development';
+import { developmentChange, growthLabels, visibleChange } from '@dugout/shared/development';
+import { isUnrated } from '@dugout/shared/ratings';
 
 const roleFilters: Exclude<PitchingAssignment, ''>[] = [
   'starter',
@@ -36,6 +37,17 @@ export function Squad({
     [sort, setSort] = useState('rating'),
     [detailed, setDetailed] = useState(false);
   const [growth, setGrowth] = useState('all');
+  const matchesGrowth = (p: Player, filter: string) => {
+    const change = isUnrated(p) ? 0 : visibleChange(developmentChange(p));
+    return (
+      filter === 'all' ||
+      (filter === 'improving'
+        ? change > 0
+        : filter === 'declining'
+          ? change < 0
+          : p.development?.stage === filter)
+    );
+  };
   const pitchers = g.roster.filter((p) => p.pos === 'P');
   const roleCount = (r: string) => pitchers.filter((p) => pitchingAssignment(g, p) === r).length;
   const list = g.roster
@@ -43,15 +55,18 @@ export function Squad({
       (p) =>
         (filter === 'all' || p.pos === filter || (filter === 'young' && p.age <= 23)) &&
         (filter !== 'P' || role === 'all' || pitchingAssignment(g, p) === role) &&
-        (growth === 'all' || p.development?.stage === growth) &&
+        matchesGrowth(p, growth) &&
         p.name.toLowerCase().includes(query.toLowerCase()),
     )
     .sort((a, b) =>
-      sort === 'age'
-        ? a.age - b.age
-        : sort === 'salary'
-          ? b.salary - a.salary
-          : overall(b) - overall(a),
+      sort === 'growth'
+        ? (isUnrated(b) ? 0 : (developmentChange(b) ?? 0)) -
+          (isUnrated(a) ? 0 : (developmentChange(a) ?? 0))
+        : sort === 'age'
+          ? a.age - b.age
+          : sort === 'salary'
+            ? b.salary - a.salary
+            : overall(b) - overall(a),
     );
   return (
     <section className="panel">
@@ -93,6 +108,7 @@ export function Squad({
             onChange={setSort}
             items={[
               { value: 'rating', label: '능력치 순' },
+              { value: 'growth', label: '최근 성장량 순' },
               { value: 'age', label: '어린 선수 순' },
               { value: 'salary', label: '연봉 순' },
             ]}
@@ -121,10 +137,15 @@ export function Squad({
         </div>
       )}
       <div className="growth-filter" role="group" aria-label="성장 단계 필터">
-        {[['all', '모든 단계'], ...Object.entries(growthLabels)].map(([key, label]) => (
+        {[
+          ['all', '모든 단계'],
+          ['improving', '↗ 최근 상승'],
+          ['declining', '↘ 최근 하락'],
+          ...Object.entries(growthLabels),
+        ].map(([key, label]) => (
           <button key={key} aria-pressed={growth === key} onClick={() => setGrowth(key)}>
             {label}
-            {key !== 'all' && ` ${g.roster.filter((p) => p.development?.stage === key).length}`}
+            {key !== 'all' && ` ${g.roster.filter((p) => matchesGrowth(p, key)).length}`}
           </button>
         ))}
       </div>

@@ -5,6 +5,7 @@ import { money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
 import type { Act } from '../career/game-contracts';
 import { contractReview, newsMeta, newsNeedsAction } from './inbox-model';
+import { useWorld } from '../career/world-context';
 
 export function InboxReport({
   news,
@@ -21,6 +22,12 @@ export function InboxReport({
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
 }) {
+  const { marketPlayers } = useWorld();
+  const scouting = news.actionView === 'scouting';
+  const candidates =
+    scouting && news.report?.players?.length
+      ? new Map(marketPlayers(g).map((p) => [p.id, p]))
+      : undefined;
   const meta = newsMeta(news),
     review = contractReview(news);
   const players =
@@ -93,6 +100,8 @@ export function InboxReport({
             <div className="inbox-player-list">
               {players.map((row) => {
                 const current = g.roster.find((p) => p.id === row.id),
+                  candidate = candidates?.get(row.id),
+                  subject = current || candidate,
                   pending = g.deals.find(
                     (d) =>
                       d.player.id === row.id &&
@@ -103,8 +112,8 @@ export function InboxReport({
                     <div>
                       <button
                         className="text-button"
-                        disabled={!current}
-                        onClick={() => current && onPlayer(current)}
+                        disabled={!subject}
+                        onClick={() => subject && onPlayer(subject)}
                       >
                         {row.name}
                       </button>
@@ -116,6 +125,20 @@ export function InboxReport({
                       )}
                     </div>
                     <div className="inbox-player-action">
+                      {scouting &&
+                        (current ? (
+                          <small>구단 합류 완료</small>
+                        ) : candidate ? (
+                          <button
+                            className="button secondary compact"
+                            disabled={busy}
+                            onClick={() => onNegotiate(candidate)}
+                          >
+                            계약 제안
+                          </button>
+                        ) : (
+                          <small>영입 대상 소속 변경</small>
+                        ))}
                       {review &&
                         (current ? (
                           current.years > 1 && !pending ? (
@@ -164,9 +187,11 @@ export function InboxReport({
                 ? '전체 계약 협상'
                 : news.actionView === 'staff'
                   ? '코치 협상 확인'
-                  : news.actionView === 'market'
-                    ? '영입 대상 확인'
-                    : '선수단 확인'}
+                  : news.actionView === 'scouting'
+                    ? '관찰 보고 · 선수 비교'
+                    : news.actionView === 'market'
+                      ? '영입 대상 확인'
+                      : '선수단 확인'}
               <ArrowUpRight size={15} />
             </Link>
           )}

@@ -1,7 +1,14 @@
 import type { GameState, Player, PlayerDevelopment } from '@dugout/shared/types';
 import { coachSkill, hash } from '@dugout/shared/game-view';
 import { gameDate, daysBetween } from '@dugout/shared/calendar';
-import { abilityKeys, abilityAverage, growthLabels } from '@dugout/shared/development';
+import {
+  abilityKeys,
+  abilityAverage,
+  growthLabels,
+  visibleChange,
+} from '@dugout/shared/development';
+import { detailedAttributes } from '@dugout/shared/player-attributes';
+import { isUnrated } from '@dugout/shared/ratings';
 import { postNews } from './club-dynamics';
 
 function curveFor(p: Player): Pick<PlayerDevelopment, 'pattern' | 'curve'> {
@@ -118,28 +125,61 @@ export function developPlayers(g: GameState) {
   }
 }
 export function developmentReports(g: GameState) {
-  const reviewed: { p: Player; change: number }[] = [];
+  const reviewed: { p: Player; change: number; changes: string[]; from: string }[] = [];
   for (const p of g.roster) {
     const d = p.development;
     if (!d) continue;
     const last = d.history.at(-1);
     if (!last || daysBetween(last.date, gameDate(g)) < 28) continue;
     const now = snapshot(g, p);
-    reviewed.push({ p, change: now.overall - last.overall });
+    const changes = detailedAttributes(p).flatMap(({ label, key, value }) => {
+      if (!key || value === null) return [];
+      const change = visibleChange(p[key] - last.abilities[key]);
+      return change
+        ? [`${change > 0 ? '↗' : '↘'} ${label} ${change > 0 ? '+' : ''}${change.toFixed(2)}`]
+        : [];
+    });
+    reviewed.push({ p, change: now.overall - last.overall, changes, from: last.date });
     d.history = [...d.history, now].slice(-18);
   }
   if (!reviewed.length) return;
-  const growing = [...reviewed].filter((x) => x.change >= 0.1).sort((a, b) => b.change - a.change);
-  const declining = [...reviewed]
-    .filter((x) => x.change <= -0.1)
+  const measured = reviewed.filter(({ p }) => !isUnrated(p));
+  const growing = measured
+    .filter((x) => visibleChange(x.change) > 0)
+    .sort((a, b) => b.change - a.change);
+  const declining = measured
+    .filter((x) => visibleChange(x.change) < 0)
     .sort((a, b) => a.change - b.change);
   const lines = [
-    `최근 4주 · 성장 ${growing.length}명 · 유지 ${reviewed.length - growing.length - declining.length}명 · 하락 ${declining.length}명.`,
+    `최근 4주 · 성장 ${growing.length}명 · 유지 ${measured.length - growing.length - declining.length}명 · 하락 ${declining.length}명.`,
   ];
   for (const { p, change } of [...growing.slice(0, 3), ...declining.slice(0, 3)])
     lines.push(
       `${p.name} (${growthLabels[p.development!.stage]}) ${change >= 0 ? '+' : ''}${change.toFixed(1)}`,
     );
   lines.push('선수 상세의 성장 기록에서 능력 변화와 육성 방향을 확인하세요.');
-  postNews(g, '선수 성장·하락 보고', lines.join('\n'), 'development', { actionView: 'squad' });
+  postNews(g, '선수 성장·하락 보고', lines.join('\n'), 'development', {
+    actionView: 'squad',
+    sender: { name: '육성 담당 코치', role: '능력 변화 관찰' },
+    report: {
+      facts: [
+        { label: '능력 상승', value: `${growing.length}명` },
+        { label: '능력 하락', value: `${declining.length}명` },
+        { label: '수치 평가 보류', value: `${reviewed.length - measured.length}명` },
+      ],
+      players: [...measured]
+        .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+        .map(({ p, change, changes, from }) => ({
+          id: p.id,
+          name: p.name,
+          detail: `${from} 대비 OVR ${visibleChange(change) > 0 ? '+' : ''}${visibleChange(change).toFixed(2)} · ${changes.join(' · ') || '주요 능력 유지'}`,
+        })),
+      sections: [
+        {
+          title: '변화를 확인하는 방법',
+          body: '선수 이름을 누르면 상세 능력치 옆에 상승·하락 화살표와 변화량이 표시됩니다. 선수단과 1군·2군 명단에서도 OVR 변화를 확인할 수 있습니다. 과거 보고의 변화량은 보고 당시 기록으로 유지됩니다.',
+        },
+      ],
+    },
+  });
 }

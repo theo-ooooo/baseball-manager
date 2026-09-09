@@ -16,6 +16,7 @@ import { Mood } from '../clubs/club-panels';
 import { Rating, PlayerName, positions } from '../../components/game-ui';
 import { RoleBadge, assignmentLabel, pitchingAssignment } from '../squad/pitching-panel';
 import { DevelopmentBadge } from './development-panel';
+import { PlayerGrowth } from './growth-indicator';
 
 export function PlayerTable({
   players,
@@ -103,6 +104,7 @@ export function PlayerTable({
               )}
               <TableCell>
                 <Rating value={overall(p)} player={p} />
+                {kind !== 'market' && own.has(p.id) && <PlayerGrowth player={p} />}
               </TableCell>
               {g.rules?.revealPotential && (
                 <TableCell>

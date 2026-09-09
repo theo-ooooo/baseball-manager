@@ -1,0 +1,195 @@
+.scouting-center > *,
+.scout-player > * {
+  margin-bottom: 20px;
+}
+.scout-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.scout-toolbar small,
+.scout-assignment-form p,
+.scout-assignment-form > small {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.scout-assignment-form {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+.scout-assignment-form h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.scout-assignment-form p {
+  margin: 10px 0 18px;
+}
+.scout-form-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.scout-form-grid label,
+.scout-comparison label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.scout-form-grid input,
+.scout-form-grid select,
+.scout-comparison select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--text);
+}
+.scout-mission {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border-top: 1px solid var(--line);
+}
+.scout-mission h3 {
+  font-size: 14px;
+}
+.scout-mission p,
+.scout-mission small {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: 7px 0;
+}
+.scout-mission progress {
+  display: block;
+  width: min(300px, 100%);
+  height: 7px;
+  margin: 12px 0;
+  accent-color: var(--brand);
+}
+.scout-empty {
+  padding: 24px;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.8;
+}
+.scout-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.scout-report-grid > section {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.scout-report-grid > section > .scout-toolbar {
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+}
+.scout-report-card {
+  padding: 22px;
+  background: #fff;
+}
+.scout-report-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.scout-report-card header h3 {
+  margin-top: 6px;
+}
+.scout-report-card small {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.8;
+}
+.scout-report-card > strong {
+  font-size: 14px;
+  color: #28553f;
+}
+.scout-abilities {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 18px 0;
+}
+.scout-abilities dt {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.scout-abilities dd {
+  font-size: 17px;
+  font-weight: 650;
+  margin-top: 5px;
+}
+.scout-findings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+}
+.scout-findings h4 {
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.scout-findings p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-2);
+}
+.scout-compare-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.scout-compare-check input {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+  padding: 0;
+  accent-color: var(--brand);
+}
+.scout-comparison {
+  margin: 20px 0;
+}
+@media (max-width: 767px) {
+  .scout-form-grid,
+  .scout-report-grid,
+  .scout-findings {
+    grid-template-columns: 1fr;
+  }
+  .scout-form-grid input,
+  .scout-form-grid select {
+    font-size: 16px;
+  }
+  .scout-mission {
+    flex-wrap: wrap;
+  }
+  .scout-assignment-form,
+  .scout-report-card {
+    padding: 18px;
+  }
+  .scout-comparison .panel-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}

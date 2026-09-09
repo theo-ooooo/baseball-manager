@@ -21,8 +21,19 @@ export function abilityAverage(p: Player) {
     : p.contact * 0.4 + p.power * 0.3 + p.speed * 0.12 + p.field * 0.18;
 }
 export function developmentChange(p: Player) {
-  const history = p.development?.history;
-  if (!history?.length) return null;
-  const baseline = history.length > 1 ? history.at(-2)! : history[0];
+  const baseline = developmentBaseline(p);
+  if (!baseline) return null;
   return abilityAverage(p) - baseline.overall;
+}
+export function developmentBaseline(p: Player) {
+  const history = p.development?.history;
+  return history?.length ? (history.length > 1 ? history.at(-2)! : history[0]) : null;
+}
+export function abilityChange(p: Player, key: AbilityKey) {
+  const baseline = developmentBaseline(p);
+  return baseline ? p[key] - baseline.abilities[key] : null;
+}
+export function visibleChange(delta: number | null) {
+  if (delta === null || !Number.isFinite(delta)) return 0;
+  return (Math.round((Math.abs(delta) + Number.EPSILON) * 100) / 100) * Math.sign(delta);
 }

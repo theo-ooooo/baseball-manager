@@ -1,3 +1,4 @@
+import type { ScoutingState } from './scouting';
 export type Pos = 'P' | 'C' | 'IF' | 'OF' | 'DH';
 export type Stats = {
   ab: number;
@@ -196,6 +197,7 @@ export type GameState = {
   liveMatch?: LiveMatch;
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
   progress?: DayProgress;
+  scouting?: ScoutingState;
 };
 export type DayProgress = {
   from: number;
@@ -380,7 +382,7 @@ export type NewsItem = {
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
-  actionView?: 'agents' | 'staff' | 'squad' | 'market';
+  actionView?: 'agents' | 'staff' | 'squad' | 'market' | 'scouting';
   sender?: { name: string; role: string };
   dealId?: string;
   report?: {

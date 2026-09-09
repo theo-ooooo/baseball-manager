@@ -123,9 +123,16 @@ test('Growth resumes deterministically from saved history and monthly reports us
   const report = a.news.find((n) => n.kind === 'development');
   assert.ok(report);
   assert.equal(report.actionView, 'squad');
+  assert.ok(report.report.players.length > 0);
+  assert.ok(report.report.players.some((p) => /↗|↘/.test(p.detail)));
+  assert.ok(report.report.facts.some((f) => f.label === '능력 상승'));
+  const snapshot = structuredClone(report);
+  const observed = a.roster.find((p) => p.id === report.report.players[0].id);
+  observed.contact += 2;
   const count = a.news.length;
   developmentReports(a);
   assert.equal(a.news.length, count);
+  assert.deepEqual(report, snapshot);
   const raw = game();
   for (let i = 0; i < 28; i++) e.advance(raw, 1);
   assert.ok(raw.news.some((n) => n.title === '선수 성장·하락 보고'));

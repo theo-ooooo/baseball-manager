@@ -45,6 +45,53 @@ async function action(payload, user = 'test-owner-a') {
   return result.body;
 }
 
+test('D1 scouting persists missions and reports, hides discoveries until due and charges once', async () => {
+  const user = 'scout-career';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Scout DB', mode: 'full' },
+    user,
+  );
+  const scout = initial.state.staff.find((c) => c.role === '스카우트');
+  const command = {
+    type: 'assignScout',
+    league: 'kbo',
+    pos: 'P',
+    maxAge: 25,
+    days: 7,
+    scoutId: scout.id,
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const assigned = await call('/api/career', command, user);
+  assert.equal(assigned.status, 201);
+  let saved = assigned.body;
+  assert.equal(saved.state.scouting.assignments[0].candidateIds, undefined);
+  assert.equal(saved.state.budget, initial.state.budget - 4);
+  assert.deepEqual(saved.state.roster, initial.state.roster);
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.equal(raw.scouting.assignments[0].candidateIds.length, 3);
+  assert.equal((await call('/api/career', command, user)).body.revision, saved.revision);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, saved);
+  for (let i = 0; i < 7; i++) saved = await action({ type: 'advance', count: 1 }, user);
+  assert.equal(saved.state.scouting.reports.length, 3);
+  assert.equal(saved.state.scouting.assignments[0].status, 'completed');
+  assert.deepEqual(
+    (await call('/api/career', undefined, user)).body.state.scouting,
+    saved.state.scouting,
+  );
+  assert.ok(
+    !saved.state.scouting.reports.some((r) => 'potential' in r || 'potential' in r.abilities),
+  );
+  const selected = saved.state.scouting.reports[0].playerId;
+  saved = await action({ type: 'shortlistPlayer', id: selected, add: true }, user);
+  assert.deepEqual(saved.state.scouting.shortlist, [selected]);
+  assert.deepEqual((await call('/api/career', undefined, user)).body.state.scouting.shortlist, [
+    selected,
+  ]);
+});
+
 test('D1 timeline revisions preserve consumed events, hide inputs and commit a saved result once', async () => {
   const user = 'timeline-revision';
   await action({ type: 'start', club: 'kbo-lotte', manager: 'Timeline DB', mode: 'short' }, user);

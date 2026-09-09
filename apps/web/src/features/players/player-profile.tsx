@@ -4,12 +4,11 @@ import { ClubBadge } from '../../components/club-badge';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import type { GameState, Player, Stats } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { PlayerContractRoom } from '../contracts/player-contract-room';
 import { potentialText, ratingText } from '@dugout/shared/ratings';
-import { detailedAttributes, lineupReason } from '@dugout/shared/player-attributes';
+import { lineupReason } from '@dugout/shared/player-attributes';
 import { defensivePositions, familiarity } from '@dugout/shared/management';
 import {
   LOW_CONDITION,
@@ -25,6 +24,8 @@ import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
 import { PositionTraining } from '../squad/management-panels';
 import { RosterMoveControl } from '../squad/roster-moves';
 import { DevelopmentPanel } from './development-panel';
+import { ScoutPlayer } from '../scouting/scout-player';
+import { PlayerAttributes, PlayerGrowth } from './growth-indicator';
 
 type Props = {
   player: Player;
@@ -139,13 +140,17 @@ export function PlayerProfile(props: Props) {
             )}
           </p>
         </div>
-        <span className="rating">{ratingText(player)}</span>
+        <div className="profile-rating-trend">
+          <span className="rating">{ratingText(player)}</span>
+          {own && <PlayerGrowth player={player} />}
+        </div>
       </header>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="profile-tabs" variant="line">
           <TabsTrigger value="profile">프로필 · 세부 능력</TabsTrigger>
           <TabsTrigger value="records">성적</TabsTrigger>
           {own && <TabsTrigger value="development">성장 기록</TabsTrigger>}
+          {!own && <TabsTrigger value="scouting">관찰 · 관심 명단</TabsTrigger>}
           <TabsTrigger value="contract">{own ? '계약 · 이적' : '계약 협상'}</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
@@ -169,16 +174,7 @@ export function PlayerProfile(props: Props) {
               </div>
             )}
           </div>
-          <div className="attribute-grid">
-            {detailedAttributes(player).map(({ label, value, basis }) => (
-              <div key={label}>
-                <span>{label}</span>
-                <strong>{value ?? '미평가'}</strong>
-                <Progress value={value ?? 0} aria-label={`${label} ${value ?? '미평가'}`} />
-                <small>{basis}</small>
-              </div>
-            ))}
-          </div>
+          <PlayerAttributes player={player} owned={own} />
           {own && (
             <section className="profile-development">
               <h3>선수단 역할</h3>
@@ -254,6 +250,11 @@ export function PlayerProfile(props: Props) {
         <TabsContent value="contract">
           <ContractPanel {...props} />
         </TabsContent>
+        {!own && (
+          <TabsContent value="scouting">
+            <ScoutPlayer player={player} g={game} act={act} busy={busy} />
+          </TabsContent>
+        )}
         {own && (
           <TabsContent value="development">
             <DevelopmentPanel player={player} game={game} />

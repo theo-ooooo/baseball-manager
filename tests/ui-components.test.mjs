@@ -95,3 +95,44 @@ test('Club badges render sourced assets and a labelled abbreviation when no logo
   assert.ok(fallback.includes(`aria-label="${missing.name} 구단 약칭"`));
   assert.doesNotMatch(fallback, /<img/);
 });
+
+test('Growth arrows show observed fractional changes without exposing unknown attributes or inventing a baseline', async () => {
+  const { PlayerAttributes, PlayerGrowth, GrowthChange } = await vite.ssrLoadModule(
+    '/apps/web/src/features/players/growth-indicator.tsx',
+  );
+  const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
+  const { abilityAverage, abilityKeys } = await vite.ssrLoadModule(
+    '/packages/shared/src/development.ts',
+  );
+  const world = buildSeedWorld();
+  const p = structuredClone(world.players.find((p) => p.name === '유강남'));
+  const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
+  assert.equal(render(PlayerGrowth, { player: p }), '');
+  p.development = {
+    history: [
+      {
+        date: '2026-03-01',
+        overall: abilityAverage(p),
+        abilities: Object.fromEntries(abilityKeys.map((k) => [k, p[k]])),
+      },
+    ],
+  };
+  p.contact += 0.24;
+  p.power -= 0.15;
+  p.field += 5;
+  const before = structuredClone(p);
+  const html = render(PlayerAttributes, { player: p, owned: true });
+  assert.match(html, /컨택 상승 0.24 · 2026-03-01 관찰 대비/);
+  assert.match(html, /파워 하락 0.15/);
+  assert.doesNotMatch(html, /수비 상승|잠재력/);
+  assert.match(html, /미평가/);
+  assert.doesNotMatch(render(PlayerAttributes, { player: p, owned: false }), /growth-delta/);
+  assert.deepEqual(p, before);
+  for (const delta of [null, 0, 0.004, -0.004, NaN])
+    assert.equal(render(GrowthChange, { delta }), '');
+  assert.match(render(GrowthChange, { delta: 0.005 }), /\+0.01/);
+  assert.match(render(GrowthChange, { delta: -0.005 }), /-0.01/);
+  p.rating.status = 'missing';
+  assert.equal(render(PlayerGrowth, { player: p }), '');
+  assert.doesNotMatch(render(PlayerAttributes, { player: p, owned: true }), /growth-delta/);
+});

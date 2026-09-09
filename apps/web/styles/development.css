@@ -7,6 +7,103 @@
   border-radius: 4px;
   width: fit-content;
 }
+.growth-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.growth-delta.is-up,
+.attribute-growth-summary .is-up {
+  color: #176344;
+  background: #e8f5ee;
+}
+.growth-delta.is-down,
+.attribute-growth-summary .is-down {
+  color: #a0372a;
+  background: #fcece8;
+}
+.growth-delta.compact {
+  font-size: 11px;
+  padding: 2px 4px;
+}
+.player-table .growth-delta,
+.reserve-table .growth-delta {
+  margin-left: 5px;
+}
+.profile-header > .profile-rating-trend {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.profile-rating-trend .rating {
+  margin-left: 0;
+  width: 43px;
+  height: 44px;
+  font-size: 24px;
+}
+.attribute-growth-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 22px 0 12px;
+  padding: 12px 14px;
+  background: #f6f8fb;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.attribute-growth-summary > span {
+  color: var(--text-2);
+}
+.attribute-growth-summary > b {
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+.player-page .attribute-grid > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: #fbfcfd;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  min-width: 0;
+}
+.player-page .attribute-grid > .attribute-up {
+  border-top: 2px solid #408769;
+}
+.player-page .attribute-grid > .attribute-down {
+  border-top: 2px solid #b46b58;
+}
+.attribute-grid .attribute-value {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 28px;
+}
+.attribute-value > strong {
+  font-size: 20px;
+  white-space: nowrap;
+}
+.attribute-grid .growth-delta {
+  margin: 0;
+  font-size: 12px;
+}
+.attribute-grid .growth-delta > span {
+  font-size: inherit;
+  color: inherit;
+}
 .development-badge.growth {
   color: #176344;
   background: #e8f5ee;

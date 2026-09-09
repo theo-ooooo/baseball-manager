@@ -3,6 +3,7 @@ import { createLiveMatchActions } from './live-match';
 import { applyMatchEffects, runMatch } from './match-timeline';
 import { createCalendarProgression } from './calendar-progression';
 import { createRecruitment } from './recruitment';
+import { createScouting } from './scouting';
 import { developPlayers, developmentReports } from './player-development';
 
 import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
@@ -52,6 +53,7 @@ export function createGameEngine(world: WorldCatalog) {
   const calendar = createCalendarView(world);
   const transfers = createTransferMarket(world);
   const recruitment = createRecruitment(world);
+  const scouting = createScouting(world);
   const { negotiate, signDeal } = recruitment;
   const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const news = postNews;
@@ -323,6 +325,7 @@ export function createGameEngine(world: WorldCatalog) {
       dailyReports(g, world);
       transfers.offerTick(g);
       recruitment.tick(g);
+      scouting.tick(g);
       developmentReports(g);
       if (g.phase === 'preseason' && g.day === 0) {
         g.phase = 'regular';
@@ -542,6 +545,8 @@ export function createGameEngine(world: WorldCatalog) {
     if (social) return social;
     const recruited = recruitment.action(s, a);
     if (recruited) return recruited;
+    const scouted = scouting.action(s, a);
+    if (scouted) return scouted;
     const managed = managementAction(s, a);
     if (managed) return managed;
     switch (a.type) {

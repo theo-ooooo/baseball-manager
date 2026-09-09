@@ -38,7 +38,7 @@ export function AppSidebar({
       ids: ['home', 'inbox'],
     },
     { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'dynamics'] },
-    { label: '시즌 · 운영', ids: ['schedule', 'world', 'market', 'agents', 'finance'] },
+    { label: '시즌 · 운영', ids: ['schedule', 'world', 'market', 'scouting', 'agents', 'finance'] },
   ];
   return (
     <Sidebar className="app-sidebar">
