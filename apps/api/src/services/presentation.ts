@@ -19,6 +19,16 @@ function player(p: Player, reveal = false): Player {
 export function presentState(state: GameState | null): GameState | null {
   if (!state) return null;
   const next = { ...state };
+  if (state.scouting) {
+    next.scouting = {
+      ...state.scouting,
+      assignments: state.scouting.assignments.map((task) => {
+        const visible = { ...task };
+        delete visible.candidateIds;
+        return visible;
+      }),
+    };
+  }
   // Frozen simulation inputs are server-only, even in a revealed career.
   if (state.liveMatch) {
     next.liveMatch = { ...state.liveMatch };

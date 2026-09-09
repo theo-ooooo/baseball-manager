@@ -10,6 +10,7 @@ import '../styles/calendar-progress.css';
 import '../styles/negotiations.css';
 import '../styles/development.css';
 import '../styles/contracts.css';
+import '../styles/scouting.css';
 import '../styles/inbox.css';
 import '../styles/mobile-match.css';
 

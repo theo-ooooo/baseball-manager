@@ -25,6 +25,7 @@ import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
 import { PositionTraining } from '../squad/management-panels';
 import { RosterMoveControl } from '../squad/roster-moves';
 import { DevelopmentPanel } from './development-panel';
+import { ScoutPlayer } from '../scouting/scout-player';
 
 type Props = {
   player: Player;
@@ -146,6 +147,7 @@ export function PlayerProfile(props: Props) {
           <TabsTrigger value="profile">프로필 · 세부 능력</TabsTrigger>
           <TabsTrigger value="records">성적</TabsTrigger>
           {own && <TabsTrigger value="development">성장 기록</TabsTrigger>}
+          {!own && <TabsTrigger value="scouting">관찰 · 관심 명단</TabsTrigger>}
           <TabsTrigger value="contract">{own ? '계약 · 이적' : '계약 협상'}</TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
@@ -254,6 +256,11 @@ export function PlayerProfile(props: Props) {
         <TabsContent value="contract">
           <ContractPanel {...props} />
         </TabsContent>
+        {!own && (
+          <TabsContent value="scouting">
+            <ScoutPlayer player={player} g={game} act={act} busy={busy} />
+          </TabsContent>
+        )}
         {own && (
           <TabsContent value="development">
             <DevelopmentPanel player={player} game={game} />

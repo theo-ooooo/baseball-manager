@@ -46,6 +46,7 @@ import { Dashboard } from './dashboard';
 import { Squad } from '../squad/squad-panel';
 import { World } from '../clubs/world-panel';
 import { Market } from '../market/market-panel';
+import { ScoutingPanel } from '../scouting/scouting-panel';
 import { Agents } from '../market/agents-panel';
 import { Finance } from '../finance/finance-panel';
 import { Help } from './help-dialog';
@@ -418,6 +419,15 @@ export function GameScreen({
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
           {view === 'world' && <World g={g} onPlayer={setPlayer} />}
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
+          {view === 'scouting' && (
+            <ScoutingPanel
+              g={g}
+              act={act}
+              busy={busy}
+              onPlayer={setPlayer}
+              onNegotiate={setContractPlayer}
+            />
+          )}
           {view === 'agents' && (
             <Agents g={g} busy={busy} onPlayer={setPlayer} onNegotiate={setContractPlayer} />
           )}
