@@ -1,7 +1,11 @@
 'use client';
 import { useState } from 'react';
 import type { Defense, GameState, TeamInstructions } from '@dugout/shared/types';
-import { defaults, firstTeam } from '@dugout/shared/management';
+import { defaults, firstTeam, autoDefense } from '@dugout/shared/management';
+import { lineupAuto } from '@dugout/shared/game-view';
+import { starterScore } from '@dugout/shared/pitching';
+import { matchEnergy } from '@dugout/shared/match-energy';
+import { nextMatchHalf } from '@dugout/shared/match-commands';
 
 export type PlanSlot = number | 'P';
 export type MatchPlan = {
@@ -44,7 +48,7 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
     ...changes.filter((c) => c.cursor < cursor).flatMap((c) => c.lineup),
   ]);
   const usedPitchers = new Set([team.defense.P, ...pitched]);
-  const canPitch = cursor === 0 || timeline.log[cursor]?.half !== side;
+  const canPitch = cursor === 0 || nextMatchHalf(live, cursor) !== side;
   function commit(next: MatchPlan) {
     if (!equal(plan, next)) setHistory((past) => [...past.slice(-29), next]);
   }
@@ -128,6 +132,7 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
     initial,
     defense: plan.defense,
     players,
+    energy: matchEnergy(timeline, cursor),
     byId,
     target,
     incoming,
@@ -140,6 +145,23 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
     chooseSlot,
     chooseBench,
     restore,
+    recommend: (pitchersOnly = false) => {
+      if (cursor > 0 || busy) return;
+      if (pitchersOnly) {
+        const candidates = players.filter((p) => g.pitching?.rotation.includes(p.id));
+        const pitcher = candidates.toSorted(
+          (a, b) => starterScore(b) * b.condition - starterScore(a) * a.condition,
+        )[0];
+        if (pitcher)
+          commit({ ...plan, pitcher: pitcher.id, defense: { ...plan.defense, P: pitcher.id } });
+        setNotice('코치가 선발 보직·컨디션·기록을 보고 추천했습니다. 적용 전 확인하세요.');
+      } else {
+        const lineup = lineupAuto(players);
+        const defense = autoDefense({ ...g, lineup, starter: plan.pitcher, defense: undefined });
+        commit({ ...plan, lineup, defense });
+        setNotice('코치가 컨디션·능력·포지션 균형을 고려해 야수 9명과 타순을 추천했습니다.');
+      }
+    },
     setInstructions: (instructions: TeamInstructions) => commit({ ...plan, instructions }),
   };
 }

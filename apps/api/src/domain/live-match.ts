@@ -28,6 +28,7 @@ export function createLiveMatchActions(
         away,
         seed: g.seed,
         pitchingVersion: 2,
+        energyVersion: 1,
         cursor: 0,
         finished: false,
         result: {

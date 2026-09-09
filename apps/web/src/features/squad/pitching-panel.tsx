@@ -145,6 +145,13 @@ export function PitchingPanel({ g, busy, act, onPlayer }: Props) {
                         </small>
                       </button>
                       <div className="ui-pitcher-controls">
+                        <button
+                          className="button secondary compact"
+                          disabled={busy || g.starter === p.id}
+                          onClick={() => void act({ type: 'starter', id: p.id })}
+                        >
+                          {g.starter === p.id ? '다음 선발' : '다음 경기 선발로 지정'}
+                        </button>
                         {role === 'starter' && (
                           <>
                             <button

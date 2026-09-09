@@ -1,9 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, GripVertical } from 'lucide-react';
-import type { DefensivePosition, GameState, Player } from '@dugout/shared/types';
+import type { DefensivePosition, Player } from '@dugout/shared/types';
 import { familiarity, positionLabels } from '@dugout/shared/management';
-import { pitchingRole } from '@dugout/shared/pitching';
 import { ratingText } from '@dugout/shared/ratings';
 import type { MatchPlanDraft, PlanSlot } from './use-match-plan';
 
@@ -19,10 +18,13 @@ const positions: { pos: DefensivePosition; x: number; y: number }[] = [
   { pos: 'C', x: 50, y: 85 },
   { pos: 'DH', x: 16, y: 87 },
 ];
-function Condition({ player }: { player: Player }) {
-  const value = Math.max(0, Math.min(100, Math.round(player.condition)));
+function Condition({ player, energy }: { player: Player; energy?: number }) {
+  const value = Math.max(0, Math.min(100, Math.round(energy ?? player.condition)));
   return (
-    <span className={`plan-condition ${value < 65 ? 'is-tired' : ''}`} title={`컨디션 ${value}%`}>
+    <span
+      className={`plan-condition ${value < 65 ? 'is-tired' : ''}`}
+      title={`${energy === undefined ? '컨디션' : '경기 체력'} ${value}%`}
+    >
       <i style={{ width: `${value}%` }} />
     </span>
   );
@@ -41,41 +43,43 @@ export function MatchDiamond({ draft, busy }: { draft: MatchPlanDraft; busy: boo
         <circle cx="250" cy="304" r="19" />
         <path d="M244 408h12v8l-6 5-6-5Z" />
       </svg>
-      {positions.map(({ pos, x, y }) => {
-        const p = draft.byId.get(draft.defense[pos]);
-        if (!p) return null;
-        const slot: PlanSlot = pos === 'P' ? 'P' : draft.plan.lineup.indexOf(p.id);
-        const selected = draft.target === slot;
-        const shiftedY = ['LF', 'CF', 'RF'].includes(pos)
-          ? y - (draft.plan.instructions.depth - 50) * 0.07
-          : y;
-        return (
-          <button
-            type="button"
-            className="plan-fielder"
-            key={pos}
-            style={{ left: `${x}%`, top: `${shiftedY}%` }}
-            aria-label={`${positionLabels[pos]} ${p.name} 교체 선택`}
-            aria-pressed={selected}
-            disabled={busy || (pos === 'P' && !draft.canPitch)}
-            onClick={() => draft.chooseSlot(slot)}
-            onDragOver={(e) => {
-              if (!busy) e.preventDefault();
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (!busy) draft.assign(slot, e.dataTransfer.getData('text/plain'));
-            }}
-          >
-            <span className="plan-position">{slot === 'P' ? 'P' : `${slot + 1} · ${pos}`}</span>
-            <strong>{p.name}</strong>
-            <Condition player={p} />
-            {pos !== 'P' && pos !== 'DH' && familiarity(p, pos) < 50 && (
-              <small className="plan-fit-warning">낯선 포지션</small>
-            )}
-          </button>
-        );
-      })}
+      {positions
+        .filter((p) => p.pos !== 'P')
+        .map(({ pos, x, y }) => {
+          const p = draft.byId.get(draft.defense[pos]);
+          if (!p) return null;
+          const slot: PlanSlot = pos === 'P' ? 'P' : draft.plan.lineup.indexOf(p.id);
+          const selected = draft.target === slot;
+          const shiftedY = ['LF', 'CF', 'RF'].includes(pos)
+            ? y - (draft.plan.instructions.depth - 50) * 0.07
+            : y;
+          return (
+            <button
+              type="button"
+              className="plan-fielder"
+              key={pos}
+              style={{ left: `${x}%`, top: `${shiftedY}%` }}
+              aria-label={`${positionLabels[pos]} ${p.name} 교체 선택`}
+              aria-pressed={selected}
+              disabled={busy || (pos === 'P' && !draft.canPitch)}
+              onClick={() => draft.chooseSlot(slot)}
+              onDragOver={(e) => {
+                if (!busy) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (!busy) draft.assign(slot, e.dataTransfer.getData('text/plain'));
+              }}
+            >
+              <span className="plan-position">{slot === 'P' ? 'P' : `${slot + 1} · ${pos}`}</span>
+              <strong>{p.name}</strong>
+              <Condition player={p} energy={draft.energy.get(p.id)} />
+              {pos !== 'P' && pos !== 'DH' && familiarity(p, pos) < 50 && (
+                <small className="plan-fit-warning">낯선 포지션</small>
+              )}
+            </button>
+          );
+        })}
     </section>
   );
 }
@@ -124,7 +128,8 @@ export function MatchBattingOrder({ draft, cursor }: { draft: MatchPlanDraft; cu
                 <span className="plan-batter-name">
                   <strong>{p.name}</strong>
                   <small>
-                    {pos} · 컨디션 {Math.round(p.condition)}%
+                    {pos} · {draft.energy.has(p.id) ? '체력' : '컨디션'}{' '}
+                    {Math.round(draft.energy.get(p.id) ?? p.condition)}%
                   </small>
                 </span>
                 <span className="plan-rating" title="종합 능력">
@@ -159,14 +164,9 @@ export function MatchBattingOrder({ draft, cursor }: { draft: MatchPlanDraft; cu
     </section>
   );
 }
-export function MatchBench({ g, draft }: { g: GameState; draft: MatchPlanDraft }) {
-  const [group, setGroup] = useState<'batters' | 'pitchers'>('batters');
-  const visibleGroup =
-    draft.target === 'P' ? 'pitchers' : typeof draft.target === 'number' ? 'batters' : group;
-  const candidates = draft.players.filter((p) =>
-    visibleGroup === 'pitchers'
-      ? p.pos === 'P' && p.id !== draft.plan.pitcher
-      : p.pos !== 'P' && !draft.plan.lineup.includes(p.id),
+export function MatchBench({ draft }: { draft: MatchPlanDraft }) {
+  const candidates = draft.players.filter(
+    (p) => p.pos !== 'P' && !draft.plan.lineup.includes(p.id),
   );
   const outgoingId =
     draft.target === 'P'
@@ -175,26 +175,9 @@ export function MatchBench({ g, draft }: { g: GameState; draft: MatchPlanDraft }
         ? draft.plan.lineup[draft.target]
         : null;
   return (
-    <section className="plan-bench" aria-label="벤치와 불펜">
+    <section className="plan-bench" aria-label="야수 벤치">
       <div className="plan-section-heading">
-        <div className="plan-tabs" aria-label="대기 선수">
-          <button
-            type="button"
-            aria-pressed={visibleGroup === 'batters'}
-            disabled={draft.target === 'P'}
-            onClick={() => setGroup('batters')}
-          >
-            벤치
-          </button>
-          <button
-            type="button"
-            aria-pressed={visibleGroup === 'pitchers'}
-            disabled={typeof draft.target === 'number'}
-            onClick={() => setGroup('pitchers')}
-          >
-            불펜
-          </button>
-        </div>
+        <h3>야수 벤치 · 대타 / 대수비</h3>
         <small>
           {outgoingId
             ? `${draft.byId.get(outgoingId)?.name} 대신 투입할 선수`
@@ -224,9 +207,10 @@ export function MatchBench({ g, draft }: { g: GameState; draft: MatchPlanDraft }
               <span className="plan-reserve-info">
                 <strong>{p.name}</strong>
                 <small>
-                  {p.pos === 'P' ? pitchingRole(g, p) : p.pos} · 컨디션 {Math.round(p.condition)}%
+                  {p.pos} · {draft.energy.has(p.id) ? '체력' : '컨디션'}{' '}
+                  {Math.round(draft.energy.get(p.id) ?? p.condition)}%
                 </small>
-                <Condition player={p} />
+                <Condition player={p} energy={draft.energy.get(p.id)} />
                 {reason && <small>{reason}</small>}
               </span>
               <span className="plan-rating" title="종합 능력">

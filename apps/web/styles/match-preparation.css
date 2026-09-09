@@ -666,3 +666,253 @@
     min-height: 440px;
   }
 }
+
+.pitching-default-plan {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.pitching-instructions {
+  padding: 20px;
+  background: #fff;
+  color: #172b40;
+  border: 1px solid #ced8e2;
+  border-radius: 10px;
+}
+.pitching-instructions header,
+.pitching-bullpen-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.pitching-instructions h3,
+.pitching-bullpen-heading h3 {
+  font-size: 18px;
+  font-weight: 750;
+}
+.pitching-instructions small,
+.pitching-instructions header > span,
+.pitching-bullpen-heading span {
+  font-size: 11px;
+  color: #52657b;
+}
+.pitching-approach-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pitching-approach-cards button {
+  display: grid;
+  gap: 7px;
+  text-align: left;
+  border: 1px solid #d5dee8;
+  border-radius: 7px;
+  padding: 13px;
+  background: #f7f9fc;
+}
+.pitching-approach-cards button[aria-pressed='true'] {
+  border: 2px solid #1f5bbb;
+  padding: 12px;
+  background: #eaf1ff;
+}
+.pitching-approach-cards strong {
+  font-size: 14px;
+}
+.pitching-approach-cards span {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pitching-instructions > p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #52657b;
+  margin-top: 12px;
+}
+.pitching-plan-top {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.7fr) minmax(0, 1.3fr);
+  gap: 16px;
+}
+.current-pitcher-card {
+  background: #182d40;
+  color: #fff;
+  padding: 24px;
+  border-radius: 10px;
+}
+.current-pitcher-card > small {
+  color: #bad6eb;
+  font-size: 12px;
+}
+.current-pitcher-card h3 {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 20px 0 12px;
+}
+.current-pitcher-card h3 span {
+  color: #83b8de;
+  font-size: 20px;
+}
+.current-pitcher-card p {
+  font-size: 12px;
+  color: #e1edf5;
+  line-height: 1.6;
+}
+.match-energy-meter {
+  margin: 18px 0 0;
+}
+.match-energy-meter > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 7px;
+  gap: 8px;
+}
+.match-energy-meter b {
+  font-variant-numeric: tabular-nums;
+}
+.match-energy-meter meter {
+  display: block;
+  width: 100%;
+  height: 10px;
+  background: #dce5ec;
+  border: 0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.match-energy-meter meter::-webkit-meter-bar {
+  background: #dce5ec;
+  border: 0;
+}
+.match-energy-meter meter::-webkit-meter-optimum-value {
+  background: #2ea87c;
+}
+.match-energy-meter meter::-webkit-meter-suboptimum-value {
+  background: #d59822;
+}
+.match-energy-meter meter::-webkit-meter-even-less-good-value {
+  background: #d0544b;
+}
+.match-energy-meter > small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 9px;
+  opacity: 0.85;
+}
+.match-energy-meter.compact {
+  margin-top: 10px;
+}
+.pitcher-fatigue-alert {
+  margin-top: 14px;
+  padding: 10px;
+  border: 1px solid #cf9c45;
+  border-radius: 5px;
+}
+.pitching-bullpen-heading {
+  margin-top: 24px;
+}
+.pitching-role-group {
+  margin-top: 16px;
+}
+.pitching-role-group h4 {
+  font-size: 13px;
+  font-weight: 750;
+  margin-bottom: 9px;
+}
+.pitching-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.pitching-candidate-grid > button {
+  padding: 15px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #cbd7e2;
+  border-radius: 8px;
+}
+.pitching-candidate-grid > button:hover:enabled {
+  border-color: #2362c5;
+  background: #f1f6ff;
+}
+.pitching-candidate-grid strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 7px;
+}
+.pitching-candidate-grid strong span {
+  color: #607890;
+  font-size: 12px;
+}
+.pitching-candidate-grid small {
+  font-size: 11px;
+  color: #536c80;
+}
+.pitcher-candidate-action {
+  display: block;
+  margin-top: 12px;
+  font-size: 11px;
+  color: #2353a0;
+}
+@media (max-width: 760px) {
+  .pitching-plan-top {
+    grid-template-columns: 1fr;
+  }
+  .pitching-candidate-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pitching-instructions {
+    padding: 14px;
+  }
+  .pitching-approach-cards button {
+    padding: 10px;
+  }
+  .pitching-approach-cards button[aria-pressed='true'] {
+    padding: 9px;
+  }
+  .pitching-instructions header > span {
+    display: none;
+  }
+  .current-pitcher-card {
+    padding: 18px;
+  }
+  .current-pitcher-card h3 {
+    margin: 12px 0 8px;
+    font-size: 24px;
+  }
+  .plan-toolbar .plan-tabs {
+    width: 100%;
+  }
+  .plan-toolbar .plan-tabs button {
+    flex: 1;
+    padding: 9px 6px;
+    white-space: nowrap;
+  }
+}
+.coach-plan-recommendation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid #c4d6ed;
+  border-radius: 8px;
+  background: #edf4fd;
+}
+.coach-plan-recommendation strong {
+  display: block;
+  font-size: 13px;
+}
+.coach-plan-recommendation small {
+  display: block;
+  color: #52657b;
+  font-size: 11px;
+  margin-top: 4px;
+}
+@media (max-width: 760px) {
+  .coach-plan-recommendation {
+    flex-wrap: wrap;
+  }
+}

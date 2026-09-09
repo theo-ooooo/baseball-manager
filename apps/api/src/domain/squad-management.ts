@@ -1,5 +1,6 @@
 import { pitchingAssignment, preparePitching } from '@dugout/shared/pitching';
 import { prepareCalendar } from '@dugout/shared/calendar';
+import { isPitchingApproach } from '@dugout/shared/pitching-tactics';
 import type {
   DefensivePosition,
   GameState,
@@ -116,6 +117,8 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
         throw new Error('선발투수는 최소 1명이 필요합니다.');
       if (a.role === 'starter' && !plan.rotation.includes(p.id) && plan.rotation.length >= 6)
         throw new Error('선발 로테이션은 최대 6명입니다.');
+      const previousRotation = [...plan.rotation];
+      const previousNext = Math.max(0, previousRotation.indexOf(g.starter));
       plan.rotation = plan.rotation.filter((id) => id !== p.id);
       plan.bullpen = plan.bullpen.filter((id) => id !== p.id);
       plan.setup = plan.setup!.filter((id) => id !== p.id);
@@ -128,7 +131,14 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
         if (a.role === 'setup') plan.setup.push(p.id);
         if (a.role === 'chase') plan.chase.push(p.id);
       }
-      if (g.starter === p.id && a.role !== 'starter') g.starter = plan.rotation[0];
+      if (g.starter === p.id && a.role !== 'starter') {
+        const following = [
+          ...previousRotation.slice(previousNext + 1),
+          ...previousRotation.slice(0, previousNext),
+        ];
+        g.starter = following.find((id) => plan.rotation.includes(id)) || plan.rotation[0];
+      }
+      plan.next = Math.max(0, plan.rotation.indexOf(g.starter));
       preparePitching(g);
       return g;
     }
@@ -193,11 +203,19 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
       const keys = ['steal', 'patience', 'power', 'depth'] as const;
       if (!input || keys.some((k) => !Number.isFinite(input[k]) || input[k] < 0 || input[k] > 100))
         throw new Error('전술 수치는 0~100 사이여야 합니다.');
+      if (input.pitching !== undefined && !isPitchingApproach(input.pitching))
+        throw new Error('투구 방침을 확인해 주세요.');
       const old = g.instructions || defaults(g.tactic);
       const change = keys.reduce((s, k) => s + Math.abs(input[k] - old[k]), 0) / 20;
-      g.instructions = Object.fromEntries(
-        keys.map((k) => [k, Math.round(input[k])]),
-      ) as TeamInstructions;
+      g.instructions = {
+        steal: Math.round(input.steal),
+        patience: Math.round(input.patience),
+        power: Math.round(input.power),
+        depth: Math.round(input.depth),
+      };
+      // Omitted by older clients: retain the club's pitching instruction.
+      const pitching = input.pitching ?? old.pitching;
+      if (pitching !== undefined) g.instructions.pitching = pitching;
       g.tacticFamiliarity = Math.max(20, (g.tacticFamiliarity || 55) - change);
       if (a.type === 'teamInstructions') g.tactic = String(a.preset);
       return g;

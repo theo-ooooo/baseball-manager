@@ -554,3 +554,54 @@
 .field-2d {
   filter: none;
 }
+
+.match-page {
+  width: 100%;
+  color: var(--text);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  outline: none;
+}
+.match-page .stadium-replay-header {
+  padding: 18px 24px;
+}
+.match-page .stadium-replay-header h2 {
+  font-size: 22px;
+  font-weight: 750;
+}
+.match-page .stadium-replay-header h2 span {
+  font-size: 13px;
+  color: var(--text-3);
+  padding: 0 8px;
+}
+.match-page .stadium-replay-header p {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 5px;
+}
+.match-page .live-controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: var(--surface-1);
+  border-top: 1px solid var(--line);
+}
+.match-page .stadium-match-report {
+  max-height: 850px;
+}
+.match-workspace .page-content {
+  max-width: none;
+}
+@media (max-width: 760px) {
+  .match-page {
+    border-radius: 0;
+  }
+  .match-page .stadium-replay-header {
+    padding: 14px;
+  }
+  .match-page .stadium-replay-header h2 {
+    font-size: 17px;
+  }
+}

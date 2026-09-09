@@ -20,6 +20,7 @@ export const nav = [
   { id: 'home', label: '홈', icon: House },
   { id: 'inbox', label: '수신함', icon: MessageSquare },
   { id: 'matchday', label: '경기 준비', icon: CircleDot },
+  { id: 'match', label: '경기장', icon: CircleDot },
   { id: 'media', label: '인터뷰 · 팀 대화', icon: Mic },
   { id: 'dynamics', label: '선수단 분위기', icon: Activity },
   { id: 'squad', label: '선수단', icon: Users },
