@@ -199,7 +199,9 @@ export function GameScreen({
           label: '경기 전 인터뷰',
           detail: '기자 질문과 라커룸 대화를 마치고 경기장으로 이동하세요.',
         }
-      : baseStep;
+      : baseStep?.kind === 'matchday' && view === 'media' && interviewReady
+        ? { ...baseStep, label: '선수단 제출 · 경기장으로' }
+        : baseStep;
   async function continueFlow() {
     if (!g || !step || busy || progressing || g.liveMatch) return;
     const unsaved = document.querySelector('[data-unsaved-plan="true"]');

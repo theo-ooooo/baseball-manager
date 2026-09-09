@@ -111,7 +111,8 @@ function ConversationForm({
     [answers, setAnswers] = useState<Record<string, string>>({});
   const questionHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    questionHeading.current?.focus();
+    questionHeading.current?.focus({ preventScroll: true });
+    questionHeading.current?.scrollIntoView({ block: 'center' });
   }, [at]);
   const question = context.questions[at],
     last = at === context.questions.length - 1;
@@ -234,7 +235,8 @@ function ConversationResult({
     negative = record.reactions.filter((r) => r.after < r.before).length;
   const resultHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    resultHeading.current?.focus();
+    resultHeading.current?.focus({ preventScroll: true });
+    resultHeading.current?.scrollIntoView({ block: 'center' });
   }, [record.key]);
   return (
     <div className="media-result">
@@ -260,6 +262,10 @@ function ConversationResult({
           차분한 반응 <b>{record.reactions.length - positive - negative}명</b>
         </span>
       </div>
+      <button className="button primary" disabled={busy} onClick={onContinue}>
+        {historical ? '현재 일정으로' : record.stage === 'pre' ? '경기장으로' : '다음 일정으로'}
+        <ArrowRight size={16} />
+      </button>
       <h4>선수단의 반응</h4>
       <div className="media-reactions">
         {record.reactions.map((r) => (
@@ -275,10 +281,6 @@ function ConversationResult({
           </div>
         ))}
       </div>
-      <button className="button primary" disabled={busy} onClick={onContinue}>
-        {historical ? '현재 일정으로' : record.stage === 'pre' ? '경기장으로' : '다음 일정으로'}
-        <ArrowRight size={16} />
-      </button>
       <details className="media-transcript">
         <summary>질문과 답변 다시 읽기</summary>
         {record.questions.map((q) => (
