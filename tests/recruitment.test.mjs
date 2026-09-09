@@ -132,3 +132,88 @@ test('Coach replacement protects a newly changed role and rejects direct instant
   assert.throws(() => e.applyAction(g, { type: 'signCoach', id: g.coachDeals[0].id }), /담당 코치/);
   assert.deepEqual(g, before);
 });
+
+test('Contract salary revision preserves the agreed club fee and requires a new player reply', () => {
+  let g = game();
+  g.budget = 1e8;
+  const p = e
+    .marketPlayers(g)
+    .filter((p) => p.club === 'kbo-lg')
+    .sort((a, b) => e.overall(a) - e.overall(b))[0];
+  g = e.negotiate(g, p.id, p.salary * 3, 3, 'buy', 0);
+  g = waitForReply(e, g, g.deals[0].id);
+  g = e.applyAction(g, { type: 'acceptDealCounter', id: g.deals[0].id });
+  g = waitForReply(e, g, g.deals[0].id);
+  const original = structuredClone(g),
+    d = g.deals[0];
+  assert.equal(d.status, 'accepted');
+  g = e.applyAction(g, {
+    type: 'reviseContractSalary',
+    kind: 'player',
+    id: d.id,
+    salary: d.salary * 0.95,
+    years: 1,
+    fee: 0,
+  });
+  const revised = g.deals[0];
+  assert.notEqual(revised.id, d.id);
+  assert.equal(revised.status, 'pending');
+  assert.equal(revised.salary, d.salary * 0.95);
+  assert.equal(revised.years, d.years);
+  assert.equal(revised.fee, d.fee);
+  assert.equal(revised.stage, 'player');
+  assert.deepEqual(revised.seller, d.seller);
+  assert.deepEqual(g.roster, original.roster);
+  assert.equal(g.budget, original.budget);
+  assert.equal(g.expenses, original.expenses);
+  assert.throws(() => e.signDeal(g, d.id));
+  assert.throws(() => e.signDeal(g, revised.id), /기다려/);
+  assert.throws(
+    () =>
+      e.applyAction(g, {
+        type: 'reviseContractSalary',
+        kind: 'player',
+        id: revised.id,
+        salary: revised.salary + 1,
+      }),
+    /기다려/,
+  );
+  g = waitForReply(e, g, revised.id);
+  const accepted = g.deals[0];
+  assert.equal(accepted.status, 'accepted');
+  const balance = g.budget;
+  g = e.signDeal(g, accepted.id);
+  assert.equal(g.roster.find((p) => p.id === d.player.id).salary, revised.salary);
+  assert.equal(g.budget, balance - accepted.fee - accepted.agentFee - accepted.salary * 0.15);
+});
+
+test('Coach salary revision retains role and term; invalid and expired documents cannot be revised', () => {
+  let g = game();
+  const c = coach(g);
+  g = e.applyAction(g, { type: 'coachOffer', id: c.id, salary: c.salary * 3, years: 3 });
+  g = waitForReply(e, g, g.coachDeals[0].id, true);
+  const original = structuredClone(g),
+    d = g.coachDeals[0];
+  const action = { type: 'reviseContractSalary', kind: 'coach', id: d.id, salary: d.salary * 0.95 };
+  for (const salary of [NaN, 0, -1, Infinity, 1e9, d.salary])
+    assert.throws(() => e.applyAction(g, { ...action, salary }));
+  assert.throws(() => e.applyAction(g, { ...action, kind: 'player' }));
+  assert.throws(() => e.applyAction(g, { ...action, kind: 'unknown' }));
+  const expired = structuredClone(g);
+  expired.day = d.expires + 1;
+  assert.throws(() => e.applyAction(expired, action), /유효기간/);
+  g = e.applyAction(g, { ...action, role: '타격', years: 1 });
+  const revised = g.coachDeals[0];
+  assert.equal(revised.role, d.role);
+  assert.equal(revised.years, d.years);
+  assert.equal(revised.status, 'pending');
+  assert.deepEqual(g.staff, original.staff);
+  assert.equal(g.budget, original.budget);
+  assert.equal(g.expenses, original.expenses);
+  assert.throws(() => e.applyAction(g, { type: 'signCoach', id: d.id }));
+  assert.throws(() => e.applyAction(g, { type: 'signCoach', id: revised.id }));
+  g = waitForReply(e, g, revised.id, true);
+  assert.equal(g.coachDeals[0].status, 'accepted');
+  g = e.applyAction(g, { type: 'signCoach', id: revised.id });
+  assert.equal(g.staff.find((s) => s.id === c.id).salary, action.salary);
+});

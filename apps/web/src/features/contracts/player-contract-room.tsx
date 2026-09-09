@@ -258,6 +258,14 @@ export function PlayerContractRoom({
           g={g}
           busy={busy}
           sign={async () => !!(await act({ type: 'sign', id: signing.id }))}
+          reviseSalary={async (salary) =>
+            !!(await act({ type: 'reviseContractSalary', kind: 'player', id: signing.id, salary }))
+          }
+          estimateCosts={(salary) => [
+            { label: '계약금 · 연봉의 15%', amount: salary * 0.15 },
+            { label: '에이전트 수수료', amount: Math.round(salary * agent.fee) },
+            { label: '이적료', amount: signing.fee },
+          ]}
           close={() => setSigning(null)}
         />
       )}

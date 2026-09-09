@@ -269,6 +269,35 @@ test('Negotiation, signing, reselling and coaches update relational rows and acc
   while (negotiated.state.deals[0].status === 'pending')
     negotiated = await action({ type: 'advance', count: 1 });
   assert.notEqual(negotiated.state.deals[0].status, 'rejected');
+  const agreed = negotiated;
+  const revisionCommand = {
+    type: 'reviseContractSalary',
+    kind: 'player',
+    id: agreed.state.deals[0].id,
+    salary: agreed.state.deals[0].salary * 0.95,
+    revision: agreed.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const revised = await call('/api/career', revisionCommand);
+  assert.equal(revised.status, 201);
+  negotiated = revised.body;
+  assert.equal(negotiated.state.deals[0].status, 'pending');
+  assert.equal(negotiated.state.deals[0].salary, revisionCommand.salary);
+  assert.deepEqual(negotiated.state.roster, agreed.state.roster);
+  assert.equal(negotiated.state.budget, agreed.state.budget);
+  assert.deepEqual(negotiated.ledger, agreed.ledger);
+  assert.deepEqual((await call()).body, negotiated);
+  assert.equal((await call('/api/career', revisionCommand)).body.revision, negotiated.revision);
+  const oldSignature = await call('/api/career', {
+    type: 'sign',
+    id: revisionCommand.id,
+    revision: negotiated.revision,
+  });
+  assert.equal(oldSignature.status, 400);
+  assert.deepEqual((await call()).body, negotiated);
+  while (negotiated.state.deals[0].status === 'pending')
+    negotiated = await action({ type: 'advance', count: 1 });
+  assert.equal(negotiated.state.deals[0].status, 'accepted');
   const deal = negotiated.state.deals[0],
     requestId = crypto.randomUUID();
   const command = { type: 'sign', id: deal.id, revision: negotiated.revision, requestId };
