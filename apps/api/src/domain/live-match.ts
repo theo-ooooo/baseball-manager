@@ -2,6 +2,7 @@ import type { WorldCatalog, GameState } from '@dugout/shared/types';
 import { createGameView } from '@dugout/shared/game-view';
 import type { createMatchSimulator } from './match-simulation';
 import { generateTimeline, reviseTimeline, validateCursor, visibleResult } from './match-timeline';
+import { matchCommandAction } from './match-command-actions';
 
 type Advance = (game: GameState, count?: number, pauseAfterOwn?: boolean) => GameState;
 export function createLiveMatchActions(
@@ -11,6 +12,8 @@ export function createLiveMatchActions(
 ) {
   const { nextFixture, rosterFor } = createGameView(world);
   function liveAction(g: GameState, a: Record<string, unknown>) {
+    if (a.type === 'matchCommand' || a.type === 'cancelMatchCommand')
+      return matchCommandAction(g, a, simulateMatch);
     if (a.type === 'startMatch') {
       if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
       if (g.news.some((n) => n.choiceKind && !n.choice))

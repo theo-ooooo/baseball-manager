@@ -42,7 +42,7 @@ FM 공식 자료의 [영입과 선수단 계획](https://www.footballmanager.com
 | 1군·2군 등록 | 구현 | 승격·말소, 정원이 찼을 때 동시 교체, 타순·보직 보존 | 리그별 등록 기간·재등록 제한 | `roster-moves.ts`, `reserve-panel.tsx` |
 | 투수 보직 | 구현 | 선발 순서, 일반 불펜·필승조·추격조·마무리 및 자동 등판 판단 | 경기 중 직접 불펜 준비·등판 지시, 상황별 상세 운용 정책 | `pitching.ts`, `relief-selection.ts`, `pitching-decisions.ts` |
 | 경기 전 전술 | 부분 | 타순·수비 위치·팀 지시·전술 저장·포지션 숙련 | 선수별 상황 지시와 상대별 작전 계획 | `squad-management.ts`, `match-simulation.ts` |
-| 경기 중 감독 조작 | 부분 | 저장 타석 재생·2D 장면·일시 정지·재개·다시보기, 구장/벤치 카드로 대타·투수·수비 교체, 팀 지시 적용 시 이후 타임라인 갱신 | 타석별 도루·번트·히트앤드런, 불펜 준비, 경기 전후 인터뷰·팀 대화 | `live-match.ts`, `match-simulation.ts`, `match-plan-editor.tsx` |
+| 경기 중 감독 조작 | 부분 | 저장 타석 재생·2D 장면·일시 정지·재개·다시보기, 구장/벤치 카드로 대타·투수·수비 교체, 팀 지시 및 도루·희생번트·히트앤드런 카드 적용 시 이후 타임라인 갱신 | 불펜 준비, 경기 전후 인터뷰·팀 대화 | `live-match.ts`, `match-simulation.ts`, `match-plan-editor.tsx` |
 | 선수 탐색·스카우팅 | 부분 | 시장 검색·필터, 리그/선수 관찰 파견·기간·비용·진척, 관찰 범위와 신뢰도 보고, 관심 명단·후보/소속 선수 비교·직접 계약 제안 | 테스트 입단, 장기 지역 지식 축적과 다수 스카우트 조직 | `scouting.ts`, `scouting-panel.tsx`, `scout-player.tsx`, `presentation.ts` |
 | 선수 영입·재계약 | 부분 | 구단 이적료 → 개인 조건, 날짜별 답변·역제안·거절·철회·만료·최종 서명 | 경쟁 구단 제안, 협상 관계·관심도, 계약 옵션·성과 조건·분할 지급 | `recruitment.ts`, `agents-panel.tsx` |
 | 선수 매각 | 부분 | 매각 명단, 상대 구단의 조건 제안·수락·거절·기한 | 선수 간 트레이드 패키지, 현금과 선수 복합 거래, 역제안 | `transfer-market.ts` |

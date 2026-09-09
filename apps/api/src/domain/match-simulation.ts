@@ -27,6 +27,7 @@ import {
 import { gameDate } from '@dugout/shared/calendar';
 import { pitchingDecisions } from './pitching-decisions';
 import { selectReliever } from './relief-selection';
+import { buntResult, stealChance } from './match-command-probabilities';
 
 export function createMatchSimulator(world: WorldCatalog) {
   const { getClub, rosterFor } = createGameView(world);
@@ -101,6 +102,8 @@ export function createMatchSimulator(world: WorldCatalog) {
     pitchingStats(0);
     pitchingStats(1);
     let changeIndex = 0;
+    let commandIndex = 0;
+    const commands = g.liveMatch?.commands || [];
     let manualPitcherCursor = -1;
     const applyChanges = (inning: number, bases?: (Player | null)[]) => {
       let changed = false;
@@ -224,6 +227,47 @@ export function createMatchSimulator(world: WorldCatalog) {
         while (outs < 3 && appearances++ < 120) {
           if (applyChanges(inn, ownBat ? bases : undefined))
             ({ pitcher, pStrength, defense } = context());
+          const command =
+            commands[commandIndex]?.cursor === log.length ? commands[commandIndex++] : undefined;
+          if (command && !ownBat) throw new Error('작전 시점의 공격 팀이 일치하지 않습니다.');
+          if (command?.kind === 'stealSecond' || command?.kind === 'stealThird') {
+            const from = command.kind === 'stealSecond' ? 0 : 1;
+            const runner = bases[from];
+            if (!runner || bases[from + 1])
+              throw new Error('도루를 시도할 주자 상황이 바뀌었습니다.');
+            const catcherId = replayTeams[1 - side].defense.C;
+            const catcher = rosters[1 - side].find((p) => p.id === catcherId);
+            const safe = random() < stealChance(runner, pitcher, catcher?.field || 50, from === 1);
+            const play: ReplayPlay = {
+              batter: lineups[side][order[side] % lineups[side].length].id,
+              pitcher: pitcher.id,
+              before: { outs, bases: bases.map((p) => p?.id || null), score: [...score] },
+              after: { outs, bases: [], score: [...score] },
+              plateAppearance: false,
+              command: command.kind,
+              defense: { ...replayTeams[1 - side].defense, P: pitcher.id },
+              steal: { runner: runner.id, safe, to: (from + 2) as 2 | 3 },
+            };
+            bases[from] = null;
+            if (safe) {
+              bases[from + 1] = runner;
+              runner.stats.sb = (runner.stats.sb || 0) + 1;
+            } else {
+              outs++;
+              pitchingStats(1 - side).outs++;
+              runner.stats.cs = (runner.stats.cs || 0) + 1;
+            }
+            play.after = { outs, bases: bases.map((p) => p?.id || null), score: [...score] };
+            log.push({
+              inning: inn,
+              half: side,
+              play,
+              text: `${runner.name} ${from + 2}루 도루 ${safe ? '성공' : '실패'} · 감독 지시`,
+              score: [...score],
+            });
+            yield snapshot();
+            continue;
+          }
           const p = lineups[side][order[side]++ % lineups[side].length];
           const play: ReplayPlay = {
             batter: p.id,
@@ -233,6 +277,8 @@ export function createMatchSimulator(world: WorldCatalog) {
           };
           if (changeIndex)
             play.defense = { ...(ownPitch ? g.defense! : replayTeams[1 - side].defense) };
+          if (command) play.command = command.kind;
+          const hitAndRun = command?.kind === 'hitAndRun';
           const stats = ownBat ? p.stats : blankStats();
           let runs = 0;
           let event = '';
@@ -246,7 +292,8 @@ export function createMatchSimulator(world: WorldCatalog) {
               ((p.mood?.value ?? 65) - 65) * 0.0005 +
               cohesion +
               (p.contact * cond - pStrength) * 0.0028 +
-              bonus,
+              bonus +
+              (hitAndRun ? 0.02 : 0),
             0.1,
             0.43,
           );
@@ -254,7 +301,38 @@ export function createMatchSimulator(world: WorldCatalog) {
           const patient = ownBat ? instructions.patience / 100 : 0;
           const smallball = ownBat ? instructions.steal / 100 : 0;
           const roll = random();
-          if (
+          if (command?.kind === 'bunt') {
+            if (outs >= 2 || (!bases[0] && !bases[1]) || bases[2])
+              throw new Error('희생번트 주자 상황이 바뀌었습니다.');
+            const outcome = buntResult(p, defense, g.tacticFamiliarity ?? 70, roll);
+            if (outcome === 'hit' || outcome === 'sacrifice') {
+              bases[2] = bases[1];
+              bases[1] = bases[0];
+              bases[0] = outcome === 'hit' ? p : null;
+              if (outcome === 'hit') {
+                stats.ab++;
+                stats.h++;
+                hits[side]++;
+                event = '번트 안타 · 감독 지시';
+              } else {
+                stats.sh = (stats.sh || 0) + 1;
+                outs++;
+                pitchingStats(1 - side).outs++;
+                isOut = true;
+                event = '희생번트 성공 · 감독 지시';
+              }
+            } else {
+              stats.ab++;
+              outs++;
+              pitchingStats(1 - side).outs++;
+              isOut = true;
+              if (outcome === 'strikeout') {
+                stats.k++;
+                pitchingStats(1 - side).k++;
+                event = '번트 실패 · 삼진';
+              } else event = '번트 실패 · 뜬공 아웃';
+            }
+          } else if (
             roll < clamp(0.073 + (70 - pitcher.control) * 0.0009 + patient * 0.032, 0.035, 0.14)
           ) {
             stats.bb++;
@@ -274,7 +352,7 @@ export function createMatchSimulator(world: WorldCatalog) {
             hits[side]++;
             const extra = random();
             const hrChance = clamp(
-              0.1 + (p.power - pStrength) * 0.003 + aggressive * 0.08,
+              (0.1 + (p.power - pStrength) * 0.003 + aggressive * 0.08) * (hitAndRun ? 0.65 : 1),
               0.03,
               0.33,
             );
@@ -296,6 +374,7 @@ export function createMatchSimulator(world: WorldCatalog) {
               for (let b = 2; b >= 0; b--)
                 if (bases[b]) {
                   let move = advance;
+                  if (hitAndRun && advance === 1 && b === 0) move = 2;
                   if (advance === 1 && b === 1 && random() < bases[b]!.speed / 160) move = 2;
                   if (b + move >= 3) runs++;
                   else bases[b + move] = bases[b];
@@ -326,13 +405,13 @@ export function createMatchSimulator(world: WorldCatalog) {
             outs++;
             isOut = true;
             pitchingStats(1 - side).outs++;
-            if (random() < 0.36 + aggressive * 0.09) {
+            if (random() < 0.36 + aggressive * 0.09 - (hitAndRun ? 0.09 : 0)) {
               stats.k++;
               pitchingStats(1 - side).k++;
               event = '삼진';
             } else {
               event = '범타';
-              if (bases[0] && outs < 3 && random() < 0.15) {
+              if (bases[0] && outs < 3 && random() < (hitAndRun ? 0.05 : 0.15)) {
                 outs++;
                 pitchingStats(1 - side).outs++;
                 bases[0] = null;
@@ -344,18 +423,46 @@ export function createMatchSimulator(world: WorldCatalog) {
               }
             }
           }
-          if (smallball && bases[0] && !bases[1] && outs < 3 && random() < smallball * 0.26) {
-            const runner = bases[0]!.id;
+          if (hitAndRun) {
+            event += ' · 히트앤드런';
+            if (event.startsWith('삼진') && bases[0] && !bases[1] && outs < 3) {
+              const runner = bases[0];
+              const safe = random() < stealChance(runner, pitcher, defense);
+              bases[0] = null;
+              if (safe) {
+                bases[1] = runner;
+                runner.stats.sb = (runner.stats.sb || 0) + 1;
+              } else {
+                outs++;
+                pitchingStats(1 - side).outs++;
+                runner.stats.cs = (runner.stats.cs || 0) + 1;
+              }
+              play.steal = { runner: runner.id, safe };
+              event += safe ? ' · 주자 2루 진루' : ' · 주자 도루 실패';
+            }
+          }
+          if (
+            !command &&
+            smallball &&
+            bases[0] &&
+            !bases[1] &&
+            outs < 3 &&
+            random() < smallball * 0.26
+          ) {
+            const runnerPlayer = bases[0]!,
+              runner = runnerPlayer.id;
             if (random() < clamp(bases[0]!.speed / 105, 0.3, 0.92)) {
               bases[1] = bases[0];
               bases[0] = null;
               play.steal = { runner, safe: true };
+              if (ownBat) runnerPlayer.stats.sb = (runnerPlayer.stats.sb || 0) + 1;
               event += ' · 2루 도루';
             } else {
               bases[0] = null;
               outs++;
               pitchingStats(1 - side).outs++;
               play.steal = { runner, safe: false };
+              if (ownBat) runnerPlayer.stats.cs = (runnerPlayer.stats.cs || 0) + 1;
               event += ' · 도루 실패';
             }
           }

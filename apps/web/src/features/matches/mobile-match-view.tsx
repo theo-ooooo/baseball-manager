@@ -12,7 +12,7 @@ export function MatchAtBat({ result, cursor }: { result: Result; cursor: number 
         {view.current ? `${view.current.inning}회 ${view.current.half ? '말' : '초'}` : '경기 준비'}
       </span>
       <div>
-        <small>타자</small>
+        <small>{view.current?.play?.plateAppearance === false ? '주자' : '타자'}</small>
         <strong>{view.batter || '선발 명단 확인'}</strong>
         <b>vs</b>
         <small>투수</small>

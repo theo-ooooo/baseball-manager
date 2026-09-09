@@ -318,7 +318,7 @@
 }
 @media (max-width: 767px) {
   .mobile-live-layout .mobile-team-columns {
-    max-height: calc(100dvh - 470px);
+    max-height: calc(100dvh - 530px);
     min-height: 120px;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -341,4 +341,76 @@
   .mobile-live-layout .stadium-replay-header {
     margin: 0;
   }
+  .mobile-live-layout.command-open .mobile-team-columns {
+    display: none;
+  }
+  .mobile-live-layout.has-queued-command .mobile-team-columns {
+    max-height: calc(100dvh - 580px);
+  }
+}
+
+.match-command-panel {
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+}
+.match-command-panel header,
+.match-command-queued {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.match-command-panel header span,
+.match-command-panel p {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.match-command-panel p {
+  margin: 8px 0 0;
+}
+.match-command-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.match-command-cards button {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid var(--brand);
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--text);
+}
+.match-command-cards button:hover:enabled {
+  background: #dbe7ff;
+}
+.match-command-cards button:disabled {
+  opacity: 1;
+  background: var(--surface-3);
+  border-color: var(--line);
+  color: var(--text-3);
+  cursor: not-allowed;
+}
+.match-command-cards span {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.match-command-queued {
+  width: 100%;
+  padding: 7px 10px;
+  color: var(--ok-text);
+  background: var(--ok-bg);
+  font-size: 12px;
+  border-radius: 6px;
+}
+.match-command-queued button {
+  text-decoration: underline;
+  min-height: 32px;
 }

@@ -28,9 +28,16 @@ export function matchReadout(
   const defenses = new Map<number, MatchChange['defense']>();
   for (const event of events) {
     if (!event.play) continue;
-    const prior = outcomes.get(event.play.batter) || [];
-    prior.push(outcomeLabels[playKind(event.text)]);
-    outcomes.set(event.play.batter, prior);
+    const id = event.play.plateAppearance === false ? event.play.steal!.runner : event.play.batter;
+    const prior = outcomes.get(id) || [];
+    prior.push(
+      event.play.plateAppearance === false
+        ? event.play.steal!.safe
+          ? '도루'
+          : '도루 실패'
+        : outcomeLabels[playKind(event.text)],
+    );
+    outcomes.set(id, prior);
     pitchers.set(1 - event.half, event.play.pitcher);
     if (event.play.defense) defenses.set(1 - event.half, event.play.defense);
   }
@@ -53,7 +60,10 @@ export function matchReadout(
         number: byId.get(id)?.number,
         position: Object.entries(defense).find(([, player]) => player === id)?.[0] || 'DH',
         outcomes: outcomes.get(id) || [],
-        active: current?.play?.batter === id,
+        active:
+          (current?.play?.plateAppearance === false
+            ? current.play.steal?.runner
+            : current?.play?.batter) === id,
       })),
     };
   });
@@ -62,8 +72,22 @@ export function matchReadout(
     teams,
     current,
     score: current?.score || [0, 0],
-    label: current ? outcomeLabels[playKind(current.text)] : '플레이볼 준비',
-    batter: players.find((p) => p.id === current?.play?.batter)?.name || '',
+    label:
+      current?.play?.plateAppearance === false
+        ? current.play.steal!.safe
+          ? '도루'
+          : '도루 실패'
+        : current
+          ? outcomeLabels[playKind(current.text)]
+          : '플레이볼 준비',
+    batter:
+      players.find(
+        (p) =>
+          p.id ===
+          (current?.play?.plateAppearance === false
+            ? current.play.steal!.runner
+            : current?.play?.batter),
+      )?.name || '',
     pitcher: players.find((p) => p.id === current?.play?.pitcher)?.name || '',
     count,
   };

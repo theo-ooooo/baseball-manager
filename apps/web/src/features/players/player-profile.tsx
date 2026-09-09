@@ -39,11 +39,19 @@ const innings = (outs: number) => `${Math.floor(outs / 3)}${outs % 3 ? ` ${outs 
 
 function SeasonStats({ stats, pitcher }: { stats: Stats; pitcher: boolean }) {
   return (
-    <p>
-      {pitcher
-        ? `${stats.g}경기 · ${innings(stats.outs)}이닝 · ${stats.wins}승 · ${stats.saves || 0}세이브 · ${stats.holds || 0}홀드 · ERA ${stats.outs ? ((stats.er * 27) / stats.outs).toFixed(2) : '—'}`
-        : `${stats.g}경기 · ${stats.ab}타수 · ${stats.h}안타 · ${stats.hr}홈런 · ${stats.rbi}타점 · AVG ${stats.ab ? (stats.h / stats.ab).toFixed(3) : '—'}`}
-    </p>
+    <div>
+      <p>
+        {pitcher
+          ? `${stats.g}경기 · ${innings(stats.outs)}이닝 · ${stats.wins}승 · ${stats.saves || 0}세이브 · ${stats.holds || 0}홀드 · ERA ${stats.outs ? ((stats.er * 27) / stats.outs).toFixed(2) : '—'}`
+          : `${stats.g}경기 · ${stats.ab}타수 · ${stats.h}안타 · ${stats.hr}홈런 · ${stats.rbi}타점 · AVG ${stats.ab ? (stats.h / stats.ab).toFixed(3) : '—'}`}
+      </p>
+      {!pitcher && (
+        <p className="tiny">
+          추가 집계 · 도루 {stats.sb ?? '—'} · 도루 실패 {stats.cs ?? '—'} · 희생번트{' '}
+          {stats.sh ?? '—'} (기능 추가 전 기록은 포함하지 않습니다.)
+        </p>
+      )}
+    </div>
   );
 }
 
