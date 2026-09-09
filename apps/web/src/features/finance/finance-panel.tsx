@@ -1,4 +1,6 @@
 'use client';
+import { financePlan } from '@dugout/shared/club-finance';
+import { useWorld } from '../career/world-context';
 import { ArrowUpRight, Banknote, Trophy, Users, Wallet } from 'lucide-react';
 import {
   Table,
@@ -15,6 +17,8 @@ import { dateLabel } from '@dugout/shared/calendar';
 import { Metric, Empty } from '../../components/game-ui';
 
 export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] }) {
+  const { getClub } = useWorld();
+  const plan = financePlan(g, getClub(g.club).league);
   const wages = g.roster.reduce((s, p) => s + p.salary, 0),
     coaches = g.staff.reduce((s, c) => s + c.salary, 0);
   return (
@@ -29,7 +33,7 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
         <Metric
           label="이번 시즌 수입"
           value={money(g.income)}
-          sub="경기 수익 · 매각 · 상금"
+          sub="스폰서·중계 지원금 · 경기 · 매각 · 상금"
           icon={<ArrowUpRight size={18} />}
         />
         <Metric
@@ -40,15 +44,15 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
         />
         <Metric
           label="총 연간 급여"
-          value={money(wages + coaches)}
-          sub="선수와 코치의 연봉 합계"
+          value={money(wages + coaches + (g.managerCareer?.contract?.salary || 0))}
+          sub="선수·코치·감독의 연봉 합계"
           icon={<Users size={18} />}
         />
       </div>
       <section className="panel ledger-panel">
         <div className="panel-header">
           <h2>거래 내역</h2>
-          <span>최근 60건 · 자동 기록</span>
+          <span>감독 커리어 전체 · 최근 60건 · 구단 변경 전 내역 포함</span>
         </div>
         <Table>
           <TableHeader>
@@ -76,6 +80,8 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
                     coach: '코치 계약',
                     signCoach: '코치 계약 · 교체 보상금',
                     nextSeason: '새 시즌 지원금',
+                    signManager: '새 소속 구단의 운영 잔액 인계',
+                    managerContinue: '휴가·구직 기간 정산',
                   }[e.kind] || e.kind}
                 </TableCell>
                 <TableCell className={e.amount > 0 ? 'accent' : ''}>
@@ -129,10 +135,20 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
               </div>
               <div>
                 <span>하루 급여 지출</span>
-                <strong>
-                  {money((wages + coaches) / (g.rounds + (g.rules?.preseason ? 28 : 0)))}
-                </strong>
+                <strong>{money(plan.dailyWages)}</strong>
               </div>
+              <div>
+                <span>하루 스폰서·중계 지원금</span>
+                <strong>{money(plan.dailySupport)}</strong>
+              </div>
+              <div>
+                <span>감독 연봉</span>
+                <strong>{money(g.managerCareer?.contract?.salary || 0)}</strong>
+              </div>
+              <p>
+                지원금은 시즌 시작 시 계약된 금액입니다. 추가 영입으로 지출이 늘어도 자동 증액되지
+                않습니다. 급여와 지원금은 시즌별 정산 일정에 따라 지급됩니다.
+              </p>
               <p>
                 금액은 원화로 표시하며 계약 연봉은 만 원 단위로 입력합니다. 게임 고정 환산 기준은
                 1달러 = 1,400원이며, 실제 환율·선수 연봉과는 다릅니다.

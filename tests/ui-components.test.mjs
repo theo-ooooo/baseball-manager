@@ -163,3 +163,35 @@ test('Training and history withhold unmeasured ability goals and retain observed
   assert.match(observed, /개인 육성 목표 진척/);
   assert.doesNotMatch(observed, /aria-label="개인 육성 목표 수치"[^>]*disabled/);
 });
+
+test('Manager job listings show board confidence and vacancies separately from the continuous career office', async () => {
+  const { engine, world } = await vite.ssrLoadModule('/tests/fixtures/engine.ts');
+  const { WorldProvider } = await vite.ssrLoadModule(
+    '/apps/web/src/features/career/world-context.tsx',
+  );
+  const { ManagerJobsPanel } = await vite.ssrLoadModule(
+    '/apps/web/src/features/career/manager-jobs-panel.tsx',
+  );
+  const { ManagerPanel } = await vite.ssrLoadModule(
+    '/apps/web/src/features/career/manager-panel.tsx',
+  );
+  let g = engine.newGame('kbo-lotte', '감독 화면', 'short', 3);
+  g = engine.applyAction(g, { type: 'resignManager', confirm: true });
+  const render = (component) =>
+    renderToStaticMarkup(
+      React.createElement(
+        WorldProvider,
+        { world },
+        React.createElement(component, { g, act: async () => null, busy: false }),
+      ),
+    );
+  const jobs = render(ManagerJobsPanel),
+    office = render(ManagerPanel);
+  assert.match(jobs, /감독 채용 현황/);
+  assert.match(jobs, /35%/);
+  assert.match(jobs, /공석/);
+  assert.match(jobs, /지원 조건 선택/);
+  assert.match(office, /무직/);
+  assert.match(office, /\?view=jobs/);
+  assert.match(office, /구직 기간 진행/);
+});

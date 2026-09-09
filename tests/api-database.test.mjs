@@ -977,3 +977,56 @@ test('Routine news and tactic saves leave projections untouched; a player edit u
     await db.prepare('DROP TABLE delta_probe').run();
   }
 });
+
+test('D1 manager resignation, job eligibility, employment and club preservation survive reloads and duplicate requests', async () => {
+  const user = 'manager-career-db';
+  const start = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '경력 검증', mode: 'short' },
+    user,
+  );
+  const request = {
+    type: 'resignManager',
+    confirm: true,
+    revision: start.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const resigned = await call('/api/career', request, user);
+  assert.equal(resigned.status, 201);
+  assert.equal(resigned.body.state.managerCareer.status, 'unemployed');
+  assert.deepEqual((await call('/api/career', request, user)).body, resigned.body);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, resigned.body);
+  const locked = await call(
+    '/api/career',
+    { type: 'auto', revision: resigned.body.revision, requestId: crypto.randomUUID() },
+    user,
+  );
+  assert.equal(locked.status, 400);
+  const open = Object.values(resigned.body.state.managerJobs).find(
+    (j) => j.club.startsWith('kbo-') && j.club !== 'kbo-lotte' && j.confidence < 35,
+  );
+  assert.ok(open);
+  const applied = await action({ type: 'applyManager', club: open.club, targetRank: 4 }, user);
+  assert.equal(applied.state.managerJobs[open.club].managerName, open.managerName);
+  let progressed = applied;
+  for (let i = 0; i < 3; i++) progressed = await action({ type: 'managerContinue' }, user);
+  const before = structuredClone(progressed.state.standings);
+  const signed = await action(
+    { type: 'signManager', id: progressed.state.managerCareer.offers[0].id },
+    user,
+  );
+  assert.equal(signed.state.club, open.club);
+  assert.deepEqual(signed.state.standings, before);
+  assert.equal(signed.state.clubCareers, undefined);
+  assert.equal(signed.state.managerJobs[open.club].managerName, '경력 검증');
+  assert.equal(signed.state.managerJobs[open.club].confidence, 65);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, signed);
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.ok(raw.clubCareers['kbo-lotte']);
+  assert.ok(raw.transferred.some((p) => p.club === 'kbo-lotte'));
+  const catalog = (await call('/api/catalog', undefined, user)).body;
+  const foreign = catalog.players.find((p) => p.club.startsWith('npb-'));
+  assert.equal(foreign.contact, 0);
+  assert.equal(foreign.observation.status, 'unknown');
+});

@@ -35,7 +35,7 @@ export function AppSidebar({
   const groups = [
     {
       label: '내 구단',
-      ids: ['home', 'inbox', 'matchday', 'media'],
+      ids: ['manager', 'jobs', 'home', 'inbox', 'matchday', 'media'],
     },
     { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'dynamics'] },
     { label: '시즌 · 운영', ids: ['schedule', 'world', 'market', 'scouting', 'agents', 'finance'] },
@@ -59,7 +59,9 @@ export function AppSidebar({
         <div className="sidebar-club" style={{ '--club': club.color } as CSSProperties}>
           <Badge club={club} />
           <span>
-            <strong>{club.name}</strong>
+            <strong>
+              {g.managerCareer?.status === 'unemployed' ? '무직 · 감독 채용' : club.name}
+            </strong>
             <small>
               {getLeague(club.league).name} · {g.year}
             </small>
@@ -72,30 +74,38 @@ export function AppSidebar({
             <h2>{group.label}</h2>
             <SidebarGroup>
               <SidebarMenu>
-                {group.ids.map((id) => {
-                  const n = nav.find((n) => n.id === id)!;
-                  return (
-                    <SidebarMenuItem key={id}>
-                      <SidebarMenuButton
-                        className="nav-button"
-                        isActive={view === id}
-                        onClick={() => {
-                          onView(id);
-                          setOpenMobile(false);
-                        }}
-                      >
-                        <n.icon />
-                        <span>{n.label}</span>
-                        {id === 'inbox' && g.news.some((item) => !item.read) && (
-                          <b className="nav-count">{g.news.filter((item) => !item.read).length}</b>
-                        )}
-                        {id === 'agents' && g.deals.length > 0 && (
-                          <b className="nav-count">{g.deals.length}</b>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {group.ids
+                  .filter(
+                    (id) =>
+                      g.managerCareer?.status !== 'unemployed' ||
+                      ['manager', 'jobs', 'inbox', 'world'].includes(id),
+                  )
+                  .map((id) => {
+                    const n = nav.find((n) => n.id === id)!;
+                    return (
+                      <SidebarMenuItem key={id}>
+                        <SidebarMenuButton
+                          className="nav-button"
+                          isActive={view === id}
+                          onClick={() => {
+                            onView(id);
+                            setOpenMobile(false);
+                          }}
+                        >
+                          <n.icon />
+                          <span>{n.label}</span>
+                          {id === 'inbox' && g.news.some((item) => !item.read) && (
+                            <b className="nav-count">
+                              {g.news.filter((item) => !item.read).length}
+                            </b>
+                          )}
+                          {id === 'agents' && g.deals.length > 0 && (
+                            <b className="nav-count">{g.deals.length}</b>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
               </SidebarMenu>
             </SidebarGroup>
           </section>

@@ -17,6 +17,29 @@ buildSync({
   format: 'cjs',
   outfile: out,
 });
+
+test('Previously managed players stay familiar after release while unknown free agents remain masked per account', () => {
+  const g = game();
+  const released = { ...g.roster[0], club: 'fa' };
+  g.roster = g.roster.filter((p) => p.id !== released.id);
+  g.transferred.push(released);
+  assert.equal(presentState(g).transferred[0].observation, undefined);
+  assert.equal(presentState(g).transferred[0].contact, released.contact);
+  const fa = world.players.find((p) => p.club === 'fa');
+  assert.equal(
+    presentWorld(world, false, g).players.find((p) => p.id === fa.id).observation.status,
+    'unknown',
+  );
+  g.knowledge.players.push(fa.id);
+  assert.equal(
+    presentWorld(world, false, g).players.find((p) => p.id === fa.id).observation,
+    undefined,
+  );
+  assert.equal(
+    presentWorld(world, false, game()).players.find((p) => p.id === fa.id).observation.status,
+    'unknown',
+  );
+});
 const {
   world,
   engine: e,

@@ -8,7 +8,10 @@ import { postNews } from './club-dynamics';
 
 export function prepareKnowledge(g: GameState, world: WorldCatalog) {
   const league = world.clubs.find((c) => c.id === g.club)!.league;
-  g.knowledge ??= { leagues: [league], clubs: [] };
+  g.knowledge = g.knowledge ? { ...g.knowledge } : { leagues: [league], clubs: [] };
+  g.knowledge.players = [
+    ...new Set([...(g.knowledge.players || []), ...g.roster.map((p) => p.id)]),
+  ];
   g.knowledge.clubs = world.clubs
     .filter((c) => g.knowledge!.leagues.includes(c.league))
     .map((c) => c.id);

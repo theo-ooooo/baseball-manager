@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 
 export const nav = [
+  { id: 'jobs', label: '감독 채용 현황', icon: Handshake },
+  { id: 'manager', label: '감독 경력 · 구단주', icon: Handshake },
   { id: 'home', label: '홈', icon: House },
   { id: 'inbox', label: '수신함', icon: MessageSquare },
   { id: 'matchday', label: '경기 준비', icon: CircleDot },

@@ -14,7 +14,7 @@ function player(p: Player, reveal = false, state?: CatalogKnowledge | null): Pla
     next.development = { ...next.development };
     delete next.development.curve;
   }
-  const known = state && p.club === state.club;
+  const known = state && (p.club === state.club || state.knowledge?.players?.includes(p.id));
   if (!known && !state?.knowledge?.clubs.includes(p.club)) {
     const report = state?.scouting?.reports.find((r) => r.playerId === p.id);
     next.observation = report
@@ -46,6 +46,7 @@ function player(p: Player, reveal = false, state?: CatalogKnowledge | null): Pla
 export function presentState(state: GameState | null): GameState | null {
   if (!state) return null;
   const next = { ...state };
+  delete next.clubCareers;
   if (state.scouting) {
     next.scouting = {
       ...state.scouting,
@@ -108,11 +109,13 @@ export function presentWorld(
     if (cache.size >= 32) cache.delete(cache.keys().next().value!);
     cache.set(key, base);
   }
-  if (!state?.scouting?.reports.length) return base;
-  const reports = new Map(state.scouting.reports.map((r) => [r.playerId, r]));
+  if (!state?.scouting?.reports.length && !state?.knowledge?.players?.length) return base;
+  const reports = new Map((state?.scouting?.reports || []).map((r) => [r.playerId, r]));
+  const knownPlayers = new Set(state?.knowledge?.players || []);
   return {
     ...base,
-    players: base.players.map((p) => {
+    players: base.players.map((p, i) => {
+      if (p.observation && knownPlayers.has(p.id)) return player(world.players[i], reveal, state);
       const report = reports.get(p.id);
       return p.observation && report
         ? {

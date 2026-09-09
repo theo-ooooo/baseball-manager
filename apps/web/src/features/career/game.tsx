@@ -1,5 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { ManagerJobsPanel } from './manager-jobs-panel';
+import { ManagerPanel } from './manager-panel';
+import { CoachRecommendations } from '../squad/coach-recommendations';
+import { isUnemployed } from '@dugout/shared/manager-career';
 import { ReservePanel } from '../squad/reserve-panel';
 import { useRouter } from 'next/navigation';
 import { PlayerProfile } from '../players/player-profile';
@@ -75,7 +79,7 @@ export function GameScreen({
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
   const router = useRouter();
-  const view = initialPlayerId
+  const requestedView = initialPlayerId
     ? 'player'
     : nav.some((n) => n.id === initialView)
       ? initialView!
@@ -93,6 +97,11 @@ export function GameScreen({
     [replay, setReplay] = useState<Result | null>(null),
     [help, setHelp] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
+  const awayFromClub = !!g && (isUnemployed(g) || !!g.managerCareer?.vacationUntil);
+  const view =
+    awayFromClub && !['inbox', 'world', 'manager', 'jobs'].includes(requestedView)
+      ? 'manager'
+      : requestedView;
   const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
   const [reportEpoch, setReportEpoch] = useState(0);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -147,6 +156,9 @@ export function GameScreen({
       revision.current = d.revision;
       setLedger(d.ledger || []);
       setSaveFailed(false);
+      if (action.type === 'signManager') await refreshCatalog();
+      if (['signManager', 'resignManager', 'startVacation'].includes(String(action.type)))
+        setView('manager');
       if (action.type === 'startMatch') router.push('/match');
       return d.state;
     } catch (e) {
@@ -206,6 +218,10 @@ export function GameScreen({
         : baseStep;
   async function continueFlow() {
     if (!g || !step || busy || progressing) return;
+    if (awayFromClub) {
+      await act({ type: g.phase === 'finished' ? 'nextSeason' : 'managerContinue', count: 7 });
+      return;
+    }
     if (g.liveMatch) {
       setView('match');
       return;
@@ -311,7 +327,7 @@ export function GameScreen({
             <SidebarTrigger className="mobile-menu" aria-label="메뉴 열기" />
             <Badge club={club} size="small" />
             <div>
-              <strong>{club.name}</strong>
+              <strong>{isUnemployed(g) ? `${g.manager} · 무직` : club.name}</strong>
               <span>
                 {league.name}
                 <ChevronRight size={11} />
@@ -344,7 +360,7 @@ export function GameScreen({
             <div className="page-actions">
               {g.phase !== 'finished' ? (
                 <>
-                  <details className="advance-menu">
+                  <details className="advance-menu" hidden={awayFromClub}>
                     <summary aria-label="자동 진행 옵션">
                       <ChevronsRight size={18} />
                     </summary>
@@ -544,6 +560,9 @@ export function GameScreen({
               경기 준비로 돌아가기 <ChevronRight size={15} />
             </Link>
           )}
+          {view === 'jobs' && <ManagerJobsPanel g={g} act={act} busy={busy} />}
+          {view === 'manager' && <ManagerPanel key={g.club} g={g} act={act} busy={busy} />}
+          {view === 'reserves' && <CoachRecommendations g={g} act={act} busy={busy} />}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}

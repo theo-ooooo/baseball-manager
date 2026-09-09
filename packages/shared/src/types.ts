@@ -1,3 +1,4 @@
+import type { ManagerCareer, ClubCareer, ClubManagerJob } from './manager-career';
 import type { ScoutingState } from './scouting';
 import type { TrainingPlan } from './training-plan';
 import type { MatchCommand, MatchCommandKind } from './match-commands';
@@ -212,7 +213,29 @@ export type GameState = {
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
   progress?: DayProgress;
   scouting?: ScoutingState;
-  knowledge?: { leagues: string[]; clubs: string[] };
+  knowledge?: { leagues: string[]; clubs: string[]; players?: string[] };
+  managerCareer?: ManagerCareer;
+  managerJobs?: Record<string, ClubManagerJob>;
+  /** Server-only preserved club operations; player contracts live in transferred. */
+  clubCareers?: Record<string, ClubCareer>;
+  worldRevenue?: Record<string, number>;
+  finances?: {
+    days?: number;
+    annualSupport: number;
+    year: number;
+    settledDays: number;
+    paidWages: number;
+    receivedSupport: number;
+  };
+  coachRecommendations?: {
+    id: string;
+    playerId: string;
+    replacementId?: string;
+    target: 'first' | 'reserve';
+    date: string;
+    status: 'pending' | 'accepted' | 'dismissed';
+    reason: string;
+  }[];
   media?: MatchMediaState;
 };
 export type DayProgress = {
@@ -411,7 +434,16 @@ export type NewsItem = {
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
-  actionView?: 'agents' | 'staff' | 'squad' | 'market' | 'scouting' | 'media';
+  actionView?:
+    | 'agents'
+    | 'staff'
+    | 'squad'
+    | 'market'
+    | 'scouting'
+    | 'media'
+    | 'manager'
+    | 'jobs'
+    | 'reserves';
   sender?: { name: string; role: string };
   dealId?: string;
   report?: {

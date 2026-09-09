@@ -44,11 +44,15 @@ test('Rest day advances the date without creating a match; league games share th
   while (g.phase === 'preseason') g = e.advance(g, 7);
   g = e.advance(g, 2);
   const count = g.history.length,
-    budget = g.budget;
+    budget = g.budget,
+    income = g.income,
+    expenses = g.expenses;
   g = e.advance(g, 1);
   assert.equal(g.history.length, count);
   assert.equal(g.day, 3);
-  assert.ok(g.budget < budget);
+  assert.ok(g.expenses > expenses);
+  assert.ok(g.income > income);
+  assert.ok(Math.abs(g.budget - budget - (g.income - income - (g.expenses - expenses))) < 1e-8);
   assert.equal(
     g.worldResults.filter((r) => r.date === '2026-03-28' && r.home.startsWith('kbo-')).length,
     5,

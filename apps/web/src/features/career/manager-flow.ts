@@ -16,6 +16,20 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
       label: '경기 진행 중',
       detail: '경기를 마치면 경기 후 보고로 이어집니다.',
     };
+  if (g.managerCareer?.status === 'unemployed' || g.managerCareer?.vacationUntil)
+    return {
+      kind: 'continue',
+      label:
+        g.phase === 'finished'
+          ? '다음 시즌'
+          : g.managerCareer.status === 'unemployed'
+            ? '구직 기간 진행'
+            : '휴가 진행',
+      detail:
+        g.managerCareer.status === 'unemployed'
+          ? '감독 채용에 지원하고 답변을 기다립니다.'
+          : '코치에게 경기를 위임하며 복귀일까지 진행합니다.',
+    };
   const decision = g.news.find((n) => n.choiceKind && !n.choice);
   if (decision)
     return { kind: 'decision', label: '필수 답변', detail: decision.title, reportId: decision.id };

@@ -1,5 +1,6 @@
 import type { GameState, NewsItem } from '@dugout/shared/types';
 export const newsKinds: Record<string, { label: string; sender: string; role: string }> = {
+  manager: { label: '감독 경력', sender: '구단주 사무실', role: '감독 계약·채용' },
   contract: { label: '계약 관리', sender: '계약 담당자', role: '선수 계약 관리' },
   transfer: { label: '이적 · 협상', sender: '영입 담당자', role: '영입 및 에이전트 연락' },
   scout: { label: '스카우팅', sender: '전력 분석팀', role: '상대 전력 분석' },
@@ -22,6 +23,12 @@ export function contractReview(news: NewsItem) {
 }
 export function newsNeedsAction(news: NewsItem, g: GameState) {
   if (news.id === `media-pending:${g.media?.pending?.key}`) return true;
+  if (
+    g.coachRecommendations?.some(
+      (r) => r.playerId === news.playerId && r.date === news.date && r.status === 'pending',
+    )
+  )
+    return true;
   if (news.choiceKind && !news.choice) return true;
   if (contractReview(news))
     return (

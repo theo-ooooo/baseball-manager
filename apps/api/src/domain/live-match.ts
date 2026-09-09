@@ -81,7 +81,8 @@ export function createLiveMatchActions(
       const before = new Set(g.history.map((result) => result.id));
       const next = advance(g, 1, true);
       const result = next.history.find((result) => !before.has(result.id));
-      if (result) queuePostMatchConversation(next, result, world);
+      if (result && next.managerCareer?.status !== 'unemployed')
+        queuePostMatchConversation(next, result, world);
       return next;
     }
     if (g.liveMatch && a.type !== 'syncCatalog')
