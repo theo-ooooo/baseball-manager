@@ -381,6 +381,43 @@
   color: #767260;
   margin-top: 2px;
 }
+.contract-salary-clause {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.contract-salary-clause dd {
+  width: min(280px, 100%);
+  min-width: 0;
+}
+.contract-salary-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid #a9b6bf;
+  border-radius: 4px;
+  color: #263344;
+  background: #fff;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.contract-salary-clause dd > strong {
+  display: block;
+  margin-top: 8px;
+}
+.contract-salary-clause .text-button {
+  margin-top: 7px;
+  font-size: 11px;
+  color: #285880;
+}
+.contract-revision-note {
+  margin-top: 20px;
+  border-left: 3px solid #a67722;
+  padding: 12px;
+  background: #fbf0d9;
+  color: #67491c;
+  font-size: 12px;
+  line-height: 1.8;
+}
 .contract-total {
   display: flex;
   justify-content: space-between;

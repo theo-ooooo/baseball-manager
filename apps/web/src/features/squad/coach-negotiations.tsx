@@ -241,6 +241,13 @@ export function CoachNegotiations({
           g={g}
           busy={busy}
           sign={async () => !!(await act({ type: 'signCoach', id: signing.id }))}
+          reviseSalary={async (salary) =>
+            !!(await act({ type: 'reviseContractSalary', kind: 'coach', id: signing.id, salary }))
+          }
+          estimateCosts={(salary) => [
+            { label: '계약금 · 연봉의 50%', amount: salary * 0.5 },
+            { label: '기존 코치 계약 보상금', amount: signing.compensation },
+          ]}
           close={() => setSigning(null)}
         />
       )}

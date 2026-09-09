@@ -349,6 +349,20 @@ export function createRecruitment(world: WorldCatalog) {
     }
   }
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
+    if (a.type === 'reviseContractSalary') {
+      if (a.kind !== 'player' && a.kind !== 'coach') throw new Error('계약 대상을 선택해 주세요.');
+      const d = (a.kind === 'coach' ? g.coachDeals || [] : g.deals).find((d) => d.id === a.id);
+      if (!d) throw new Error('협상을 찾을 수 없습니다.');
+      requireReply(g, d);
+      if (d.status !== 'accepted' || ('player' in d && d.stage === 'club'))
+        throw new Error('합의한 계약서의 연봉만 다시 조율할 수 있습니다.');
+      const salary = Number(a.salary);
+      terms(salary, d.years);
+      if (salary === d.salary) throw new Error('조율할 연봉을 변경해 주세요.');
+      if ('coach' in d)
+        return coachOffer(g, { id: d.coach.id, role: d.role, salary, years: d.years });
+      return negotiate(g, d.player.id, salary, d.years, d.type, d.fee);
+    }
     if (a.type === 'coachOffer' || a.type === 'coach') return coachOffer(g, a);
     if (
       ![
