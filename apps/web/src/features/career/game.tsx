@@ -52,17 +52,21 @@ import { Finance } from '../finance/finance-panel';
 import { Help } from './help-dialog';
 import { AppSidebar } from './game-sidebar';
 import { CalendarProgress, useCalendarProgress } from './calendar-progress';
+import { managerStep, matchReportId } from './manager-flow';
+import { MatchdayBriefing } from '../matches/matchday-briefing';
 
 export function GameScreen({
   initial,
   refreshCatalog,
   initialPlayerId,
   initialView,
+  initialReportId,
 }: {
   initial: CareerData;
   refreshCatalog: () => Promise<void>;
   initialPlayerId?: string;
   initialView?: string;
+  initialReportId?: string;
 }) {
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
@@ -71,7 +75,7 @@ export function GameScreen({
     ? 'player'
     : nav.some((n) => n.id === initialView)
       ? initialView!
-      : 'home';
+      : 'inbox';
   const setView = (id: string) => router.push('/?view=' + encodeURIComponent(id));
   const setPlayer = (p: Player) =>
     router.push('/players/' + encodeURIComponent(p.id) + '?from=' + encodeURIComponent(view));
@@ -85,6 +89,7 @@ export function GameScreen({
     [help, setHelp] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
   const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
+  const [reportEpoch, setReportEpoch] = useState(0);
   const locked = useRef(false);
   const revision = useRef(initial.revision);
   const [ledger, setLedger] = useState(initial.ledger);
@@ -143,6 +148,10 @@ export function GameScreen({
   };
   const calendarProgress = useCalendarProgress(act);
   const progressing = calendarProgress.journey?.running === true;
+  function openReport(id?: string) {
+    setReportEpoch((n) => n + 1);
+    router.push('/?view=inbox' + (id ? '&report=' + encodeURIComponent(id) : ''));
+  }
   async function openReplay(result: Result) {
     if (result.log.length) {
       setReplay(result);
@@ -159,15 +168,63 @@ export function GameScreen({
       toast.error('경기 기록을 불러오지 못했습니다. 다시 시도해 주세요.');
     }
   }
-  async function simulate(count = 1, watch = false) {
+  async function simulate(count = 1) {
     if (!g || g.liveMatch || busy || progressing) return;
-    if (count === 1 && watch && nextFixture(g) && !g.news.some((n) => n.choiceKind && !n.choice)) {
-      await act({ type: 'startMatch' });
-      return;
-    }
     const next = await calendarProgress.run(g, count === 1 ? 45 : count, count > 1);
-    if (next?.progress?.newsIds.length) setView('inbox');
+    if (next?.progress?.newsIds.length) openReport(next.progress.newsIds[0]);
+    else if (next?.progress?.stop === 'fixture') setView('matchday');
   }
+  const step = g ? managerStep(g, !!nextFixture(g), view) : null;
+  async function continueFlow() {
+    if (!g || !step || busy || progressing || g.liveMatch) return;
+    calendarProgress.close();
+    if (step.reportId) openReport(step.reportId);
+    else if (step.kind === 'matchday') {
+      if (view === 'matchday') await act({ type: 'startMatch' });
+      else setView('matchday');
+    } else if (step.kind === 'season') {
+      const next = await act({ type: 'nextSeason' });
+      if (next) openReport(next.news[0]?.id);
+    } else await simulate();
+  }
+  const matchAct: Act = async (action) => {
+    const next = await act(action);
+    if (next && g && action.type === 'completeMatch') {
+      calendarProgress.close();
+      openReport(matchReportId(g, next));
+    }
+    return next;
+  };
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (
+        event.code !== 'Space' ||
+        event.repeat ||
+        event.defaultPrevented ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+      )
+        return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (
+        target?.closest(
+          'input,textarea,select,button,a,summary,[contenteditable="true"],[role="button"],[role="tab"],[role="combobox"],[role="listbox"],[role="option"],[role="slider"],[role="switch"],[role="checkbox"],[role="menuitem"],[role="dialog"],[role="alertdialog"]',
+        ) ||
+        document.querySelector('[role="dialog"], [role="alertdialog"]') ||
+        setup ||
+        !g ||
+        progressing ||
+        busy
+      )
+        return;
+      event.preventDefault();
+      void continueFlow();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  });
   if (!g || setup)
     return (
       <>
@@ -191,7 +248,7 @@ export function GameScreen({
             if (result) {
               await refreshCatalog();
               setSetup(false);
-              setView('home');
+              openReport(result.news.find((n) => n.kind === 'club')?.id);
               toast.success(`${getClub(club).name}의 감독으로 취임했습니다.`);
             }
           }}
@@ -260,7 +317,8 @@ export function GameScreen({
                     <div>
                       <strong>자동 진행</strong>
                       <p>
-                        경기를 자동 계산하며 최대 7일 진행합니다. 새 리포트가 도착하면 멈춥니다.
+                        기존 안 읽은 보고는 건너뛰고 경기를 자동 계산하며 최대 7일 진행합니다. 새
+                        보고나 필수 결정에서 멈춥니다.
                       </p>
                       <button
                         className="button secondary"
@@ -276,14 +334,15 @@ export function GameScreen({
                   </details>
                   <button
                     className="button primary continue-button"
-                    disabled={busy}
-                    onClick={() => simulate(1, true)}
+                    disabled={busy || !!g.liveMatch}
+                    onClick={continueFlow}
+                    title={step?.detail}
                   >
                     {busy ? (
                       <LoaderCircle size={16} className="spin" />
                     ) : (
                       <>
-                        <span>{nextFixture(g) ? '경기 진행' : '계속 진행'}</span>
+                        <span>{step?.label}</span>
                         <ChevronRight size={18} />
                       </>
                     )}
@@ -293,22 +352,32 @@ export function GameScreen({
                 <button
                   className="button primary continue-button"
                   disabled={busy}
-                  onClick={() => act({ type: 'nextSeason' })}
+                  onClick={continueFlow}
                 >
-                  다음 시즌
+                  {step?.label}
                   <ChevronRight size={18} />
                 </button>
               )}
             </div>
           </div>
         </header>
+        {!g.liveMatch && step && (
+          <div className="manager-next-step">
+            <span>
+              <b>다음 할 일</b>
+              {step.detail}
+            </span>
+            <small>Space로 진행</small>
+          </div>
+        )}
         {calendarProgress.journey && (
           <CalendarProgress
             journey={calendarProgress.journey}
             g={g}
             pause={calendarProgress.pause}
             close={calendarProgress.close}
-            onReports={() => setView('inbox')}
+            onReports={() => openReport(g.progress?.newsIds[0])}
+            onMatchday={() => setView('matchday')}
           />
         )}
         <div className="workspace-body" inert={progressing || undefined}>
@@ -395,8 +464,8 @@ export function GameScreen({
             <Dashboard
               g={g}
               setView={setView}
-              simulate={() => simulate(1, true)}
-              act={act}
+              simulate={continueFlow}
+              continueLabel={step!.label}
               busy={busy}
               onPlayer={setPlayer}
               replay={openReplay}
@@ -404,13 +473,30 @@ export function GameScreen({
           )}
           {view === 'inbox' && (
             <InboxPanel
-              key={g.news[0]?.id}
+              key={`${g.news[0]?.id}:${initialReportId || ''}:${reportEpoch}`}
+              initialReportId={initialReportId}
+              onReplay={openReplay}
               onNegotiate={setContractPlayer}
               g={g}
               act={act}
               busy={busy || contractPlayer !== null}
               onPlayer={setPlayer}
             />
+          )}
+          {view === 'matchday' && (
+            <MatchdayBriefing
+              g={g}
+              onView={setView}
+              onPlayer={setPlayer}
+              onContinue={continueFlow}
+              label={step!.label}
+              busy={busy}
+            />
+          )}
+          {nextFixture(g) && ['tactics', 'reserves', 'squad', 'player'].includes(view) && (
+            <Link className="button secondary matchday-return" href="/?view=matchday">
+              경기 준비로 돌아가기 <ChevronRight size={15} />
+            </Link>
           )}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
@@ -443,7 +529,7 @@ export function GameScreen({
           </button>
         </footer>
       </main>
-      <>{g.liveMatch && <LiveMatchScreen g={g} act={act} busy={busy} />}</>
+      <>{g.liveMatch && <LiveMatchScreen g={g} act={matchAct} busy={busy} />}</>
       <StadiumReplay result={replay} close={() => setReplay(null)} />
       {contractPlayer && (
         <PlayerContractDialog
@@ -477,7 +563,8 @@ export function GameScreen({
 export default function Game({
   initialPlayerId,
   initialView,
-}: { initialPlayerId?: string; initialView?: string } = {}) {
+  initialReportId,
+}: { initialPlayerId?: string; initialView?: string; initialReportId?: string } = {}) {
   const [data, setData] = useState<{ world: WorldCatalog; career: CareerData } | null>(null),
     [error, setError] = useState(''),
     [attempt, setAttempt] = useState(0);
@@ -535,6 +622,7 @@ export default function Game({
         initial={data.career}
         initialPlayerId={initialPlayerId}
         initialView={initialView}
+        initialReportId={initialReportId}
         refreshCatalog={async () => {
           const response = await fetch('/api/catalog', { cache: 'no-store' });
           if (!response.ok)

@@ -382,6 +382,7 @@ export function createGameEngine(world: WorldCatalog) {
       'match',
       {
         sender: { name: '수석 코치', role: '경기 후 보고' },
+        matchId: res.id,
         actionView: 'squad',
         report: {
           facts: [

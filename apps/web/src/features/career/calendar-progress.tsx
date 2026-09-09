@@ -78,12 +78,14 @@ export function CalendarProgress({
   pause,
   close,
   onReports,
+  onMatchday,
 }: {
   journey: Journey;
   g: GameState;
   pause: () => void;
   close: () => void;
   onReports: () => void;
+  onMatchday: () => void;
 }) {
   const { nextFixture, getClub } = useWorld();
   const days = Array.from({ length: journey.limit + 7 }, (_, i) => journey.start - 3 + i);
@@ -107,6 +109,11 @@ export function CalendarProgress({
           </button>
         ) : (
           <div>
+            {g.progress?.stop === 'fixture' && (
+              <button className="text-button" onClick={onMatchday}>
+                경기 준비 →
+              </button>
+            )}
             {reports > 0 && (
               <button className="text-button" onClick={onReports}>
                 리포트 확인 →

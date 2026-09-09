@@ -381,6 +381,7 @@ export type NewsItem = {
   kind: string;
   read?: boolean;
   playerId?: string;
+  matchId?: string;
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
