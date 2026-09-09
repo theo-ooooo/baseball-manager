@@ -12,7 +12,6 @@ import { useWorld } from './world-context';
 import { type GameState, type Player, type Result, money } from '@dugout/shared/game-view';
 import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
 import { Badge } from '../../components/game-ui';
-import type { Act } from './game-contracts';
 const tactics: Record<string, string> = {
   balanced: '균형 잡힌 야구',
   power: '장타 중심',
@@ -32,7 +31,7 @@ export function Dashboard({
   g,
   setView,
   simulate,
-  act,
+  continueLabel,
   busy,
   onPlayer,
   replay,
@@ -40,7 +39,7 @@ export function Dashboard({
   g: GameState;
   setView: (v: string) => void;
   simulate: () => void;
-  act: Act;
+  continueLabel: string;
   busy: boolean;
   onPlayer: (p: Player) => void;
   replay: (r: Result) => void;
@@ -239,15 +238,9 @@ export function Dashboard({
             </div>
           )}
           <footer className="next-game-actions">
-            <button
-              className="button primary"
-              disabled={busy || !!g.liveMatch}
-              onClick={() =>
-                g.phase === 'finished' ? void act({ type: 'nextSeason' }) : simulate()
-              }
-            >
+            <button className="button primary" disabled={busy || !!g.liveMatch} onClick={simulate}>
               {busy ? <LoaderCircle size={16} className="spin" /> : <Play size={16} />}
-              {g.phase === 'finished' ? '다음 시즌 시작' : fixture ? '경기 시작' : '다음 일정으로'}
+              {continueLabel}
             </button>
             <button className="button secondary" onClick={() => setView('tactics')}>
               <ClipboardList size={15} />

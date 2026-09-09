@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowUpRight, FileSignature, UserRound } from 'lucide-react';
-import type { GameState, NewsItem, Player } from '@dugout/shared/types';
+import type { GameState, NewsItem, Player, Result } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
 import type { Act } from '../career/game-contracts';
@@ -14,6 +14,7 @@ export function InboxReport({
   busy,
   onPlayer,
   onNegotiate,
+  onReplay,
 }: {
   news: NewsItem;
   g: GameState;
@@ -21,8 +22,10 @@ export function InboxReport({
   busy: boolean;
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
+  onReplay?: (r: Result) => void;
 }) {
-  const { marketPlayers } = useWorld();
+  const { marketPlayers, getClub } = useWorld();
+  const match = news.matchId ? g.history.find((r) => r.id === news.matchId) : undefined;
   const scouting = news.actionView === 'scouting';
   const candidates =
     scouting && news.report?.players?.length
@@ -70,6 +73,32 @@ export function InboxReport({
         </div>
       </header>
       <div className="inbox-report-content">
+        {match && (
+          <section className="inbox-match-result" aria-label="경기 최종 결과">
+            <div>
+              <span>
+                {getClub(match.away).name}
+                <small>원정</small>
+              </span>
+              <strong>
+                {match.awayScore} : {match.homeScore}
+              </strong>
+              <span>
+                {getClub(match.home).name}
+                <small>홈</small>
+              </span>
+            </div>
+            {onReplay && (
+              <button
+                className="button secondary compact"
+                disabled={busy}
+                onClick={() => onReplay(match)}
+              >
+                경기 기록 · 다시보기 <ArrowUpRight size={14} />
+              </button>
+            )}
+          </section>
+        )}
         <p className="inbox-letter-greeting">{g.manager} 감독님께,</p>
         <div className="inbox-letter-body">
           {news.body.split('\n').map((line, i) => (

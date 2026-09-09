@@ -148,6 +148,16 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                 : `${event?.inning}회 ${event?.half ? '말' : '초'}`}
           </DialogDescription>
         </DialogHeader>
+        <ol className="match-flow-steps" aria-label="경기 진행 단계">
+          {['경기 준비', '경기 지휘', '경기 후 보고'].map((label, i) => (
+            <li
+              key={label}
+              aria-current={(finished ? 2 : cursor === 0 ? 0 : 1) === i ? 'step' : undefined}
+            >
+              {label}
+            </li>
+          ))}
+        </ol>
         {editor && !finished && mobile && (
           <details className="mobile-preview-teams">
             <summary>홈 · 원정 선발 명단 비교</summary>
@@ -262,7 +272,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                     })
                   }
                 >
-                  결과 확인 · 더그아웃으로 →
+                  결과 저장 · 경기 후 보고 →
                 </button>
               )}
             </div>

@@ -13,6 +13,8 @@ export function createLiveMatchActions(
   function liveAction(g: GameState, a: Record<string, unknown>) {
     if (a.type === 'startMatch') {
       if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+      if (g.news.some((n) => n.choiceKind && !n.choice))
+        throw new Error('수신함의 필수 면담에 답변한 뒤 경기장으로 이동해 주세요.');
       const pair = nextFixture(g);
       if (!pair) throw new Error('오늘 경기가 없습니다. 계속 진행으로 다음 일정으로 이동하세요.');
       const [home, away] = pair;

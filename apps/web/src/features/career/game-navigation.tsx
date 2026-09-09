@@ -12,11 +12,13 @@ import {
   MessageSquare,
   GraduationCap,
   Binoculars,
+  CircleDot,
 } from 'lucide-react';
 
 export const nav = [
   { id: 'home', label: '홈', icon: House },
   { id: 'inbox', label: '수신함', icon: MessageSquare },
+  { id: 'matchday', label: '경기 준비', icon: CircleDot },
   { id: 'dynamics', label: '선수단 분위기', icon: Activity },
   { id: 'squad', label: '선수단', icon: Users },
   { id: 'reserves', label: '1군 · 2군 관리', icon: GraduationCap },

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useIsMobile } from '../../hooks/use-mobile';
 import { ArrowLeft, ChevronRight, Inbox, MailCheck, Search } from 'lucide-react';
-import type { GameState, Player } from '@dugout/shared/types';
+import type { GameState, Player, Result } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { dateLabel } from '@dugout/shared/calendar';
 import { InboxReport } from './inbox-report';
@@ -14,13 +14,24 @@ type Props = {
   busy: boolean;
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
+  initialReportId?: string;
+  onReplay?: (r: Result) => void;
 };
-export function InboxPanel({ g, act, busy, onPlayer, onNegotiate }: Props) {
-  const [selectedId, setSelectedId] = useState(g.news[0]?.id || ''),
+export function InboxPanel({
+  g,
+  act,
+  busy,
+  onPlayer,
+  onNegotiate,
+  initialReportId,
+  onReplay,
+}: Props) {
+  const initialReport = g.news.find((n) => n.id === initialReportId);
+  const [selectedId, setSelectedId] = useState(initialReport?.id || g.news[0]?.id || ''),
     [filter, setFilter] = useState('all'),
     [category, setCategory] = useState('all'),
     [search, setSearch] = useState(''),
-    [detailOpen, setDetailOpen] = useState(!!g.progress?.newsIds.length);
+    [detailOpen, setDetailOpen] = useState(!!initialReport || !!g.progress?.newsIds.length);
   const attempted = useRef(new Set<string>());
   const mobile = useIsMobile();
   const unread = g.news.filter((n) => !n.read),
@@ -172,7 +183,7 @@ export function InboxPanel({ g, act, busy, onPlayer, onNegotiate }: Props) {
             </button>
           </div>
           {selected ? (
-            <InboxReport news={selected} {...{ g, act, busy, onPlayer, onNegotiate }} />
+            <InboxReport news={selected} {...{ g, act, busy, onPlayer, onNegotiate, onReplay }} />
           ) : (
             <div className="empty-state">읽을 보고를 선택해 주세요.</div>
           )}

@@ -18,18 +18,31 @@
 
 ## 비교 기준
 
+### 2026-09-09 추가 점검과 진행 순서
+
+사용자는 게임 전체의 FM형 흐름, 경기 전/후 인터뷰, 경기 중 도루·번트 지시와 추가 누락 기능 탐색을 요청했다. 아래 우선순위는 구현 순서이며 완료 선언이 아니다.
+
+1. 수신함의 필수 결정/안 읽은 보고 → 경기 전 준비 → 경기장 → 해당 경기 보고/다시보기로 연결한다. 화면 이동과 경기 시뮬레이션을 구분하고 날짜 변경은 서버에서만 수행한다.
+2. 타석별 도루·희생번트·히트앤드런을 상황에 맞게 지시한다. 저장된 과거 이벤트와 기존 커리어를 유지하며 이후 타임라인만 다시 생성한다.
+3. 경기 전/후 기자 질문·답변, 선수 반응, 라커룸 팀 대화와 수석 코치 위임을 경기 흐름에 넣는다. 실제 경기 상황과 선택 결과를 저장하고 같은 인터뷰의 효과를 반복 획득하지 못하게 한다.
+4. 부상/의료실/재활, 구단주 목표·감독 평가, 스태프 책임 위임, 계약 옵션/성과급, 시즌별 선수 이력, 영입 계획 회의·지역 관찰 지식, 성격·리더십·선수 특성은 현재 코드에서 빠졌거나 단순한 부분이다. 아래 도메인별 미완성 범위를 계속 구현/검증한다.
+
+공식 자료의 [경기일 경험](https://www.footballmanager.com/fm26/features/where-storytelling-evolves-fm26s-match-day-experience), [상호작용과 개인 목표](https://www.footballmanager.com/features/individual-player-targets-and-interaction-logic), [언론과 팬 반응](https://www.footballmanager.com/features/supporter-confidence), [업무 위임](https://www.footballmanager.com/the-dugout/delegating-success-football-manager-26), [영입 계획 회의](https://www.footballmanager.com/features/recruitment-revamp)를 비교 기준으로 확인했다. 각 문서는 FM23/24/26 등 서로 다른 버전의 기능을 다루므로 이를 하나의 특정 버전과 완전히 같다고 설명하지 않는다. 야구 구현의 공식 규칙 재현 여부는 별도로 검증한다.
+
+경기 계산 코드 점검: 타자 컨택에 `0.7 + condition × 0.003`, 투수 종합 능력에 `0.75 + condition / 400`을 적용한다. 장타·신중한 타격·도루·수비 깊이 지시와 전술 숙련도, 선수 사기·코치·포지션 숙련도가 연결돼 있다. 경기 중 투구 누적에 따른 피로 저하, 피로의 파워/주루/수비 전반 반영은 아직 미흡하며 향후 검증·보강 대상이다. 확률과 계수는 게임 모델로서 현실 야구의 통계적 보정을 완료했다는 뜻이 아니다.
+
 FM 공식 자료의 [영입과 선수단 계획](https://www.footballmanager.com/fm26/features/powered-transferroom-fm26s-recruitment-revamp), [유소년 육성](https://www.footballmanager.com/the-dugout/developing-and-maximising-your-youth-intakes-fm26), [스태프 업무 위임](https://www.footballmanager.com/the-dugout/delegating-success-football-manager-26)을 참고했다. 영입 목표·관찰 보고·시설과 성격의 육성 영향·스태프에게 맡기는 업무를 비교 축으로 삼았다. 야구의 드래프트·트레이드·등록 제도는 별도의 야구 게임 요구사항이며 FM 축구 규칙을 그대로 옮길 대상은 아니다.
 
 ## 현재 구현과 남은 범위
 
 | 영역 | 상태 | 현재 동작 | 남은 핵심 기능 | 코드 근거 |
 | --- | --- | --- | --- | --- |
-| 날짜 진행 | 구현 | 하루별 서버 저장, 이동 달력, 경기·새 보고·면담·시즌 변화에서 정지, 진행 중 멈추기 | 보고 종류별 정지 설정, 목표 날짜·휴가 설정 | `calendar-progression.ts`, `calendar-progress.tsx` |
-| 수신함·결정 | 부분 | 경기·훈련·협상·성장 보고, 출전 불만 답변, 관련 화면 이동 | 구독·필터·중요도와 처리 기한, 더 다양한 선택과 장기 결과 | `club-dynamics.ts`, `clubs/club-panels.tsx`의 `InboxPanel` |
+| 날짜 진행 | 구현 | 하루별 서버 저장·이동 달력, 경기·새 보고·면담·시즌 변화에서 정지, 진행 중 멈추기, 진행 버튼/Space의 보고→준비→경기→결과 보고 흐름 | 보고 종류별 정지 설정, 목표 날짜·휴가 설정 | `calendar-progression.ts`, `calendar-progress.tsx`, `manager-flow.ts` |
+| 수신함·결정 | 부분 | 주제/안 읽음/처리 필요/검색, 발신자·과거 보고·직접 계약, 필수 답변 우선 진행, 경기별 점수와 다시보기 연결 | 구독·처리 기한, 더 다양한 선택과 장기 결과 | `club-dynamics.ts`, `inbox-panel.tsx`, `inbox-report.tsx` |
 | 1군·2군 등록 | 구현 | 승격·말소, 정원이 찼을 때 동시 교체, 타순·보직 보존 | 리그별 등록 기간·재등록 제한 | `roster-moves.ts`, `reserve-panel.tsx` |
 | 투수 보직 | 구현 | 선발 순서, 일반 불펜·필승조·추격조·마무리 및 자동 등판 판단 | 경기 중 직접 불펜 준비·등판 지시, 상황별 상세 운용 정책 | `pitching.ts`, `relief-selection.ts`, `pitching-decisions.ts` |
 | 경기 전 전술 | 부분 | 타순·수비 위치·팀 지시·전술 저장·포지션 숙련 | 선수별 상황 지시와 상대별 작전 계획 | `squad-management.ts`, `match-simulation.ts` |
-| 경기 중 감독 조작 | 부분 | 타석 단위 진행·2D 장면·일시 정지·저장 재개·다시보기 | 수동 투수 교체·대타·대주자·수비 교체, 타석별 작전 명령 | `live-match.ts`, `match-simulation.ts` |
+| 경기 중 감독 조작 | 부분 | 저장 타석 재생·2D 장면·일시 정지·재개·다시보기, 구장/벤치 카드로 대타·투수·수비 교체, 팀 지시 적용 시 이후 타임라인 갱신 | 타석별 도루·번트·히트앤드런, 불펜 준비, 경기 전후 인터뷰·팀 대화 | `live-match.ts`, `match-simulation.ts`, `match-plan-editor.tsx` |
 | 선수 탐색·스카우팅 | 부분 | 시장 검색·필터, 리그/선수 관찰 파견·기간·비용·진척, 관찰 범위와 신뢰도 보고, 관심 명단·후보/소속 선수 비교·직접 계약 제안 | 테스트 입단, 장기 지역 지식 축적과 다수 스카우트 조직 | `scouting.ts`, `scouting-panel.tsx`, `scout-player.tsx`, `presentation.ts` |
 | 선수 영입·재계약 | 부분 | 구단 이적료 → 개인 조건, 날짜별 답변·역제안·거절·철회·만료·최종 서명 | 경쟁 구단 제안, 협상 관계·관심도, 계약 옵션·성과 조건·분할 지급 | `recruitment.ts`, `agents-panel.tsx` |
 | 선수 매각 | 부분 | 매각 명단, 상대 구단의 조건 제안·수락·거절·기한 | 선수 간 트레이드 패키지, 현금과 선수 복합 거래, 역제안 | `transfer-market.ts` |
