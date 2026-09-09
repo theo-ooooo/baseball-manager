@@ -7,6 +7,7 @@ import type { GameState, Player } from '@dugout/shared/types';
 import { firstTeam, reserveTeam, dayLabel } from '@dugout/shared/management';
 import { FIRST_TEAM_LIMIT } from '@dugout/shared/roster-rules';
 import { overall, blankStats } from '@dugout/shared/game-view';
+import { PlayerGrowth } from '../players/growth-indicator';
 import { PlayerName, Rating, SearchBox, positions } from '../../components/game-ui';
 import type { Act } from '../career/game-contracts';
 import { useWorld } from '../career/world-context';
@@ -120,6 +121,7 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
                       </div>
                       <div className="roster-rating">
                         <Rating value={overall(p)} player={p} />
+                        <PlayerGrowth player={p} />
                         <span className={p.condition < 70 ? 'roster-tired' : ''}>
                           {Math.round(p.condition)}%
                         </span>
