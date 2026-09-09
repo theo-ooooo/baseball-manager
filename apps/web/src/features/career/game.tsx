@@ -1,5 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { ManagerJobsPanel } from './manager-jobs-panel';
+import { ManagerPanel } from './manager-panel';
+import { CoachRecommendations } from '../squad/coach-recommendations';
+import { isUnemployed } from '@dugout/shared/manager-career';
 import { ReservePanel } from '../squad/reserve-panel';
 import { useRouter } from 'next/navigation';
 import { PlayerProfile } from '../players/player-profile';
@@ -75,12 +79,13 @@ export function GameScreen({
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
   const router = useRouter();
-  const view = initialPlayerId
+  const requestedView = initialPlayerId
     ? 'player'
     : nav.some((n) => n.id === initialView)
       ? initialView!
       : 'inbox';
-  const setView = (id: string) => router.push('/?view=' + encodeURIComponent(id));
+  const setView = (id: string) =>
+    router.push(id === 'match' ? '/match' : '/?view=' + encodeURIComponent(id));
   const setPlayer = (p: Player) =>
     router.push('/players/' + encodeURIComponent(p.id) + '?from=' + encodeURIComponent(view));
   const [g, setG] = useState<GameState | null>(initial.state),
@@ -92,6 +97,11 @@ export function GameScreen({
     [replay, setReplay] = useState<Result | null>(null),
     [help, setHelp] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
+  const awayFromClub = !!g && (isUnemployed(g) || !!g.managerCareer?.vacationUntil);
+  const view =
+    awayFromClub && !['inbox', 'world', 'manager', 'jobs'].includes(requestedView)
+      ? 'manager'
+      : requestedView;
   const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
   const [reportEpoch, setReportEpoch] = useState(0);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -146,6 +156,10 @@ export function GameScreen({
       revision.current = d.revision;
       setLedger(d.ledger || []);
       setSaveFailed(false);
+      if (action.type === 'signManager') await refreshCatalog();
+      if (['signManager', 'resignManager', 'startVacation'].includes(String(action.type)))
+        setView('manager');
+      if (action.type === 'startMatch') router.push('/match');
       return d.state;
     } catch (e) {
       setSaveFailed(true);
@@ -203,7 +217,15 @@ export function GameScreen({
         ? { ...baseStep, label: '선수단 제출 · 경기장으로' }
         : baseStep;
   async function continueFlow() {
-    if (!g || !step || busy || progressing || g.liveMatch) return;
+    if (!g || !step || busy || progressing) return;
+    if (awayFromClub) {
+      await act({ type: g.phase === 'finished' ? 'nextSeason' : 'managerContinue', count: 7 });
+      return;
+    }
+    if (g.liveMatch) {
+      setView('match');
+      return;
+    }
     const unsaved = document.querySelector('[data-unsaved-plan="true"]');
     if (unsaved) {
       unsaved.scrollIntoView({ block: 'center' });
@@ -299,13 +321,13 @@ export function GameScreen({
       <div style={{ display: 'contents' }} inert={progressing || undefined}>
         <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
       </div>
-      <main className="workspace">
+      <main className={`workspace ${view === 'match' ? 'match-workspace' : ''}`}>
         <header className="topbar" inert={progressing || undefined}>
           <div className="breadcrumb">
             <SidebarTrigger className="mobile-menu" aria-label="메뉴 열기" />
             <Badge club={club} size="small" />
             <div>
-              <strong>{club.name}</strong>
+              <strong>{isUnemployed(g) ? `${g.manager} · 무직` : club.name}</strong>
               <span>
                 {league.name}
                 <ChevronRight size={11} />
@@ -338,7 +360,7 @@ export function GameScreen({
             <div className="page-actions">
               {g.phase !== 'finished' ? (
                 <>
-                  <details className="advance-menu">
+                  <details className="advance-menu" hidden={awayFromClub}>
                     <summary aria-label="자동 진행 옵션">
                       <ChevronsRight size={18} />
                     </summary>
@@ -363,7 +385,7 @@ export function GameScreen({
                   <button
                     className="button primary continue-button"
                     aria-keyshortcuts="Space"
-                    disabled={busy || !!g.liveMatch}
+                    disabled={busy || (!!g.liveMatch && view === 'match')}
                     onClick={continueFlow}
                     title={step?.detail}
                   >
@@ -371,7 +393,7 @@ export function GameScreen({
                       <LoaderCircle size={16} className="spin" />
                     ) : (
                       <>
-                        <span>{step?.label}</span>
+                        <span>{g.liveMatch ? '경기장으로' : step?.label}</span>
                         <ChevronRight size={18} />
                       </>
                     )}
@@ -446,7 +468,14 @@ export function GameScreen({
               <button onClick={() => setView('tactics')}>전술 준비 →</button>
             </div>
           )}
-          {view !== 'home' && (
+          {g.liveMatch && view !== 'match' && (
+            <div className="preseason-banner">
+              <strong>진행 중인 경기가 있습니다</strong>
+              <span>저장한 경기 위치에서 이어갈 수 있습니다.</span>
+              <button onClick={() => setView('match')}>경기장으로 →</button>
+            </div>
+          )}
+          {view !== 'home' && view !== 'match' && (
             <div className="page-title">
               <h1>{view === 'player' ? '선수 상세' : nav.find((n) => n.id === view)?.label}</h1>
               <p>
@@ -531,6 +560,9 @@ export function GameScreen({
               경기 준비로 돌아가기 <ChevronRight size={15} />
             </Link>
           )}
+          {view === 'jobs' && <ManagerJobsPanel g={g} act={act} busy={busy} />}
+          {view === 'manager' && <ManagerPanel key={g.club} g={g} act={act} busy={busy} />}
+          {view === 'reserves' && <CoachRecommendations g={g} act={act} busy={busy} />}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
@@ -552,6 +584,18 @@ export function GameScreen({
           )}
           {view === 'staff' && <CoachPanel g={g} act={act} busy={busy} />}
           {view === 'finance' && <Finance g={g} ledger={ledger} />}
+          {view === 'match' &&
+            (g.liveMatch ? (
+              <LiveMatchScreen g={g} act={matchAct} busy={busy} />
+            ) : (
+              <section className="panel panel-content">
+                <h1>경기장</h1>
+                <p>진행 중인 경기가 없습니다. 경기 준비에서 다음 일정을 확인하세요.</p>
+                <button className="button primary" onClick={() => setView('matchday')}>
+                  경기 준비로
+                </button>
+              </section>
+            ))}
         </div>
         <footer className="game-footer" inert={progressing || undefined}>
           <span>
@@ -562,7 +606,6 @@ export function GameScreen({
           </button>
         </footer>
       </main>
-      <>{g.liveMatch && <LiveMatchScreen g={g} act={matchAct} busy={busy} />}</>
       <StadiumReplay result={replay} close={() => setReplay(null)} />
       {contractPlayer && (
         <PlayerContractDialog

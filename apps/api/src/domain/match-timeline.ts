@@ -8,6 +8,7 @@ import type {
   TeamInstructions,
 } from '@dugout/shared/types';
 import { rng } from '@dugout/shared/game-view';
+import { isPitchingApproach } from '@dugout/shared/pitching-tactics';
 import { defenseFor, defensivePositions, firstTeam } from '@dugout/shared/management';
 import type { createMatchSimulator } from './match-simulation';
 
@@ -155,14 +156,14 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
   const instructions = a.instructions as TeamInstructions;
   if (
     !instructions ||
-    ['steal', 'patience', 'power', 'depth'].some(
+    (['steal', 'patience', 'power', 'depth'] as const).some(
       (key) =>
-        !Number.isInteger(instructions[key as keyof TeamInstructions]) ||
-        instructions[key as keyof TeamInstructions] < 0 ||
-        instructions[key as keyof TeamInstructions] > 100,
+        !Number.isInteger(instructions[key]) || instructions[key] < 0 || instructions[key] > 100,
     )
   )
     throw new Error('전술 수치는 0~100 사이로 입력해 주세요.');
+  if (instructions.pitching !== undefined && !isPitchingApproach(instructions.pitching))
+    throw new Error('투구 방침을 확인해 주세요.');
   const pastChanges = (live.changes || []).filter((change) => change.cursor < cursor);
   const previous = pastChanges.at(-1);
   const input = live.prepared!.input;
@@ -225,6 +226,9 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
       patience: instructions.patience,
       power: instructions.power,
       depth: instructions.depth,
+      ...((instructions.pitching ?? g.instructions?.pitching) !== undefined
+        ? { pitching: instructions.pitching ?? g.instructions?.pitching }
+        : {}),
     },
   };
   const prefix = live.timeline!.log.slice(0, cursor);

@@ -1,6 +1,6 @@
 import type { GameState, Player, WorldCatalog } from '@dugout/shared/types';
 import { askPrice } from '@dugout/shared/game-view';
-function player(p: Player, reveal = false): Player {
+function player(p: Player, reveal = false, state?: CatalogKnowledge | null): Player {
   const next = { ...p };
   next.marketValue = askPrice(p);
   if (!reveal) {
@@ -14,11 +14,39 @@ function player(p: Player, reveal = false): Player {
     next.development = { ...next.development };
     delete next.development.curve;
   }
+  const known = state && (p.club === state.club || state.knowledge?.players?.includes(p.id));
+  if (!known && !state?.knowledge?.clubs.includes(p.club)) {
+    const report = state?.scouting?.reports.find((r) => r.playerId === p.id);
+    next.observation = report
+      ? {
+          status: 'scouted',
+          overall: report.overall,
+          abilities: report.abilities,
+          date: report.date,
+        }
+      : { status: 'unknown' };
+    for (const key of [
+      'contact',
+      'power',
+      'speed',
+      'field',
+      'stuff',
+      'control',
+      'potential',
+    ] as const)
+      next[key] = 0;
+    if (next.rating) next.rating = { ...next.rating, base: {} };
+    delete next.development;
+    delete next.trainingPlan;
+    delete next.familiarity;
+    delete next.positionTraining;
+  }
   return next;
 }
 export function presentState(state: GameState | null): GameState | null {
   if (!state) return null;
   const next = { ...state };
+  delete next.clubCareers;
   if (state.scouting) {
     next.scouting = {
       ...state.scouting,
@@ -36,9 +64,9 @@ export function presentState(state: GameState | null): GameState | null {
     delete next.liveMatch.prepared;
   }
   const reveal = state.rules?.revealPotential === true;
-  next.roster = state.roster.map((p) => player(p, reveal));
-  next.transferred = state.transferred.map((p) => player(p, reveal));
-  next.deals = state.deals.map((d) => ({ ...d, player: player(d.player, reveal) }));
+  next.roster = state.roster.map((p) => player(p, reveal, state));
+  next.transferred = state.transferred.map((p) => player(p, reveal, state));
+  next.deals = state.deals.map((d) => ({ ...d, player: player(d.player, reveal, state) }));
   return next;
 }
 export function presentCareer<T extends { state: GameState | null }>(
@@ -52,13 +80,54 @@ export function presentCareer<T extends { state: GameState | null }>(
     state.history = state.history.map((result) => ({ ...result, log: [], replayTeams: undefined }));
   return { ...career, state };
 }
-const hiddenCatalogs = new WeakMap<WorldCatalog, WorldCatalog>();
-export function presentWorld(world: WorldCatalog, reveal = false): WorldCatalog {
-  if (reveal) return world;
-  let hidden = hiddenCatalogs.get(world);
-  if (!hidden) {
-    hidden = { ...world, players: world.players.map((p) => player(p)) };
-    hiddenCatalogs.set(world, hidden);
+export type CatalogKnowledge = Pick<GameState, 'club' | 'rules' | 'knowledge' | 'scouting'>;
+const catalogViews = new WeakMap<WorldCatalog, Map<string, WorldCatalog>>();
+export function presentWorld(
+  world: WorldCatalog,
+  reveal = false,
+  state?: CatalogKnowledge | null,
+): WorldCatalog {
+  const league = world.clubs.find((c) => c.id === state?.club)?.league;
+  const leagues = state?.knowledge?.leagues ?? (league ? [league] : []);
+  const key = `${reveal}:${[...leagues].sort().join(',')}`;
+  let cache = catalogViews.get(world);
+  if (!cache) {
+    cache = new Map();
+    catalogViews.set(world, cache);
   }
-  return hidden;
+  let base = cache.get(key);
+  if (!base) {
+    // This cache contains only shared visibility policy, never a user's reports or career.
+    const context = {
+      club: '',
+      knowledge: {
+        leagues,
+        clubs: world.clubs.filter((c) => leagues.includes(c.league)).map((c) => c.id),
+      },
+    };
+    base = { ...world, players: world.players.map((p) => player(p, reveal, context)) };
+    if (cache.size >= 32) cache.delete(cache.keys().next().value!);
+    cache.set(key, base);
+  }
+  if (!state?.scouting?.reports.length && !state?.knowledge?.players?.length) return base;
+  const reports = new Map((state?.scouting?.reports || []).map((r) => [r.playerId, r]));
+  const knownPlayers = new Set(state?.knowledge?.players || []);
+  return {
+    ...base,
+    players: base.players.map((p, i) => {
+      if (p.observation && knownPlayers.has(p.id)) return player(world.players[i], reveal, state);
+      const report = reports.get(p.id);
+      return p.observation && report
+        ? {
+            ...p,
+            observation: {
+              status: 'scouted',
+              overall: report.overall,
+              abilities: report.abilities,
+              date: report.date,
+            },
+          }
+        : p;
+    }),
+  };
 }

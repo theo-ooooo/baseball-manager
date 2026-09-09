@@ -1,3 +1,5 @@
+import { createManagerCareer } from '../domain/manager-career';
+import { prepareKnowledge } from '../domain/scouting';
 import { presentCareer } from './presentation';
 import {
   BadRequestException,
@@ -23,7 +25,9 @@ export class CareerService {
     if (current.state && !current.state.liveMatch) {
       const world = await this.catalog.getWorld(db);
       // Repository parsing already owns this request's state; do not clone the entire save again.
+      createManagerCareer(world).prepare(current.state);
       prepareSquad(current.state, world);
+      prepareKnowledge(current.state, world);
       prepareDynamics(current.state);
     }
     return current;
@@ -46,7 +50,9 @@ export class CareerService {
     ]);
     const refreshed = () => {
       if (current.state && !current.state.liveMatch) {
+        createManagerCareer(world).prepare(current.state);
         prepareSquad(current.state, world);
+        prepareKnowledge(current.state, world);
         prepareDynamics(current.state);
       }
       return current;
@@ -91,6 +97,7 @@ export class CareerService {
     } catch (error) {
       throw new BadRequestException(error instanceof Error ? error.message : '잘못된 요청입니다.');
     }
+    prepareKnowledge(next, world);
     const saved = await this.careers.save(
       db,
       user,

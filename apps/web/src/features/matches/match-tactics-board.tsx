@@ -62,7 +62,9 @@ export function MatchTacticsBoard({
             type="button"
             key={id}
             aria-pressed={activePreset?.id === id}
-            onClick={() => onChange(defaults(id))}
+            onClick={() =>
+              onChange({ ...defaults(id), ...(value.pitching ? { pitching: value.pitching } : {}) })
+            }
           >
             <Icon size={23} aria-hidden="true" />
             <strong>{label}</strong>

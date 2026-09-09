@@ -1,5 +1,6 @@
 'use client';
 import { PitchingPanel } from './pitching-panel';
+import { PitchingInstructions } from '../matches/pitching-instructions';
 import { BattingOrderEditor } from './batting-order-editor';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -296,7 +297,14 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
                     className={selectedPreset === value ? 'selected' : ''}
                     disabled={busy}
                     onClick={() =>
-                      setDraft({ key: instructionKey, value: defaults(value), preset: value })
+                      setDraft({
+                        key: instructionKey,
+                        value: {
+                          ...defaults(value),
+                          ...(instructions.pitching ? { pitching: instructions.pitching } : {}),
+                        },
+                        preset: value,
+                      })
                     }
                   >
                     {label}
@@ -369,6 +377,34 @@ export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
         </div>
       </TabsContent>
       <TabsContent value="pitching">
+        <section
+          className="panel pitching-default-plan"
+          data-unsaved-plan={instructionsDirty || undefined}
+        >
+          <PitchingInstructions
+            value={instructions.pitching}
+            disabled={busy}
+            onChange={(pitching) => setInstructions({ ...instructions, pitching })}
+          />
+          <div className="plan-actions">
+            <button
+              className="button secondary compact"
+              disabled={busy || !instructionsDirty}
+              onClick={() => setDraft(null)}
+            >
+              되돌리기
+            </button>
+            <button
+              className="button primary compact"
+              disabled={busy || !instructionsDirty}
+              onClick={() =>
+                void act({ type: 'teamInstructions', preset: selectedPreset, value: instructions })
+              }
+            >
+              투구 방침 적용
+            </button>
+          </div>
+        </section>
         <PitchingPanel g={g} act={act} busy={busy} onPlayer={onPlayer} />
       </TabsContent>
     </Tabs>

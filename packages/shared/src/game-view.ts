@@ -178,11 +178,27 @@ export function createGameView(world: WorldCatalog) {
           baseRoster(c.id, g.year).filter((p) => !g.ownership[p.id] || g.ownership[p.id] === c.id),
         ),
       ...baseRoster('fa', g.year),
-    ].filter((p) => {
-      if (own.has(p.id) || seen.has(p.id) || g.ownership[p.id] === g.club) return false;
-      seen.add(p.id);
-      return true;
-    });
+    ]
+      .filter((p) => {
+        if (own.has(p.id) || seen.has(p.id) || g.ownership[p.id] === g.club) return false;
+        seen.add(p.id);
+        return true;
+      })
+      .map((p) => {
+        if (!p.observation) return p;
+        const report = g.scouting?.reports.find((r) => r.playerId === p.id);
+        return report
+          ? {
+              ...p,
+              observation: {
+                status: 'scouted' as const,
+                overall: report.overall,
+                abilities: report.abilities,
+                date: report.date,
+              },
+            }
+          : p;
+      });
   }
   function rosterFor(g: GameState, id: string) {
     if (id === g.club) return g.roster;

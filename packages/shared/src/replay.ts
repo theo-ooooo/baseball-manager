@@ -29,7 +29,7 @@ export const playKind = (text: string) =>
         ? 'double'
         : text.includes('안타')
           ? 'single'
-          : text.includes('볼넷')
+          : text.includes('볼넷') || text.includes('고의4구')
             ? 'walk'
             : text.includes('삼진')
               ? 'strikeout'

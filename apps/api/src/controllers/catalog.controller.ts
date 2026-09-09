@@ -15,10 +15,10 @@ export class CatalogController {
   @Get()
   async world(@Req() request: ApiRequest) {
     const user = userId(request);
-    const [world, reveal] = await Promise.all([
+    const [world, knowledge] = await Promise.all([
       this.catalog.getWorld(env.DB),
-      this.careers.revealsPotential(env.DB, user),
+      this.careers.catalogKnowledge(env.DB, user),
     ]);
-    return presentWorld(world, reveal);
+    return presentWorld(world, knowledge?.rules?.revealPotential === true, knowledge);
   }
 }

@@ -1,3 +1,4 @@
+import { CoachRecommendations } from '../squad/coach-recommendations';
 import Link from 'next/link';
 import { ArrowUpRight, FileSignature, UserRound } from 'lucide-react';
 import type { GameState, NewsItem, Player, Result } from '@dugout/shared/types';
@@ -204,25 +205,38 @@ export function InboxReport({
           </section>
         )}
         <div className="inbox-report-actions">
-          {news.actionView === 'agents' && subject && (
-            <button className="button primary" disabled={busy} onClick={() => onNegotiate(subject)}>
-              <FileSignature size={16} />
-              {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
-            </button>
-          )}
+          {news.actionView === 'manager'
+            ? '감독 경력 · 계약 확인'
+            : news.actionView === 'reserves'
+              ? '1군 · 2군 등록 확인'
+              : news.actionView === 'agents' &&
+                subject && (
+                  <button
+                    className="button primary"
+                    disabled={busy}
+                    onClick={() => onNegotiate(subject)}
+                  >
+                    <FileSignature size={16} />
+                    {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
+                  </button>
+                )}
           {news.actionView && !(news.actionView === 'agents' && subject) && (
             <Link className="button secondary" href={`/?view=${news.actionView}`}>
-              {news.actionView === 'agents'
-                ? '전체 계약 협상'
-                : news.actionView === 'media'
-                  ? '인터뷰 · 라커룸으로'
-                  : news.actionView === 'staff'
-                    ? '코치 협상 확인'
-                    : news.actionView === 'scouting'
-                      ? '관찰 보고 · 선수 비교'
-                      : news.actionView === 'market'
-                        ? '영입 대상 확인'
-                        : '선수단 확인'}
+              {news.actionView === 'manager'
+                ? '감독 경력 · 계약 확인'
+                : news.actionView === 'reserves'
+                  ? '1군 · 2군 등록 확인'
+                  : news.actionView === 'agents'
+                    ? '전체 계약 협상'
+                    : news.actionView === 'media'
+                      ? '인터뷰 · 라커룸으로'
+                      : news.actionView === 'staff'
+                        ? '코치 협상 확인'
+                        : news.actionView === 'scouting'
+                          ? '관찰 보고 · 선수 비교'
+                          : news.actionView === 'market'
+                            ? '영입 대상 확인'
+                            : '선수단 확인'}
               <ArrowUpRight size={15} />
             </Link>
           )}
@@ -232,6 +246,9 @@ export function InboxReport({
             </button>
           )}
         </div>
+        {news.playerId && news.kind === 'training' && (
+          <CoachRecommendations g={g} act={act} busy={busy} playerId={news.playerId} />
+        )}
         {news.choiceKind && !news.choice && (
           <section className="inbox-decision">
             <h3>감독님의 답변을 기다리고 있습니다</h3>

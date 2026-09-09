@@ -183,6 +183,13 @@ export function PlayerProfile(props: Props) {
               </div>
             )}
           </div>
+          {player.observation && (
+            <p className="rule-notice">
+              {player.observation.status === 'unknown'
+                ? '낯선 리그의 선수입니다. 능력치는 ?로 표시됩니다. 스카우트를 파견해 관찰 보고를 받아보세요.'
+                : `${player.observation.date} 스카우트 보고의 평가 범위입니다. 실제 능력치는 공개되지 않습니다.`}
+            </p>
+          )}
           <PlayerAttributes player={player} owned={own} />
           {own && (
             <section className="profile-development">

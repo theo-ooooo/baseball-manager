@@ -1,7 +1,9 @@
+import type { ManagerCareer, ClubCareer, ClubManagerJob } from './manager-career';
 import type { ScoutingState } from './scouting';
 import type { TrainingPlan } from './training-plan';
 import type { MatchCommand, MatchCommandKind } from './match-commands';
 import type { MatchMediaState } from './match-media';
+import type { PitchingApproach } from './pitching-tactics';
 export type Pos = 'P' | 'C' | 'IF' | 'OF' | 'DH';
 export type Stats = {
   ab: number;
@@ -53,6 +55,12 @@ export type Player = {
   mood?: PlayerMood;
   development?: PlayerDevelopment;
   trainingPlan?: TrainingPlan;
+  observation?: {
+    status: 'unknown' | 'scouted';
+    overall?: [number, number];
+    abilities?: Partial<Record<AbilityKey, [number, number]>>;
+    date?: string;
+  };
 };
 export type AbilityKey = 'contact' | 'power' | 'speed' | 'field' | 'stuff' | 'control';
 export type GrowthStage = 'growth' | 'peak' | 'decline';
@@ -205,6 +213,29 @@ export type GameState = {
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
   progress?: DayProgress;
   scouting?: ScoutingState;
+  knowledge?: { leagues: string[]; clubs: string[]; players?: string[] };
+  managerCareer?: ManagerCareer;
+  managerJobs?: Record<string, ClubManagerJob>;
+  /** Server-only preserved club operations; player contracts live in transferred. */
+  clubCareers?: Record<string, ClubCareer>;
+  worldRevenue?: Record<string, number>;
+  finances?: {
+    days?: number;
+    annualSupport: number;
+    year: number;
+    settledDays: number;
+    paidWages: number;
+    receivedSupport: number;
+  };
+  coachRecommendations?: {
+    id: string;
+    playerId: string;
+    replacementId?: string;
+    target: 'first' | 'reserve';
+    date: string;
+    status: 'pending' | 'accepted' | 'dismissed';
+    reason: string;
+  }[];
   media?: MatchMediaState;
 };
 export type DayProgress = {
@@ -278,7 +309,13 @@ export type FinanceEntry = {
 
 export type DefensivePosition = 'P' | 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH';
 export type Defense = Record<DefensivePosition, string>;
-export type TeamInstructions = { steal: number; patience: number; power: number; depth: number };
+export type TeamInstructions = {
+  steal: number;
+  patience: number;
+  power: number;
+  depth: number;
+  pitching?: PitchingApproach;
+};
 export type SavedTactic = {
   id: string;
   name: string;
@@ -305,6 +342,9 @@ export type ReplayPlay = {
   after: ReplayState;
   steal?: { runner: string; safe: boolean; to?: 2 | 3 };
   command?: MatchCommandKind;
+  pitching?: PitchingApproach;
+  /** Server-calculated remaining match energy before/after this recorded play. */
+  energy?: { pitcher: [number, number]; batter?: [number, number]; runners?: [string, number][] };
   /** A standalone steal does not consume the batter's turn or count as an at-bat. */
   plateAppearance?: false;
   /** Actual defensive alignment at this plate appearance, after substitutions. */
@@ -313,7 +353,7 @@ export type ReplayPlay = {
 export type ReplayTeam = {
   lineup: string[];
   defense: Defense;
-  players: { id: string; name: string; number: number }[];
+  players: { id: string; name: string; number: number; condition?: number }[];
 };
 
 export type PerformanceRecord = {
@@ -394,7 +434,16 @@ export type NewsItem = {
   choiceKind?: 'playingTime';
   choice?: string;
   response?: string;
-  actionView?: 'agents' | 'staff' | 'squad' | 'market' | 'scouting' | 'media';
+  actionView?:
+    | 'agents'
+    | 'staff'
+    | 'squad'
+    | 'market'
+    | 'scouting'
+    | 'media'
+    | 'manager'
+    | 'jobs'
+    | 'reserves';
   sender?: { name: string; role: string };
   dealId?: string;
   report?: {
@@ -440,6 +489,8 @@ export type LiveMatch = {
   opponents?: Player[][];
   /** Existing matches retain their original relief decisions when resumed. */
   pitchingVersion?: 2;
+  /** Older in-progress games keep their original outcomes and fatigue rules. */
+  energyVersion?: 1;
   /** Saved once per generation; playback never invokes the simulator. */
   timeline?: Result;
   timelineVersion?: number;

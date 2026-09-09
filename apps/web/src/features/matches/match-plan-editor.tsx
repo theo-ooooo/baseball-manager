@@ -6,6 +6,7 @@ import type { Act } from '../career/game-contracts';
 import { useMatchPlan } from './use-match-plan';
 import { MatchBattingOrder, MatchBench, MatchDiamond } from './match-lineup-board';
 import { MatchTacticsBoard } from './match-tactics-board';
+import { MatchPitchingPlan } from './match-pitching-plan';
 
 export function MatchPlanEditor({
   g,
@@ -27,7 +28,7 @@ export function MatchPlanEditor({
   onCancel: () => void;
 }) {
   const draft = useMatchPlan(g, cursor, busy);
-  const [tab, setTab] = useState<'players' | 'tactics'>('players');
+  const [tab, setTab] = useState<'players' | 'pitchers' | 'tactics'>('players');
   const { plan, initial, dirty } = draft;
   useEffect(() => {
     onDirty(dirty);
@@ -65,7 +66,14 @@ export function MatchPlanEditor({
         <div className="plan-tabs" aria-label="경기 계획 편집">
           <button type="button" aria-pressed={tab === 'players'} onClick={() => setTab('players')}>
             <ClipboardList size={16} />
-            선수 구성
+            야수 · 타순
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === 'pitchers'}
+            onClick={() => setTab('pitchers')}
+          >
+            투수 · 불펜
           </button>
           <button type="button" aria-pressed={tab === 'tactics'} onClick={() => setTab('tactics')}>
             <SlidersHorizontal size={16} />팀 전술
@@ -74,32 +82,51 @@ export function MatchPlanEditor({
       </div>
       <fieldset disabled={busy} className="plan-workspace">
         <legend className="sr-only">경기 계획</legend>
-        <div className="plan-board-layout">
-          <MatchDiamond draft={draft} busy={busy} />
-          {tab === 'players' ? (
-            <MatchBattingOrder draft={draft} cursor={cursor} />
-          ) : (
-            <MatchTacticsBoard value={plan.instructions} onChange={draft.setInstructions} />
-          )}
-        </div>
-        <div className="plan-interaction-hint" role="status" aria-live="polite">
-          {draft.notice ||
-            (draft.target !== null
-              ? '교체할 선수를 선택했습니다. 아래에서 투입할 선수를 눌러 주세요.'
-              : '구장 선수와 벤치 선수를 차례로 누르면 교체됩니다. 끌어서 놓기도 가능합니다.')}
-          {(draft.target !== null || draft.incoming !== null) && (
+        {cursor === 0 && tab !== 'tactics' && (
+          <div className="coach-plan-recommendation">
+            <div>
+              <strong>코치에게 구성 맡기기</strong>
+              <small>컨디션·능력·포지션을 검토한 초안입니다. 적용 전 바꿀 수 있습니다.</small>
+            </div>
             <button
               type="button"
-              onClick={() => {
-                if (draft.target !== null) draft.chooseSlot(draft.target);
-                else if (draft.incoming) draft.chooseBench(draft.incoming);
-              }}
+              className="button secondary compact"
+              onClick={() => draft.recommend(tab === 'pitchers')}
             >
-              선택 해제
+              {tab === 'pitchers' ? '코치의 선발 추천' : '코치의 야수·타순 추천'}
             </button>
-          )}
-        </div>
-        <MatchBench g={g} draft={draft} />
+          </div>
+        )}
+        {tab === 'pitchers' ? (
+          <MatchPitchingPlan g={g} draft={draft} />
+        ) : tab === 'tactics' ? (
+          <MatchTacticsBoard value={plan.instructions} onChange={draft.setInstructions} />
+        ) : (
+          <>
+            <div className="plan-board-layout">
+              <MatchDiamond draft={draft} busy={busy} />
+              <MatchBattingOrder draft={draft} cursor={cursor} />
+            </div>
+            <div className="plan-interaction-hint" role="status" aria-live="polite">
+              {draft.notice ||
+                (draft.target !== null
+                  ? '교체할 선수를 선택했습니다. 아래에서 투입할 선수를 눌러 주세요.'
+                  : '구장 선수와 벤치 선수를 차례로 누르면 교체됩니다. 끌어서 놓기도 가능합니다.')}
+              {(draft.target !== null || draft.incoming !== null) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (draft.target !== null) draft.chooseSlot(draft.target);
+                    else if (draft.incoming) draft.chooseBench(draft.incoming);
+                  }}
+                >
+                  선택 해제
+                </button>
+              )}
+            </div>
+            <MatchBench draft={draft} />
+          </>
+        )}
       </fieldset>
       <footer className="plan-footer">
         <div className="plan-review" aria-live="polite">
