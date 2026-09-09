@@ -16,6 +16,8 @@ import { MobileMatchView, MatchAtBat } from './mobile-match-view';
 import { useReducedMotion } from '../../hooks/use-reduced-motion';
 import { StadiumScene } from './stadium-replay';
 import { MatchPlanEditor } from './match-plan-editor';
+import { MatchCommandPanel } from './match-command-panel';
+import { matchCommandLabels } from '@dugout/shared/match-commands';
 
 function readCursor(key: string, floor: number, length: number) {
   try {
@@ -78,12 +80,14 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
   const storageKey = `dugout:playback:${live.playbackId}:${live.timelineVersion}`;
   const [cursor, setCursor] = useState(() => readCursor(storageKey, live.cursor, length));
   const [playing, setPlaying] = useState(false),
+    [commandOpen, setCommandOpen] = useState(false),
     [settled, setSettled] = useState(true),
     [editorOverride, setEditor] = useState<boolean | null>(null),
     [planDirty, setPlanDirty] = useState(false),
     [speed, setSpeed] = useState(readSpeed);
   const editor = editorOverride ?? (cursor === 0 && !mobile);
   const finished = cursor >= length;
+  const queuedCommand = live.commands?.find((command) => command.cursor === cursor);
   const event = result.log[cursor - 1];
   useEffect(() => {
     try {
@@ -111,6 +115,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
   }, []);
   function next() {
     if (cursor < length) {
+      setCommandOpen(false);
       setEditor(false);
       setSettled(false);
       setCursor(cursor + 1);
@@ -131,7 +136,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
   return (
     <Dialog open>
       <DialogContent
-        className={`stadium-replay-dialog live-match-dialog ${mobile && !editor ? 'mobile-live-layout' : ''}`}
+        className={`stadium-replay-dialog live-match-dialog ${mobile && !editor ? 'mobile-live-layout' : ''} ${commandOpen ? 'command-open' : ''} ${queuedCommand ? 'has-queued-command' : ''}`}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
@@ -210,7 +215,27 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                   />
                 </>
               ))}
+            {!editor && !finished && commandOpen && (
+              <MatchCommandPanel g={g} cursor={cursor} busy={busy} act={act} />
+            )}
             <div className="stadium-controls live-controls" hidden={editor}>
+              {queuedCommand && !finished && (
+                <div className="match-command-queued" role="status">
+                  <strong>{matchCommandLabels[queuedCommand.kind]} 지시 대기</strong>
+                  <button
+                    disabled={busy || playing || !settled}
+                    onClick={() =>
+                      void act({
+                        type: 'cancelMatchCommand',
+                        cursor,
+                        timelineVersion: live.timelineVersion,
+                      })
+                    }
+                  >
+                    지시 취소
+                  </button>
+                </div>
+              )}
               <button
                 className="replay-play"
                 disabled={busy || finished || planDirty}
@@ -230,7 +255,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                 disabled={busy || playing || !settled || finished || planDirty}
                 onClick={next}
               >
-                다음 타석
+                다음 플레이
               </button>
               <select
                 aria-label="경기 속도"
@@ -248,17 +273,30 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                 disabled={busy || finished || planDirty}
                 onClick={() => {
                   pause();
+                  setCommandOpen(false);
                   setEditor(!editor);
                 }}
               >
                 <Settings2 size={15} /> 선수·전술
+              </button>
+              <button
+                className="button secondary compact"
+                disabled={busy || finished || planDirty || cursor === 0}
+                aria-expanded={commandOpen}
+                aria-controls="match-command-panel"
+                onClick={() => {
+                  pause();
+                  setCommandOpen(!commandOpen);
+                }}
+              >
+                작전 지시
               </button>
               <span className="tiny">
                 {planDirty
                   ? '선수·전술 변경을 적용하거나 취소해 주세요.'
                   : cursor === 0
                     ? '선수·전술에서 경기 계획을 준비하세요.'
-                    : '일시정지하면 선수 교체와 전술 변경을 할 수 있습니다.'}
+                    : '작전 지시나 선수·전술을 누르면 경기가 잠시 멈춥니다.'}
               </span>
               {finished && (
                 <button

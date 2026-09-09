@@ -47,10 +47,19 @@ export function replayScene(result: Result, index: number) {
     kind = playKind(event?.text || '');
   const play = event?.play;
   const seed = hash(result.id + ':' + index),
-    fly = ['single', 'double', 'triple', 'homeRun', 'sacrifice'].includes(kind);
-  const fielder: DefensivePosition = fly
-    ? (['LF', 'CF', 'RF'] as const)[seed % 3]
-    : (['SS', '2B', '3B'] as const)[seed % 3];
+    fly =
+      play?.command !== 'bunt' &&
+      ['single', 'double', 'triple', 'homeRun', 'sacrifice'].includes(kind);
+  const stealOnly = play?.plateAppearance === false;
+  const fielder: DefensivePosition = stealOnly
+    ? play.steal?.to === 3
+      ? '3B'
+      : 'SS'
+    : play?.command === 'bunt'
+      ? 'P'
+      : fly
+        ? (['LF', 'CF', 'RF'] as const)[seed % 3]
+        : (['SS', '2B', '3B'] as const)[seed % 3];
   const target = { ...fieldPoints[fielder] };
   if (['double', 'triple', 'homeRun'].includes(kind)) {
     target.y -= kind === 'homeRun' ? 155 : 70;
@@ -71,7 +80,7 @@ export function replayScene(result: Result, index: number) {
     let scorers = play.after.score[event.half] - play.before.score[event.half];
     const starting = [
       ...play.before.bases.map((id, i) => ({ id, from: i + 1 })),
-      { id: play.batter, from: 0 },
+      ...(stealOnly ? [] : [{ id: play.batter, from: 0 }]),
     ]
       .filter((r): r is { id: string; from: number } => !!r.id)
       .sort((a, b) => b.from - a.from);
@@ -81,7 +90,7 @@ export function replayScene(result: Result, index: number) {
         out = false;
       if (at < 0) {
         if (play.steal?.runner === runner.id && !play.steal.safe) {
-          to = 2;
+          to = play.steal.to || 2;
           out = true;
         } else if (kind === 'doublePlay') {
           to = runner.from === 0 ? 1 : 2;
@@ -98,7 +107,7 @@ export function replayScene(result: Result, index: number) {
     }
   }
   const batter = play
-    ? playerName(play.batter)
+    ? playerName(stealOnly ? play.steal!.runner : play.batter)
     : event?.text.split(/ (?:홈런|안타|2루타|3루타|볼넷|삼진|병살타|범타|수비|희생)/)[0] || '';
   return {
     event,
@@ -124,16 +133,24 @@ export function runnerPoint(from: number, to: number, t: number) {
   return index === 4 ? bases[4] : between(bases[index], bases[index + 1], at - index);
 }
 export function ballPoint(scene: ReturnType<typeof replayScene>, progress: number): Point {
+  if (scene.play?.plateAppearance === false)
+    return between(
+      fieldPoints.C,
+      bases[scene.play.steal?.to || 2],
+      Math.max(0, Math.min(1, (progress - 0.15) / 0.65)),
+    );
   if (progress < 0.2) return between(fieldPoints.P, bases[0], progress / 0.2);
   if (['walk', 'strikeout', 'tiebreak'].includes(scene.kind))
     return between(bases[0], fieldPoints.C, Math.min(1, (progress - 0.2) / 0.2));
   if (progress < 0.65) return between(bases[0], scene.target, (progress - 0.2) / 0.45);
   if (['homeRun', 'double', 'triple'].includes(scene.kind)) return scene.target;
   const destination =
-    scene.kind === 'doublePlay'
-      ? bases[2]
-      : ['out', 'error'].includes(scene.kind)
-        ? bases[1]
-        : fieldPoints.P;
+    scene.play?.command === 'bunt'
+      ? bases[1]
+      : scene.kind === 'doublePlay'
+        ? bases[2]
+        : ['out', 'error'].includes(scene.kind)
+          ? bases[1]
+          : fieldPoints.P;
   return between(scene.target, destination, Math.min(1, (progress - 0.65) / 0.25));
 }

@@ -210,6 +210,61 @@ test('D1 timeline revisions preserve consumed events, hide inputs and commit a s
   assert.deepEqual(record.body.log, afterReject.state.liveMatch.timeline.log);
 });
 
+test('D1 direct instructions persist once, preserve watched events and keep preseason stats separate', async () => {
+  const user = 'match-command-career';
+  await action({ type: 'start', club: 'kbo-lotte', manager: 'Command DB', mode: 'short' }, user);
+  await action({ type: 'continue' }, user);
+  const initial = await action({ type: 'startMatch' }, user);
+  const live = initial.state.liveMatch,
+    own = live.home === initial.state.club ? 1 : 0;
+  const cursor = live.timeline.log.findIndex((_, i) => {
+    const event = live.timeline.log[i - 1],
+      state = event?.play?.after;
+    return i > 0 && event.half === own && state?.outs < 3 && state.bases[0] && !state.bases[1];
+  });
+  assert.ok(cursor > 0);
+  const payload = {
+    type: 'matchCommand',
+    command: 'stealSecond',
+    cursor,
+    timelineVersion: 1,
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const changed = await call('/api/career', payload, user);
+  assert.equal(changed.status, 201);
+  assert.equal(changed.body.revision, initial.revision + 1);
+  assert.deepEqual(changed.body.state.roster, initial.state.roster);
+  assert.deepEqual(
+    changed.body.state.liveMatch.timeline.log.slice(0, cursor),
+    live.timeline.log.slice(0, cursor),
+  );
+  assert.equal(changed.body.state.liveMatch.timeline.log[cursor].play.plateAppearance, false);
+  assert.equal(changed.body.state.liveMatch.prepared, undefined);
+  assert.deepEqual((await call('/api/career', payload, user)).body, changed.body);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, changed.body);
+  const finalPayload = {
+    type: 'completeMatch',
+    cursor: changed.body.state.liveMatch.timeline.log.length,
+    timelineVersion: 2,
+    revision: changed.body.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const final = await call('/api/career', finalPayload, user);
+  assert.equal(final.status, 201);
+  assert.deepEqual((await call('/api/career', finalPayload, user)).body, final.body);
+  const record = await call(
+    '/api/career/matches/' + encodeURIComponent(final.body.state.history[0].id),
+    undefined,
+    user,
+  );
+  assert.deepEqual(record.body.log, changed.body.state.liveMatch.timeline.log);
+  assert.deepEqual(
+    final.body.state.roster.map((p) => p.stats),
+    initial.state.roster.map((p) => p.stats),
+  );
+});
+
 test('D1 commits a full-roster exchange once and rejected exchanges leave both players unchanged', async () => {
   const user = 'roster-exchange';
   const before = await action(

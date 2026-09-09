@@ -1,5 +1,6 @@
 import type { ScoutingState } from './scouting';
 import type { TrainingPlan } from './training-plan';
+import type { MatchCommand, MatchCommandKind } from './match-commands';
 export type Pos = 'P' | 'C' | 'IF' | 'OF' | 'DH';
 export type Stats = {
   ab: number;
@@ -15,6 +16,9 @@ export type Stats = {
   saves?: number;
   holds?: number;
   hrAllowed?: number;
+  sb?: number;
+  cs?: number;
+  sh?: number;
 };
 export type Player = {
   id: string;
@@ -297,7 +301,10 @@ export type ReplayPlay = {
   pitcher: string;
   before: ReplayState;
   after: ReplayState;
-  steal?: { runner: string; safe: boolean };
+  steal?: { runner: string; safe: boolean; to?: 2 | 3 };
+  command?: MatchCommandKind;
+  /** A standalone steal does not consume the batter's turn or count as an at-bat. */
+  plateAppearance?: false;
   /** Actual defensive alignment at this plate appearance, after substitutions. */
   defense?: Defense;
 };
@@ -436,6 +443,7 @@ export type LiveMatch = {
   timelineVersion?: number;
   playbackId?: string;
   changes?: MatchChange[];
+  commands?: MatchCommand[];
   /** Server-only frozen inputs and deferred effects. Never returned by the API. */
   prepared?: {
     input: MatchInput;

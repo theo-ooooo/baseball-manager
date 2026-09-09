@@ -138,7 +138,7 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
   const cursor = validateCursor(live, a);
   if (cursor >= live.timeline!.log.length || live.finished)
     throw new Error('종료된 경기는 변경할 수 없습니다.');
-  if ((live.changes?.length || 0) >= MAX_MATCH_CHANGES)
+  if ((live.changes?.length || 0) + (live.commands?.length || 0) >= MAX_MATCH_CHANGES)
     throw new Error('한 경기의 변경 횟수를 초과했습니다.');
   const lineup = a.lineup;
   const eligible = firstTeam(g),
