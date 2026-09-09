@@ -26,6 +26,7 @@ import { RosterMoveControl } from '../squad/roster-moves';
 import { DevelopmentPanel } from './development-panel';
 import { ScoutPlayer } from '../scouting/scout-player';
 import { PlayerAttributes, PlayerGrowth } from './growth-indicator';
+import { TrainingPlanForm } from './training-plan-form';
 
 type Props = {
   player: Player;
@@ -257,6 +258,13 @@ export function PlayerProfile(props: Props) {
         )}
         {own && (
           <TabsContent value="development">
+            <TrainingPlanForm
+              key={JSON.stringify(player.trainingPlan) || player.id}
+              player={player}
+              g={game}
+              act={act}
+              busy={busy}
+            />
             <DevelopmentPanel player={player} game={game} />
           </TabsContent>
         )}

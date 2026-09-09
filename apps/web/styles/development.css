@@ -242,6 +242,148 @@
   color: var(--brand);
   background: var(--brand-soft);
 }
+.individual-training-plan {
+  margin: 8px 0 24px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+.individual-training-plan header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.individual-training-plan h3 {
+  margin-top: 6px;
+  font-size: 18px;
+}
+.individual-training-plan small {
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1.8;
+  display: block;
+  margin-top: 6px;
+}
+.individual-training-plan fieldset {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+}
+.individual-training-plan legend,
+.individual-training-plan form > label,
+.training-plan-fields > label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.training-focus-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.training-focus-options button {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  text-align: left;
+  background: #f8fafc;
+}
+.training-focus-options button[aria-pressed='true'] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.training-focus-options strong {
+  font-size: 13px;
+}
+.training-plan-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.training-plan-fields .contract-year-options {
+  margin-top: 12px;
+}
+.individual-training-plan input[type='number'],
+.individual-training-plan select {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 9px;
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  font-size: 14px;
+  color: var(--text);
+}
+.training-rest-days {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.training-rest-days label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f5f7f9;
+  padding: 9px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.training-rest-days input {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: var(--brand);
+}
+.training-mentor {
+  display: block;
+  margin: 20px 0;
+}
+.individual-goal {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 16px;
+  margin: 20px 0;
+  background: #edf6f0;
+  color: #245b3e;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.individual-goal [data-slot='progress'] {
+  grid-column: 1/-1;
+}
+@media (max-width: 767px) {
+  .individual-training-plan {
+    padding: 16px;
+  }
+  .individual-training-plan header {
+    flex-wrap: wrap;
+  }
+  .training-focus-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .training-plan-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .training-rest-days {
+    flex-wrap: wrap;
+  }
+  .individual-training-plan input[type='number'],
+  .individual-training-plan select {
+    font-size: 16px;
+  }
+  .individual-goal {
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width: 600px) {
   .player-page .profile-tabs [data-slot='tabs-trigger'] {
     padding: 6px 8px;

@@ -45,6 +45,47 @@ async function action(payload, user = 'test-owner-a') {
   return result.body;
 }
 
+test('D1 individual training persists once without altering existing abilities, contracts, records or finances', async () => {
+  const user = 'individual-training-career';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Training DB', mode: 'full' },
+    user,
+  );
+  const player = initial.state.roster.find((p) => !p.real && p.pos !== 'P');
+  const command = {
+    type: 'setTrainingPlan',
+    id: player.id,
+    focus: 'contact',
+    intensity: 'normal',
+    restDays: [1, 4],
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const assigned = await call('/api/career', command, user);
+  assert.equal(assigned.status, 201);
+  const saved = assigned.body;
+  assert.equal(saved.revision, initial.revision + 1);
+  assert.equal(saved.state.budget, initial.state.budget);
+  assert.equal(saved.state.expenses, initial.state.expenses);
+  const oldRoster = structuredClone(saved.state.roster);
+  delete oldRoster.find((p) => p.id === player.id).trainingPlan;
+  assert.deepEqual(oldRoster, initial.state.roster);
+  assert.deepEqual((await call('/api/career', command, user)).body, saved);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, saved);
+  const continued = await action({ type: 'continueDay', simulateGames: true }, user);
+  assert.deepEqual(
+    continued.state.roster.find((p) => p.id === player.id).trainingPlan,
+    saved.state.roster.find((p) => p.id === player.id).trainingPlan,
+  );
+  const cleared = await action({ type: 'clearTrainingPlan', id: player.id }, user);
+  assert.equal(cleared.state.roster.find((p) => p.id === player.id).trainingPlan, undefined);
+  assert.equal(
+    (await call('/api/career', undefined, user)).body.state.roster.find((p) => p.id === player.id)
+      .trainingPlan,
+    undefined,
+  );
+});
+
 test('D1 scouting persists missions and reports, hides discoveries until due and charges once', async () => {
   const user = 'scout-career';
   const initial = await action(

@@ -1,4 +1,5 @@
 import type { ScoutingState } from './scouting';
+import type { TrainingPlan } from './training-plan';
 export type Pos = 'P' | 'C' | 'IF' | 'OF' | 'DH';
 export type Stats = {
   ab: number;
@@ -46,6 +47,7 @@ export type Player = {
   rating?: RatingEvidence;
   mood?: PlayerMood;
   development?: PlayerDevelopment;
+  trainingPlan?: TrainingPlan;
 };
 export type AbilityKey = 'contact' | 'power' | 'speed' | 'field' | 'stuff' | 'control';
 export type GrowthStage = 'growth' | 'peak' | 'decline';
