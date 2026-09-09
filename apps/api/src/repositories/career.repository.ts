@@ -5,6 +5,17 @@ import type { GameState, WorldCatalog, FinanceEntry, Result } from '@dugout/shar
 type CareerRow = { state: string; revision: number };
 @Injectable()
 export class CareerRepository {
+  async catalogKnowledge(db: D1Database, user: string) {
+    const row = await db
+      .prepare(
+        "SELECT json_object('club',json_extract(state,'$.club'),'rules',json_extract(state,'$.rules'),'knowledge',json_extract(state,'$.knowledge'),'scouting',json_extract(state,'$.scouting')) AS visibility FROM careers WHERE user_id=?",
+      )
+      .bind(user)
+      .first<{ visibility: string }>();
+    return row
+      ? (JSON.parse(row.visibility) as Pick<GameState, 'club' | 'rules' | 'knowledge' | 'scouting'>)
+      : null;
+  }
   async revealsPotential(db: D1Database, user: string) {
     const row = await db
       .prepare(

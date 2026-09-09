@@ -54,6 +54,12 @@ export type Player = {
   mood?: PlayerMood;
   development?: PlayerDevelopment;
   trainingPlan?: TrainingPlan;
+  observation?: {
+    status: 'unknown' | 'scouted';
+    overall?: [number, number];
+    abilities?: Partial<Record<AbilityKey, [number, number]>>;
+    date?: string;
+  };
 };
 export type AbilityKey = 'contact' | 'power' | 'speed' | 'field' | 'stuff' | 'control';
 export type GrowthStage = 'growth' | 'peak' | 'decline';
@@ -206,6 +212,7 @@ export type GameState = {
   calendar?: { openingDate: string; startDay: number; remaining?: Record<string, number> };
   progress?: DayProgress;
   scouting?: ScoutingState;
+  knowledge?: { leagues: string[]; clubs: string[] };
   media?: MatchMediaState;
 };
 export type DayProgress = {

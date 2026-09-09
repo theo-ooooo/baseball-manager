@@ -81,7 +81,7 @@ export function PlayerAttributes({ player: p, owned }: { player: Player; owned: 
         </div>
       )}
       <div className="attribute-grid">
-        {attributes.map(({ label, value, basis, delta }) => (
+        {attributes.map(({ label, key, value, basis, delta }) => (
           <div
             key={label}
             className={
@@ -94,7 +94,11 @@ export function PlayerAttributes({ player: p, owned }: { player: Player; owned: 
           >
             <span>{label}</span>
             <div className="attribute-value">
-              <strong>{value ?? '미평가'}</strong>
+              <strong>
+                {p.observation
+                  ? (key && p.observation.abilities?.[key]?.join('–')) || '?'
+                  : (value ?? '미평가')}
+              </strong>
               {baseline && <GrowthChange delta={delta} since={baseline.date} label={label} />}
             </div>
             <Progress value={value ?? 0} aria-label={`${label} ${value ?? '미평가'}`} />

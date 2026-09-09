@@ -3,7 +3,7 @@ import { createLiveMatchActions } from './live-match';
 import { applyMatchEffects, runMatch } from './match-timeline';
 import { createCalendarProgression } from './calendar-progression';
 import { createRecruitment } from './recruitment';
-import { createScouting } from './scouting';
+import { createScouting, prepareKnowledge } from './scouting';
 import { individualTrainingAction } from './individual-training';
 import { createMatchMediaActions, finishPendingConversation } from './match-media-actions';
 import { trainingRecovery } from '@dugout/shared/training-plan';
@@ -122,6 +122,7 @@ export function createGameEngine(world: WorldCatalog) {
       income: 0,
       expenses: 0,
     };
+    prepareKnowledge(g, world);
     prepareCalendar(g, world, true);
     prepareSquad(g, world);
     // A new career has no manager-selected starter to preserve. Recommend the full plan.
@@ -545,6 +546,7 @@ export function createGameEngine(world: WorldCatalog) {
       prepareDynamics(s);
       preparePitching(s);
     }
+    prepareKnowledge(s, world);
     const live = liveAction(s, a);
     if (live) return live;
     const media = mediaAction(s, a);

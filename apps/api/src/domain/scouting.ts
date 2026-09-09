@@ -6,6 +6,14 @@ import { abilityKeys, abilityLabels } from '@dugout/shared/development';
 import { askPrice, createGameView, hash, money, overall } from '@dugout/shared/game-view';
 import { postNews } from './club-dynamics';
 
+export function prepareKnowledge(g: GameState, world: WorldCatalog) {
+  const league = world.clubs.find((c) => c.id === g.club)!.league;
+  g.knowledge ??= { leagues: [league], clubs: [] };
+  g.knowledge.clubs = world.clubs
+    .filter((c) => g.knowledge!.leagues.includes(c.league))
+    .map((c) => c.id);
+}
+
 export function createScouting(world: WorldCatalog) {
   const view = createGameView(world);
   const state = (g: GameState) => (g.scouting ??= { shortlist: [], assignments: [], reports: [] });

@@ -1,3 +1,4 @@
+import { prepareKnowledge } from '../domain/scouting';
 import { presentCareer } from './presentation';
 import {
   BadRequestException,
@@ -23,6 +24,7 @@ export class CareerService {
     if (current.state && !current.state.liveMatch) {
       const world = await this.catalog.getWorld(db);
       // Repository parsing already owns this request's state; do not clone the entire save again.
+      prepareKnowledge(current.state, world);
       prepareSquad(current.state, world);
       prepareDynamics(current.state);
     }
@@ -46,6 +48,7 @@ export class CareerService {
     ]);
     const refreshed = () => {
       if (current.state && !current.state.liveMatch) {
+        prepareKnowledge(current.state, world);
         prepareSquad(current.state, world);
         prepareDynamics(current.state);
       }

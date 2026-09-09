@@ -53,6 +53,20 @@ export function ScoutingPanel({
           <strong>{active.length} / 3</strong>
         </div>
       </header>
+      <section className="panel panel-content">
+        <h2>리그 친숙도</h2>
+        <p>
+          근무 경험이 있는 리그는 능력치를 확인할 수 있습니다. 낯선 리그 선수는 ?로 표시하며 파견
+          보고가 도착하면 관찰 범위를 보여줍니다.
+        </p>
+        <div className="scout-toolbar">
+          {leagues.map((l) => (
+            <span className="pill" key={l.id}>
+              {l.flag} {l.name} · {g.knowledge?.leagues.includes(l.id) ? '친숙함' : '관찰 필요'}
+            </span>
+          ))}
+        </div>
+      </section>
       <div className="preset-buttons" role="group" aria-label="스카우팅 화면">
         {[
           ['missions', '관찰 임무'],

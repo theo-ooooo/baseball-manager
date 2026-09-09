@@ -166,7 +166,13 @@ export function detailedAttributes(p: Player): DetailedAttribute[] {
             basis: p.real ? '측정 자료 미확인' : '게임 능력',
           },
         ];
-  return rows;
+  return p.observation
+    ? rows.map((row) => ({
+        ...row,
+        value: null,
+        basis: p.observation!.status === 'unknown' ? '관찰 필요' : '스카우트 관찰',
+      }))
+    : rows;
 }
 export function lineupReason(p: Player, slot: number) {
   const profile = battingProfile(p);
