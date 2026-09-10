@@ -34,6 +34,16 @@ export function roundPairs(ids: string[], round: number) {
 }
 const winter = new Set(['lmp', 'lidom', 'lvbp', 'lbprc', 'abl']);
 const officialIndexes = new WeakMap<WorldCatalog, Map<string, Fixture[]>>();
+// Schedules contain catalog club ids and dates only. Never cache a career, result, or D1 promise.
+// A bounded cache is shared across short-lived domain views and isolated by catalog identity.
+const scheduleIndexes = new WeakMap<
+  WorldCatalog,
+  {
+    fixtures: Map<string, Fixture[]>;
+    dates: Map<string, Map<string, Fixture[]>>;
+  }
+>();
+const MAX_SCHEDULES = 32;
 export function createCalendarView(world: WorldCatalog) {
   let officialByLeague = officialIndexes.get(world);
   if (!officialByLeague) {
@@ -48,8 +58,25 @@ export function createCalendarView(world: WorldCatalog) {
     officialIndexes.set(world, officialByLeague);
   }
   const officialFixtures = officialByLeague;
-  const cache = new Map<string, Fixture[]>(),
-    dateCache = new Map<string, Map<string, Fixture[]>>();
+  let schedules = scheduleIndexes.get(world);
+  if (!schedules) {
+    schedules = { fixtures: new Map(), dates: new Map() };
+    scheduleIndexes.set(world, schedules);
+  }
+  const cache = schedules.fixtures,
+    dateCache = schedules.dates;
+  function remember(k: string, result: Fixture[]) {
+    // Freeze a copy so one consumer cannot modify another career's schedule.
+    const snapshot = result.map((f) => Object.freeze({ ...f }));
+    Object.freeze(snapshot);
+    cache.set(k, snapshot);
+    if (cache.size > MAX_SCHEDULES) {
+      const oldest = cache.keys().next().value!;
+      cache.delete(oldest);
+      dateCache.delete(oldest);
+    }
+    return snapshot;
+  }
   const official = (g: GameState, lid: string) =>
     g.mode === 'full' &&
     g.year === world.year &&
@@ -65,7 +92,7 @@ export function createCalendarView(world: WorldCatalog) {
     const k = key(g, lid);
     if (cache.has(k)) return cache.get(k)!;
     let result: Fixture[] = [];
-    if (official(g, lid)) return officialFixtures.get(lid)!;
+    if (official(g, lid)) return remember(k, officialFixtures.get(lid)!);
     else {
       const ids = world.clubs.filter((c) => c.league === lid).map((c) => c.id),
         league = world.leagues.find((l) => l.id === lid)!;
@@ -122,14 +149,14 @@ export function createCalendarView(world: WorldCatalog) {
         }
     }
     result = [...result].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
-    cache.set(k, result);
-    return result;
+    return remember(k, result);
   }
   function onDate(g: GameState, lid: string, day = g.day) {
     const k = key(g, lid);
     if (!dateCache.has(k)) {
       const map = new Map<string, Fixture[]>();
       for (const f of fixtures(g, lid)) map.set(f.date, [...(map.get(f.date) || []), f]);
+      for (const rows of map.values()) Object.freeze(rows);
       dateCache.set(k, map);
     }
     return dateCache.get(k)!.get(gameDate(g, day)) || [];

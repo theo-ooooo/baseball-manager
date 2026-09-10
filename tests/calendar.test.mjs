@@ -6,13 +6,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const out = join(tmpdir(), 'dugout-calendar-test.cjs');
 buildSync({
-  entryPoints: ['tests/fixtures/engine.ts'],
+  stdin: {
+    contents:
+      "export * from './tests/fixtures/engine';export * from './packages/shared/src/calendar';",
+    resolveDir: process.cwd(),
+    loader: 'ts',
+  },
   bundle: true,
   platform: 'node',
   format: 'cjs',
   outfile: out,
 });
-const { world: w, engine: e } = createRequire(import.meta.url)(out);
+const { world: w, engine: e, createCalendarView } = createRequire(import.meta.url)(out);
 test('Official calendar has the correct club totals, rest dates and distinct fixture identities', () => {
   for (const [lid, games] of [
     ['kbo', 144],
@@ -57,4 +62,48 @@ test('Rest day advances the date without creating a match; league games share th
     g.worldResults.filter((r) => r.date === '2026-03-28' && r.home.startsWith('kbo-')).length,
     5,
   );
+});
+
+test('Shared schedules reuse date indexes across requests without exposing mutable career state', () => {
+  const g = e.newGame('kbo-lotte', 'Schedule cache', 'short', 3);
+  g.day = 0;
+  const a = createCalendarView(w),
+    b = createCalendarView(w);
+  const original = a.onDate(g, 'kbo');
+  const other = structuredClone(g);
+  other.club = 'kbo-lg';
+  other.manager = 'Another career';
+  assert.strictEqual(b.onDate(other, 'kbo'), original);
+  assert.equal(original.length, 5);
+  const snapshot = JSON.stringify(original);
+  assert.throws(() => {
+    original[0].home = 'fa';
+  }, TypeError);
+  assert.throws(() => {
+    original.pop();
+  }, TypeError);
+  assert.equal(JSON.stringify(b.onDate(other, 'kbo')), snapshot);
+  assert.ok(a.ownFixtures(g).every((f) => [f.home, f.away].includes(g.club)));
+  assert.ok(b.ownFixtures(other).every((f) => [f.home, f.away].includes(other.club)));
+});
+
+test('Different remaining schedules and catalog identities never share another career fixtures', () => {
+  const g = e.newGame('kbo-lotte', 'Schedule isolation', 'short', 3);
+  const a = createCalendarView(w);
+  const original = a.fixtures(g, 'kbo');
+  const legacy = structuredClone(g);
+  legacy.calendar.remaining = Object.fromEntries(w.clubs.map((c) => [c.id, 2]));
+  legacy.calendar.startDay = 20;
+  const tail = createCalendarView(w).fixtures(legacy, 'kbo');
+  assert.notDeepEqual(tail, original);
+  assert.strictEqual(createCalendarView(w).fixtures(g, 'kbo'), original);
+  const catalog = {
+    ...w,
+    clubs: w.clubs.map((c) => (c.league === 'kbo' ? { ...c, id: c.id + '-new' } : c)),
+  };
+  const replaced = createCalendarView(catalog).fixtures(g, 'kbo');
+  assert.ok(replaced.every((f) => f.home.endsWith('-new') && f.away.endsWith('-new')));
+  // Eviction does not affect deterministic calendars still held by another caller.
+  for (let year = 2030; year < 2070; year++) a.fixtures({ ...g, year }, 'kbo');
+  assert.deepEqual(a.fixtures(g, 'kbo'), original);
 });
