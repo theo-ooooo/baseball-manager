@@ -41,13 +41,15 @@ export function PlayerTable({
     <Table className={`data-table player-table ${compact ? 'player-table-summary' : ''}`}>
       <TableHeader>
         <TableRow>
-          <TableHead>선수</TableHead>
+          <TableHead className="player-identity-cell">선수</TableHead>
           <TableHead className="player-secondary-column">
             {kind === 'market' ? '구분' : '구분 · 보직'}
           </TableHead>
           {!compact && <TableHead>나이</TableHead>}
-          <TableHead>OVR</TableHead>
-          {g.rules?.revealPotential && <TableHead>잠재력</TableHead>}
+          <TableHead className="player-rating-cell">OVR</TableHead>
+          {g.rules?.revealPotential && (
+            <TableHead className="player-potential-cell">잠재력</TableHead>
+          )}
           {kind === 'market' ? (
             <>
               <TableHead>소속 구단</TableHead>
@@ -57,7 +59,7 @@ export function PlayerTable({
           ) : (
             <>
               {!compact && <TableHead>사기</TableHead>}
-              <TableHead>컨디션</TableHead>
+              <TableHead className="player-condition-cell">컨디션</TableHead>
               {!compact && (
                 <>
                   <TableHead>경기</TableHead>
@@ -68,7 +70,7 @@ export function PlayerTable({
               <TableHead className="player-secondary-column">연봉</TableHead>
             </>
           )}
-          <TableHead>{onMove ? '등록' : ''}</TableHead>
+          <TableHead className="player-action-cell">{onMove ? '등록' : ''}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -76,7 +78,7 @@ export function PlayerTable({
           const role = kind !== 'market' && own.has(p.id) ? pitchingAssignment(g, p) : '';
           return (
             <TableRow key={p.id}>
-              <TableCell>
+              <TableCell className="player-identity-cell">
                 <PlayerName p={p} onClick={onPlayer} />
                 {kind !== 'market' && <DevelopmentBadge player={p} />}
                 {role && (
@@ -102,12 +104,12 @@ export function PlayerTable({
                   {p.ageEstimated && <small className="block muted">게임 나이</small>}
                 </TableCell>
               )}
-              <TableCell>
+              <TableCell className="player-rating-cell">
                 <Rating value={overall(p)} player={p} />
                 {kind !== 'market' && own.has(p.id) && <PlayerGrowth player={p} />}
               </TableCell>
               {g.rules?.revealPotential && (
-                <TableCell>
+                <TableCell className="player-potential-cell">
                   <span className="potential">{potentialText(p)}</span>
                 </TableCell>
               )}
@@ -128,7 +130,7 @@ export function PlayerTable({
                       <Mood p={p} />
                     </TableCell>
                   )}
-                  <TableCell>
+                  <TableCell className="player-condition-cell">
                     <div className="condition">
                       <Progress value={p.condition} />
                       <span>{Math.round(p.condition)}%</span>
@@ -155,7 +157,7 @@ export function PlayerTable({
                   </TableCell>
                 </>
               )}
-              <TableCell>
+              <TableCell className="player-action-cell">
                 {onMove ? (
                   <button
                     className="roster-move"

@@ -137,7 +137,7 @@
   gap: 12px;
   padding: 12px 16px;
   margin-bottom: 20px;
-  border: 1px solid #efb3b3;
+  border: 1px solid color-mix(in srgb, var(--danger-text) 40%, var(--line));
   border-radius: var(--ui-radius);
   background: var(--danger-bg);
   color: var(--danger-text);
@@ -361,7 +361,7 @@
   padding: 14px 18px;
   border-radius: var(--ui-radius);
   border: 1px solid var(--ui-line);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--surface-1);
   backdrop-filter: blur(8px);
   box-shadow: 0 -8px 30px rgba(23, 43, 68, 0.12);
 }
@@ -1159,7 +1159,7 @@
     gap: 6px;
     min-height: 44px;
     padding: 9px;
-    color: white;
+    color: var(--brand-fg);
     background: var(--brand);
     font-size: 13px;
     font-weight: 750;

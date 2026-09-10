@@ -20,13 +20,13 @@
 }
 .growth-delta.is-up,
 .attribute-growth-summary .is-up {
-  color: #176344;
-  background: #e8f5ee;
+  color: var(--ok-text);
+  background: var(--ok-bg);
 }
 .growth-delta.is-down,
 .attribute-growth-summary .is-down {
-  color: #a0372a;
-  background: #fcece8;
+  color: var(--danger-text);
+  background: var(--danger-bg);
 }
 .growth-delta.compact {
   font-size: 11px;
@@ -57,7 +57,7 @@
   gap: 10px;
   margin: 22px 0 12px;
   padding: 12px 14px;
-  background: #f6f8fb;
+  background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 6px;
   font-size: 12px;
@@ -73,16 +73,16 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 12px;
-  background: #fbfcfd;
+  background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: 6px;
   min-width: 0;
 }
 .player-page .attribute-grid > .attribute-up {
-  border-top: 2px solid #408769;
+  border-top: 2px solid var(--line);
 }
 .player-page .attribute-grid > .attribute-down {
-  border-top: 2px solid #b46b58;
+  border-top: 2px solid var(--line);
 }
 .attribute-grid .attribute-value {
   display: flex;
@@ -105,16 +105,16 @@
   color: inherit;
 }
 .development-badge.growth {
-  color: #176344;
-  background: #e8f5ee;
+  color: var(--ok-text);
+  background: var(--ok-bg);
 }
 .development-badge.peak {
-  color: #284dc0;
-  background: #edf2ff;
+  color: var(--brand);
+  background: var(--surface-2);
 }
 .development-badge.decline {
-  color: #925019;
-  background: #fff3e4;
+  color: var(--warn-text);
+  background: var(--warn-bg);
 }
 .development-panel {
   padding: 24px;
@@ -152,10 +152,10 @@
   margin: 6px 0;
 }
 .development-panel .growth {
-  color: #176344;
+  color: var(--ok-text);
 }
 .development-panel .decline {
-  color: #925019;
+  color: var(--warn-text);
 }
 .development-stages {
   display: flex;
@@ -247,7 +247,7 @@
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface-1);
 }
 .individual-training-plan header {
   display: flex;
@@ -288,7 +288,7 @@
   border: 1px solid var(--line);
   border-radius: 6px;
   text-align: left;
-  background: #f8fafc;
+  background: var(--surface-2);
 }
 .training-focus-options button[aria-pressed='true'] {
   border-color: var(--brand);
@@ -313,7 +313,7 @@
   width: 100%;
   padding: 10px;
   margin-top: 9px;
-  background: #fff;
+  background: var(--surface-1);
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   font-size: 14px;
@@ -328,7 +328,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  background: #f5f7f9;
+  background: var(--surface-2);
   padding: 9px;
   border-radius: 4px;
   font-size: 12px;
@@ -351,8 +351,8 @@
   gap: 12px;
   padding: 16px;
   margin: 20px 0;
-  background: #edf6f0;
-  color: #245b3e;
+  background: var(--ok-bg);
+  color: var(--ok-text);
   border-radius: 6px;
   font-size: 12px;
 }

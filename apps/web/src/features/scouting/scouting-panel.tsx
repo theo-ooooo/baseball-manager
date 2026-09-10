@@ -1,7 +1,14 @@
 'use client';
 import { useScoutCenter } from './use-scout-center';
 import Link from 'next/link';
-import { Binoculars } from 'lucide-react';
+import { Binoculars, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import type { GameState, Player } from '@dugout/shared/types';
 import { daysBetween, gameDate } from '@dugout/shared/calendar';
 import { scoutingDurations } from '@dugout/shared/scouting';
@@ -25,6 +32,9 @@ export function ScoutingPanel({
 }) {
   const { leagues, getClub } = useWorld();
   const {
+    dispatch,
+    assignmentOpen,
+    setAssignmentOpen,
     tab,
     setTab,
     league,
@@ -42,35 +52,24 @@ export function ScoutingPanel({
     reports,
     cost,
     toggle,
-  } = useScoutCenter(g);
+  } = useScoutCenter(g, act);
   const s = g.scouting;
   return (
     <div className="scouting-center">
-      <header className="market-notice">
-        <Binoculars size={26} />
+      <header className="scout-command-heading">
         <div>
-          <strong>스카우트 센터</strong>
-          <p>관찰 의뢰 → 보고 검토 → 비교 · 트레이드 / FA 계약</p>
+          <Binoculars size={20} />
+          <h2>관찰 현황</h2>
+          <span>{active.length} / 3명 파견 중</span>
         </div>
-        <div>
-          <small>파견 중</small>
-          <strong>{active.length} / 3</strong>
-        </div>
+        <button
+          className="button primary compact"
+          onClick={() => setAssignmentOpen(true)}
+          disabled={busy || active.length >= 3}
+        >
+          <Plus size={16} />새 파견
+        </button>
       </header>
-      <details className="panel panel-content scout-knowledge">
-        <summary>리그 친숙도 · 관찰 범위 확인</summary>
-        <p>
-          근무 경험이 있는 리그는 능력치를 확인할 수 있습니다. 낯선 리그 선수는 ?로 표시하며 파견
-          보고가 도착하면 관찰 범위를 보여줍니다.
-        </p>
-        <div className="scout-toolbar">
-          {leagues.map((l) => (
-            <span className="pill" key={l.id}>
-              {l.flag} {l.name} · {g.knowledge?.leagues.includes(l.id) ? '친숙함' : '관찰 필요'}
-            </span>
-          ))}
-        </div>
-      </details>
       <div className="preset-buttons" role="group" aria-label="스카우트 화면">
         {[
           ['missions', '관찰 임무'],
@@ -89,91 +88,6 @@ export function ScoutingPanel({
       </div>
       {tab === 'missions' && (
         <>
-          <section className="panel scout-assignment-form">
-            <h2>리그에 스카우트 파견</h2>
-            <p>
-              {scout
-                ? `담당 ${scout.name} · 능력 ${scout.skill}`
-                : '코치 화면에서 스카우트를 선임해 주세요.'}{' '}
-              · 가용 예산 {money(g.budget)}
-            </p>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                await act({ type: 'assignScout', league, pos, maxAge, days, scoutId: scout?.id });
-              }}
-            >
-              <div className="scout-form-grid">
-                <label>
-                  관찰 리그
-                  <select
-                    value={league}
-                    disabled={busy}
-                    onChange={(e) => setLeague(e.target.value)}
-                  >
-                    {leagues.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.flag} {l.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  포지션
-                  <select value={pos} disabled={busy} onChange={(e) => setPos(e.target.value)}>
-                    {Object.entries({
-                      all: '전체',
-                      P: '투수',
-                      C: '포수',
-                      IF: '내야수',
-                      OF: '외야수',
-                      DH: '지명타자',
-                    }).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  최대 나이
-                  <input
-                    type="number"
-                    min="16"
-                    max="50"
-                    step="1"
-                    required
-                    value={maxAge}
-                    disabled={busy}
-                    onChange={(e) => setMaxAge(Number(e.target.value))}
-                  />
-                </label>
-                <label>
-                  관찰 기간
-                  <select
-                    value={days}
-                    disabled={busy}
-                    onChange={(e) => setDays(Number(e.target.value))}
-                  >
-                    {scoutingDurations.map((d) => (
-                      <option key={d} value={d}>
-                        {d}일
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div className="scout-toolbar">
-                <button
-                  className="button primary"
-                  disabled={busy || !scout || active.length >= 3 || cost > g.budget}
-                >
-                  파견 시작 · {money(cost)}
-                </button>
-                <small>최대 3명 추천 · 파견비 선지급, 취소 시 반환 없음</small>
-              </div>
-            </form>
-          </section>
           <section className="panel">
             <div className="panel-header">
               <h2>진행 중인 관찰</h2>
@@ -325,6 +239,119 @@ export function ScoutingPanel({
           })}
         </section>
       )}
+      <details className="panel panel-content scout-knowledge">
+        <summary>리그 친숙도 · 관찰 범위 확인</summary>
+        <p>
+          근무 경험이 있는 리그는 능력치를 확인할 수 있습니다. 낯선 리그 선수는 ?로 표시하며 파견
+          보고가 도착하면 관찰 범위를 보여줍니다.
+        </p>
+        <div className="scout-toolbar">
+          {leagues.map((l) => (
+            <span className="pill" key={l.id}>
+              {l.flag} {l.name} · {g.knowledge?.leagues.includes(l.id) ? '친숙함' : '관찰 필요'}
+            </span>
+          ))}
+        </div>
+      </details>
+      <Dialog
+        open={assignmentOpen}
+        onOpenChange={(open) => {
+          if (!busy) setAssignmentOpen(open);
+        }}
+      >
+        <DialogContent className="scout-dispatch-dialog">
+          <DialogHeader>
+            <DialogTitle>새 스카우트 파견</DialogTitle>
+            <DialogDescription>
+              관찰할 리그와 선수 조건을 정한 뒤 담당 스카우트에게 의뢰합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="scout-assignment-form">
+            <p>
+              {scout
+                ? `담당 ${scout.name} · 능력 ${scout.skill}`
+                : '코치 화면에서 스카우트를 선임해 주세요.'}{' '}
+              · 가용 예산 {money(g.budget)}
+            </p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await dispatch();
+              }}
+            >
+              <div className="scout-form-grid">
+                <label>
+                  관찰 리그
+                  <select
+                    value={league}
+                    disabled={busy}
+                    onChange={(e) => setLeague(e.target.value)}
+                  >
+                    {leagues.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.flag} {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  포지션
+                  <select value={pos} disabled={busy} onChange={(e) => setPos(e.target.value)}>
+                    {Object.entries({
+                      all: '전체',
+                      P: '투수',
+                      C: '포수',
+                      IF: '내야수',
+                      OF: '외야수',
+                      DH: '지명타자',
+                    }).map(([v, l]) => (
+                      <option key={v} value={v}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  최대 나이
+                  <input
+                    type="number"
+                    min="16"
+                    max="50"
+                    step="1"
+                    required
+                    value={maxAge}
+                    disabled={busy}
+                    onChange={(e) => setMaxAge(Number(e.target.value))}
+                  />
+                </label>
+                <label>
+                  관찰 기간
+                  <select
+                    value={days}
+                    disabled={busy}
+                    onChange={(e) => setDays(Number(e.target.value))}
+                  >
+                    {scoutingDurations.map((d) => (
+                      <option key={d} value={d}>
+                        {d}일
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="scout-toolbar">
+                <button
+                  className="button primary"
+                  disabled={busy || !scout || active.length >= 3 || cost > g.budget}
+                >
+                  파견 시작 · {money(cost)}
+                </button>
+                <small>최대 3명 추천 · 파견비 선지급, 취소 시 반환 없음</small>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

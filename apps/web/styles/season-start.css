@@ -69,8 +69,8 @@
 .preseason-skip-dialog .preseason-skip-blockers {
   margin: 0 0 12px;
   padding: 10px 12px;
-  border: 1px solid #ecd19a;
-  background: #fff3d9;
+  border: 1px solid color-mix(in srgb, var(--warn-text) 40%, var(--line));
+  background: var(--warn-bg);
   font-size: 12px;
 }
 .preseason-skip-dialog .preseason-skip-blockers strong {

@@ -2,6 +2,39 @@
   display: none;
 }
 .match-center.match-page {
+  color-scheme: dark;
+  --bg: #101a20;
+  --surface-1: #19262e;
+  --surface-2: #142027;
+  --surface-3: #23343d;
+  --surface-4: #30444e;
+  --line: #31434b;
+  --line-strong: #627e89;
+  --text: #eef4f5;
+  --text-2: #c0d0d7;
+  --text-3: #9aafb9;
+  --brand: #bcf16b;
+  --brand-hover: #cef794;
+  --brand-fg: #15221a;
+  --brand-soft: #283d2d;
+  --input: #536b77;
+  --ok-bg: #193d32;
+  --ok-text: #8cdeb9;
+  --warn-bg: #3b3020;
+  --warn-text: #f2ca80;
+  --danger-bg: #3d252b;
+  --danger-text: #f3a1ac;
+  --background: var(--bg);
+  --foreground: var(--text);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-fg);
+  --secondary: var(--surface-3);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-3);
+  --muted-foreground: var(--text-3);
+  --border: var(--line);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand);
   --match-bg: #101a20;
   --match-panel: #19262e;
   --match-line: #31434b;
@@ -1238,7 +1271,7 @@
     bottom: 0;
     display: grid;
     gap: 8px;
-    background: #fff;
+    background: var(--surface-1);
     border-top: 1px solid #cbd7e2;
   }
   .match-center .plan-review > strong {
@@ -1380,16 +1413,16 @@
   flex-wrap: wrap;
 }
 .match-repeat-command {
-  color: #20334d;
+  color: var(--text);
 }
 .match-decision .match-repeat-command {
   width: 100%;
-  color: #20334d;
+  color: var(--text);
   background: #edf3ff;
   padding: 10px 12px;
 }
 .match-decision .match-repeat-command span {
-  color: #20334d;
+  color: var(--text);
   margin-top: 0;
 }
 .match-decision .match-repeat-command b {
@@ -1431,8 +1464,8 @@
   z-index: 30;
   width: min(340px, calc(100vw - 24px));
   padding: 16px;
-  background: #fff;
-  color: #20334d;
+  background: var(--surface-1);
+  color: var(--text);
   border: 1px solid #ccd5e3;
   border-radius: 12px;
   box-shadow: 0 8px 32px #14243730;
@@ -1445,7 +1478,7 @@
   margin-bottom: 12px;
 }
 .match-view-settings .match-auto-pause {
-  color: #20334d;
+  color: var(--text);
 }
 .match-view-settings .match-auto-pause small {
   margin-left: 0;

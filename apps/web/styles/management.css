@@ -76,9 +76,9 @@ input,
   font-size: 12px;
 }
 .button.danger {
-  border-color: #efb3b3;
-  color: #a31d2b;
-  background: #fdecec;
+  border-color: color-mix(in srgb, var(--danger-text) 40%, var(--line));
+  color: var(--danger-text);
+  background: var(--danger-bg);
 }
 .icon-button {
   width: 30px;
@@ -162,11 +162,11 @@ input,
   border: 0;
   border-radius: 2px;
   background: var(--surface-3);
-  color: #8a4b00;
+  color: var(--warn-text);
 }
 .rating.good {
-  background: #def5eb;
-  color: #0e6b4f;
+  background: var(--ok-bg);
+  color: var(--ok-text);
   border: 0;
 }
 .rating.elite {
@@ -185,12 +185,12 @@ input,
 .pill.lime {
   background: var(--surface-3);
   border-color: var(--line);
-  color: #0e6b4f;
+  color: var(--ok-text);
 }
 .pill.amber {
-  background: #fff3d9;
-  border-color: #ecd19a;
-  color: #8a4b00;
+  background: var(--warn-bg);
+  border-color: color-mix(in srgb, var(--warn-text) 40%, var(--line));
+  color: var(--warn-text);
 }
 .real-tag,
 .gen-tag {
@@ -204,7 +204,7 @@ input,
   color: var(--brand);
 }
 .gen-tag {
-  color: #6d28d9;
+  color: #6944a7;
 }
 .player-avatar {
   width: 27px;
@@ -216,8 +216,8 @@ input,
   font-size: 11px;
 }
 .player-avatar.generated {
-  background: #ede9fe;
-  color: #5b21b6;
+  background: #efe9f8;
+  color: #6944a7;
 }
 .player-name {
   gap: 8px;
@@ -259,16 +259,16 @@ input,
   color: var(--text-2);
 }
 .form > .W {
-  background: #def5eb;
-  color: #0e6b4f;
+  background: var(--ok-bg);
+  color: var(--ok-text);
 }
 .form > .L {
-  background: #fdecec;
-  color: #a31d2b;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 .form > .D {
-  background: #fff3d9;
-  color: #8a4b00;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 
 /* Navigation and game clock remain visible while the work area scrolls. */
@@ -664,7 +664,7 @@ input,
 }
 .news-icon.transfer {
   background: var(--surface-3);
-  color: #8a4b00;
+  color: var(--warn-text);
 }
 .inbox-detail {
   padding: 14px 12px;
@@ -787,7 +787,7 @@ input,
 }
 .field-player > strong,
 .field-player strong {
-  background: rgba(255, 255, 255, 0.93);
+  background: var(--surface-2);
   border-radius: 1px;
   color: var(--text);
   padding: 2px 5px;
@@ -863,7 +863,7 @@ input,
   font-size: 10px;
 }
 .potential {
-  color: #6d28d9;
+  color: #6944a7;
   font-size: 12px;
 }
 .condition {
@@ -943,7 +943,7 @@ input,
   height: 66px;
   padding: 0 25px;
   background: var(--brand-soft);
-  border-bottom: 1px solid #b7c9f2;
+  border-bottom: 1px solid var(--line-strong);
 }
 .setup-header .brand > span {
   font-size: 23px;
@@ -1264,9 +1264,9 @@ input,
   font-size: 10px;
 }
 .error-banner {
-  background: #fdecec;
-  border-color: #efb3b3;
-  color: #a31d2b;
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger-text) 40%, var(--line));
+  color: var(--danger-text);
 }
 .catalog-loading {
   background: var(--surface-1);
@@ -1442,7 +1442,7 @@ input,
 .agent-message {
   margin: 14px 0;
   padding: 12px;
-  border-left-color: #b7c9f2;
+  border-left-color: var(--line-strong);
   border-radius: 0;
   background: var(--surface-2);
   color: var(--text);
@@ -1604,8 +1604,8 @@ input,
   font-size: 30px;
 }
 .profile-number.generated {
-  background: #ede9fe;
-  color: #5b21b6;
+  background: #efe9f8;
+  color: #6944a7;
   border-color: #c4b5fd;
 }
 .profile-tabs {
@@ -1691,7 +1691,7 @@ input,
 }
 .play-log {
   background: var(--surface-1);
-  border-color: #b7c9f2;
+  border-color: var(--line-strong);
 }
 .play-log > div {
   border-color: var(--line);
@@ -2143,7 +2143,7 @@ input,
   color: var(--brand);
 }
 .rule-notice {
-  color: #8a4b00;
+  color: var(--warn-text);
 }
 .tactic-library {
   display: flex;
@@ -2212,7 +2212,7 @@ input,
   display: inline-block;
   font-size: 10px;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.93);
+  background: var(--surface-2);
   border-radius: 2px;
   padding: 1px 5px;
   margin-top: 3px;
@@ -2511,7 +2511,7 @@ input,
   min-height: 50px;
 }
 .calendar-day.today {
-  background: rgba(29, 78, 216, 0.09);
+  background: var(--brand-soft);
   box-shadow: inset 3px 0 var(--brand);
 }
 .calendar-date {
@@ -2537,7 +2537,7 @@ input,
   font-size: 12px;
 }
 .calendar-game.own {
-  background: rgba(29, 78, 216, 0.08);
+  background: var(--brand-soft);
 }
 .calendar-game small {
   color: var(--muted-foreground);
@@ -2603,7 +2603,7 @@ input,
   box-shadow: inset 2px 0 var(--brand);
 }
 .manager-news-list > button.selected {
-  background: rgba(29, 78, 216, 0.12);
+  background: var(--brand-soft);
 }
 .manager-news-body {
   padding: 28px;
@@ -2656,10 +2656,10 @@ input,
   white-space: nowrap;
 }
 .mood.unhappy {
-  color: #a31d2b;
+  color: var(--danger-text);
 }
 .mood.happy {
-  color: #0e6b4f;
+  color: var(--ok-text);
 }
 .outgoing-transfer {
   margin-top: 24px;
@@ -2694,8 +2694,8 @@ input,
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border: 1px solid #ecd19a;
-  background: #fff3d9;
+  border: 1px solid color-mix(in srgb, var(--warn-text) 40%, var(--line));
+  background: var(--warn-bg);
   font-size: 12px;
 }
 @media (max-width: 760px) {
@@ -2952,7 +2952,7 @@ input,
   background: var(--popover);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(29, 78, 216, 0.1);
+  box-shadow: 0 12px 30px var(--brand-soft);
   z-index: 50;
 }
 .advance-menu p {
@@ -2961,7 +2961,7 @@ input,
   color: var(--muted-foreground);
 }
 .save-state.save-error {
-  color: #a31d2b;
+  color: var(--danger-text);
 }
 .workspace-body {
   padding-top: 26px;
@@ -3117,11 +3117,11 @@ input,
 .coach-evidence {
   padding: 14px;
   margin: 12px 0;
-  background: #f0f5fb;
+  background: var(--surface-2);
   border-radius: 8px;
 }
 .coach-evidence > strong {
-  color: #235aa0;
+  color: var(--brand);
   font-size: 13px;
 }
 .coach-evidence dl {
