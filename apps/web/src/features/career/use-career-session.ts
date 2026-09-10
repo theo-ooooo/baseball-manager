@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { careerMemory } from './career-memory';
 import { toast } from 'sonner';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
+import { isInboxReadCommand } from '@dugout/shared/inbox-commands';
 import { careerResponse, mergeCareerResponse, careerErrorMessage } from './career-response';
 import type { Act, CareerData } from './game-contracts';
 
@@ -58,7 +59,10 @@ export function useCareerSession(initial: CareerData) {
         ? retry.current.payload
         : {
             ...action,
-            responseMode: isManagerConversationCommand(action.type) ? 'patch' : 'compact',
+            responseMode:
+              isManagerConversationCommand(action.type) || isInboxReadCommand(action.type)
+                ? 'patch'
+                : 'compact',
             revision: current.current.revision,
             requestId: crypto.randomUUID(),
           };
