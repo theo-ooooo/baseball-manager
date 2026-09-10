@@ -195,3 +195,18 @@ test('Manager job listings show board confidence and vacancies separately from t
   assert.match(office, /\?view=jobs/);
   assert.match(office, /내 프로필/);
 });
+
+test('At-bat presentation reveals the outcome only after the visual play settles', async () => {
+  const { MatchAtBat } = await vite.ssrLoadModule(
+    '/apps/web/src/features/matches/mobile-match-view.tsx',
+  );
+  const result = {
+    id: 'visual-timing',
+    log: [{ inning: 1, half: 0, text: '타자 홈런', score: [1, 0] }],
+  };
+  const render = (settled) =>
+    renderToStaticMarkup(React.createElement(MatchAtBat, { result, cursor: 1, settled }));
+  assert.match(render(false), /플레이 진행/);
+  assert.doesNotMatch(render(false), /홈런/);
+  assert.match(render(true), /홈런/);
+});

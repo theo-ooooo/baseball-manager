@@ -605,3 +605,51 @@
     font-size: 17px;
   }
 }
+
+/* Keep tactical markers readable against both grass and clay. */
+.is-2d .stadium-motion .player-number {
+  font-size: 23px;
+  font-weight: 750;
+}
+.is-2d .stadium-motion .player-label {
+  font-size: 23px;
+  font-weight: 550;
+  stroke: none;
+  fill: #f0f5f7;
+}
+.player-caption > rect {
+  fill: #10242fe6;
+  stroke: #90b5c333;
+  stroke-width: 1;
+}
+.stadium-motion .player-cap {
+  stroke: #fff;
+  stroke-opacity: 0.6;
+  stroke-width: 3;
+  fill: none;
+}
+.stadium-defender > .player-focus {
+  fill: none;
+  stroke: transparent;
+}
+.stadium-defender.is-active > .player-focus {
+  stroke: #ffdd82;
+  stroke-width: 3;
+}
+.is-2d .ball-trail {
+  stroke: #fff7bf;
+  stroke-width: 5;
+  stroke-dasharray: none;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.is-2d .stadium-ball {
+  stroke: #293a2c;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 5px #ffffffa6);
+}
+@media (max-width: 640px) {
+  .is-2d .stadium-motion .player-number {
+    font-size: 26px;
+  }
+}

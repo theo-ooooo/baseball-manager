@@ -4,7 +4,15 @@ import type { GameState, Result } from '@dugout/shared/types';
 import { ClubBadge } from '../../components/club-badge';
 import { useWorld } from '../career/world-context';
 import { matchReadout } from './match-readout';
-export function MatchAtBat({ result, cursor }: { result: Result; cursor: number }) {
+export function MatchAtBat({
+  result,
+  cursor,
+  settled = true,
+}: {
+  result: Result;
+  cursor: number;
+  settled?: boolean;
+}) {
   const view = useMemo(() => matchReadout(result, cursor), [result, cursor]);
   return (
     <div className="match-at-bat" aria-live="polite">
@@ -18,7 +26,9 @@ export function MatchAtBat({ result, cursor }: { result: Result; cursor: number 
         <small>투수</small>
         <strong>{view.pitcher || '—'}</strong>
       </div>
-      <em className={`outcome-${view.label}`}>{view.label}</em>
+      <em className={settled ? `outcome-${view.label}` : 'outcome-playing'}>
+        {settled ? view.label : '플레이 진행'}
+      </em>
     </div>
   );
 }
