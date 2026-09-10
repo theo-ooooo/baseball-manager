@@ -163,6 +163,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
             <MatchDecisionBar
               decision={m.decision}
               paused={m.decisionVisible && !m.commandOpen}
+              pauseReason={m.pauseReason}
               busy={busy}
               onPlan={() => m.showPanel('plan')}
               onCommand={m.toggleCommand}
@@ -299,7 +300,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                     {kind === 'opportunity' ? '득점 기회' : '실점 위기'}
                   </label>
                 ))}
-                <small>체크 해제 시 계속 진행</small>
+                <small role="status">{m.autoPause.label}</small>
               </fieldset>
             </div>
           </details>

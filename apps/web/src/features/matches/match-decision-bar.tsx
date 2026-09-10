@@ -1,10 +1,12 @@
 'use client';
 import type { previousMatchCommand } from '@dugout/shared/match-commands';
 import type { matchDecision } from '@dugout/shared/match-decision';
+import type { MatchPauseReason } from './use-match-playback';
 
 export function MatchDecisionBar({
   decision,
   paused,
+  pauseReason,
   busy,
   onPlan,
   onCommand,
@@ -14,6 +16,7 @@ export function MatchDecisionBar({
 }: {
   decision: ReturnType<typeof matchDecision>;
   paused: boolean;
+  pauseReason: MatchPauseReason;
   busy: boolean;
   onPlan: () => void;
   onCommand: () => void;
@@ -30,11 +33,17 @@ export function MatchDecisionBar({
     >
       <div>
         <strong>
-          {decision.kind === 'opportunity'
-            ? '득점 기회 · 자동 일시정지'
-            : decision.kind === 'threat'
-              ? '실점 위기 · 자동 일시정지'
-              : '일시정지 · 다음 타석 준비'}
+          {pauseReason === 'ready'
+            ? '재생 대기 · 계속 진행을 눌러주세요'
+            : pauseReason === 'hidden'
+              ? '화면 이탈 · 일시정지'
+              : pauseReason !== 'automatic'
+                ? '일시정지 · 감독 지시'
+                : decision.kind === 'opportunity'
+                  ? '득점 기회 · 자동 일시정지'
+                  : decision.kind === 'threat'
+                    ? '실점 위기 · 자동 일시정지'
+                    : '일시정지 · 다음 타석 준비'}
         </strong>
         <span>{decision.situation}</span>
         <p>
