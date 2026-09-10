@@ -72,8 +72,11 @@ export class CatalogRepository {
           ),
           db.prepare('SELECT id,date,league,home,away,time,source FROM fixtures ORDER BY date,id'),
         ]);
+    // Official photo identities live in catalog_meta and attach by player id, never by name.
+    const portraits: Record<string, Player['portrait']> = JSON.parse(meta.player_portraits || '{}');
     const players = (playerRows.results as unknown as Player[]).map((p) => ({
       ...p,
+      portrait: portraits[p.id],
       rating: typeof p.rating === 'string' ? JSON.parse(p.rating) : p.rating,
       real: Boolean(p.real),
       ageEstimated: Boolean(p.ageEstimated),

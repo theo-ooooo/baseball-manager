@@ -28,6 +28,8 @@ import { ScoutPlayer } from '../scouting/scout-player';
 import { PlayerAttributes, PlayerGrowth } from './growth-indicator';
 import { TrainingPlanForm } from './training-plan-form';
 import { CareerRecords } from './career-records';
+import { PlayerPortrait } from './player-portrait';
+import { officialPortrait } from '@dugout/shared/player-portrait';
 
 type Props = {
   player: Player;
@@ -126,11 +128,12 @@ export function PlayerProfile(props: Props) {
   const own = game.roster.some((p) => p.id === player.id);
   const slot = game.lineup.indexOf(player.id);
   const [tab, setTab] = useState('profile');
+  const portrait = officialPortrait(player);
   return (
     <article className="panel player-page">
       <header className="profile-header">
         {getClub(player.club) && <ClubBadge club={getClub(player.club)} size="large" />}
-        <span className={`profile-number ${player.real ? '' : 'generated'}`}>{player.number}</span>
+        <PlayerPortrait player={player} size="large" />
         <div>
           <span className={player.real ? 'real-tag' : 'gen-tag'}>
             {player.real ? '실명 선수' : '가상 선수'}
@@ -255,6 +258,16 @@ export function PlayerProfile(props: Props) {
           {player.source && (
             <a href={player.source} target="_blank" rel="noreferrer">
               선수 명단 출처 ↗
+            </a>
+          )}
+          {portrait && (
+            <a
+              className="profile-photo-source"
+              href={portrait.sourcePage}
+              target="_blank"
+              rel="noreferrer"
+            >
+              공식 사진 출처 · {portrait.league.toUpperCase()} ↗
             </a>
           )}
         </TabsContent>

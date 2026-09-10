@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { type Player } from '@dugout/shared/game-view';
 import { isUnrated, ratingText } from '@dugout/shared/ratings';
+import { PlayerPortrait } from '../features/players/player-portrait';
 
 export { ClubBadge as Badge } from './club-badge';
 
@@ -97,7 +98,7 @@ export function SectionTitle({
 export function PlayerName({ p, onClick }: { p: Player; onClick?: (p: Player) => void }) {
   return (
     <button className="player-name" onClick={() => onClick?.(p)}>
-      <span className={`player-avatar ${p.real ? '' : 'generated'}`}>{p.number}</span>
+      <PlayerPortrait player={p} size="small" />
       <span>
         <strong>{p.name}</strong>
         <small>

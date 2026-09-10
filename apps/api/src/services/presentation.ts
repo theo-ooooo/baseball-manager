@@ -127,6 +127,40 @@ export function presentCareer<T extends { state: GameState | null }>(
     state.history = state.history.map((result) => ({ ...result, log: [], replayTeams: undefined }));
   return { ...career, state };
 }
+const portraitIndexes = new WeakMap<WorldCatalog, Map<string, NonNullable<Player['portrait']>>>();
+/**
+ * Presentation-only merge of verified official photo identities into a career response.
+ * Saved careers keep their stored player objects; photos follow the catalog player id, so a
+ * player traded to another club keeps the same photo. Nothing here touches ratings or contracts.
+ */
+export function attachPortraits<T extends { state: GameState | null }>(
+  career: T,
+  world: WorldCatalog,
+): T {
+  const state = career.state;
+  if (!state) return career;
+  let index = portraitIndexes.get(world);
+  if (!index) {
+    index = new Map();
+    for (const p of world.players) if (p.portrait) index.set(p.id, p.portrait);
+    portraitIndexes.set(world, index);
+  }
+  if (!index.size) return career;
+  // Catalog metadata is the source of truth; a copy stored inside an older save is superseded.
+  const merge = (p: Player): Player => {
+    const portrait = index!.get(p.id);
+    return !portrait || p.portrait === portrait ? p : { ...p, portrait };
+  };
+  return {
+    ...career,
+    state: {
+      ...state,
+      roster: state.roster.map(merge),
+      transferred: state.transferred.map(merge),
+      deals: state.deals.map((d) => ({ ...d, player: merge(d.player) })),
+    },
+  };
+}
 export type CatalogKnowledge = Pick<GameState, 'club' | 'rules' | 'knowledge' | 'scouting'>;
 const catalogViews = new WeakMap<WorldCatalog, Map<string, WorldCatalog>>();
 export function presentWorld(
