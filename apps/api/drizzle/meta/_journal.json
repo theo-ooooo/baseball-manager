@@ -120,6 +120,13 @@
       "when": 1789012957284,
       "tag": "0016_lotte_son_seongbin",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1789034529701,
+      "tag": "0017_career_snapshot_parts",
+      "breakpoints": true
     }
   ]
 }

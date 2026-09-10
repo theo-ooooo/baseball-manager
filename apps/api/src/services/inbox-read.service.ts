@@ -1,3 +1,4 @@
+import { isClubDutyReport } from '@dugout/shared/employment-reports';
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { respondPlayerNews } from '../domain/club-dynamics';
 import type { GameState } from '@dugout/shared/types';
@@ -27,7 +28,7 @@ export class InboxReadService {
               json_extract(state,'$.managerCareer.status') AS employment,
               json_extract(state,'$.managerCareer.vacationUntil') AS vacation
               FROM careers WHERE user_id=?`
-            : "SELECT revision,json_extract(state,'$.news') AS news FROM careers WHERE user_id=?",
+            : "SELECT revision,json_extract(state,'$.news') AS news,json_extract(state,'$.managerCareer.status') AS employment FROM careers WHERE user_id=?",
         )
         .bind(user),
       db
@@ -51,6 +52,12 @@ export class InboxReadService {
     if (!row?.news) return null;
     let news = JSON.parse(row.news) as GameState['news'];
     if (!Array.isArray(news)) return null;
+    if (row.employment === 'unemployed')
+      for (const message of news)
+        if (isClubDutyReport(message)) {
+          message.read = true;
+          message.employmentClosed = true;
+        }
     const roster =
       conversation && row.roster ? (JSON.parse(row.roster) as GameState['roster']) : [];
     const subject = roster.find((p) => p.id === news.find((n) => n.id === action.id)?.playerId);

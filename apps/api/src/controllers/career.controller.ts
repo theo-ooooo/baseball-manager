@@ -2,6 +2,8 @@ import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { ManagerConversationService } from '../services/manager-conversation.service';
 import { isInboxCommand } from '@dugout/shared/inbox-commands';
 import { InboxReadService } from '../services/inbox-read.service';
+import { LiveMatchCommandService } from '../services/live-match-command.service';
+import { isLiveMatchCommand } from '@dugout/shared/live-match-commands';
 import { BadRequestException, Controller, Get, Inject, Param, Post, Req } from '@nestjs/common';
 import { env } from 'cloudflare:workers';
 import { userId, type ApiRequest } from '../auth/api-request';
@@ -14,6 +16,7 @@ export class CareerController {
     @Inject(CareerService) private readonly careers: CareerService,
     @Inject(ManagerConversationService) private readonly conversations: ManagerConversationService,
     @Inject(InboxReadService) private readonly inbox: InboxReadService,
+    @Inject(LiveMatchCommandService) private readonly liveCommands: LiveMatchCommandService,
   ) {}
 
   @Get()
@@ -33,6 +36,13 @@ export class CareerController {
     if (!body || typeof body !== 'object' || Array.isArray(body))
       throw new BadRequestException('요청 형식이 올바르지 않습니다.');
     const action = body as Record<string, unknown>;
+    if (isLiveMatchCommand(action.type)) {
+      const response = await this.liveCommands.act(env.DB, user, action);
+      if (response)
+        return action.responseMode === 'patch'
+          ? response
+          : presentCareer(await this.careers.read(env.DB, user), action.responseMode === 'compact');
+    }
     if (action.responseMode === 'patch' && isInboxCommand(action.type)) {
       const response = await this.inbox.act(env.DB, user, action);
       if (response) return response;

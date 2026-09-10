@@ -80,8 +80,10 @@
   .calendar-progress-heading {
     padding: 12px;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .calendar-progress-heading > div {
+    min-width: 0;
     flex-wrap: wrap;
     gap: 6px;
   }
@@ -90,6 +92,7 @@
   }
   .calendar-progress-heading strong {
     font-size: 12px;
+    overflow-wrap: anywhere;
   }
   .calendar-progress-day {
     flex-basis: calc(100% / 3);

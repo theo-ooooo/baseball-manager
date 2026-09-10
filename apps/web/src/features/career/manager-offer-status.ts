@@ -14,7 +14,7 @@ export function managerOfferActionLabel(offer: ManagerOffer | undefined, g: Game
   if (offer.status === 'invited') return '면접 초청 확인';
   if (offer.status === 'interview')
     return (offer.interview?.length || 0) >= managerInterviewQuestions(g, offer, '').length
-      ? '운영 제안서 작성'
+      ? '면접 마치기'
       : '면접 참석';
-  return offer.proposal ? '최종 심사 현황' : '지원 현황 확인';
+  return offer.answer ? '최종 심사 현황' : '지원 현황 확인';
 }

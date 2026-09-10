@@ -1,6 +1,6 @@
 'use client';
 import { managerOfferActionLabel } from './manager-offer-status';
-import { useState } from 'react';
+import { useManagerInterview } from './use-manager-interview';
 import { ManagerContractNegotiation } from './manager-contract-negotiation';
 import Link from 'next/link';
 import { Handshake, LockKeyhole, Megaphone, Mail } from 'lucide-react';
@@ -27,8 +27,7 @@ export function ManagerOfferCard({
 }) {
   const { getClub } = useWorld();
   const club = getClub(o.club);
-  const [selected, setSelected] = useState(''),
-    [proposal, setProposal] = useState(o.proposal || '');
+  const { selected, setSelected, answer } = useManagerInterview(act, busy);
   const expired = o.expires < gameDate(g),
     active = !expired && ['invited', 'pending', 'interview', 'offered'].includes(o.status);
   const questions = managerInterviewQuestions(g, o, club.name),
@@ -133,72 +132,25 @@ export function ManagerOfferCard({
           <button
             className="button primary interview-submit"
             disabled={busy || !selected}
-            onClick={async () => {
-              if (
-                await act({
-                  type: 'managerInterview',
-                  id: o.id,
-                  question: question.id,
-                  answer: selected,
-                })
-              )
-                setSelected('');
-            }}
+            onClick={() => void answer(o.id, question.id)}
           >
-            답변 전달 · 대화 계속
+            {(o.interview?.length || 0) + 1 === questions.length
+              ? '답변 전달 · 면접 마치기'
+              : '답변 전달 · 대화 계속'}
           </button>
         </div>
       )}
       {!summary && o.status === 'interview' && !expired && !question && (
-        <section className="manager-proposal-paper">
-          <small>CLUB MANAGEMENT PROPOSAL</small>
-          <h3>{club.name} 운영 제안서</h3>
-          <p>
-            면접에서 합의한 목표와 운영 방향을 정리해 주세요. 이사회에는 답변 기록과 함께
-            제출됩니다.
-          </p>
-          <dl className="contact-terms">
-            <div>
-              <dt>성적 목표</dt>
-              <dd>{o.targetRank}위 이내</dd>
-            </div>
-            <div>
-              <dt>운영 예산</dt>
-              <dd>
-                {o.budgetAdjustment
-                  ? o.budgetAdjustment > 0
-                    ? '추가 지원 요청'
-                    : '절감 약속'
-                  : '현 예산 유지'}
-              </dd>
-            </div>
-          </dl>
-          <label htmlFor="manager-proposal">감독의 운영 계획</label>
-          <textarea
-            id="manager-proposal"
-            value={proposal}
-            onChange={(e) => setProposal(e.target.value)}
-            maxLength={1200}
-            rows={8}
-            placeholder="취임 후 먼저 점검할 부분, 선수단과 코치진을 운영할 계획을 적어 주세요."
-          />
-          <div className="proposal-paper-footer">
-            <span>{proposal.trim().length} / 1,200자 · 최소 20자</span>
-            <button
-              className="button primary"
-              disabled={busy || proposal.trim().length < 20}
-              onClick={() => void act({ type: 'submitManagerProposal', id: o.id, proposal })}
-            >
-              제안서 제출 · 면접 마치기
-            </button>
-          </div>
-        </section>
-      )}
-      {!summary && o.proposal && (
-        <details className="interview-transcript">
-          <summary>제출한 운영 제안서</summary>
-          <p className="submitted-proposal">{o.proposal}</p>
-        </details>
+        <div className="contact-actions">
+          <p>면접 답변을 모두 마쳤습니다. 최종 심사를 진행해 주세요.</p>
+          <button
+            className="button primary"
+            disabled={busy}
+            onClick={() => void act({ type: 'finishManagerInterview', id: o.id })}
+          >
+            면접 마치기 · 최종 심사
+          </button>
+        </div>
       )}
       {!summary && o.status === 'offered' && !expired && (
         <ManagerContractNegotiation

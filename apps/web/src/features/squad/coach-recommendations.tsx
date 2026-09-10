@@ -1,4 +1,5 @@
 'use client';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 import type { GameState } from '@dugout/shared/types';
 import { squadMoveError } from '@dugout/shared/roster-rules';
 import { daysBetween, gameDate } from '@dugout/shared/calendar';
@@ -17,7 +18,8 @@ export function CoachRecommendations({
   const reports = (g.coachRecommendations || []).filter(
     (r) => r.status === 'pending' && (!playerId || r.playerId === playerId),
   );
-  if (!reports.length) return null;
+  if (!reports.length || isClubSeasonRest(g) || g.managerCareer?.status === 'unemployed')
+    return null;
   return (
     <section className="panel panel-content">
       <h2>코치의 등록 제안</h2>

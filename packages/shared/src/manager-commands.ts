@@ -5,6 +5,7 @@ export const managerConversationCommands = [
   'managerInterview',
   'acceptManagerInvite',
   'submitManagerProposal',
+  'finishManagerInterview',
   'declineManager',
   'negotiateManagerContract',
   'acceptManagerTerms',

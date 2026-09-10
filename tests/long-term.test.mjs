@@ -26,7 +26,7 @@ const {
   managerOfferActionLabel,
 } = createRequire(import.meta.url)(out);
 const game = () => e.newGame('kbo-lg', '검증 감독', 'short', 434);
-test('An unemployed start preserves league managers and must complete six questions, proposal, agreement and signature', () => {
+test('An unemployed start preserves league managers and must complete six questions, agreement and signature without a written proposal', () => {
   let g = e.newGame('kbo-lg', '', 'short', 434, { unemployed: true });
   assert.equal(g.manager, '신임 감독');
   assert.equal(g.managerJobs['kbo-lg'].managerName, '염경엽');
@@ -75,6 +75,9 @@ test('An unemployed start preserves league managers and must complete six questi
     signature: g.manager,
   });
   assert.equal(signed.managerCareer.status, 'employed');
+  const closedMail = signed.news.filter((n) => n.managerOfferId === id);
+  assert.ok(closedMail.length);
+  assert.ok(closedMail.every((n) => n.contractResolution === 'signed'));
   assert.equal(gameDate(signed), gameDate(g));
   assert.deepEqual(signed.standings, g.standings);
   assert.equal(signed.managerCareer.history.length, 0);

@@ -1,3 +1,6 @@
+import { isClosedClubReport } from '@dugout/shared/employment-reports';
+import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 import { LineupRecommendationActions } from './lineup-recommendation-actions';
 import { MedicalDecision } from '../squad/medical-decision';
 import { CoachRecommendations } from '../squad/coach-recommendations';
@@ -36,12 +39,14 @@ export function InboxReport({
       ? new Map(marketPlayers(g).map((p) => [p.id, p]))
       : undefined;
   const meta = newsMeta(news),
-    review = contractReview(news);
+    review = contractReview(news),
+    resolution = isClosedClubReport(g, news) ? 'departed' : contractReportStatus(g, news),
+    reviewComplete = review && !newsNeedsAction(news, g);
   const players =
     news.report?.players ||
     (review
       ? g.roster
-          .filter((p) => p.years === 1)
+          .filter((p) => needsContractReview(g, p))
           .map((p) => ({
             id: p.id,
             name: p.name,
@@ -106,6 +111,20 @@ export function InboxReport({
             )}
           </section>
         )}
+        {(resolution || reviewComplete) && (
+          <section className="inbox-resolved" role="status">
+            <strong>
+              {resolution === 'departed'
+                ? '전 소속팀 업무 종료'
+                : resolution === 'signed'
+                  ? '계약 완료'
+                  : reviewComplete
+                    ? '계약 검토 완료'
+                    : '종료된 협상'}
+            </strong>
+            <p>이 보고서는 이전 연락 기록입니다. 추가 서명이나 재계약 처리가 필요하지 않습니다.</p>
+          </section>
+        )}
         <p className="inbox-letter-greeting">{g.manager} 감독님께,</p>
         <div className="inbox-letter-body">
           {news.body.split('\n').map((line, i) => (
@@ -122,12 +141,14 @@ export function InboxReport({
             ))}
           </dl>
         )}
-        {news.report?.sections?.map((section) => (
-          <section className="inbox-report-section" key={section.title}>
-            <h3>{section.title}</h3>
-            <p>{section.body}</p>
-          </section>
-        ))}
+        {!resolution &&
+          !reviewComplete &&
+          news.report?.sections?.map((section) => (
+            <section className="inbox-report-section" key={section.title}>
+              <h3>{section.title}</h3>
+              <p>{section.body}</p>
+            </section>
+          ))}
         {players.length > 0 && (
           <section className="inbox-report-section">
             <h3>
@@ -167,6 +188,7 @@ export function InboxReport({
                     </div>
                     <div className="inbox-player-action">
                       {scouting &&
+                        !resolution &&
                         (current ? (
                           <small>구단 합류 완료</small>
                         ) : candidate ? (
@@ -181,8 +203,9 @@ export function InboxReport({
                           <small>영입 대상 소속 변경</small>
                         ))}
                       {review &&
+                        resolution !== 'departed' &&
                         (current ? (
-                          current.years > 1 && !pending ? (
+                          !needsContractReview(g, current) && !pending ? (
                             <span className="inbox-resolved">재계약 완료 · {current.years}년</span>
                           ) : (
                             <>
@@ -215,11 +238,13 @@ export function InboxReport({
             </div>
           </section>
         )}
-        {news.lineupRecommendation && <LineupRecommendationActions {...{ g, news, act, busy }} />}
+        {!resolution && news.lineupRecommendation && (
+          <LineupRecommendationActions {...{ g, news, act, busy }} />
+        )}
         {news.actionView === 'medical' && player && (
           <MedicalDecision g={g} player={player} act={act} busy={busy} />
         )}
-        {managerOffer && (
+        {managerOffer && !resolution && (
           <section className="inbox-interview-invitation">
             <h3>
               {managerOffer.status === 'invited'
@@ -240,22 +265,24 @@ export function InboxReport({
           </section>
         )}
         <div className="inbox-report-actions">
-          {news.actionView === 'manager'
-            ? '감독 경력 · 계약 확인'
-            : news.actionView === 'reserves'
-              ? '1군 · 2군 등록 확인'
-              : news.actionView === 'agents' &&
-                subject && (
-                  <button
-                    className="button primary"
-                    disabled={busy}
-                    onClick={() => onNegotiate(subject)}
-                  >
-                    <FileSignature size={16} />
-                    {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
-                  </button>
-                )}
-          {news.actionView &&
+          {!resolution &&
+            (news.actionView === 'manager'
+              ? '감독 경력 · 계약 확인'
+              : news.actionView === 'reserves'
+                ? '1군 · 2군 등록 확인'
+                : news.actionView === 'agents' &&
+                  subject && (
+                    <button
+                      className="button primary"
+                      disabled={busy}
+                      onClick={() => onNegotiate(subject)}
+                    >
+                      <FileSignature size={16} />
+                      {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
+                    </button>
+                  ))}
+          {!resolution &&
+            news.actionView &&
             !news.lineupRecommendation &&
             news.actionView !== 'medical' &&
             !(news.actionView === 'agents' && subject) && (
@@ -290,10 +317,10 @@ export function InboxReport({
             </button>
           )}
         </div>
-        {news.playerId && news.kind === 'training' && (
+        {!resolution && news.playerId && news.kind === 'training' && (
           <CoachRecommendations g={g} act={act} busy={busy} playerId={news.playerId} />
         )}
-        {news.choiceKind && !news.choice && (
+        {news.choiceKind && !news.choice && !resolution && !isClubSeasonRest(g) && (
           <section className="inbox-decision">
             <h3>감독님의 답변을 기다리고 있습니다</h3>
             <p>출전 기회를 약속하거나 현재 운용 방침을 설명해 주세요.</p>

@@ -36,6 +36,21 @@ export function MatchCommandPanel({
         <strong>{defending ? '마운드에 보내는 사인' : '타자에게 보내는 작전'}</strong>
         <span>다음 플레이 한 번에 적용됩니다.</span>
       </header>
+      {m.recommendation && (
+        <section
+          className="coach-substitution-card coach-batting-advice"
+          aria-label="타격 코치 작전 추천"
+        >
+          <small>
+            {m.recommendation.coach} 코치 · {m.recommendation.judgment}
+          </small>
+          <strong>추천 작전: {m.recommendation.label}</strong>
+          <p>{m.recommendation.reason}</p>
+          <button disabled={busy} onClick={() => m.setSelected(m.recommendation!.command)}>
+            추천 작전 선택
+          </button>
+        </section>
+      )}
       {m.previous && (
         <div className="match-repeat-command">
           <span>

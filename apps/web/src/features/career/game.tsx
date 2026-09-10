@@ -70,6 +70,7 @@ import { Finance } from '../finance/finance-panel';
 import { Help } from './help-dialog';
 import { AppSidebar } from './game-sidebar';
 import { CalendarProgress, useCalendarProgress } from './calendar-progress';
+import { clubSeasonStatus } from '@dugout/shared/season-status';
 import { managerStep, matchReportId } from './manager-flow';
 import { MatchdayBriefing } from '../matches/matchday-briefing';
 import { ActionProgress } from './action-progress';
@@ -403,11 +404,7 @@ export function GameScreen({
                     ? dateLabel(g)
                     : g.phase === 'regular'
                       ? `${dateLabel(g)} · 정규 시즌`
-                      : g.phase === 'semifinal'
-                        ? '플레이오프 · 준결승'
-                        : g.phase === 'final'
-                          ? '플레이오프 · 결승'
-                          : '시즌 종료'}
+                      : clubSeasonStatus(g).label}
                 </span>
               </div>
               <div className="page-actions">
@@ -419,19 +416,16 @@ export function GameScreen({
                       </summary>
                       <div>
                         <strong>자동 진행</strong>
-                        <p>
-                          기존 안 읽은 보고는 건너뛰고 경기를 자동 계산하며 최대 7일 진행합니다. 새
-                          보고나 필수 결정에서 멈춥니다.
-                        </p>
+                        <p>하루씩 저장하며 다음 경기나 새 보고, 답변할 이슈가 생기면 멈춥니다.</p>
                         <button
                           className="button secondary"
                           disabled={busy}
                           onClick={(event) => {
                             event.currentTarget.closest('details')?.removeAttribute('open');
-                            void simulate(7);
+                            void simulate();
                           }}
                         >
-                          7일 자동 진행
+                          다음 일정까지 자동 진행
                         </button>
                         {g.phase === 'preseason' && (
                           <div className="advance-menu-skip">

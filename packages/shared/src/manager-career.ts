@@ -64,6 +64,10 @@ export type ManagerCareer = {
     from: string;
     to: string;
     reason: 'resigned' | 'sacked';
+    endKind?: 'resignation' | 'nonrenewal' | 'dismissal';
+    detail?: string;
+    targetRank?: number;
+    confidence?: number;
     rank: number;
   }[];
 };

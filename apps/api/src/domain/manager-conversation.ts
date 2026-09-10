@@ -1,3 +1,4 @@
+import { isClubDutyReport } from '@dugout/shared/employment-reports';
 import type { ManagerConversationState } from '@dugout/shared/manager-commands';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { managerInterviewQuestions } from '@dugout/shared/manager-interview';
@@ -15,6 +16,12 @@ export function managerConversationAction<T extends ManagerConversationState>(
 ): T | null {
   if (!isManagerConversationCommand(a.type)) return null;
   if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+  if (g.managerCareer?.status === 'unemployed')
+    for (const news of g.news)
+      if (isClubDutyReport(news)) {
+        news.read = true;
+        news.employmentClosed = true;
+      }
   const contract = managerContractAction(g, a);
   if (contract) return contract;
   const m = g.managerCareer;
@@ -26,7 +33,16 @@ export function managerConversationAction<T extends ManagerConversationState>(
       sender: { name: `${club.name} 이사회`, role: '감독 선임 담당' },
     });
   }
-  if (a.type === 'submitManagerProposal') {
+  function finish(offer: ManagerOffer) {
+    offer.status = 'pending';
+    offer.due = addDays(gameDate(g), 2);
+    offer.expires = addDays(gameDate(g), 14);
+    offer.message =
+      '면접을 마쳤습니다. 답변과 다른 후보들을 검토해 2일 뒤 최종 결과를 알려드리겠습니다.';
+    report(g, `${club.name} · 면접 완료`, offer.message, offer);
+  }
+  // Keep the old command accepted for sessions already waiting at the removed proposal step.
+  if (a.type === 'finishManagerInterview' || a.type === 'submitManagerProposal') {
     const offer = m.offers.find((o) => o.id === a.id);
     if (
       !offer ||
@@ -34,17 +50,8 @@ export function managerConversationAction<T extends ManagerConversationState>(
       offer.expires < gameDate(g) ||
       offer.interview?.length !== managerInterviewQuestions(g, offer, club.name).length
     )
-      throw new Error('면접 문항을 모두 마친 뒤 제안서를 제출해 주세요.');
-    const proposal = typeof a.proposal === 'string' ? a.proposal.trim() : '';
-    if (proposal.length < 20 || proposal.length > 1200)
-      throw new Error('운영 제안서는 20~1,200자로 작성해 주세요.');
-    offer.proposal = proposal;
-    offer.status = 'pending';
-    offer.due = addDays(gameDate(g), 2);
-    offer.expires = addDays(gameDate(g), 14);
-    offer.message =
-      '운영 제안서를 접수했습니다. 면접에서 합의한 방향과 다른 후보들을 비교해 2일 뒤 최종 결과를 알려드리겠습니다.';
-    report(g, `${club.name} · 면접 및 제안서 접수`, offer.message, offer);
+      throw new Error('면접 문항을 모두 마친 뒤 최종 심사로 진행해 주세요.');
+    finish(offer);
     return g;
   }
   if (
@@ -96,9 +103,7 @@ export function managerConversationAction<T extends ManagerConversationState>(
     if (question.id === 'budget')
       offer.budgetAdjustment = answer.id === 'extra' ? 0.1 : answer.id === 'lean' ? -0.1 : 0;
     offer.message = answer.reaction;
-    if (offer.interview.length === questions.length)
-      offer.message =
-        '면접 문항을 모두 마쳤습니다. 논의한 내용을 운영 제안서로 정리해 제출해 주십시오.';
+    if (offer.interview.length === questions.length) finish(offer);
   }
   return g;
 }

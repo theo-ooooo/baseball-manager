@@ -3,7 +3,7 @@ import { ManagerContractNegotiation } from './manager-contract-negotiation';
 import { gameDate } from '@dugout/shared/calendar';
 import { managerOfferActionLabel } from './manager-offer-status';
 import Link from 'next/link';
-import { Check, FileText } from 'lucide-react';
+import { Check } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
 import type { ManagerOffer } from '@dugout/shared/manager-career';
 import { managerInterviewQuestions } from '@dugout/shared/manager-interview';
@@ -38,7 +38,7 @@ export function ManagerInterviewSession({
           <h2>
             {club.name} · {managerOfferActionLabel(offer, g)}
           </h2>
-          <p>{g.manager} 감독의 운영 계획과 계약 조건을 논의합니다.</p>
+          <p>{g.manager} 감독의 면접 답변과 계약 조건을 논의합니다.</p>
         </div>
         <Link className="button secondary" href={`/clubs/${encodeURIComponent(club.id)}`}>
           구단 살펴보기
@@ -81,23 +81,6 @@ export function ManagerInterviewSession({
                   </div>
                 </li>
               ))}
-              <li
-                className={
-                  offer.proposal
-                    ? 'done'
-                    : answered === questions.length && offer.status === 'interview'
-                      ? 'current'
-                      : ''
-                }
-              >
-                <span>
-                  <FileText size={14} />
-                </span>
-                <div>
-                  <strong>운영 제안서</strong>
-                  <small>{offer.proposal ? '제출 완료' : '면접 마지막에 제출'}</small>
-                </div>
-              </li>
               <li className={offer.status === 'offered' ? 'current' : ''}>
                 <span>✓</span>
                 <div>

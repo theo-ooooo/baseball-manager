@@ -1,3 +1,6 @@
+import { isClubDutyReport } from '@dugout/shared/employment-reports';
+import { needsContractReview } from '@dugout/shared/contract-status';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 import { playingTimeAssessment } from '@dugout/shared/playing-time';
 import type { GameState, Result, WorldCatalog, NewsItem } from '@dugout/shared/types';
 import { overall, hash, createGameView, money } from '@dugout/shared/game-view';
@@ -5,6 +8,7 @@ import { gameDate, dateLabel } from '@dugout/shared/calendar';
 const limit = (n: number) => Math.max(0, Math.min(100, n));
 export function postNews(
   g: Pick<GameState, 'year' | 'day' | 'news'> & {
+    managerCareer?: GameState['managerCareer'];
     calendar?: Pick<NonNullable<GameState['calendar']>, 'openingDate'>;
   },
   title: string,
@@ -23,6 +27,7 @@ export function postNews(
     read: false,
     ...extra,
   };
+  if (g.managerCareer?.status === 'unemployed' && isClubDutyReport(item)) return;
   if (g.news.some((n) => n.id === item.id)) return;
   g.news = [item, ...g.news];
   const pending = g.news.filter((n) => n.choiceKind && !n.choice),
@@ -88,13 +93,16 @@ export function dailyReports(
   world: WorldCatalog,
   training?: Map<string, { rest: boolean }>,
 ) {
+  if (g.managerCareer?.status === 'unemployed') return;
   prepareDynamics(g);
   const view = createGameView(world);
+  const resting = isClubSeasonRest(g);
   for (const p of g.roster) {
     const m = p.mood!;
     if ((training?.get(p.id)?.rest ?? g.training === 'rest') && p.condition < 70)
       m.value = limit(m.value + 0.5);
-    if (m.promise && g.day >= m.promise.due) {
+    if (resting && m.promise) m.promise.due++;
+    if (!resting && m.promise && g.day >= m.promise.due) {
       const completed = p.stats.g - m.promise.startGames >= m.promise.games;
       m.value = limit(m.value + (completed ? 8 : -16));
       m.reason = completed ? '감독이 출전 약속을 지킴' : '출전 약속이 지켜지지 않음';
@@ -107,7 +115,7 @@ export function dailyReports(
       );
       m.promise = undefined;
     }
-    const usage = playingTimeAssessment(g, p);
+    const usage = resting ? null : playingTimeAssessment(g, p);
     if (
       usage?.shortage &&
       m.value < 45 &&
@@ -125,7 +133,7 @@ export function dailyReports(
       );
     }
   }
-  if (g.day % 7 === 0) {
+  if (g.day % 7 === 0 && !resting) {
     const unhappy = g.roster.filter((p) => p.mood!.value < 45),
       tired = g.roster.filter((p) => p.condition < 55);
     postNews(
@@ -177,7 +185,7 @@ export function dailyReports(
     );
   }
   if (g.day % 14 === 0) {
-    const expiring = g.roster.filter((p) => p.years === 1);
+    const expiring = g.roster.filter((p) => needsContractReview(g, p));
     if (expiring.length)
       postNews(
         g,
@@ -220,6 +228,7 @@ export function dailyReports(
         },
       );
   }
+  if (resting) return;
   const today = view.ownFixtures(g),
     previous = view.ownFixtures(g, g.day - 1),
     first = today[0];

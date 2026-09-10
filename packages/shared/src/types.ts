@@ -55,6 +55,7 @@ export type Player = {
   marketValue?: number;
   salary: number;
   years: number;
+  contractSigned?: { year: number; day: number; dealId: string };
   stats: Stats;
   squad?: 'first' | 'reserve';
   familiarity?: Partial<Record<DefensivePosition, number>>;
@@ -514,6 +515,8 @@ export type NewsItem = {
   sender?: { name: string; role: string };
   dealId?: string;
   managerOfferId?: string;
+  contractResolution?: 'signed';
+  employmentClosed?: boolean;
   lineupRecommendation?: LineupRecommendation;
   report?: {
     purpose?: 'contractReview' | 'squadReview';

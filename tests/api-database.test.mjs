@@ -45,6 +45,201 @@ async function action(payload, user = 'test-owner-a') {
   return result.body;
 }
 
+test('Live commands save a large career with a bounded patch, retain watched events and deduplicate atomically', async () => {
+  const user = 'large-match-command';
+  await action({ type: 'start', club: 'kbo-lotte', manager: 'Large command', mode: 'short' }, user);
+  for (let i = 0; i < 35; i++) {
+    const next = await action({ type: 'continue' }, user);
+    if (next.state.progress?.stop === 'fixture') break;
+  }
+  const initial = await action({ type: 'startMatch' }, user);
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  const live = raw.liveMatch,
+    own = live.home === raw.club ? 1 : 0;
+  raw.history = Array.from({ length: 5 }, (_, i) => ({
+    ...live.timeline,
+    id: `archive-large-${i}`,
+    day: -28 + i,
+  }));
+  raw.news.push({
+    id: 'large-report',
+    title: 'Long report',
+    body: '',
+    read: true,
+    day: raw.day,
+    type: 'league',
+  });
+  raw.news.at(-1).body = 'x'.repeat(Math.max(0, 1_795_000 - JSON.stringify(raw).length));
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const cursor = live.timeline.log.findLastIndex(
+    (event) => event.half === own && event.play?.before.outs < 3,
+  );
+  assert.ok(cursor > 20);
+  const payload = {
+    type: 'matchCommand',
+    command: 'contactFocus',
+    cursor,
+    timelineVersion: 1,
+    responseMode: 'patch',
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const response = await call('/api/career', payload, user);
+  assert.equal(response.status, 201, JSON.stringify(response.body));
+  assert.deepEqual(Object.keys(response.body.patch), ['liveMatch']);
+  assert.equal(response.body.patch.liveMatch.prepared, undefined);
+  assert.equal(response.body.patch.liveMatch.opponents, undefined);
+  assert.ok(JSON.stringify(response.body).length < 160_000);
+  assert.deepEqual(
+    response.body.patch.liveMatch.timeline.log.slice(0, cursor),
+    live.timeline.log.slice(0, cursor),
+  );
+  const saved = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.ok(JSON.stringify(saved).length > 1_800_000, 'reproduces the old whole-save rejection');
+  const { liveMatch: changed, ...remaining } = saved;
+  const { liveMatch: old, ...before } = raw;
+  assert.equal(old.cursor, 0);
+  assert.deepEqual(remaining, before);
+  assert.equal(changed.commands.at(-1).kind, 'contactFocus');
+  assert.ok(changed.prepared.input.roster.some((p) => p.potential > 0));
+  assert.deepEqual((await call('/api/career', payload, user)).body, response.body);
+  assert.equal(
+    (await call('/api/career', { ...payload, requestId: crypto.randomUUID() }, user)).status,
+    409,
+  );
+  assert.equal((await call('/api/career', payload, 'different-owner')).status, 409);
+  const bad = await call(
+    '/api/career',
+    {
+      ...payload,
+      command: 'invalid',
+      revision: response.body.revision,
+      timelineVersion: 2,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(bad.status, 400);
+  const cancel = {
+    type: 'cancelMatchCommand',
+    cursor,
+    timelineVersion: 2,
+    responseMode: 'patch',
+    revision: response.body.revision,
+  };
+  const competing = await Promise.all(
+    [0, 1].map(() => call('/api/career', { ...cancel, requestId: crypto.randomUUID() }, user)),
+  );
+  assert.deepEqual(competing.map((r) => r.status).sort(), [201, 409]);
+  assert.equal((await call('/api/career', payload, user)).status, 409);
+  // A later full save archives duplicate retained playback before compacting it.
+  const current = competing.find((r) => r.status === 201).body;
+  const finish = {
+    type: 'completeMatch',
+    cursor: current.patch.liveMatch.timeline.log.length,
+    timelineVersion: current.patch.liveMatch.timelineVersion,
+    revision: current.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const completed = await call('/api/career', finish, user);
+  assert.equal(completed.status, 201, JSON.stringify(completed.body).slice(0, 500));
+  for (const result of raw.history) {
+    const archive = await call('/api/career/matches/' + result.id, undefined, user);
+    assert.equal(archive.status, 200);
+    assert.deepEqual(archive.body, result);
+  }
+  assert.ok(completed.body.state.history.every((m) => m.log.length === 0));
+  assert.equal(completed.body.state.liveMatch, undefined);
+});
+
+test('Growing world progress moves to atomic snapshot parts and survives reload, retry, races and career reset', async () => {
+  const user = 'split-world-snapshot';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Split world', mode: 'short', preseason: false },
+    user,
+  );
+  const row = await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first();
+  const raw = JSON.parse(row.state);
+  const proof = 'world⚾'.repeat(210_000);
+  raw.simulation.proof = proof;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const request = {
+    type: 'auto',
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const saved = await call('/api/career', request, user);
+  assert.equal(saved.status, 201, JSON.stringify(saved.body).slice(0, 300));
+  assert.equal(saved.body.state.simulation.proof, proof);
+  const storage = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.equal(storage.simulation, undefined);
+  assert.ok(storage.__worldParts > 2);
+  assert.ok(JSON.stringify(storage).length < 500_000);
+  const parts = (
+    await db
+      .prepare('SELECT part,data FROM career_snapshot_parts WHERE user_id=? ORDER BY part')
+      .bind(user)
+      .all()
+  ).results;
+  assert.equal(parts.length, storage.__worldParts);
+  assert.ok(parts.every((p) => new TextEncoder().encode(p.data).length < 600_000));
+  assert.equal(JSON.parse(parts.map((p) => p.data).join('')).proof, proof);
+  assert.equal((await call('/api/career', undefined, user)).body.state.simulation.proof, proof);
+  assert.equal((await call('/api/career', request, user)).body.revision, saved.body.revision);
+  const race = await Promise.all(
+    [0, 1].map(() =>
+      call(
+        '/api/career',
+        { ...request, revision: saved.body.revision, requestId: crypto.randomUUID() },
+        user,
+      ),
+    ),
+  );
+  assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+  assert.equal((await call('/api/career', undefined, user)).body.state.simulation.proof, proof);
+  assert.equal(
+    (
+      await db
+        .prepare('SELECT COUNT(*) AS n FROM career_snapshot_parts WHERE user_id=?')
+        .bind('different-user')
+        .first()
+    ).n,
+    0,
+  );
+  await action(
+    {
+      type: 'start',
+      replace: true,
+      club: 'kbo-lotte',
+      manager: 'Reset',
+      mode: 'short',
+      preseason: false,
+    },
+    user,
+  );
+  assert.equal(
+    (
+      await db
+        .prepare('SELECT COUNT(*) AS n FROM career_snapshot_parts WHERE user_id=?')
+        .bind(user)
+        .first()
+    ).n,
+    0,
+  );
+});
+
 test('D1 individual training persists once without altering existing abilities, contracts, records or finances', async () => {
   const user = 'individual-training-career';
   const initial = await action(
@@ -635,6 +830,9 @@ test('Negotiation, signing, reselling and coaches update relational rows and acc
   while (coached.state.coachDeals[0].status === 'pending')
     coached = await action({ type: 'advance', count: 1 });
   coached = await action({ type: 'signCoach', id: coachDealId });
+  const closedCoachMail = coached.state.news.filter((n) => n.dealId === coachDealId);
+  assert.ok(closedCoachMail.length);
+  assert.ok(closedCoachMail.every((n) => n.contractResolution === 'signed'));
   const staff = await db
     .prepare('SELECT coach_id FROM career_staff WHERE user_id=? AND role=?')
     .bind('test-owner-a', '투수')
@@ -1045,14 +1243,7 @@ test('D1 manager resignation, job eligibility, employment and club preservation 
     ['staff', 'keep'],
   ])
     progressed = await action({ type: 'managerInterview', id, question, answer }, user);
-  progressed = await action(
-    {
-      type: 'submitManagerProposal',
-      id,
-      proposal: '선수단의 강점을 점검하고 코치진과 협력하여 합의한 시즌 목표를 달성하겠습니다.',
-    },
-    user,
-  );
+  assert.equal(progressed.state.managerCareer.offers.find((o) => o.id === id).status, 'pending');
   for (let i = 0; i < 2; i++) progressed = await action({ type: 'managerContinue' }, user);
   const terms = progressed.state.managerCareer.offers.find((o) => o.id === id).contractTerms;
   const agreement = {
@@ -1407,11 +1598,7 @@ test('D1 bounded manager conversations preserve the rest of a career and safely 
   const stale = await call('/api/career', invited.command, user);
   assert.equal(stale.status, 409);
   assert.equal(stale.body.reload, true);
-  const proposal = await send({
-    type: 'submitManagerProposal',
-    proposal: '젊은 선수들의 강점을 점검하고 코치진과 협력하여 합의한 목표를 달성하겠습니다.',
-  });
-  assert.equal(proposal.result.patch.managerCareer.offers[0].status, 'pending');
+  assert.equal((await raw()).managerCareer.offers[0].status, 'pending');
   const current = await raw();
   current.managerCareer.offers[0].status = 'offered';
   await db

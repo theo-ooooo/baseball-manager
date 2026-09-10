@@ -1,11 +1,12 @@
 import type { CareerData } from './game-contracts';
 import type { ManagerPatchResponse } from '@dugout/shared/manager-commands';
 import type { InboxReadPatchResponse } from '@dugout/shared/inbox-commands';
+import type { LiveMatchPatchResponse } from '@dugout/shared/live-match-commands';
 
 /** The server owns mutations; merging a revision-bound view patch is presentation only. */
 export function mergeCareerResponse(
   current: CareerData,
-  response: CareerData | ManagerPatchResponse | InboxReadPatchResponse,
+  response: CareerData | ManagerPatchResponse | InboxReadPatchResponse | LiveMatchPatchResponse,
 ): CareerData {
   if (!('patch' in response)) return response;
   if (
@@ -24,7 +25,8 @@ export function mergeCareerResponse(
         'managerCareer' in response.patch
           ? response.patch.managerCareer
           : current.state.managerCareer,
-      news: response.patch.news,
+      news: 'news' in response.patch ? response.patch.news : current.state.news,
+      liveMatch: 'liveMatch' in response.patch ? response.patch.liveMatch : current.state.liveMatch,
       roster: playerMood
         ? current.state.roster.map((p) =>
             p.id === playerMood.id ? { ...p, mood: playerMood.mood } : p,

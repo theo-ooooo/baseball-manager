@@ -90,6 +90,17 @@ export const careers = sqliteTable('careers', {
   updatedAt: text('updated_at').notNull(),
   writeToken: text('write_token').notNull().default(''),
 });
+export const careerSnapshotParts = sqliteTable(
+  'career_snapshot_parts',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => careers.userId, { onDelete: 'cascade' }),
+    part: integer('part').notNull(),
+    data: text('data').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.part] })],
+);
 export const careerPlayers = sqliteTable(
   'career_players',
   {

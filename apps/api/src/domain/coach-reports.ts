@@ -5,6 +5,7 @@ import { overall } from '@dugout/shared/game-view';
 import { squadMoveError } from '@dugout/shared/roster-rules';
 import { postNews } from './club-dynamics';
 import { changeSquad } from './roster-moves';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 
 const statsText = (p: Player, reserve = false) => {
   const s = reserve ? p.reserveStats : p.stats;
@@ -13,7 +14,7 @@ const statsText = (p: Player, reserve = false) => {
     : `${s?.ab || 0}타수 · 타율 ${s?.ab ? (s.h / s.ab).toFixed(3) : '—'}`;
 };
 export function coachReports(g: GameState) {
-  if (g.day % 7 || g.managerCareer?.status === 'unemployed') return;
+  if (g.day % 7 || g.managerCareer?.status === 'unemployed' || isClubSeasonRest(g)) return;
   const today = gameDate(g);
   g.coachRecommendations ??= [];
   const recent = new Set(
@@ -143,6 +144,8 @@ export function coachReports(g: GameState) {
 }
 export function coachReportAction(g: GameState, a: Record<string, unknown>) {
   if (a.type !== 'coachRecommendation') return null;
+  if (isClubSeasonRest(g))
+    throw new Error('우리 팀 시즌이 끝나 휴식 중입니다. 기용 추천을 적용하지 않습니다.');
   const report = g.coachRecommendations?.find((r) => r.id === a.id);
   if (!report || report.status !== 'pending') throw new Error('처리할 코치 보고가 없습니다.');
   if (typeof a.accept !== 'boolean') throw new Error('보고 수락 여부를 선택해 주세요.');
