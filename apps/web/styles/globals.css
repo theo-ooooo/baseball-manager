@@ -2,34 +2,34 @@
 @import 'tw-animate-css';
 @import './vendor/shadcn-tailwind-4.13.0.css';
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   /* Single source of truth for every stylesheet (management, replay, interface reference these). */
-  --bg: #f5f6f8;
-  --surface-1: #ffffff;
-  --surface-2: #f8f9fb;
-  --surface-3: #eef0f3;
-  --surface-4: #e2e5e9;
-  --line: #e0e4e9;
-  --line-strong: #94a3b8;
-  --text: #202630;
-  --text-2: #4b5563;
-  --text-3: #596575;
-  --brand: #1d4ed8;
-  --brand-hover: #1e40af;
-  --brand-fg: #ffffff;
-  --brand-soft: #edf2fd;
-  --nav-bg: #ffffff;
-  --nav-bg-2: #f5f6f8;
-  --nav-fg: #374151;
-  --nav-muted: #667085;
-  --nav-line: #e7eaee;
+  --bg: #101a20;
+  --surface-1: #19262e;
+  --surface-2: #142027;
+  --surface-3: #23343d;
+  --surface-4: #30444e;
+  --line: #31434b;
+  --line-strong: #627e89;
+  --text: #eef4f5;
+  --text-2: #c0d0d7;
+  --text-3: #9aafb9;
+  --brand: #bcf16b;
+  --brand-hover: #cef794;
+  --brand-fg: #15221a;
+  --brand-soft: #283d2d;
+  --nav-bg: #111e25;
+  --nav-bg-2: #213139;
+  --nav-fg: #dfebef;
+  --nav-muted: #9aafb9;
+  --nav-line: #2b3d46;
   --stadium-fg: #e6edf7;
-  --ok-bg: #def5eb;
-  --ok-text: #0e6b4f;
-  --warn-bg: #fff3d9;
-  --warn-text: #8a4b00;
-  --danger-bg: #fdecec;
-  --danger-text: #a31d2b;
+  --ok-bg: #193d32;
+  --ok-text: #8cdeb9;
+  --warn-bg: #3b3020;
+  --warn-text: #f2ca80;
+  --danger-bg: #3d252b;
+  --danger-text: #f3a1ac;
   --background: var(--bg);
   --foreground: var(--text);
   --card: var(--surface-1);
@@ -46,7 +46,7 @@
   --accent-foreground: var(--brand);
   --destructive: var(--danger-text);
   --border: var(--line);
-  --input: #b8c4d3;
+  --input: #536b77;
   --ring: var(--brand);
   --radius: 0.6rem;
   --sidebar: var(--nav-bg);
@@ -242,9 +242,9 @@ b {
   padding: 8px 13px;
 }
 .button.danger {
-  border-color: #efb3b3;
-  color: #a31d2b;
-  background: #fdecec;
+  border-color: color-mix(in srgb, var(--danger-text) 40%, var(--line));
+  color: var(--danger-text);
+  background: var(--danger-bg);
   margin-top: 14px;
 }
 .full-width {
@@ -399,9 +399,9 @@ b {
   background: var(--surface-2);
 }
 .pill.amber {
-  color: #8a4b00;
-  border-color: #ecd19a;
-  background: #fff3d9;
+  color: var(--warn-text);
+  border-color: color-mix(in srgb, var(--warn-text) 40%, var(--line));
+  background: var(--warn-bg);
 }
 .real-tag,
 .gen-tag {
@@ -414,8 +414,8 @@ b {
   font-weight: 500;
 }
 .real-tag {
-  color: #0e6b4f;
-  background: #def5eb;
+  color: var(--ok-text);
+  background: var(--ok-bg);
 }
 .gen-tag {
   color: var(--text);
@@ -492,8 +492,8 @@ b {
   color: var(--brand-fg);
 }
 .form > .L {
-  background: #fdecec;
-  color: #a31d2b;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 .form > .D {
   background: var(--surface-2);
@@ -872,9 +872,9 @@ b {
   letter-spacing: 1.2px;
 }
 .error-banner {
-  background: #fdecec;
-  color: #a31d2b;
-  border: 1px solid #efb3b3;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border: 1px solid color-mix(in srgb, var(--danger-text) 40%, var(--line));
   padding: 15px;
   margin-bottom: 22px;
   border-radius: 7px;
@@ -1238,7 +1238,7 @@ b {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(29, 78, 216, 0.06);
+  background: var(--brand-soft);
   border-top: 1px solid var(--line);
   padding: 13px 18px;
 }
@@ -1326,7 +1326,7 @@ b {
   border-color: var(--brand);
 }
 .field-player > strong {
-  background: rgba(255, 255, 255, 0.93);
+  background: var(--surface-2);
   color: var(--text);
   padding: 1px 5px;
   border-radius: 3px;
@@ -1441,9 +1441,9 @@ b {
   flex-shrink: 0;
 }
 .news-icon.transfer {
-  background: #def5eb;
-  border-color: #a6dcc7;
-  color: #0e6b4f;
+  background: var(--ok-bg);
+  border-color: var(--ok-text);
+  color: var(--ok-text);
 }
 .news-item small {
   font-size: 9px;
@@ -2150,7 +2150,7 @@ b {
 .profile-number.generated {
   background: var(--brand-soft);
   color: var(--brand);
-  border-color: #b7c9f2;
+  border-color: var(--line-strong);
 }
 .profile-header > div {
   flex: 1;

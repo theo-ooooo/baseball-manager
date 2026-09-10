@@ -15,7 +15,7 @@
   align-items: center;
   gap: 12px;
   padding: 22px 26px;
-  background: #172e55;
+  background: var(--surface-2);
   color: #fff;
 }
 .media-room-header span {
@@ -130,10 +130,10 @@
   flex-shrink: 0;
 }
 .is-team-talk .media-question {
-  border-left: 3px solid #26765b;
+  border-left: 3px solid var(--line);
   padding-left: 18px;
   margin-top: 18px;
-  background: #f3f8f5;
+  background: var(--ok-bg);
 }
 .media-coach-note {
   font-size: 12px;
@@ -227,10 +227,10 @@
   color: var(--text-2);
 }
 .media-reactions .positive {
-  border-left: 3px solid #228764;
+  border-left: 3px solid var(--line);
 }
 .media-reactions .negative {
-  border-left: 3px solid #b7494c;
+  border-left: 3px solid var(--line);
 }
 .media-transcript {
   margin-top: 22px;
@@ -356,8 +356,8 @@
   padding: 24px;
   margin: 0;
   border-radius: 12px;
-  background: #f1f5fa;
-  border: 1px solid #dce4ef;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
 }
 .media-speaker {
   display: flex;
@@ -372,8 +372,8 @@
   height: 46px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #dce6f6;
-  color: #27497b;
+  background: var(--surface-3);
+  color: var(--brand);
 }
 .media-speaker small {
   margin-bottom: 3px;
@@ -417,7 +417,7 @@
   font-size: 12px;
 }
 .media-answers .is-selected .media-answer-number {
-  color: white;
+  color: var(--brand-fg);
   background: var(--brand);
   border-color: var(--brand);
 }

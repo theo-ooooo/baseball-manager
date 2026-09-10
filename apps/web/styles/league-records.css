@@ -1,7 +1,7 @@
 .league-section-tabs {
   display: flex;
   gap: 6px;
-  border-bottom: 1px solid var(--line, #dce1e9);
+  border-bottom: 1px solid var(--line, var(--line));
   margin: 0 0 24px;
 }
 .league-section-tabs button {
@@ -9,12 +9,12 @@
   border: 0;
   border-bottom: 3px solid transparent;
   font-weight: 700;
-  color: #697486;
+  color: var(--text-3);
   background: transparent;
 }
 .league-section-tabs button[aria-pressed='true'] {
-  color: #224ae7;
-  border-bottom-color: #224ae7;
+  color: var(--brand);
+  border-bottom-color: var(--brand);
 }
 .league-records {
   overflow: hidden;
@@ -34,7 +34,7 @@
   margin: 5px 0 0;
 }
 .league-records-eyebrow {
-  color: #748094;
+  color: var(--text-3);
   font-size: 12px;
   letter-spacing: 0.04em;
 }
@@ -42,7 +42,7 @@
   display: flex;
   padding: 4px;
   border-radius: 10px;
-  background: #f0f3f9;
+  background: var(--surface-2);
 }
 .league-record-switch button {
   padding: 8px 20px;
@@ -53,8 +53,8 @@
   white-space: nowrap;
 }
 .league-record-switch button[aria-pressed='true'] {
-  background: #fff;
-  color: #224ae7;
+  background: var(--surface-1);
+  color: var(--brand);
   box-shadow: 0 1px 5px #13234712;
 }
 .league-record-metrics {
@@ -65,15 +65,15 @@
 }
 .league-record-metrics button {
   padding: 8px 14px;
-  border: 1px solid #dce1e9;
+  border: 1px solid var(--line);
   border-radius: 7px;
-  background: #fff;
+  background: var(--surface-1);
   font-size: 13px;
 }
 .league-record-metrics button[aria-pressed='true'] {
-  border-color: #244ce3;
-  background: #eef2ff;
-  color: #244ce3;
+  border-color: var(--brand);
+  background: var(--surface-2);
+  color: var(--brand);
   font-weight: 700;
 }
 .league-record-filter {
@@ -82,9 +82,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 24px;
-  background: #f7f8fb;
+  background: var(--surface-2);
   font-size: 12px;
-  color: #667287;
+  color: var(--text-3);
 }
 .league-record-filter label {
   display: flex;
@@ -96,7 +96,7 @@
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: #244ce3;
+  accent-color: var(--brand);
 }
 .league-record-table {
   width: 100%;
@@ -109,43 +109,43 @@
   padding: 12px 24px;
   font-size: 12px;
   font-weight: 500;
-  color: #7a8493;
-  border-bottom: 1px solid #e7ebf2;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 .league-record-table td {
   text-align: right;
   padding: 13px 24px;
-  border-bottom: 1px solid #edf0f5;
+  border-bottom: 1px solid var(--line);
 }
 .league-record-table th:nth-child(2),
 .league-record-table td:nth-child(2) {
   text-align: left;
 }
 .league-record-table tr.own {
-  background: #f4f7ff;
+  background: var(--surface-2);
 }
 .league-record-table .record-rank {
   width: 65px;
   text-align: center;
   font-weight: 600;
-  color: #8a95a6;
+  color: var(--text-3);
 }
 .league-record-table tbody tr:first-child .record-rank {
-  color: #244ce3;
+  color: var(--brand);
 }
 .record-player {
   padding: 0;
   border: 0;
   background: none;
-  color: #243149;
+  color: var(--text);
   text-align: left;
   font-weight: 700;
   cursor: pointer;
 }
 .record-player:hover {
   text-decoration: underline;
-  color: #244ce3;
+  color: var(--brand);
 }
 .record-player-meta {
   display: flex;
@@ -154,7 +154,7 @@
   gap: 8px;
   margin-top: 4px;
   font-size: 11px;
-  color: #778397;
+  color: var(--text-3);
 }
 .record-player-meta a {
   color: inherit;
@@ -167,11 +167,11 @@
   display: none;
 }
 .record-player-meta small {
-  color: #997438;
+  color: var(--warn-text);
   font-size: 10px;
 }
 .record-value {
-  color: #244ce3;
+  color: var(--brand);
   font-size: 18px;
   font-weight: 750;
 }
@@ -184,7 +184,7 @@
 }
 .league-record-footer p {
   font-size: 11px;
-  color: #788497;
+  color: var(--text-3);
   margin: 0;
 }
 .league-record-footer > div {
@@ -199,9 +199,9 @@
   place-items: center;
   width: 30px;
   height: 30px;
-  border: 1px solid #dce1e9;
+  border: 1px solid var(--line);
   border-radius: 5px;
-  background: #fff;
+  background: var(--surface-1);
 }
 .league-record-footer button:disabled {
   opacity: 0.35;
@@ -211,7 +211,7 @@
   padding: 0 24px 20px;
   font-size: 11px;
   line-height: 1.6;
-  color: #8a94a5;
+  color: var(--text-3);
 }
 .league-record-empty {
   padding: 45px 24px;
@@ -219,10 +219,10 @@
   justify-items: center;
   gap: 12px;
   text-align: center;
-  color: #8090aa;
+  color: var(--text-3);
 }
 .league-record-empty strong {
-  color: #4b5b75;
+  color: var(--text-3);
 }
 .league-record-empty p {
   font-size: 13px;

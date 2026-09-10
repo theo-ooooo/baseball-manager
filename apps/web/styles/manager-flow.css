@@ -4,7 +4,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 28px;
-  background: #fff;
+  background: var(--surface-1);
   border-bottom: 1px solid var(--line);
   color: var(--text-3);
   font-size: 12px;
@@ -33,7 +33,7 @@
 .matchday-overview,
 .matchday-lineup,
 .matchday-opponent {
-  background: #fff;
+  background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 24px;
@@ -75,8 +75,8 @@
   font-size: 13px;
   line-height: 1.8;
   padding: 15px 18px;
-  background: #f5f7fb;
-  border-left: 3px solid #6d83ba;
+  background: var(--surface-2);
+  border-left: 3px solid var(--line);
 }
 .matchday-coach-note strong {
   display: block;
@@ -164,7 +164,7 @@
   color: var(--text-3);
 }
 .matchday-lineup li > span.tired {
-  color: #a64620;
+  color: var(--warn-text);
   font-weight: 600;
 }
 .matchday-opponent > strong {
@@ -193,16 +193,16 @@
   width: 26px;
   height: 26px;
   border-radius: 4px;
-  background: #f1f3f7;
+  background: var(--surface-2);
   font-size: 11px;
 }
 .matchday-form .W {
-  color: #247048;
-  background: #edf7f0;
+  color: var(--ok-text);
+  background: var(--ok-bg);
 }
 .matchday-form .L {
-  color: #9d4531;
-  background: #f9efeb;
+  color: var(--danger-text);
+  background: var(--danger-bg);
 }
 .matchday-steps {
   padding-left: 22px;
@@ -231,7 +231,7 @@
   margin: 0;
   padding: 8px 18px;
   gap: 22px;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid var(--line);
   color: #bac8da;
   background: #162336;
   font-size: 12px;
@@ -243,12 +243,12 @@
 .match-flow-steps li + li::before {
   content: '›';
   padding-right: 22px;
-  color: #8193ac;
+  color: var(--text-3);
 }
 .inbox-match-result {
   padding: 20px;
   border: 1px solid var(--line);
-  background: #f8fafc;
+  background: var(--surface-2);
   border-radius: 6px;
   margin-bottom: 24px;
   text-align: center;

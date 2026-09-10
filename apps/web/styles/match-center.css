@@ -1238,7 +1238,7 @@
     bottom: 0;
     display: grid;
     gap: 8px;
-    background: #fff;
+    background: var(--surface-1);
     border-top: 1px solid #cbd7e2;
   }
   .match-center .plan-review > strong {
@@ -1380,16 +1380,16 @@
   flex-wrap: wrap;
 }
 .match-repeat-command {
-  color: #20334d;
+  color: var(--text);
 }
 .match-decision .match-repeat-command {
   width: 100%;
-  color: #20334d;
+  color: var(--text);
   background: #edf3ff;
   padding: 10px 12px;
 }
 .match-decision .match-repeat-command span {
-  color: #20334d;
+  color: var(--text);
   margin-top: 0;
 }
 .match-decision .match-repeat-command b {
@@ -1431,8 +1431,8 @@
   z-index: 30;
   width: min(340px, calc(100vw - 24px));
   padding: 16px;
-  background: #fff;
-  color: #20334d;
+  background: var(--surface-1);
+  color: var(--text);
   border: 1px solid #ccd5e3;
   border-radius: 12px;
   box-shadow: 0 8px 32px #14243730;
@@ -1445,7 +1445,7 @@
   margin-bottom: 12px;
 }
 .match-view-settings .match-auto-pause {
-  color: #20334d;
+  color: var(--text);
 }
 .match-view-settings .match-auto-pause small {
   margin-left: 0;

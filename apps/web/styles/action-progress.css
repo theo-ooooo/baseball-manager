@@ -8,13 +8,13 @@
 .action-progress-rail {
   height: 5px;
   overflow: hidden;
-  background: #cedbfa;
+  background: var(--surface-3);
 }
 .action-progress-rail span {
   display: block;
   width: 36%;
   height: 100%;
-  background: #1d4ed8;
+  background: var(--brand);
   animation: action-rail 1.3s ease-in-out infinite;
 }
 .action-progress-message {
@@ -25,9 +25,9 @@
   max-width: calc(100% - 24px);
   margin: 12px auto 0;
   padding: 15px 20px;
-  border: 1px solid #7895d0;
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
-  background: #172e55;
+  background: var(--surface-2);
   box-shadow: 0 8px 24px #071b3c40;
 }
 .action-progress-message > svg {
@@ -42,7 +42,7 @@
   line-height: 1.5;
 }
 .action-progress-message small {
-  color: #d1dff7;
+  color: var(--text-2);
   margin-top: 3px;
   font-size: 12px;
 }
@@ -76,7 +76,7 @@
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--surface-1);
-  box-shadow: 0 4px 12px #172e5517;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 .lineup-draft-actions > span {
   color: var(--text-2);

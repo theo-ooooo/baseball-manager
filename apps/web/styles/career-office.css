@@ -88,15 +88,15 @@
 }
 .manager-office .manager-resign {
   padding: 20px;
-  border: 1px solid #e9c7c7;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fffafa;
+  background: var(--danger-bg);
 }
 .manager-office .manager-resign summary {
   font-size: 14px;
   font-weight: 650;
   cursor: pointer;
-  color: #923f3f;
+  color: var(--danger-text);
 }
 .manager-office .manager-resign > label {
   display: inline-flex;
@@ -550,8 +550,8 @@
   min-height: 128px;
   flex-shrink: 0;
   border-radius: 8px;
-  background: #e7f4ee;
-  color: #227650;
+  background: var(--ok-bg);
+  color: var(--ok-text);
 }
 .vision-grade small,
 .vision-grade span {
@@ -562,8 +562,8 @@
   line-height: 1.4;
 }
 .vision-grade.concern {
-  background: #fff1eb;
-  color: #af5332;
+  background: var(--warn-bg);
+  color: var(--warn-text);
 }
 .vision-board > div:nth-child(2) {
   flex: 1;
@@ -653,15 +653,15 @@
 }
 .vision-status {
   font-size: 11px;
-  color: #227650;
-  background: #e7f4ee;
+  color: var(--ok-text);
+  background: var(--ok-bg);
   border-radius: 4px;
   padding: 5px 8px;
   white-space: nowrap;
 }
 .vision-status.concern {
-  color: #af5332;
-  background: #fff1eb;
+  color: var(--warn-text);
+  background: var(--warn-bg);
 }
 .vision-priority {
   font-size: 12px;
@@ -1009,7 +1009,7 @@
   min-width: 680px;
 }
 .job-market-table tr[data-own='true'] {
-  background: #f5f8ff;
+  background: var(--surface-2);
 }
 .job-current-club {
   font-size: 10px;
@@ -1435,13 +1435,13 @@
 }
 .interview-agenda li.current > span {
   background: var(--brand);
-  color: white;
+  color: var(--brand-fg);
   border-color: var(--brand);
 }
 .interview-agenda li.done > span {
-  background: #e7f4ee;
-  color: #227650;
-  border-color: #d3e9dc;
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--line);
 }
 .interview-session-layout > main {
   min-width: 0;
@@ -1539,8 +1539,8 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  color: #64748b;
-  background: #eef2f7;
+  color: var(--text-3);
+  background: var(--surface-3);
 }
 .unemployed-home {
   display: grid;

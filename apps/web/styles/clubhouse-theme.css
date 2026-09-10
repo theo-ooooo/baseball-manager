@@ -1,0 +1,147 @@
+/* Shared clubhouse presentation follows the match preview's surfaces and accent. */
+::selection {
+  color: var(--brand-fg);
+  background: var(--brand);
+}
+html {
+  scrollbar-color: var(--line-strong) var(--bg);
+}
+.topbar {
+  background: var(--surface-2);
+}
+.app-sidebar .brand > svg {
+  color: var(--brand);
+}
+.sidebar-club {
+  padding: 14px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+.workspace-body {
+  padding: 24px;
+}
+.page-title {
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.page-title .eyebrow {
+  color: var(--brand);
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+.page-title h1 {
+  font-size: clamp(24px, 2.1vw, 30px);
+}
+.panel {
+  background: var(--surface-1);
+}
+.panel-header,
+.dashboard-card > header {
+  background: var(--surface-2);
+}
+.dashboard {
+  gap: 20px;
+}
+.dashboard-heading {
+  padding: 24px;
+  background: #1c3033;
+  border: 1px solid #344a4b;
+  border-radius: 10px;
+}
+.dashboard-heading > div > p {
+  color: var(--brand);
+}
+.dashboard-heading h1 {
+  font-size: clamp(25px, 2.3vw, 34px);
+}
+.dashboard-stats {
+  padding: 20px 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.dashboard-stats button:hover strong {
+  color: var(--brand);
+}
+.dashboard-card > header {
+  padding: 15px 20px;
+}
+.button.secondary:hover:not(:disabled),
+.icon-button:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+[data-slot='tabs-list'][data-variant='line'] [data-state='active'] {
+  color: var(--brand);
+}
+.field-player strong,
+.field-player small {
+  background: var(--surface-2);
+}
+/* These are documents inside the clubhouse, with their own readable paper palette. */
+.contract-paper,
+.manager-contract-paper,
+.manager-proposal-paper {
+  color-scheme: light;
+  --text: #303a44;
+  --text-2: #4b5563;
+  --text-3: #686452;
+  --foreground: var(--text);
+  --muted-foreground: var(--text-3);
+  --surface-1: #fffdf7;
+  --surface-2: #f5f1e7;
+  --line: #d8d2c5;
+  --input: #a59e8d;
+  --brand: #285d45;
+  --brand-hover: #1c4935;
+  --brand-fg: #ffffff;
+  --primary: var(--brand);
+  --brand-soft: #e9f1e5;
+  color: var(--text);
+}
+.manager-contract-paper > span,
+.manager-proposal-paper > small {
+  color: #6c6356;
+}
+.manager-proposal-paper textarea {
+  color: var(--text);
+}
+input[type='checkbox'],
+input[type='radio'] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--brand);
+}
+@media (max-width: 700px) {
+  .workspace-body {
+    padding: 16px 12px;
+  }
+  .page-title {
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+  }
+  .dashboard {
+    gap: 14px;
+  }
+  .dashboard-heading {
+    padding: 20px 16px;
+  }
+  .dashboard-stats {
+    padding: 16px 12px;
+  }
+  .dashboard-stats button {
+    padding: 0 12px;
+  }
+  .dashboard-stats button > strong {
+    font-size: 22px;
+  }
+  .dashboard-card > header {
+    padding: 14px 16px;
+  }
+}
