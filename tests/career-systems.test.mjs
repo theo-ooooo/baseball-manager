@@ -1,3 +1,4 @@
+import { finishInterview, signManager } from './helpers/manager.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildSync } from 'esbuild';
@@ -30,8 +31,9 @@ const progress = (g, n) => {
 const hire = (g, club) => {
   Object.assign(g.managerJobs[club], { vacant: true, confidence: 0 });
   g = e.applyAction(g, { type: 'applyManager', club, targetRank: 4 });
-  g = progress(g, 3);
-  return e.applyAction(g, { type: 'signManager', id: g.managerCareer.offers[0].id });
+  const id = g.managerCareer.offers.find((o) => o.club === club && o.status === 'pending').id;
+  g = finishInterview(e, progress(g, 3), id);
+  return signManager(e, g, id);
 };
 
 test('Resignation, unemployment and re-employment continue the same world and restore previous club operations', () => {
@@ -119,13 +121,14 @@ test('Job offers are delayed, reputation dependent, expire and cannot be signed 
     /유효/,
   );
   assert.throws(() => e.applyAction(g, { type: 'applyManager', club: 'kbo-lg', targetRank: 4 }));
-  g = progress(g, 3);
-  assert.equal(g.managerCareer.offers[0].status, 'offered');
   const id = g.managerCareer.offers[0].id;
-  const hired = e.applyAction(g, { type: 'signManager', id });
+  g = progress(g, 3);
+  assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'interview');
+  g = finishInterview(e, g, id);
+  const hired = signManager(e, g, id);
   assert.throws(() => e.applyAction(hired, { type: 'signManager', id }));
   g = progress(g, 15);
-  assert.equal(g.managerCareer.offers[0].status, 'expired');
+  assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'expired');
   assert.throws(() => e.applyAction(g, { type: 'signManager', id }));
   let inexperienced = e.applyAction(game(), { type: 'resignManager', confirm: true });
   inexperienced.managerCareer.reputation = 20;
@@ -144,7 +147,7 @@ test('Coach promotion and demotion reports support legal atomic swaps without al
   const reserve = g.roster.find((p) => p.squad === 'reserve' && p.pos === 'P');
   reserve.reserveStats = { ...reserve.stats, outs: 18, er: 0 };
   const poor = g.roster.find((p) => p.squad !== 'reserve' && p.pos !== 'P');
-  poor.stats = { ...poor.stats, ab: 30, h: 2 };
+  poor.stats = { ...poor.stats, g: 10, ab: 45, h: 2 };
   coachReports(g);
   assert.ok(g.coachRecommendations.some((r) => r.target === 'first'));
   assert.ok(g.coachRecommendations.some((r) => r.target === 'reserve'));
@@ -212,11 +215,12 @@ test('Joining a different league preserves the world date, all standings and sco
   g.managerJobs[dest].vacant = true;
   g.managerCareer.reputation = 99;
   g = e.applyAction(g, { type: 'applyManager', club: dest, targetRank: 4 });
-  g = progress(g, 3);
+  const id = g.managerCareer.offers[0].id;
+  g = finishInterview(e, progress(g, 3), id);
   const date = gameDate(g),
     year = g.year,
     standings = structuredClone(g.standings);
-  g = e.applyAction(g, { type: 'signManager', id: g.managerCareer.offers[0].id });
+  g = signManager(e, g, id);
   assert.equal(gameDate(g), date);
   assert.equal(g.year, year);
   assert.deepEqual(g.standings, standings);
@@ -231,13 +235,14 @@ test('Offseason job applications get a real answer and can be signed without res
   g.day = g.rounds + 8;
   g = e.applyAction(g, { type: 'resignManager', confirm: true });
   g = e.applyAction(g, { type: 'applyManager', club: g.club, targetRank: 4 });
+  const id = g.managerCareer.offers[0].id;
   const year = g.year,
     day = g.day;
   g = progress(g, 3);
   assert.equal(g.day, day + 3);
   assert.equal(g.year, year);
-  assert.equal(g.managerCareer.offers[0].status, 'offered');
-  g = e.applyAction(g, { type: 'signManager', id: g.managerCareer.offers[0].id });
+  assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'interview');
+  g = signManager(e, finishInterview(e, g, id), id);
   assert.equal(g.phase, 'finished');
   const contract = structuredClone(g.managerCareer.contract);
   g = e.applyAction(g, { type: 'managerContinue', count: 3 });
@@ -288,6 +293,7 @@ test('Advancing the season explicitly expires old applications instead of leavin
   g.day = g.rounds + 8;
   g = e.applyAction(g, { type: 'resignManager', confirm: true });
   g = e.applyAction(g, { type: 'applyManager', club: g.club, targetRank: 4 });
+  const id = g.managerCareer.offers[0].id;
   g = e.applyAction(g, { type: 'nextSeason' });
-  assert.equal(g.managerCareer.offers[0].status, 'expired');
+  assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'expired');
 });

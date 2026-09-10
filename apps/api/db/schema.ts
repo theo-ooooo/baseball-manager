@@ -272,3 +272,24 @@ export const catalogChunks = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.version, t.section, t.chunk] })],
 );
+
+export const careerPlayerRecords = sqliteTable(
+  'career_player_records',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => careers.userId, { onDelete: 'cascade' }),
+    id: text('id').notNull(),
+    playerId: text('player_id').notNull(),
+    name: text('name').notNull(),
+    season: integer('season').notNull(),
+    clubId: text('club_id').notNull(),
+    kind: text('kind').notNull(),
+    data: text('data').notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.id] }),
+    index('idx_player_records_user_player').on(t.userId, t.playerId, t.season),
+    index('idx_player_records_user_kind').on(t.userId, t.kind, t.season),
+  ],
+);

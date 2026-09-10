@@ -12,10 +12,20 @@ const integer = (name: string): Column => ({ name, type: 'integer' });
 const real = (name: string): Column => ({ name, type: 'real' });
 
 /**
- * Fixed column whitelist mirroring apps/api/db/schema.ts after migration 0011.
+ * Fixed column whitelist mirroring apps/api/db/schema.ts after migration 0013.
  * The live database is cross-checked against it with PRAGMA table_info before any write.
  */
 export const careerColumns: Record<CareerTable, readonly Column[]> = {
+  career_player_records: [
+    text('user_id'),
+    text('id'),
+    text('player_id'),
+    text('name'),
+    integer('season'),
+    text('club_id'),
+    text('kind'),
+    text('data'),
+  ],
   careers: [
     text('user_id'),
     text('state'),
@@ -177,7 +187,7 @@ function parseBackup(backup: unknown) {
     throw invalid(`허용되지 않은 테이블이 포함되어 있습니다: ${unknownTables.join(', ')}`);
   const rows = {} as Record<CareerTable, Row[]>;
   for (const table of careerTables) {
-    const list = tables[table];
+    const list = tables[table] ?? (table === 'career_player_records' ? [] : undefined);
     if (!Array.isArray(list)) throw invalid(`${table} 테이블 데이터가 배열이 아닙니다.`);
     const columns = careerColumns[table];
     const names = new Set(columns.map((c) => c.name));

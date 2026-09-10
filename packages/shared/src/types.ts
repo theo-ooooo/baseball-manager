@@ -4,6 +4,14 @@ import type { TrainingPlan } from './training-plan';
 import type { MatchCommand, MatchCommandKind } from './match-commands';
 import type { MatchMediaState } from './match-media';
 import type { PitchingApproach } from './pitching-tactics';
+import type {
+  CareerBaseline,
+  PlayerCareerRecord,
+  WorldSimulation,
+  MedicalCase,
+  TradeOffer,
+  DraftState,
+} from './long-term';
 export type Pos = 'P' | 'C' | 'IF' | 'OF' | 'DH';
 export type Stats = {
   ab: number;
@@ -55,6 +63,8 @@ export type Player = {
   mood?: PlayerMood;
   development?: PlayerDevelopment;
   trainingPlan?: TrainingPlan;
+  careerBaseline?: CareerBaseline;
+  injury?: MedicalCase;
   observation?: {
     status: 'unknown' | 'scouted';
     overall?: [number, number];
@@ -237,6 +247,12 @@ export type GameState = {
     reason: string;
   }[];
   media?: MatchMediaState;
+  simulation?: WorldSimulation;
+  /** Transactional archive outbox. Not retained in the hot snapshot or public response. */
+  pendingRecords?: PlayerCareerRecord[];
+  trades?: TradeOffer[];
+  draft?: DraftState;
+  facilities?: { training: number; medical: number };
 };
 export type DayProgress = {
   from: number;
@@ -265,6 +281,7 @@ export type Club = {
   city: string;
   division: string;
   logo?: ClubLogo;
+  manager?: { name: string; source: string; asOf: string };
 };
 export type ClubLogo = {
   path: string;
@@ -442,10 +459,17 @@ export type NewsItem = {
     | 'scouting'
     | 'media'
     | 'manager'
+    | 'medical'
+    | 'trade'
+    | 'draft'
+    | 'records'
     | 'jobs'
+    | 'job-offers'
+    | 'vision'
     | 'reserves';
   sender?: { name: string; role: string };
   dealId?: string;
+  managerOfferId?: string;
   report?: {
     purpose?: 'contractReview' | 'squadReview';
     facts?: { label: string; value: string }[];
@@ -491,6 +515,8 @@ export type LiveMatch = {
   pitchingVersion?: 2;
   /** Older in-progress games keep their original outcomes and fatigue rules. */
   energyVersion?: 1;
+  bullpenVersion?: 1;
+  warmups?: { playerId: string; cursor: number; mode: 'warm' | 'standby' }[];
   /** Saved once per generation; playback never invokes the simulator. */
   timeline?: Result;
   timelineVersion?: number;
@@ -521,6 +547,7 @@ export type MatchInput = Pick<
 >;
 export type MatchPlayerEffect = Pick<Player, 'id' | 'stats' | 'condition' | 'familiarity'>;
 export type MatchChange = {
+  coldEntry?: boolean;
   cursor: number;
   lineup: string[];
   pitcher: string;

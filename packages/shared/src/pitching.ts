@@ -1,3 +1,4 @@
+import { isAvailable } from '@dugout/shared/long-term';
 import type { GameState, Player, PitchingPlan } from '@dugout/shared/types';
 import { overall } from '@dugout/shared/game-view';
 import { firstTeam } from '@dugout/shared/management';
@@ -15,7 +16,7 @@ function reliefGroups(pitchers: Player[]) {
   };
 }
 export function autoPitching(players: Player[]): PitchingPlan {
-  const pitchers = players.filter((p) => p.pos === 'P');
+  const pitchers = players.filter((p) => p.pos === 'P' && isAvailable(p));
   const starters = [...pitchers]
     .sort((a, b) => starterScore(b) - starterScore(a))
     .slice(0, Math.min(5, Math.max(1, pitchers.length - 2)));
@@ -34,7 +35,7 @@ export function autoPitching(players: Player[]): PitchingPlan {
   };
 }
 export function preparePitching(g: GameState) {
-  const active = firstTeam(g).filter((p) => p.pos === 'P'),
+  const active = firstTeam(g).filter((p) => p.pos === 'P' && isAvailable(p)),
     valid = new Set(active.map((p) => p.id));
   if (!g.pitching) {
     g.pitching = autoPitching(active);

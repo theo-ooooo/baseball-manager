@@ -1,3 +1,4 @@
+import { isAvailable } from '@dugout/shared/long-term';
 import type {
   WorldCatalog,
   GameState,
@@ -44,8 +45,12 @@ export function createMatchSimulator(world: WorldCatalog) {
   ): Generator<Result, Result> {
     const involved = home === g.club || away === g.club;
     const rosters = [
-      away === g.club ? firstTeam(g) : g.liveMatch?.opponents?.[0] || rosterFor(g, away),
-      home === g.club ? firstTeam(g) : g.liveMatch?.opponents?.[1] || rosterFor(g, home),
+      away === g.club
+        ? firstTeam(g).filter(isAvailable)
+        : g.liveMatch?.opponents?.[0] || rosterFor(g, away),
+      home === g.club
+        ? firstTeam(g).filter(isAvailable)
+        : g.liveMatch?.opponents?.[1] || rosterFor(g, home),
     ];
     const lineups = rosters.map((r, i) => {
       const club = i ? home : away;
@@ -143,6 +148,7 @@ export function createMatchSimulator(world: WorldCatalog) {
         g.instructions = { ...change.instructions };
         if (pitchers[side].id !== change.pitcher) {
           pitchers[side] = g.roster.find((p) => p.id === change.pitcher)!;
+          if (change.coldEntry && g.liveMatch?.bullpenVersion) energy.spend(pitchers[side], 12);
           entered[side] = inning;
           pitchingStats(side);
           manualPitcherCursor = log.length;

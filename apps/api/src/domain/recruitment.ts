@@ -1,6 +1,6 @@
+import { archivePlayer } from './world-simulation';
 import type { CoachDeal, Deal, GameState, WorldCatalog } from '@dugout/shared/types';
 import {
-  blankStats,
   coachRoles,
   createGameView,
   hash,
@@ -232,19 +232,22 @@ export function createRecruitment(world: WorldCatalog) {
       if (g.roster.some((p) => p.id === deal.player.id)) throw new Error('이미 소속된 선수입니다.');
     }
     const current =
-      deal.type === 'renew' ? g.roster.find((p) => p.id === deal.player.id) : deal.player;
+      deal.type === 'renew'
+        ? g.roster.find((p) => p.id === deal.player.id)
+        : view.marketPlayers(g).find((p) => p.id === deal.player.id);
     if (!current) throw new Error('재계약 선수를 찾을 수 없습니다.');
     const cash = deal.fee + deal.agentFee + deal.salary * 0.15;
     if (g.budget < cash) throw new Error('영입 예산이 부족합니다.');
     g.budget -= cash;
     g.expenses += cash;
+    if (deal.type === 'buy' && g.simulation) archivePlayer(g, current, 'transfer', [], g.club);
     const p = {
       ...current,
       club: g.club,
       salary: deal.salary,
       years: deal.years,
-      condition: deal.type === 'buy' ? 100 : current.condition,
-      stats: deal.type === 'buy' ? blankStats() : current.stats,
+      condition: current.condition,
+      stats: current.stats,
     };
     if (deal.type === 'renew') g.roster = g.roster.map((old) => (old.id === p.id ? p : old));
     else {

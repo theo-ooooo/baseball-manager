@@ -23,7 +23,10 @@ export function matchCommandAction(
     const option = matchCommandOptions(live, g.club, cursor).find((c) => c.kind === a.command);
     if (!option) throw new Error('지시할 작전을 확인해 주세요.');
     if (option.reason) throw new Error(option.reason);
-    if (past.length + (live.changes?.length || 0) >= MAX_MATCH_CHANGES)
+    if (
+      past.length + (live.changes?.length || 0) + (live.warmups?.length || 0) >=
+      MAX_MATCH_CHANGES
+    )
       throw new Error('한 경기의 변경 횟수를 초과했습니다.');
     live.commands = [...past, { cursor, kind: option.kind }];
   }

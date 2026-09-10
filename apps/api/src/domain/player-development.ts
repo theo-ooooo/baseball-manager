@@ -1,3 +1,4 @@
+import { isAvailable } from '@dugout/shared/long-term';
 import type { GameState, Player, PlayerDevelopment } from '@dugout/shared/types';
 import { coachSkill, hash } from '@dugout/shared/game-view';
 import { gameDate, daysBetween } from '@dugout/shared/calendar';
@@ -74,7 +75,7 @@ export function developPlayers(g: GameState) {
       (p.stats.g > previous.first || (p.reserveStats?.g || 0) > previous.reserve);
     d.lastGames = { year: g.year, first: p.stats.g, reserve: p.reserveStats?.g || 0 };
     d.lastTrained = date;
-    const workload = appeared ? 1.25 : p.squad === 'reserve' ? 0.7 : 0.5;
+    const workload = !isAvailable(p) ? 0.1 : appeared ? 1.25 : p.squad === 'reserve' ? 0.7 : 0.5;
     const freshness = 0.35 + Math.max(0, Math.min(100, p.condition)) / 150;
     const training =
       g.training === 'rest'
@@ -99,7 +100,8 @@ export function developPlayers(g: GameState) {
             : key === 'speed'
               ? '체력'
               : '타격';
-      const coaching = 0.55 + coachSkill(g, role) / 120;
+      const coaching =
+        (0.55 + coachSkill(g, role) / 120) * (1 + ((g.facilities?.training || 1) - 1) * 0.08);
       const focus =
         (g.training === 'power' && key === 'power') ||
         (g.training === 'pitching' && ['stuff', 'control'].includes(key)) ||

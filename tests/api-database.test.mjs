@@ -136,7 +136,12 @@ test('D1 scouting persists missions and reports, hides discoveries until due and
 test('D1 timeline revisions preserve consumed events, hide inputs and commit a saved result once', async () => {
   const user = 'timeline-revision';
   await action({ type: 'start', club: 'kbo-lotte', manager: 'Timeline DB', mode: 'short' }, user);
-  await action({ type: 'continue' }, user);
+  for (let i = 0; i < 35; i++) {
+    const next = await action({ type: 'continue' }, user);
+    for (const n of next.state.news.filter((n) => n.choiceKind && !n.choice))
+      await action({ type: 'respondNews', id: n.id, choice: 'explain' }, user);
+    if (next.state.progress?.stop === 'fixture') break;
+  }
   const initial = await action({ type: 'startMatch' }, user);
   const live = initial.state.liveMatch,
     cursor = 12,
@@ -198,10 +203,11 @@ test('D1 timeline revisions preserve consumed events, hide inputs and commit a s
   };
   const finished = await call('/api/career', complete, user);
   assert.equal(finished.status, 201);
-  assert.equal(finished.body.state.history.length, 1);
+  assert.equal(finished.body.state.history.length, initial.state.history.length + 1);
+  assert.deepEqual(finished.body.state.history.slice(1), initial.state.history);
   const repeated = await call('/api/career', complete, user);
   assert.equal(repeated.body.revision, finished.body.revision);
-  assert.equal(repeated.body.state.history.length, 1);
+  assert.deepEqual(repeated.body.state.history, finished.body.state.history);
   const record = await call(
     '/api/career/matches/' + encodeURIComponent(finished.body.state.history[0].id),
     undefined,
@@ -213,7 +219,12 @@ test('D1 timeline revisions preserve consumed events, hide inputs and commit a s
 test('D1 direct instructions persist once, preserve watched events and keep preseason stats separate', async () => {
   const user = 'match-command-career';
   await action({ type: 'start', club: 'kbo-lotte', manager: 'Command DB', mode: 'short' }, user);
-  await action({ type: 'continue' }, user);
+  for (let i = 0; i < 35; i++) {
+    const next = await action({ type: 'continue' }, user);
+    for (const n of next.state.news.filter((n) => n.choiceKind && !n.choice))
+      await action({ type: 'respondNews', id: n.id, choice: 'explain' }, user);
+    if (next.state.progress?.stop === 'fixture') break;
+  }
   const initial = await action({ type: 'startMatch' }, user);
   const live = initial.state.liveMatch,
     own = live.home === initial.state.club ? 1 : 0;
@@ -268,7 +279,12 @@ test('D1 direct instructions persist once, preserve watched events and keep pres
 test('Compact mutation responses omit archived playback without changing stored match data or duplicate semantics', async () => {
   const user = 'compact-response-career';
   await action({ type: 'start', club: 'kbo-lotte', manager: 'Compact DB', mode: 'short' }, user);
-  await action({ type: 'continue' }, user);
+  for (let i = 0; i < 35; i++) {
+    const next = await action({ type: 'continue' }, user);
+    for (const n of next.state.news.filter((n) => n.choiceKind && !n.choice))
+      await action({ type: 'respondNews', id: n.id, choice: 'explain' }, user);
+    if (next.state.progress?.stop === 'fixture') break;
+  }
   const initial = await action({ type: 'continue' }, user);
   assert.ok(initial.state.history[0].log.length > 0);
   const ids = [...initial.state.lineup];
@@ -328,7 +344,12 @@ test('Compact mutation responses omit archived playback without changing stored 
 test('D1 post-match media saves canonical messages and actual mood reactions once without rewriting the result', async () => {
   const user = 'media-conversation-career';
   await action({ type: 'start', club: 'kbo-lotte', manager: 'Media DB', mode: 'short' }, user);
-  await action({ type: 'continue' }, user);
+  for (let i = 0; i < 35; i++) {
+    const next = await action({ type: 'continue' }, user);
+    for (const n of next.state.news.filter((n) => n.choiceKind && !n.choice))
+      await action({ type: 'respondNews', id: n.id, choice: 'explain' }, user);
+    if (next.state.progress?.stop === 'fixture') break;
+  }
   const live = await action({ type: 'startMatch' }, user);
   const before = await action(
     { type: 'completeMatch', cursor: live.state.liveMatch.timeline.log.length, timelineVersion: 1 },
@@ -756,7 +777,10 @@ test(
       { type: 'start', club: 'kbo-lotte', manager: 'Live DB', mode: 'short' },
       user,
     );
-    saved = await action({ type: 'continue' }, user);
+    for (let i = 0; i < 35; i++) {
+      saved = await action({ type: 'continue' }, user);
+      if (saved.state.progress?.stop === 'fixture') break;
+    }
     saved = await action({ type: 'startMatch' }, user);
     assert.equal(saved.state.liveMatch.result.log.length, 0);
     assert.equal(saved.state.liveMatch.opponents, undefined);
@@ -1007,14 +1031,58 @@ test('D1 manager resignation, job eligibility, employment and club preservation 
   assert.ok(open);
   const applied = await action({ type: 'applyManager', club: open.club, targetRank: 4 }, user);
   assert.equal(applied.state.managerJobs[open.club].managerName, open.managerName);
+  const id = applied.state.managerCareer.offers.find((o) => o.club === open.club).id;
   let progressed = applied;
   for (let i = 0; i < 3; i++) progressed = await action({ type: 'managerContinue' }, user);
+  const offer = progressed.state.managerCareer.offers.find((o) => o.id === id);
+  assert.equal(offer.status, 'interview');
+  for (const [question, answer] of [
+    ['motivation', 'project'],
+    ['career', 'responsibility'],
+    ['style', offer.priority],
+    ['target', 'agree'],
+    ['budget', 'within'],
+    ['staff', 'keep'],
+  ])
+    progressed = await action({ type: 'managerInterview', id, question, answer }, user);
+  progressed = await action(
+    {
+      type: 'submitManagerProposal',
+      id,
+      proposal: '선수단의 강점을 점검하고 코치진과 협력하여 합의한 시즌 목표를 달성하겠습니다.',
+    },
+    user,
+  );
+  for (let i = 0; i < 2; i++) progressed = await action({ type: 'managerContinue' }, user);
+  const terms = progressed.state.managerCareer.offers.find((o) => o.id === id).contractTerms;
+  const agreement = {
+    type: 'acceptManagerTerms',
+    id,
+    termsVersion: terms.version,
+    revision: progressed.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const accepted = await call('/api/career', agreement, user);
+  assert.equal(accepted.status, 201);
+  assert.deepEqual((await call('/api/career', agreement, user)).body, accepted.body);
+  assert.equal(accepted.body.state.managerCareer.status, 'unemployed');
+  progressed = accepted.body;
   const before = structuredClone(progressed.state.standings);
   const signed = await action(
-    { type: 'signManager', id: progressed.state.managerCareer.offers[0].id },
+    {
+      type: 'signManager',
+      id,
+      termsVersion: progressed.state.managerCareer.offers.find((o) => o.id === id).contractTerms
+        .version,
+      signature: progressed.state.manager,
+    },
     user,
   );
   assert.equal(signed.state.club, open.club);
+  assert.equal(
+    (await db.prepare('SELECT COUNT(*) AS n FROM transfers WHERE user_id=?').bind(user).first()).n,
+    0,
+  ); // Manager changes are not player transfers.
   assert.deepEqual(signed.state.standings, before);
   assert.equal(signed.state.clubCareers, undefined);
   assert.equal(signed.state.managerJobs[open.club].managerName, '경력 검증');
@@ -1029,4 +1097,83 @@ test('D1 manager resignation, job eligibility, employment and club preservation 
   const foreign = catalog.players.find((p) => p.club.startsWith('npb-'));
   assert.equal(foreign.contact, 0);
   assert.equal(foreign.observation.status, 'unknown');
+});
+
+test('Player career archives leave the hot save, isolate users and supply trusted retired coaches', async () => {
+  const user = 'longterm-archive-db';
+  let saved = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Archive DB', mode: 'short' },
+    user,
+  );
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  const retired = raw.roster.find((p) => p.pos === 'P');
+  retired.age = 45;
+  retired.stats.outs = 90;
+  retired.stats.wins = 5;
+  raw.phase = 'finished';
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  saved = await action({ type: 'nextSeason' }, user);
+  const count = await db
+    .prepare('SELECT COUNT(*) AS n FROM career_player_records WHERE user_id=?')
+    .bind(user)
+    .first();
+  assert.ok(count.n > 4000);
+  const hot = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.equal(hot.pendingRecords, undefined);
+  assert.ok(JSON.stringify(hot).length < 1800000);
+  const records = await call('/api/records/' + encodeURIComponent(retired.id), undefined, user);
+  assert.equal(records.status, 200);
+  const record = records.body.find((r) => r.kind === 'retirement');
+  assert.equal(record.stats.outs, 90);
+  assert.ok(record.coach);
+  assert.deepEqual(
+    (
+      await call(
+        '/api/records/' + encodeURIComponent(retired.id),
+        undefined,
+        'unrelated-archive-user',
+      )
+    ).body,
+    [],
+  );
+  const forged = await call(
+    '/api/career',
+    {
+      type: 'hireRetiredCoach',
+      playerId: 'invented',
+      role: '투수',
+      retiredCandidate: { id: 'retired-invented', name: 'Forged', skill: 99, salary: 0 },
+      revision: saved.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(forged.status, 400);
+  saved = await action(
+    {
+      type: 'hireRetiredCoach',
+      playerId: retired.id,
+      role: '투수',
+      retiredCandidate: { ...record.coach, skill: 99, salary: 0 },
+    },
+    user,
+  );
+  assert.equal(saved.state.staff.find((c) => c.id === record.coach.id).skill, record.coach.skill);
+  assert.equal(saved.state.staff.find((c) => c.id === record.coach.id).salary, record.coach.salary);
+  assert.equal(
+    (
+      await db
+        .prepare('SELECT COUNT(*) AS n FROM career_player_records WHERE user_id=?')
+        .bind(user)
+        .first()
+    ).n,
+    count.n,
+  );
 });

@@ -1,10 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { careerProjections } from './career-projections';
 import type { GameState, WorldCatalog, FinanceEntry, Result } from '@dugout/shared/types';
+import type { PlayerCareerRecord } from '@dugout/shared/long-term';
 
 type CareerRow = { state: string; revision: number };
 @Injectable()
 export class CareerRepository {
+  async playerRecords(db: D1Database, user: string, playerId: string) {
+    const rows = await db
+      .prepare(
+        'SELECT data FROM career_player_records WHERE user_id=? AND player_id=? ORDER BY season DESC,id DESC LIMIT 1000',
+      )
+      .bind(user, playerId)
+      .all<{ data: string }>();
+    return rows.results.map((r) => JSON.parse(r.data) as PlayerCareerRecord);
+  }
+  async retiredPlayers(db: D1Database, user: string, offset = 0) {
+    const rows = await db
+      .prepare(
+        "SELECT data FROM career_player_records WHERE user_id=? AND kind='retirement' ORDER BY season DESC,id DESC LIMIT 150 OFFSET ?",
+      )
+      .bind(user, offset)
+      .all<{ data: string }>();
+    return rows.results.map((r) => JSON.parse(r.data) as PlayerCareerRecord);
+  }
   async catalogKnowledge(db: D1Database, user: string) {
     const row = await db
       .prepare(
@@ -104,6 +123,7 @@ export class CareerRepository {
       ...next,
       history: next.history.map((m, i) => (i < 5 ? m : { ...m, log: [], replayTeams: undefined })),
     };
+    delete state.pendingRecords;
     const serialized = JSON.stringify(state);
     if (serialized.length > 1_800_000) throw new Error('커리어 저장 용량을 초과했습니다.');
     const statements: D1PreparedStatement[] = [];
@@ -147,8 +167,30 @@ export class CareerRepository {
       );
     };
     if (resetting)
-      for (const table of ['career_matches', 'transfers', 'finance_entries', 'career_actions'])
+      for (const table of [
+        'career_matches',
+        'transfers',
+        'finance_entries',
+        'career_actions',
+        'career_player_records',
+      ])
         clear(table);
+    const records = next.pendingRecords || [];
+    for (let i = 0; i < records.length; i += 200)
+      insert(
+        'career_player_records',
+        ['id', 'player_id', 'name', 'season', 'club_id', 'kind', 'data'],
+        records.slice(i, i + 200).map((r) => ({
+          id: r.id,
+          player_id: r.playerId,
+          name: r.name,
+          season: r.year,
+          club_id: r.club,
+          kind: r.kind,
+          data: JSON.stringify(r),
+        })),
+        true,
+      );
     // A PA only changes liveMatch. Keep all projections and accounting intact.
     // Revision and request-id are still committed atomically with the snapshot.
     if (['stepMatch', 'matchCursor', 'prepareMatch'].includes(kind) && before?.liveMatch) {
@@ -212,7 +254,7 @@ export class CareerRepository {
       })),
       true,
     );
-    if (before && !resetting) {
+    if (before && !resetting && before.club === state.club) {
       const prior = new Map(before.roster.map((p) => [p.id, p])),
         current = new Map(state.roster.map((p) => [p.id, p]));
       const changes: Record<string, unknown>[] = [];
@@ -224,7 +266,14 @@ export class CareerRepository {
             player_name: p.name,
             from_club: before.club,
             to_club: state.ownership[p.id] || 'fa',
-            kind: kind === 'sell' ? 'sale' : 'expiry',
+            kind:
+              kind === 'acceptTrade'
+                ? 'trade'
+                : kind === 'sell'
+                  ? 'sale'
+                  : records.some((r) => r.playerId === p.id && r.kind === 'retirement')
+                    ? 'retirement'
+                    : 'expiry',
             season: state.year,
             day: state.day,
             revision,
@@ -235,9 +284,12 @@ export class CareerRepository {
             id: `${user}:${revision}:in:${p.id}`,
             player_id: p.id,
             player_name: p.name,
-            from_club: before.deals.find((d) => d.player.id === p.id)?.player.club || 'youth',
+            from_club:
+              kind === 'acceptTrade'
+                ? before.trades?.find((t) => t.incoming.includes(p.id))?.club || 'unknown'
+                : before.deals.find((d) => d.player.id === p.id)?.player.club || 'youth',
             to_club: state.club,
-            kind: kind === 'sign' ? 'signing' : 'youth',
+            kind: kind === 'acceptTrade' ? 'trade' : kind === 'sign' ? 'signing' : 'youth',
             season: state.year,
             day: state.day,
             revision,

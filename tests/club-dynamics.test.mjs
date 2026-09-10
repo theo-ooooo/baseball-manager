@@ -1,3 +1,4 @@
+import { reachFixture } from './helpers/manager.mjs';
 import { waitForReply } from './helpers/recruitment.mjs';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
@@ -68,7 +69,7 @@ test('Morale concern produces a persistent inbox decision, tracks promises and p
 });
 test('Continue skips idle dates and stops before the next game', () => {
   let g = e.newGame('kbo-lotte', 'Continue', 'full', 8);
-  g = e.applyAction(g, { type: 'continue' });
+  g = reachFixture(e, g);
   assert.equal(g.day, -22);
   assert.equal(g.history.length, 0);
   g = e.applyAction(g, { type: 'continue' });

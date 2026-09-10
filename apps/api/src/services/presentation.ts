@@ -47,6 +47,53 @@ export function presentState(state: GameState | null): GameState | null {
   if (!state) return null;
   const next = { ...state };
   delete next.clubCareers;
+  delete next.pendingRecords;
+  if (state.simulation) {
+    const known = new Set(state.knowledge?.players || []);
+    const clubs = new Set(state.knowledge?.clubs || []);
+    next.simulation = {
+      ...state.simulation,
+      players: Object.fromEntries(
+        Object.entries(state.simulation.players).map(([id, value]) => {
+          const club = state.ownership[id];
+          const visible = known.has(id) || club === state.club || clubs.has(club);
+          if (visible)
+            return [
+              id,
+              {
+                ...value,
+                generated: value.generated && {
+                  ...value.generated,
+                  potential: state.rules?.revealPotential ? value.generated.potential : 0,
+                },
+              },
+            ];
+          const report = state.scouting?.reports.find((r) => r.playerId === id);
+          return [
+            id,
+            {
+              ...value,
+              ratings: undefined,
+              generated: value.generated && { ...value.generated, potential: 0 },
+              observation: report
+                ? {
+                    status: 'scouted',
+                    overall: report.overall,
+                    abilities: report.abilities,
+                    date: report.date,
+                  }
+                : { status: 'unknown' },
+            },
+          ];
+        }),
+      ),
+    };
+  }
+  if (state.draft)
+    next.draft = {
+      ...state.draft,
+      prospects: state.draft.prospects.map((p) => player(p, false, state)),
+    };
   if (state.scouting) {
     next.scouting = {
       ...state.scouting,

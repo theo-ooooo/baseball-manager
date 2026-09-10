@@ -1,3 +1,4 @@
+import { reachFixture } from './helpers/manager.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSync } from 'esbuild';
@@ -15,7 +16,7 @@ buildSync({
 const { engine: e } = createRequire(import.meta.url)(out);
 test('Prepared game keeps the visible cursor separate and commits the completed game once', () => {
   let g = e.newGame('kbo-lotte', 'Live', 'short', 321);
-  g = e.applyAction(g, { type: 'continue' });
+  g = reachFixture(e, g);
   assert.equal(g.day, -22);
   const initial = structuredClone(g);
   g = e.applyAction(g, { type: 'startMatch' });

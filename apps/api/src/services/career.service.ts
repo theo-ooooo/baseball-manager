@@ -77,12 +77,13 @@ export class CareerService {
           throw new Error('시즌 길이를 선택해 주세요.');
         next = engine.newGame(
           String(action.club),
-          String(action.manager || '감독'),
+          String(action.manager || ''),
           action.mode,
           Date.now(),
           {
             firstSeasonTransferBan: action.firstSeasonTransferBan === true,
             revealPotential: action.revealPotential === true,
+            unemployed: action.unemployed === true,
           },
         );
       } else {
@@ -92,7 +93,13 @@ export class CareerService {
           (!Number.isInteger(action.count) || Number(action.count) < 1 || Number(action.count) > 7)
         )
           throw new Error('한 번에 1~7일을 진행할 수 있습니다.');
-        next = engine.applyAction(current.state, action);
+        const safeAction = { ...action };
+        delete safeAction.retiredCandidate;
+        if (action.type === 'hireRetiredCoach') {
+          const records = await this.careers.playerRecords(db, user, String(action.playerId));
+          safeAction.retiredCandidate = records.find((r) => r.kind === 'retirement')?.coach;
+        }
+        next = engine.applyAction(current.state, safeAction);
       }
     } catch (error) {
       throw new BadRequestException(error instanceof Error ? error.message : '잘못된 요청입니다.');
