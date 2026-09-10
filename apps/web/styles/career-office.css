@@ -1747,3 +1747,73 @@
     top: 112px;
   }
 }
+
+/* In-play chrome leaves the viewport to the field. The planning screen keeps its full header. */
+.match-page.is-watching > .stadium-replay-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 62px;
+  padding: 10px 20px;
+  background: #101e2b;
+  border-color: #2c3e4c;
+  color: #ecf2f7;
+}
+.match-page.is-watching > .stadium-replay-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+}
+.match-page.is-watching > .stadium-replay-header p {
+  margin: 0;
+  font-size: 12px;
+  color: #b3c3ce;
+}
+.match-page.is-watching .match-display-actions {
+  margin: 0;
+}
+.match-page.is-watching .match-display-actions .text-button,
+.match-page.is-watching .match-display-actions .icon-button {
+  color: #bacbd9;
+}
+.match-page.is-watching > .match-flow-steps {
+  display: none;
+}
+.match-page.is-watching .match-at-bat {
+  border-radius: 0;
+  min-height: 48px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.match-page.is-watching .stadium-stage {
+  height: max(360px, calc(100dvh - 185px));
+}
+.match-page .stadium-stage.is-2d {
+  background: #10242c;
+}
+@media (max-width: 640px) {
+  .match-page.is-watching > .stadium-replay-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    padding: 10px 12px;
+  }
+  .match-page.is-watching > .stadium-replay-header h2 {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 14px;
+  }
+  .match-page.is-watching > .stadium-replay-header p {
+    font-size: 10px;
+  }
+  .match-page.is-watching .stadium-stage {
+    height: max(390px, calc(100dvh - 315px));
+    min-height: 390px;
+  }
+}
+@media (max-width: 640px) {
+  .match-page.is-watching .stadium-stage.is-2d {
+    height: 440px;
+    min-height: 440px;
+  }
+}

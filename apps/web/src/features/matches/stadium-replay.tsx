@@ -1,5 +1,7 @@
 'use client';
 import { Stadium3D } from './stadium-3d';
+import { Stadium2DField } from './stadium-2d-field';
+import { useIsMobile } from '../../hooks/use-mobile';
 import { ClubBadge } from '../../components/club-badge';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from '../../hooks/use-reduced-motion';
@@ -54,6 +56,10 @@ export function StadiumScene({
   const [display, setDisplay] = useState<'3d' | '2d'>('3d');
   const [camera, setCamera] = useState<'overview' | 'broadcast'>('broadcast');
   const [unavailable, setUnavailable] = useState(false);
+  const mobile = useIsMobile();
+  const [zoomOverride, setZoomOverride] = useState<boolean | null>(null);
+  const zoom2d = zoomOverride ?? mobile;
+  const fieldView = zoom2d ? '240 95 1056 930' : '0 0 1536 1024';
   const show3D = display === '3d' && !unavailable;
   const progress = frameState.key === animationKey ? frameState.progress : 0;
   const elapsed = useRef(0),
@@ -89,6 +95,13 @@ export function StadiumScene({
     ball = ballPoint(scene, t),
     batting = getClub(scene.event?.half === 1 ? result.home : result.away),
     defending = getClub(scene.event?.half === 1 ? result.away : result.home);
+  const trail = Array.from({ length: 16 }, (_, i) => {
+    const past = Math.max(0, t - 0.14 + (i / 15) * Math.min(t, 0.14));
+    const point = ballPoint(scene, past);
+    const height =
+      scene.fly && past > 0.2 && past < 0.65 ? Math.sin(((past - 0.2) / 0.45) * Math.PI) * 38 : 0;
+    return `${point.x},${point.y - height}`;
+  }).join(' ');
   const runnerProgress = Math.max(0, Math.min(1, (t - 0.28) / 0.6));
   const after = t > 0.88;
   const outs = scene.play ? (after ? scene.play.after.outs : scene.play.before.outs) : null;
@@ -109,7 +122,7 @@ export function StadiumScene({
     : (after ? scene.event?.score : result.log[index - 1]?.score) || [0, 0];
   return (
     <div
-      className="stadium-stage"
+      className={`stadium-stage ${show3D ? 'is-3d' : 'is-2d'}`}
       style={{ '--attack': batting.color, '--defend': defending.color } as CSSProperties}
     >
       {show3D ? (
@@ -122,58 +135,7 @@ export function StadiumScene({
           onUnavailable={() => setUnavailable(true)}
         />
       ) : (
-        <svg
-          className="stadium-background field-2d"
-          viewBox="0 0 1536 1024"
-          aria-label="2D 탑뷰 야구장"
-        >
-          <defs>
-            <pattern id="grass" width="120" height="120" patternUnits="userSpaceOnUse">
-              <rect width="120" height="120" fill="#356c40" />
-              <rect width="60" height="120" fill="#3c7848" />
-            </pattern>
-          </defs>
-          <rect width="1536" height="1024" fill="#223b32" />
-          <path d="M 160 350 Q 768 -165 1376 350 L 818 960 L 718 960 Z" fill="#a48b65" />
-          <path
-            d="M 186 350 Q 768 -120 1350 350 L 768 921 Z"
-            fill="url(#grass)"
-            stroke="#dfc88d"
-            strokeWidth="8"
-          />
-          <path d="M 768 867 L 525 633 L 768 437 L 1011 633 Z" fill="#b79269" />
-          <path d="M 768 807 L 585 633 L 768 489 L 951 633 Z" fill="#3c7848" />
-          <circle cx="768" cy="643" r="40" fill="#b79269" />
-          <circle cx="768" cy="867" r="53" fill="#b79269" />
-          <path
-            d="M 768 867 L 186 350 M 768 867 L 1350 350"
-            stroke="#f0e7d0"
-            strokeWidth="5"
-            fill="none"
-          />
-          <path
-            d="M 649 890 Q 768 775 887 890"
-            stroke="#f0e7d0"
-            strokeWidth="4"
-            strokeDasharray="10 12"
-            fill="none"
-          />
-          {bases.slice(0, 4).map((b, i) => (
-            <rect
-              key={i}
-              x={b.x - 11}
-              y={b.y - 11}
-              width="22"
-              height="22"
-              fill="#fff6df"
-              transform={`rotate(45 ${b.x} ${b.y})`}
-            />
-          ))}
-          <rect x="755" y="638" width="26" height="8" fill="#fff6df" />
-          <text x="768" y="135" textAnchor="middle" fill="#d9e8d4" fontSize="24" letterSpacing="8">
-            DUGOUT PARK
-          </text>
-        </svg>
+        <Stadium2DField viewBox={fieldView} />
       )}
       <div className="stadium-view-options" role="group" aria-label="경기 화면 설정">
         <button
@@ -193,6 +155,11 @@ export function StadiumScene({
             onClick={() => setCamera(camera === 'broadcast' ? 'overview' : 'broadcast')}
           >
             {camera === 'broadcast' ? '전체 구장' : '중계 시점'}
+          </button>
+        )}
+        {!show3D && (
+          <button type="button" onClick={() => setZoomOverride(!zoom2d)}>
+            {zoom2d ? '전체 구장' : '선수 중심'}
           </button>
         )}
       </div>
@@ -233,11 +200,11 @@ export function StadiumScene({
       {!show3D && (
         <svg
           className="stadium-motion"
-          viewBox="0 0 1536 1024"
+          viewBox={fieldView}
           role="img"
           aria-label={`${scene.event?.inning || 1}회 ${scene.event?.half ? '말' : '초'} 플레이 진행`}
         >
-          {scene.play?.before.bases.map(
+          {(after ? scene.play?.after.bases : scene.play?.before.bases)?.map(
             (id, i) =>
               id && (
                 <circle
@@ -253,19 +220,33 @@ export function StadiumScene({
             <g
               key={pos}
               transform={`translate(${point.x} ${point.y})`}
-              className="stadium-defender"
+              className={`stadium-defender ${pos === scene.fielder && t > 0.2 && t < 0.8 ? 'is-active' : ''}`}
             >
               <title>
                 {pos} {player?.name || ''}
               </title>
-              <ellipse cy="16" rx="19" ry="8" className="player-shadow" />
-              <circle r="18" />
-              <text y="6" className="player-number">
+              <ellipse cy="21" rx="25" ry="9" className="player-shadow" />
+              <circle r="28" className="player-focus" />
+              <circle r="22" />
+              <path d="M -13 -16 Q 0 -27 13 -16" className="player-cap" />
+              <text y="8" className="player-number">
                 {player?.number ?? pos}
               </text>
-              <text y="40" className="player-label">
-                {player?.name || pos}
-              </text>
+              <g
+                className="player-caption"
+                transform={`translate(${pos === '1B' ? 120 : pos === '3B' ? -120 : 0} ${['1B', '3B'].includes(pos) ? 4 : 45})`}
+              >
+                <rect
+                  x={-Math.max(46, (player?.name.length || 2) * 12 + 28)}
+                  y="-18"
+                  width={Math.max(92, (player?.name.length || 2) * 24 + 56)}
+                  height="34"
+                  rx="5"
+                />
+                <text y="7" className="player-label">
+                  {pos} {player?.name || ''}
+                </text>
+              </g>
             </g>
           ))}
           {!scene.play && (
@@ -290,23 +271,31 @@ export function StadiumScene({
                   {r.name}
                   {r.out ? ' 아웃' : r.to === 4 ? ' 득점' : ''}
                 </title>
-                <ellipse cy="15" rx="18" ry="7" className="player-shadow" />
-                <circle r="17" />
-                <text y="6" className="player-number">
+                <ellipse cy="21" rx="25" ry="9" className="player-shadow" />
+                <circle r="23" />
+                <path d="M -13 -16 Q 0 -27 13 -16" className="player-cap" />
+                <text y="8" className="player-number">
                   {scene.batting?.players.find((p) => p.id === r.id)?.number || '·'}
                 </text>
-                <text y="-27" className="player-label">
-                  {r.name}
-                </text>
+                <g
+                  className="player-caption"
+                  transform={`translate(0 ${point.y < 800 ? 47 : -43})`}
+                >
+                  <rect
+                    x={-Math.max(42, r.name.length * 12 + 10)}
+                    y="-18"
+                    width={Math.max(84, r.name.length * 24 + 20)}
+                    height="34"
+                    rx="5"
+                  />
+                  <text y="7" className="player-label">
+                    {r.name}
+                  </text>
+                </g>
               </g>
             );
           })}
-          {!['walk', 'strikeout', 'tiebreak'].includes(scene.kind) && t > 0.2 && (
-            <path
-              d={`M ${bases[0].x} ${bases[0].y} L ${scene.target.x} ${scene.target.y}`}
-              className="ball-trail"
-            />
-          )}
+          {t > 0.01 && t < 0.94 && <polyline points={trail} className="ball-trail" />}
           {t < 0.94 && (
             <g>
               <ellipse cx={ball.x} cy={ball.y + 13} rx="9" ry="5" className="ball-shadow" />

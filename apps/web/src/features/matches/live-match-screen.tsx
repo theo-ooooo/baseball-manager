@@ -148,7 +148,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
       }}
       tabIndex={-1}
       aria-label="경기 지휘"
-      className={`match-page live-match-dialog ${mobile && !editor ? 'mobile-live-layout' : ''} ${commandOpen ? 'command-open' : ''} ${queuedCommand ? 'has-queued-command' : ''}`}
+      className={`match-page live-match-dialog ${!editor ? 'is-watching' : ''} ${mobile && !editor ? 'mobile-live-layout' : ''} ${commandOpen ? 'command-open' : ''} ${queuedCommand ? 'has-queued-command' : ''}`}
     >
       <header className="stadium-replay-header">
         <div className="match-display-actions">
@@ -218,7 +218,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
         <div className="stadium-main">
           {!editor && (
             <>
-              <MatchAtBat result={result} cursor={cursor} />
+              <MatchAtBat result={result} cursor={cursor} settled={settled} />
               <StadiumScene
                 replayKey={`${cursor}:${settled}`}
                 result={sceneResult}
@@ -231,7 +231,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               {mobile && (
                 <details className="mobile-preview-teams">
                   <summary>타순 · 선수 상태</summary>
-                  <MobileMatchView g={g} cursor={cursor} />
+                  <MobileMatchView g={g} cursor={Math.max(0, cursor - (settled ? 0 : 1))} />
                 </details>
               )}
             </>
@@ -339,7 +339,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               <p className="tiny">{finished ? '최종 기록' : '진행한 타석만 표시합니다.'}</p>
               <div className="replay-events">
                 {result.log
-                  .slice(0, cursor)
+                  .slice(0, Math.max(0, cursor - (settled ? 0 : 1)))
                   .slice(-12)
                   .map((e, i) => (
                     <div className="live-log" key={i}>
