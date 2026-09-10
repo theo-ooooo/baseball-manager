@@ -51,10 +51,17 @@ test('KBO portrait seed carries only verified official ids with evidence and no 
   assert.ok(Array.isArray(seed.skipped) && seed.skipped.length > 0);
 });
 
-test('migration 0015 stores the same map in catalog_meta and bumps the catalog version', () => {
+test('portrait migrations preserve verified identities and append Son Seong-bin', async () => {
   const value = migration.match(/VALUES\('player_portraits','([\s\S]*?)'\) ON CONFLICT/)[1];
   const stored = JSON.parse(value.replaceAll("''", "'"));
-  assert.deepEqual(stored, seed.players);
+  const { 'real-2149789910': son, ...original } = seed.players;
+  assert.deepEqual(stored, original);
+  assert.equal(son.officialId, '51528');
+  const addition = await readFile(
+    new URL('../apps/api/drizzle/0016_lotte_son_seongbin.sql', import.meta.url),
+    'utf8',
+  );
+  assert.ok(addition.includes(JSON.stringify(son)) || addition.includes(son.url));
   assert.match(migration, /UPDATE catalog_chunks SET version='world-2026-09-10-v9'/);
   assert.match(
     migration,
@@ -67,7 +74,7 @@ test('seed world attaches portraits by id and the resolver prefers them over MLB
   const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
   const { officialPortrait } = await vite.ssrLoadModule('/packages/shared/src/player-portrait.ts');
   const world = buildSeedWorld();
-  assert.equal(world.version, 'world-2026-09-10-v9');
+  assert.equal(world.version, 'world-2026-09-10-v10');
   const withPortrait = world.players.filter((p) => p.portrait);
   assert.equal(withPortrait.length, Object.keys(seed.players).length);
   for (const p of withPortrait) {

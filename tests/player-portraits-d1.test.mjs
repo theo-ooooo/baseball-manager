@@ -53,7 +53,7 @@ test('D1 catalog serves verified KBO photo identities by player id', async () =>
   const seed = JSON.parse(await readFile('apps/api/seed/kbo-portraits-2026-09-10.json', 'utf8'));
   const catalog = await call('/api/catalog');
   assert.equal(catalog.status, 200, JSON.stringify(catalog.body).slice(0, 300));
-  assert.equal(catalog.body.version, 'world-2026-09-10-v9');
+  assert.equal(catalog.body.version, 'world-2026-09-10-v10');
   const withPortrait = catalog.body.players.filter((p) => p.portrait);
   assert.equal(withPortrait.length, Object.keys(seed.players).length);
   for (const p of withPortrait) {
