@@ -17,7 +17,12 @@ export function PlayerSearch({ g, onPlayer }: { g: GameState; onPlayer: (p: Play
     <>
       <Dialog open={s.open} onOpenChange={s.setOpen}>
         <DialogTrigger asChild>
-          <button className="global-player-search" type="button">
+          <button
+            className="global-player-search"
+            type="button"
+            aria-label="선수 검색"
+            title="선수 검색"
+          >
             <Search size={18} />
             <span>선수 검색</span>
             <small>이름으로 찾기</small>

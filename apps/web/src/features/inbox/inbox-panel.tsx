@@ -1,6 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { useIsMobile } from '../../hooks/use-mobile';
+import { useInboxWorkspace } from './use-inbox-workspace';
 import { ArrowLeft, ChevronRight, Inbox, MailCheck, Search } from 'lucide-react';
 import type { GameState, Player, Result } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
@@ -26,47 +25,23 @@ export function InboxPanel({
   initialReportId,
   onReplay,
 }: Props) {
-  const initialReport = g.news.find((n) => n.id === initialReportId);
-  const [selectedId, setSelectedId] = useState(initialReport?.id || g.news[0]?.id || ''),
-    [filter, setFilter] = useState('all'),
-    [category, setCategory] = useState('all'),
-    [search, setSearch] = useState(''),
-    [detailOpen, setDetailOpen] = useState(!!initialReport || !!g.progress?.newsIds.length);
-  const attempted = useRef(new Set<string>());
-  const mobile = useIsMobile();
-  const unread = g.news.filter((n) => !n.read),
-    decisions = g.news.filter((n) => newsNeedsAction(n, g));
-  const items = g.news.filter(
-    (n) =>
-      (filter === 'all' ||
-        (filter === 'unread' && (!n.read || n.id === selectedId)) ||
-        (filter === 'decision' && newsNeedsAction(n, g))) &&
-      (category === 'all' || n.kind === category) &&
-      `${n.title} ${n.body} ${newsMeta(n).sender}`.toLowerCase().includes(search.toLowerCase()),
-  );
-  // Keep the open letter in place after it becomes read; unread filters must not jump to another report.
-  const selected = g.news.find((n) => n.id === selectedId);
-  useEffect(() => {
-    if (
-      !selected ||
-      selected.read ||
-      g.liveMatch ||
-      busy ||
-      (mobile && !detailOpen) ||
-      attempted.current.has(selected.id)
-    )
-      return;
-    const timer = setTimeout(() => {
-      attempted.current.add(selected.id);
-      void act({ type: 'readNews', id: selected.id });
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [selected, act, busy, mobile, detailOpen, g.liveMatch]);
-  function select(id: string) {
-    setSelectedId(id);
-    setDetailOpen(true);
-  }
-  const nextUnread = unread.find((n) => n.id !== selectedId);
+  const {
+    selectedId,
+    filter,
+    category,
+    search,
+    detailOpen,
+    unread,
+    decisions,
+    items,
+    selected,
+    nextUnread,
+    select,
+    setFilter,
+    setCategory,
+    setSearch,
+    setDetailOpen,
+  } = useInboxWorkspace(g, act, busy, initialReportId);
   return (
     <section className={`fm-inbox ${detailOpen ? 'show-letter' : ''}`}>
       <header className="inbox-topbar">
@@ -83,47 +58,55 @@ export function InboxPanel({
           <MailCheck size={15} /> 모두 읽음
         </button>
       </header>
-      <div className="inbox-navigation">
-        <div className="inbox-filters" role="group" aria-label="수신함 보기">
-          {[
-            ['all', '전체 보고', g.news.length],
-            ['unread', '안 읽음', unread.length],
-            ['decision', '처리 필요', decisions.length],
-          ].map(([value, label, count]) => (
-            <button
-              key={value}
-              aria-pressed={filter === value}
-              onClick={() => setFilter(String(value))}
-            >
-              {label}
-              <span>{count}</span>
-            </button>
-          ))}
-        </div>
-        <label className="inbox-search">
-          <Search size={16} />
-          <input
-            aria-label="수신함 검색"
-            placeholder="보고 검색"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
-      </div>
-      <div className="inbox-categories" role="group" aria-label="보고 종류">
-        <button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
-          모든 주제
-        </button>
-        {Object.entries(newsKinds)
-          .filter(([kind]) => g.news.some((n) => n.kind === kind))
-          .map(([kind, meta]) => (
-            <button key={kind} aria-pressed={category === kind} onClick={() => setCategory(kind)}>
-              {meta.label}
-            </button>
-          ))}
-      </div>
       <div className="inbox-columns">
+        <aside className="inbox-folder-rail" aria-label="보고 분류">
+          {' '}
+          <div className="inbox-navigation">
+            <div className="inbox-filters" role="group" aria-label="수신함 보기">
+              {[
+                ['all', '전체 보고', g.news.length],
+                ['unread', '안 읽음', unread.length],
+                ['decision', '처리 필요', decisions.length],
+              ].map(([value, label, count]) => (
+                <button
+                  key={value}
+                  aria-pressed={filter === value}
+                  onClick={() => setFilter(String(value))}
+                >
+                  {label}
+                  <span>{count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="inbox-categories" role="group" aria-label="보고 종류">
+            <button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
+              모든 주제
+            </button>
+            {Object.entries(newsKinds)
+              .filter(([kind]) => g.news.some((n) => n.kind === kind))
+              .map(([kind, meta]) => (
+                <button
+                  key={kind}
+                  aria-pressed={category === kind}
+                  onClick={() => setCategory(kind)}
+                >
+                  {meta.label}
+                </button>
+              ))}
+          </div>
+        </aside>
         <div className="inbox-message-list" aria-label="수신 보고 목록">
+          {' '}
+          <label className="inbox-search">
+            <Search size={16} />
+            <input
+              aria-label="수신함 검색"
+              placeholder="보고 검색"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
           {items.length ? (
             items.map((n, index) => {
               const meta = newsMeta(n),

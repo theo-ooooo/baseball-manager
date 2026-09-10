@@ -1,0 +1,664 @@
+/* Match-style workspace: one context bar, main work surface, and an optional decision desk. */
+.workspace > .topbar {
+  height: 64px;
+  padding: 0 24px;
+  gap: 20px;
+}
+.topbar .global-player-search {
+  width: min(260px, 24vw);
+  min-width: 110px;
+  min-height: 36px;
+  margin: 0 auto 0 0;
+  padding: 7px 12px;
+}
+.topbar .global-player-search small {
+  display: none;
+}
+.topbar .manager-quick-menu {
+  margin-left: 0;
+}
+.workspace-navigation {
+  min-height: 57px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.workspace-navigation h1 {
+  font-size: 17px;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+.workspace-navigation nav {
+  display: flex;
+  align-self: stretch;
+  gap: 24px;
+}
+.workspace-navigation nav a {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-3);
+  border-bottom: 3px solid transparent;
+  padding: 0 2px;
+}
+.workspace-navigation nav a[aria-current] {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+.workspace-section-select {
+  display: none;
+}
+.workspace[data-view='inbox'] .workspace-body {
+  padding: 16px;
+}
+.squad-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 235px;
+  gap: 20px;
+  align-items: start;
+}
+.squad-list-panel {
+  overflow: visible;
+}
+.squad-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.squad-list-heading > span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.squad-scope {
+  display: flex;
+  gap: 6px;
+}
+.squad-scope button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  font-size: 12px;
+  border-radius: 5px;
+  color: var(--text-3);
+}
+.squad-scope b {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.squad-scope button[aria-pressed='true'] {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+.squad-command-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+}
+.squad-command-bar .search-box {
+  flex: 1;
+  min-width: 70px;
+  width: auto;
+}
+.squad-command-bar select,
+.squad-filter-menu select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 7px 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  min-width: 0;
+}
+.squad-filter-menu {
+  position: relative;
+}
+.squad-filter-menu > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.squad-filter-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.squad-filter-menu > summary i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.squad-filter-menu > div {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 260px;
+  max-width: calc(100vw - 32px);
+  z-index: 40;
+  padding: 18px;
+  display: grid;
+  gap: 15px;
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  box-shadow: 0 15px 40px #0005;
+}
+.squad-filter-menu label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.squad-filter-menu .squad-detail-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.squad-applied-filter {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 12px;
+}
+.squad-desk {
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.squad-desk header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.squad-desk h2 {
+  font-size: 13px;
+}
+.squad-desk dl {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0;
+}
+.squad-desk dt {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.squad-desk dd {
+  margin: 6px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+.squad-health-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  text-align: left;
+  padding: 16px;
+  border-block: 1px solid var(--line);
+}
+.squad-health-link > span {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.squad-health-link strong {
+  display: block;
+  font-size: 17px;
+  color: var(--text);
+  margin-top: 4px;
+}
+.squad-desk > p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text-3);
+  padding: 16px;
+}
+.squad-desk nav {
+  border-top: 1px solid var(--line);
+}
+.squad-desk nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  font-size: 12px;
+}
+.squad-desk a:hover {
+  color: var(--brand);
+  background: var(--surface-2);
+}
+.squad-coach-alert {
+  display: block;
+  padding: 16px;
+  font-size: 12px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.dashboard-command-center .dashboard-heading {
+  padding: 0 0 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.dashboard-command-center .dashboard-heading h1 {
+  font-size: 26px;
+  margin: 3px 0;
+}
+.dashboard-command-center .dashboard-heading > div > span {
+  display: none;
+}
+.dashboard-command-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.dashboard-main-column,
+.dashboard-decision-desk {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.dashboard-command-center .dashboard-stats {
+  grid-template-columns: 1fr;
+  padding: 0;
+  gap: 0;
+}
+.dashboard-command-center .dashboard-stats button {
+  padding: 16px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.dashboard-command-center .dashboard-stats button:last-child {
+  border: 0;
+}
+.dashboard-command-center .dashboard-stats button > strong {
+  font-size: 20px;
+}
+.dashboard-command-center .dashboard-stats button > small {
+  grid-column: 1/-1;
+}
+.dashboard-command-center .dashboard-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.dashboard-command-center .dashboard-shortcuts > header {
+  grid-column: 1/-1;
+}
+.dashboard-command-center .dashboard-shortcuts > button {
+  padding: 16px;
+}
+.dashboard-command-center .next-game-clubs {
+  padding: 28px 24px;
+}
+.dashboard-command-center .next-game-clubs .club-badge {
+  width: 80px;
+  height: 80px;
+}
+@media (max-width: 1100px) {
+  .topbar .save-state,
+  .topbar .global-player-search span {
+    display: none;
+  }
+  .topbar .global-player-search {
+    min-width: 38px;
+    width: 38px;
+    padding: 8px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .topbar-right {
+    gap: 10px;
+  }
+  .squad-workspace {
+    grid-template-columns: minmax(0, 1fr) 205px;
+    gap: 14px;
+  }
+  .workspace-navigation {
+    gap: 20px;
+  }
+  .workspace-navigation nav {
+    gap: 16px;
+  }
+}
+@media (max-width: 767px) {
+  .workspace > .topbar {
+    height: 56px;
+    padding: 0 12px;
+    gap: 10px;
+  }
+  .topbar .global-player-search {
+    margin-left: auto;
+    margin-right: 0;
+  }
+  .topbar .manager-quick-menu {
+    display: none;
+  }
+  .topbar .breadcrumb {
+    min-width: 0;
+  }
+  .workspace-navigation {
+    padding: 8px 12px;
+    min-height: 52px;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  .workspace-navigation h1 {
+    font-size: 16px;
+  }
+  .workspace-navigation nav {
+    display: none;
+  }
+  .workspace-section-select {
+    display: block;
+    padding: 7px 30px 7px 10px;
+    max-width: 65%;
+    min-height: 36px;
+    background: var(--surface-1);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .workspace-body,
+  .workspace[data-view='inbox'] .workspace-body {
+    padding: 12px;
+  }
+  .squad-workspace {
+    display: block;
+  }
+  .squad-desk {
+    display: none;
+  }
+  .squad-list-heading {
+    padding: 8px 10px;
+  }
+  .squad-scope button {
+    min-height: 34px;
+  }
+  .squad-command-bar {
+    padding: 10px;
+    gap: 6px;
+  }
+  .squad-command-bar > select {
+    width: 94px;
+    padding: 6px;
+    font-size: 12px;
+  }
+  .squad-command-bar .search-box {
+    padding: 0 8px;
+  }
+  .squad-command-bar .search-box input {
+    padding: 8px 0;
+    font-size: 14px;
+    width: 100%;
+  }
+  .squad-command-bar .search-box svg {
+    display: none;
+  }
+  .squad-filter-menu > summary {
+    width: 38px;
+    padding: 8px;
+  }
+  .squad-filter-menu > summary > span {
+    display: none;
+  }
+  .squad-filter-menu[open] > div {
+    width: 270px;
+  }
+  .dashboard-command-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .dashboard-main-column,
+  .dashboard-decision-desk {
+    width: 100%;
+    gap: 16px;
+  }
+  .dashboard-command-center .dashboard-heading {
+    padding-bottom: 12px;
+  }
+  .dashboard-command-center .dashboard-heading h1 {
+    font-size: 23px;
+  }
+  .dashboard-command-center .next-game-clubs {
+    padding: 20px 12px;
+  }
+  .dashboard-command-center .next-game-clubs .club-badge {
+    width: 56px;
+    height: 56px;
+  }
+  .dashboard-command-center .dashboard-shortcuts {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-command-center .next-game-actions > .primary {
+    display: none;
+  }
+}
+.scout-command-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.scout-command-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.scout-command-heading h2 {
+  font-size: 18px;
+}
+.scout-command-heading span {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.scouting-center > .preset-buttons {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+}
+.scouting-center > .preset-buttons button {
+  flex: 1;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 12px 8px;
+  border-bottom: 2px solid transparent;
+}
+.scouting-center > .preset-buttons button.selected {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+.scout-dispatch-dialog {
+  width: min(620px, calc(100vw - 24px));
+}
+.scout-dispatch-dialog .scout-assignment-form {
+  padding: 0;
+}
+.fm-inbox .inbox-columns {
+  grid-template-columns: 145px 280px minmax(0, 1fr);
+  min-height: calc(100dvh - 245px);
+}
+.inbox-folder-rail {
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
+}
+.inbox-folder-rail .inbox-navigation {
+  display: block;
+  padding: 12px 8px;
+}
+.inbox-folder-rail .inbox-filters {
+  display: grid;
+  gap: 5px;
+}
+.inbox-folder-rail .inbox-filters button {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 8px;
+}
+.inbox-folder-rail .inbox-categories {
+  display: grid;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 0;
+  overflow: visible;
+}
+.inbox-folder-rail .inbox-categories button {
+  text-align: left;
+  padding: 9px;
+}
+.inbox-message-list > .inbox-search {
+  display: flex;
+  width: auto;
+  margin: 10px;
+}
+.inbox-message-list > .inbox-search input {
+  width: 100%;
+  min-width: 0;
+}
+.fm-inbox .inbox-message-list,
+.fm-inbox .inbox-reading-pane {
+  max-height: calc(100dvh - 225px);
+}
+.inbox-topbar {
+  padding: 12px 18px;
+}
+@media (max-width: 1200px) and (min-width: 768px) {
+  .fm-inbox .inbox-columns {
+    grid-template-columns: 110px 220px minmax(0, 1fr);
+  }
+  .inbox-folder-rail .inbox-filters button {
+    padding: 9px 4px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 767px) {
+  .fm-inbox .inbox-columns {
+    display: flex;
+    flex-direction: column;
+  }
+  .inbox-folder-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .inbox-folder-rail .inbox-navigation {
+    padding: 8px;
+  }
+  .inbox-folder-rail .inbox-filters {
+    display: flex;
+  }
+  .inbox-folder-rail .inbox-filters button {
+    flex: 1;
+    justify-content: center;
+    gap: 6px;
+  }
+  .inbox-folder-rail .inbox-categories {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 8px 8px;
+  }
+  .inbox-folder-rail .inbox-categories button {
+    padding: 6px 8px;
+  }
+  .fm-inbox.show-letter .inbox-folder-rail {
+    display: none;
+  }
+  .fm-inbox .inbox-message-list,
+  .fm-inbox .inbox-reading-pane {
+    max-height: none;
+  }
+  .scout-command-heading {
+    gap: 8px;
+  }
+  .scout-command-heading h2 {
+    font-size: 16px;
+  }
+  .scout-command-heading > div {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .scout-command-heading span {
+    width: 100%;
+    font-size: 11px;
+  }
+  .scout-command-heading .button {
+    flex-shrink: 0;
+  }
+}
+.dashboard-command-center .dashboard-heading > div:first-child > span {
+  display: none;
+}
+.dashboard-command-center .dashboard-heading > .dashboard-date > span {
+  display: block;
+}
+@media (max-width: 600px) {
+  .squad-list-panel .player-table-summary {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .squad-list-panel .player-table-summary .player-rating-cell {
+    width: 60px;
+  }
+  .squad-list-panel .player-table-summary .player-condition-cell {
+    width: 57px;
+  }
+  .squad-list-panel .player-table-summary .player-action-cell {
+    width: 59px;
+  }
+  .squad-list-panel .player-table-summary .player-potential-cell {
+    display: none;
+  }
+  .squad-list-panel .player-table-summary .growth-delta {
+    display: flex;
+    width: fit-content;
+    margin: 4px 0 0;
+    font-size: 9px;
+  }
+  .squad-list-panel .player-table-summary .player-identity-cell {
+    white-space: normal;
+  }
+  .squad-list-panel .player-table-summary .development-badge {
+    display: none;
+  }
+  .squad-list-panel .player-table-summary .roster-move {
+    min-width: 38px;
+    padding: 7px 5px;
+    gap: 3px;
+    font-size: 10px;
+  }
+  .squad-list-panel .player-table-summary .player-name strong {
+    font-size: 12px;
+  }
+}

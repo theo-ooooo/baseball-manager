@@ -128,11 +128,13 @@ export function Dashboard({
   if (!leaders.some((row) => row.club === g.club)) leaders.push(own);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard-command-center">
       <header className="dashboard-heading">
         <div>
-          <p>CLUB OVERVIEW</p>
-          <h1>오늘의 더그아웃</h1>
+          <p>
+            {club.name} · {phaseLabel[g.phase]}
+          </p>
+          <h1>감독의 하루</h1>
           <span>
             {club.name} · {g.manager} 감독
           </span>
@@ -147,136 +149,133 @@ export function Dashboard({
           </span>
         </div>
       </header>
-
-      <section className="dashboard-stats" aria-label="구단 현황">
-        <button onClick={() => setView('world')}>
-          <span>시즌 현황</span>
-          <strong>{standing.value}</strong>
-          <small>{standing.sub}</small>
-        </button>
-        <button onClick={() => setView('finance')}>
-          <span>운영 예산</span>
-          <strong>{money(g.budget)}</strong>
-          <small>{g.budget < 0 ? '예산 적자 · 재정 확인' : '계약과 구단 운영에 사용'}</small>
-        </button>
-        <button onClick={() => setView('squad')}>
-          <span>선수단 컨디션</span>
-          <strong>
-            {condition}
-            <small>%</small>
-          </strong>
-          <small>
-            {tired.length
-              ? `휴식이 필요한 선수 ${tired.length}명`
-              : '모든 선수가 경기를 준비하고 있습니다'}
-          </small>
-        </button>
-      </section>
-
-      <div className="dashboard-grid">
-        <section className="dashboard-card next-game" aria-labelledby="next-game-title">
-          <header>
-            <h2 id="next-game-title">
-              {fixture ? '오늘의 경기' : nextPair ? '다가오는 경기' : '다음 일정'}
-            </h2>
-            <span className="dashboard-tag">{phaseLabel[g.phase]}</span>
-          </header>
-          {nextPair ? (
-            <>
-              <p className="next-game-date">
-                {dateLabel(g, nextDay)} · {getClub(nextPair[0]).city}
-                {!fixture && ` · ${nextDay - g.day}일 후`}
-              </p>
-              <div className="next-game-clubs">
-                <div>
-                  <Badge club={getClub(nextPair[1])} size="large" />
-                  <strong>{getClub(nextPair[1]).name}</strong>
-                  <small>원정</small>
-                </div>
-                <span>VS</span>
-                <div>
-                  <Badge club={getClub(nextPair[0])} size="large" />
-                  <strong>{getClub(nextPair[0]).name}</strong>
-                  <small>홈</small>
-                </div>
-              </div>
-              <div className="next-game-plan">
-                <div>
-                  <span>예정 선발</span>
-                  {starter ? (
-                    <button onClick={() => onPlayer(starter)}>
-                      {starter.name}
-                      <ChevronRight size={13} />
-                    </button>
-                  ) : (
-                    <strong>미정</strong>
-                  )}
-                </div>
-                <div>
-                  <span>경기 전술</span>
-                  <strong>{tactics[g.tactic] || g.tactic}</strong>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="dashboard-rest">
-              <CalendarDays size={28} />
-              <h3>
-                {g.phase === 'finished'
-                  ? `${g.year} 시즌을 마쳤습니다`
-                  : playedToday
-                    ? '오늘 경기를 마쳤습니다'
-                    : '다음 경기를 준비하세요'}
-              </h3>
-              <p>
-                {g.phase === 'finished'
-                  ? `${g.champion ? getClub(g.champion).name + ' 우승 · ' : ''}재계약을 확인하고 다음 시즌을 시작하세요.`
-                  : series
-                    ? `${getClub(series.a === g.club ? series.b : series.a).name} 상대 ${ownWins}승 ${oppWins}패 · ${seriesTarget}승 선취`
-                    : '다음 일정으로 진행하면 시즌이 이어집니다.'}
-              </p>
-            </div>
-          )}
-          <footer className="next-game-actions">
-            <button className="button primary" disabled={busy || !!g.liveMatch} onClick={simulate}>
-              {busy ? <LoaderCircle size={16} className="spin" /> : <Play size={16} />}
-              {continueLabel}
-            </button>
-            <button className="button secondary" onClick={() => setView('tactics')}>
-              <ClipboardList size={15} />
-              전술 준비
-            </button>
-            <button className="dashboard-link" onClick={() => setView('schedule')}>
-              전체 일정
-              <ChevronRight size={14} />
-            </button>
-          </footer>
-        </section>
-
-        <div className="dashboard-side">
-          <section className="dashboard-card" aria-labelledby="dashboard-tasks">
+      <div className="dashboard-command-grid">
+        <div className="dashboard-main-column">
+          <section className="dashboard-card next-game" aria-labelledby="next-game-title">
             <header>
-              <h2 id="dashboard-tasks">확인할 일</h2>
-              <span className="dashboard-count">{tasks.length}</span>
+              <h2 id="next-game-title">
+                {fixture ? '오늘의 경기' : nextPair ? '다가오는 경기' : '다음 일정'}
+              </h2>
+              <span className="dashboard-tag">{phaseLabel[g.phase]}</span>
             </header>
-            {tasks.length ? (
-              <ul className="dashboard-task-list">
-                {tasks.map((item) => (
-                  <li key={item.label}>
-                    <button onClick={() => setView(item.view)}>
-                      <span className={item.urgent ? 'task-dot urgent' : 'task-dot'} />
-                      <span>{item.label}</span>
-                      <b>
-                        {item.count}
-                        {item.unit}
-                      </b>
-                      <ChevronRight size={14} />
-                    </button>
-                  </li>
-                ))}
+            {nextPair ? (
+              <>
+                <p className="next-game-date">
+                  {dateLabel(g, nextDay)} · {getClub(nextPair[0]).city}
+                  {!fixture && ` · ${nextDay - g.day}일 후`}
+                </p>
+                <div className="next-game-clubs">
+                  <div>
+                    <Badge club={getClub(nextPair[1])} size="large" />
+                    <strong>{getClub(nextPair[1]).name}</strong>
+                    <small>원정</small>
+                  </div>
+                  <span>VS</span>
+                  <div>
+                    <Badge club={getClub(nextPair[0])} size="large" />
+                    <strong>{getClub(nextPair[0]).name}</strong>
+                    <small>홈</small>
+                  </div>
+                </div>
+                <div className="next-game-plan">
+                  <div>
+                    <span>예정 선발</span>
+                    {starter ? (
+                      <button onClick={() => onPlayer(starter)}>
+                        {starter.name}
+                        <ChevronRight size={13} />
+                      </button>
+                    ) : (
+                      <strong>미정</strong>
+                    )}
+                  </div>
+                  <div>
+                    <span>경기 전술</span>
+                    <strong>{tactics[g.tactic] || g.tactic}</strong>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="dashboard-rest">
+                <CalendarDays size={28} />
+                <h3>
+                  {g.phase === 'finished'
+                    ? `${g.year} 시즌을 마쳤습니다`
+                    : playedToday
+                      ? '오늘 경기를 마쳤습니다'
+                      : '다음 경기를 준비하세요'}
+                </h3>
+                <p>
+                  {g.phase === 'finished'
+                    ? `${g.champion ? getClub(g.champion).name + ' 우승 · ' : ''}재계약을 확인하고 다음 시즌을 시작하세요.`
+                    : series
+                      ? `${getClub(series.a === g.club ? series.b : series.a).name} 상대 ${ownWins}승 ${oppWins}패 · ${seriesTarget}승 선취`
+                      : '다음 일정으로 진행하면 시즌이 이어집니다.'}
+                </p>
+              </div>
+            )}
+            <footer className="next-game-actions">
+              <button
+                className="button primary"
+                disabled={busy || !!g.liveMatch}
+                onClick={simulate}
+              >
+                {busy ? <LoaderCircle size={16} className="spin" /> : <Play size={16} />}
+                {continueLabel}
+              </button>
+              <button className="button secondary" onClick={() => setView('tactics')}>
+                <ClipboardList size={15} />
+                전술 준비
+              </button>
+              <button className="dashboard-link" onClick={() => setView('schedule')}>
+                전체 일정
+                <ChevronRight size={14} />
+              </button>
+            </footer>
+          </section>
+          <section className="dashboard-card" aria-labelledby="dashboard-results">
+            <header>
+              <h2 id="dashboard-results">최근 경기</h2>
+              <button className="dashboard-link" onClick={() => setView('schedule')}>
+                전체 결과
+                <ChevronRight size={14} />
+              </button>
+            </header>
+            {g.history.length ? (
+              <ul className="dashboard-results">
+                {g.history.slice(0, 4).map((result) => {
+                  const home = result.home === g.club,
+                    us = home ? result.homeScore : result.awayScore,
+                    them = home ? result.awayScore : result.homeScore;
+                  const opponent = getClub(home ? result.away : result.home),
+                    outcome = us > them ? 'W' : us < them ? 'L' : 'D';
+                  return (
+                    <li key={result.id}>
+                      <button onClick={() => replay(result)}>
+                        <span className={`dashboard-result ${outcome}`}>{outcome}</span>
+                        <span>
+                          <strong>{opponent.name}</strong>
+                          <small>
+                            {result.date?.slice(5).replace('-', '/') || dateLabel(g, result.day)} ·{' '}
+                            {home ? '홈' : '원정'}
+                            {result.friendly ? ' · 연습경기' : ''}
+                          </small>
+                        </span>
+                        <b>
+                          {us} : {them}
+                        </b>
+                        <ChevronRight size={14} />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
-              <p className="dashboard-empty">지금은 처리할 일이 없습니다.</p>
+              <div className="dashboard-empty-results">
+                <CalendarDays size={24} />
+                <strong>첫 경기를 기다리고 있습니다</strong>
+                <p>경기를 마치면 결과와 다시보기가 표시됩니다.</p>
+              </div>
             )}
           </section>
           <section
@@ -309,90 +308,93 @@ export function Dashboard({
             </button>
           </section>
         </div>
-      </div>
-
-      <div className="dashboard-bottom">
-        <section className="dashboard-card" aria-labelledby="dashboard-league">
-          <header>
-            <h2 id="dashboard-league">
-              {league.name} {g.phase === 'preseason' ? '참가 구단' : '순위'}
-            </h2>
-            <button className="dashboard-link" onClick={() => setView('world')}>
-              리그 보기
-              <ChevronRight size={14} />
-            </button>
-          </header>
-          <table className="dashboard-standings">
-            <thead>
-              <tr>
-                <th>순위</th>
-                <th>구단</th>
-                <th>승</th>
-                <th>패</th>
-                <th>승률</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaders.map((row) => (
-                <tr key={row.club} className={row.club === g.club ? 'own' : ''}>
-                  <td>{g.phase === 'preseason' ? '–' : rows.indexOf(row) + 1}</td>
-                  <td>
-                    <Badge club={getClub(row.club)} size="tiny" />
-                    {getClub(row.club).name}
-                  </td>
-                  <td>{row.w}</td>
-                  <td>{row.l}</td>
-                  <td>{row.w + row.l ? (row.w / (row.w + row.l)).toFixed(3) : '–'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-        <section className="dashboard-card" aria-labelledby="dashboard-results">
-          <header>
-            <h2 id="dashboard-results">최근 경기</h2>
-            <button className="dashboard-link" onClick={() => setView('schedule')}>
-              전체 결과
-              <ChevronRight size={14} />
-            </button>
-          </header>
-          {g.history.length ? (
-            <ul className="dashboard-results">
-              {g.history.slice(0, 4).map((result) => {
-                const home = result.home === g.club,
-                  us = home ? result.homeScore : result.awayScore,
-                  them = home ? result.awayScore : result.homeScore;
-                const opponent = getClub(home ? result.away : result.home),
-                  outcome = us > them ? 'W' : us < them ? 'L' : 'D';
-                return (
-                  <li key={result.id}>
-                    <button onClick={() => replay(result)}>
-                      <span className={`dashboard-result ${outcome}`}>{outcome}</span>
-                      <span>
-                        <strong>{opponent.name}</strong>
-                        <small>
-                          {result.date?.slice(5).replace('-', '/') || dateLabel(g, result.day)} ·{' '}
-                          {home ? '홈' : '원정'}
-                          {result.friendly ? ' · 연습경기' : ''}
-                        </small>
-                      </span>
+        <aside className="dashboard-decision-desk" aria-label="감독 업무와 구단 현황">
+          <section className="dashboard-card" aria-labelledby="dashboard-tasks">
+            <header>
+              <h2 id="dashboard-tasks">확인할 일</h2>
+              <span className="dashboard-count">{tasks.length}</span>
+            </header>
+            {tasks.length ? (
+              <ul className="dashboard-task-list">
+                {tasks.map((item) => (
+                  <li key={item.label}>
+                    <button onClick={() => setView(item.view)}>
+                      <span className={item.urgent ? 'task-dot urgent' : 'task-dot'} />
+                      <span>{item.label}</span>
                       <b>
-                        {us} : {them}
+                        {item.count}
+                        {item.unit}
                       </b>
                       <ChevronRight size={14} />
                     </button>
                   </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="dashboard-empty-results">
-              <CalendarDays size={24} />
-              <strong>첫 경기를 기다리고 있습니다</strong>
-              <p>경기를 마치면 결과와 다시보기가 표시됩니다.</p>
-            </div>
-          )}
-        </section>
+                ))}
+              </ul>
+            ) : (
+              <p className="dashboard-empty">지금은 처리할 일이 없습니다.</p>
+            )}
+          </section>
+          <section className="dashboard-stats" aria-label="구단 현황">
+            <button onClick={() => setView('world')}>
+              <span>시즌 현황</span>
+              <strong>{standing.value}</strong>
+              <small>{standing.sub}</small>
+            </button>
+            <button onClick={() => setView('finance')}>
+              <span>운영 예산</span>
+              <strong>{money(g.budget)}</strong>
+              <small>{g.budget < 0 ? '예산 적자 · 재정 확인' : '계약과 구단 운영에 사용'}</small>
+            </button>
+            <button onClick={() => setView('squad')}>
+              <span>선수단 컨디션</span>
+              <strong>
+                {condition}
+                <small>%</small>
+              </strong>
+              <small>
+                {tired.length
+                  ? `휴식이 필요한 선수 ${tired.length}명`
+                  : '모든 선수가 경기를 준비하고 있습니다'}
+              </small>
+            </button>
+          </section>
+          <section className="dashboard-card" aria-labelledby="dashboard-league">
+            <header>
+              <h2 id="dashboard-league">
+                {league.name} {g.phase === 'preseason' ? '참가 구단' : '순위'}
+              </h2>
+              <button className="dashboard-link" onClick={() => setView('world')}>
+                리그 보기
+                <ChevronRight size={14} />
+              </button>
+            </header>
+            <table className="dashboard-standings">
+              <thead>
+                <tr>
+                  <th>순위</th>
+                  <th>구단</th>
+                  <th>승</th>
+                  <th>패</th>
+                  <th>승률</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaders.map((row) => (
+                  <tr key={row.club} className={row.club === g.club ? 'own' : ''}>
+                    <td>{g.phase === 'preseason' ? '–' : rows.indexOf(row) + 1}</td>
+                    <td>
+                      <Badge club={getClub(row.club)} size="tiny" />
+                      {getClub(row.club).name}
+                    </td>
+                    <td>{row.w}</td>
+                    <td>{row.l}</td>
+                    <td>{row.w + row.l ? (row.w / (row.w + row.l)).toFixed(3) : '–'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </aside>
       </div>
     </div>
   );
