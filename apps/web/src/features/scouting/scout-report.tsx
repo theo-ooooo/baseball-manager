@@ -57,8 +57,8 @@ export function ScoutComparison({ reports, g }: { reports: ScoutReport[]; g: Gam
   const own = g.roster.find((p) => p.id === ownId);
   if (!reports.length)
     return (
-      <p className="scout-empty">
-        보고에서 비교할 선수를 최대 3명 선택하세요. 우리 구단 선수와 능력을 나란히 볼 수 있습니다.
+      <p className="scout-comparison-hint">
+        보고서에서 최대 3명을 선택하면 우리 구단 선수와 능력을 비교할 수 있습니다.
       </p>
     );
   return (

@@ -90,6 +90,7 @@ export function GameScreen({
   initialClubId,
   initialTradeTarget,
   initialScoutTab,
+  initialScoutMission,
 }: {
   initial: CareerData;
   refreshCatalog: () => Promise<void>;
@@ -100,6 +101,7 @@ export function GameScreen({
   initialClubId?: string;
   initialTradeTarget?: string;
   initialScoutTab?: string;
+  initialScoutMission?: string;
 }) {
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
@@ -693,8 +695,9 @@ export function GameScreen({
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
           {view === 'scouting' && (
             <ScoutingPanel
-              key={initialScoutTab || 'scouting'}
+              key={`${initialScoutTab || 'scouting'}:${initialScoutMission || ''}`}
               initialTab={initialScoutTab}
+              initialMissionId={initialScoutMission}
               g={g}
               act={act}
               busy={busy}
@@ -884,6 +887,7 @@ export default function Game({
   initialClubId,
   initialTradeTarget,
   initialScoutTab,
+  initialScoutMission,
 }: {
   initialPlayerId?: string;
   initialView?: string;
@@ -892,6 +896,7 @@ export default function Game({
   initialClubId?: string;
   initialTradeTarget?: string;
   initialScoutTab?: string;
+  initialScoutMission?: string;
 } = {}) {
   const { data, error, reconnect, refreshCatalog } = useGameResources();
   if (!data)
@@ -931,6 +936,7 @@ export default function Game({
         initialClubId={initialClubId}
         initialTradeTarget={initialTradeTarget}
         initialScoutTab={initialScoutTab}
+        initialScoutMission={initialScoutMission}
         refreshCatalog={refreshCatalog}
       />
     </WorldProvider>

@@ -98,7 +98,11 @@ test('Scouting adds a saved watchlist and reports only after the observation per
     (n) => n.actionView === 'scouting' && n.report?.players?.some((p) => p.id === r.playerId),
   );
   assert.equal(presentScoutingNews(reportNews), reportNews);
-  assert.equal(reportDestination(reportNews).href, '/?view=scouting&tab=reports');
+  assert.equal(reportNews.scoutAssignmentId, g.scouting.assignments[0].id);
+  assert.equal(
+    reportDestination(reportNews).href,
+    '/?view=scouting&tab=reports&mission=' + encodeURIComponent(reportNews.scoutAssignmentId),
+  );
   assert.equal(g.progress.stop, 'report');
   g = e.applyAction(g, { type: 'advance', count: 1 });
   assert.equal(g.scouting.reports.length, 1);

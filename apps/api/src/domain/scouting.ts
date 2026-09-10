@@ -117,6 +117,8 @@ export function createScouting(world: WorldCatalog) {
       'scout',
       {
         actionView: 'scouting',
+        scoutAssignmentId: task.id,
+        id: `scout:${task.id}:started`,
         sender: { name: scout.name, role: '스카우트' },
       },
     );
@@ -192,6 +194,8 @@ export function createScouting(world: WorldCatalog) {
         'scout',
         {
           actionView: 'scouting',
+          scoutAssignmentId: task.id,
+          id: `scout:${task.id}:completed`,
           sender: { name: task.scoutName, role: '스카우트' },
           report: {
             facts: [

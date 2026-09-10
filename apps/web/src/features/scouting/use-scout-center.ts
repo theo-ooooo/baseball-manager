@@ -2,9 +2,15 @@
 import { useMemo, useState } from 'react';
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
-import { scoutingCost } from '@dugout/shared/scouting';
+import { scoutingCost, type ScoutReport } from '@dugout/shared/scouting';
 import { useWorld } from '../career/world-context';
-export function useScoutCenter(g: GameState, act: Act, initialTab?: string) {
+const emptyReports: ScoutReport[] = [];
+export function useScoutCenter(
+  g: GameState,
+  act: Act,
+  initialTab?: string,
+  initialMissionId?: string,
+) {
   const { getClub, marketPlayers } = useWorld();
   const [tab, setTab] = useState(
       initialTab && ['reports', 'missions', 'shortlist'].includes(initialTab)
@@ -19,12 +25,41 @@ export function useScoutCenter(g: GameState, act: Act, initialTab?: string) {
     [days, setDays] = useState(14),
     [selected, setSelected] = useState<string[]>([]);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [reportQuery, setReportQuery] = useState('');
+  const [reportSort, setReportSort] = useState('recent');
+  const [missionId, setMissionId] = useState(initialMissionId || '');
   const market = useMemo(() => new Map(marketPlayers(g).map((p) => [p.id, p])), [g, marketPlayers]);
   const s = g.scouting,
     active = s?.assignments.filter((t) => t.status === 'active') || [],
     scout = g.staff.find((c) => c.role === '스카우트');
-  const reports = s?.reports || [],
+  const reports = s?.reports || emptyReports,
     cost = scoutingCost(days, true);
+  const pastMissions = s?.assignments.filter((task) => task.status !== 'active') || [];
+  const focusedMission = pastMissions.find(
+    (task) => task.id === missionId && task.status === 'completed',
+  );
+  const visibleReports = useMemo(() => {
+    const query = reportQuery.trim().toLocaleLowerCase();
+    return reports
+      .filter(
+        (report) =>
+          (!focusedMission || focusedMission.reportIds?.includes(report.playerId)) &&
+          `${report.playerName} ${report.scoutName} ${report.verdict}`
+            .toLocaleLowerCase()
+            .includes(query),
+      )
+      .sort(
+        (a, b) =>
+          (reportSort === 'confidence' ? b.confidence - a.confidence : 0) ||
+          b.date.localeCompare(a.date) ||
+          a.playerName.localeCompare(b.playerName),
+      );
+  }, [reports, reportQuery, reportSort, focusedMission]);
+  function openMissionReports(id: string) {
+    setMissionId(id);
+    setReportQuery('');
+    setTab('reports');
+  }
   const toggle = (id: string) =>
     setSelected((ids) =>
       ids.includes(id) ? ids.filter((x) => x !== id) : ids.length < 3 ? [...ids, id] : ids,
@@ -55,6 +90,15 @@ export function useScoutCenter(g: GameState, act: Act, initialTab?: string) {
     active,
     scout,
     reports,
+    visibleReports,
+    pastMissions,
+    focusedMission,
+    reportQuery,
+    setReportQuery,
+    reportSort,
+    setReportSort,
+    openMissionReports,
+    clearMission: () => setMissionId(''),
     cost,
     toggle,
   };

@@ -24,6 +24,7 @@ export function ScoutingPanel({
   onPlayer,
   onNegotiate,
   initialTab,
+  initialMissionId,
 }: {
   g: GameState;
   act: Act;
@@ -31,6 +32,7 @@ export function ScoutingPanel({
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
   initialTab?: string;
+  initialMissionId?: string;
 }) {
   const { leagues, getClub } = useWorld();
   const {
@@ -52,9 +54,18 @@ export function ScoutingPanel({
     active,
     scout,
     reports,
+    visibleReports,
+    pastMissions,
+    focusedMission,
+    reportQuery,
+    setReportQuery,
+    reportSort,
+    setReportSort,
+    openMissionReports,
+    clearMission,
     cost,
     toggle,
-  } = useScoutCenter(g, act, initialTab);
+  } = useScoutCenter(g, act, initialTab, initialMissionId);
   const s = g.scouting;
   return (
     <div className="scouting-center">
@@ -131,10 +142,69 @@ export function ScoutingPanel({
               );
             })}
           </section>
+          {!!pastMissions.length && (
+            <details className="panel panel-content scout-mission-history">
+              <summary>지난 파견 · {pastMissions.length}건</summary>
+              {pastMissions.map((task) => (
+                <article className="scout-mission" key={task.id}>
+                  <div>
+                    <h3>{task.label}</h3>
+                    <p>
+                      {task.scoutName} · {task.started} 시작 · {task.days}일 관찰
+                    </p>
+                    <small>
+                      {task.status === 'cancelled'
+                        ? '파견 취소'
+                        : `${task.due} 완료 · ${task.reportIds?.length || 0}명 보고`}
+                    </small>
+                  </div>
+                  {task.status === 'completed' && !!task.reportIds?.length && (
+                    <button
+                      className="button secondary compact"
+                      onClick={() => openMissionReports(task.id)}
+                    >
+                      해당 선수 보고서
+                    </button>
+                  )}
+                </article>
+              ))}
+            </details>
+          )}
         </>
       )}
       {tab === 'reports' && (
         <>
+          {!!reports.length && (
+            <div className="scout-report-filters">
+              <label>
+                보고서 검색
+                <input
+                  type="search"
+                  value={reportQuery}
+                  onChange={(event) => setReportQuery(event.target.value)}
+                  placeholder="선수·스카우트·추천 내용"
+                />
+              </label>
+              <label>
+                정렬
+                <select value={reportSort} onChange={(event) => setReportSort(event.target.value)}>
+                  <option value="recent">최근 관찰순</option>
+                  <option value="confidence">신뢰도 높은 순</option>
+                </select>
+              </label>
+              <span>
+                {visibleReports.length} / {reports.length}건
+              </span>
+            </div>
+          )}
+          {focusedMission && (
+            <div className="scout-report-focus">
+              <p>{focusedMission.label} · 해당 선수의 최신 보고서</p>
+              <button className="text-button" onClick={clearMission}>
+                전체 보고 보기
+              </button>
+            </div>
+          )}
           {!!reports.length && (
             <ScoutComparison reports={reports.filter((r) => selected.includes(r.playerId))} g={g} />
           )}
@@ -156,7 +226,7 @@ export function ScoutingPanel({
             </section>
           )}
           <div className="scout-report-grid">
-            {reports.map((r) => {
+            {visibleReports.map((r) => {
               const p = market.get(r.playerId),
                 listed = s?.shortlist.includes(r.playerId);
               return (
@@ -211,6 +281,20 @@ export function ScoutingPanel({
               );
             })}
           </div>
+          {!!reports.length && !visibleReports.length && (
+            <div className="scout-empty">
+              <p>조건에 맞는 보관 보고서가 없습니다.</p>
+              <button
+                className="text-button"
+                onClick={() => {
+                  setReportQuery('');
+                  clearMission();
+                }}
+              >
+                검색·임무 조건 초기화
+              </button>
+            </div>
+          )}
         </>
       )}
       {tab === 'shortlist' && (
