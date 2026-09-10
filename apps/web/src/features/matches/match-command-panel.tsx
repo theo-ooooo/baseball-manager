@@ -1,13 +1,13 @@
 'use client';
 import type { GameState } from '@dugout/shared/types';
-import {
-  matchCommandOptions,
-  isPitchingCommand,
-  nextMatchHalf,
-} from '@dugout/shared/match-commands';
+import { matchCommandLabels, isPitchingCommand } from '@dugout/shared/match-commands';
 import type { Act } from '../career/game-contracts';
+import { useMatchCommand } from './use-match-command';
 
 const descriptions = {
+  contactFocus: '장타 욕심을 줄이고 인플레이 타구에 집중합니다. 삼진 위험이 줄어듭니다.',
+  swingAway: '강한 타구와 장타를 노립니다. 헛스윙과 삼진 위험이 늘어납니다.',
+  workCount: '공을 더 지켜보며 볼넷을 노립니다. 루킹 삼진 위험도 있습니다.',
   stealSecond: '타자의 타순을 유지하고 2루를 노립니다.',
   stealThird: '2루 주자를 3루로 보냅니다. 실패 위험이 더 높습니다.',
   bunt: '아웃 하나를 감수하고 주자를 한 베이스 전진시킵니다.',
@@ -28,34 +28,56 @@ export function MatchCommandPanel({
   busy: boolean;
   act: Act;
 }) {
-  const live = g.liveMatch!;
-  const defending = nextMatchHalf(live, cursor) !== (live.home === g.club ? 1 : 0);
+  const m = useMatchCommand(g, cursor, busy, act);
+  const { defending } = m;
   return (
     <section className="match-command-panel" id="match-command-panel" aria-label="타석 작전 지시">
       <header>
-        <strong>{defending ? '마운드에 보내는 사인' : '벤치의 승부수'}</strong>
+        <strong>{defending ? '마운드에 보내는 사인' : '타자에게 보내는 작전'}</strong>
         <span>다음 플레이 한 번에 적용됩니다.</span>
       </header>
+      {m.previous && (
+        <div className="match-repeat-command">
+          <span>
+            이전 사인: <b>{m.previous.label}</b>
+          </span>
+          <button
+            disabled={busy || !!m.previous.reason}
+            onClick={() => m.setSelected(m.previous!.kind)}
+          >
+            다시 선택
+          </button>
+          {m.previous.reason && <small>{m.previous.reason}</small>}
+        </div>
+      )}
       <div className="match-command-cards">
-        {matchCommandOptions(live, g.club, cursor)
+        {m.options
           .filter((option) => isPitchingCommand(option.kind) === defending)
           .map((option) => (
             <button
               key={option.kind}
               disabled={busy || !!option.reason}
-              onClick={() =>
-                void act({
-                  type: 'matchCommand',
-                  command: option.kind,
-                  cursor,
-                  timelineVersion: live.timelineVersion,
-                })
-              }
+              aria-pressed={m.selected === option.kind}
+              onClick={() => m.setSelected(option.kind)}
             >
               <strong>{option.label}</strong>
               <span>{option.reason || descriptions[option.kind]}</span>
             </button>
           ))}
+      </div>
+      <div className="match-command-confirm">
+        <span>
+          {m.selected
+            ? `선택한 사인: ${matchCommandLabels[m.selected]}`
+            : '사인을 골라 검토하세요.'}
+        </span>
+        <button
+          className="button primary"
+          disabled={busy || !m.selected || m.selected === m.queued}
+          onClick={() => void m.confirm()}
+        >
+          {m.selected === m.queued && m.queued ? '현재 대기 중인 사인' : '사인 확정 · 경기 재개'}
+        </button>
       </div>
       <p>
         {defending

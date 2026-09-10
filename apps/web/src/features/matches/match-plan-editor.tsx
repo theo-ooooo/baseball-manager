@@ -84,6 +84,19 @@ export function MatchPlanEditor({
       </div>
       <fieldset disabled={busy} className="plan-workspace">
         <legend className="sr-only">경기 계획</legend>
+        {cursor > 0 && (
+          <div className="plan-next-batter">
+            <strong>{draft.decision.situation}</strong>
+            <span>
+              다음 타자 {draft.decision.batter} · 투수 {draft.decision.pitcher}
+            </span>
+            <small>
+              {draft.decision.attacking
+                ? `${draft.decision.slot + 1}번 타순을 선택해 두었습니다. 벤치 선수를 누르면 대타로 교체합니다.`
+                : '몸을 푼 불펜 투수 또는 수비 교체를 선택하세요.'}
+            </small>
+          </div>
+        )}
         {cursor === 0 && tab !== 'tactics' && (
           <div className="coach-plan-recommendation">
             <div>
@@ -181,11 +194,7 @@ export function MatchPlanEditor({
           {dirty ? (
             <button type="submit" className="button primary compact" disabled={busy}>
               <Check size={16} />
-              {busy
-                ? '경기 계획 반영 중…'
-                : cursor === 0
-                  ? '경기 계획 적용'
-                  : '변경 적용 · 이후 경기 갱신'}
+              {busy ? '경기 계획 반영 중…' : cursor === 0 ? '경기 계획 적용' : '교체·전술 적용'}
             </button>
           ) : (
             <button

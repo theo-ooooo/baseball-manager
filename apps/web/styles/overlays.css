@@ -1,0 +1,58 @@
+/* A single coordinate system keeps dialogs inside the visible keyboard viewport. */
+[data-slot='dialog-content'],
+[data-slot='alert-dialog-content'] {
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.global-player-search {
+  text-align: left;
+  justify-content: flex-start;
+  min-height: 44px;
+}
+.global-player-search span {
+  display: inline;
+  color: var(--text);
+  font-weight: 600;
+}
+.global-player-search small {
+  margin-left: auto;
+  font-size: 12px;
+}
+@media (max-width: 767px) {
+  [data-slot='dialog-content'],
+  [data-slot='alert-dialog-content'] {
+    top: calc(var(--dialog-top, 0px) + var(--dialog-height, 100dvh) / 2) !important;
+    left: 50% !important;
+    translate: -50% -50% !important;
+    transform: none !important;
+    max-height: calc(var(--dialog-height, 100dvh) - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-width: 0;
+    scroll-padding-block: 16px;
+  }
+  [data-slot='dialog-content'] input,
+  [data-slot='dialog-content'] select,
+  [data-slot='alert-dialog-content'] input {
+    font-size: 16px;
+  }
+  [data-slot='dialog-close'] {
+    min-width: 40px;
+    min-height: 40px;
+    display: grid;
+    place-items: center;
+    top: 4px;
+    right: 4px;
+  }
+  [data-slot='dialog-header'] {
+    padding-right: 20px;
+    flex-shrink: 0;
+  }
+  .player-search-input {
+    flex-shrink: 0;
+  }
+  .player-search-results {
+    min-height: 0;
+    flex: 1;
+  }
+}

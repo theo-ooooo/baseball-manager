@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function savedCursor(key: string, floor: number, length: number) {
   try {
@@ -9,27 +9,36 @@ function savedCursor(key: string, floor: number, length: number) {
     return floor;
   }
 }
-export function useMatchPlayback(key: string, floor: number, length: number, busy: boolean) {
+export function useMatchPlayback(
+  key: string,
+  floor: number,
+  length: number,
+  busy: boolean,
+  shouldPause: (cursor: number) => boolean,
+  resume = false,
+) {
+  // Cancel immediately, including callbacks already queued before React commits the pause.
+  const stopped = useRef(!resume);
   const [state, setState] = useState<{
     cursor: number;
     phase: 'settled' | 'playing' | 'paused';
     continuous: boolean;
   }>(() => ({
-    cursor: savedCursor(key, floor, length),
-    phase: 'settled',
-    continuous: false,
+    cursor: Math.min(length, savedCursor(key, floor, length) + (resume ? 1 : 0)),
+    phase: resume && floor < length ? 'playing' : 'settled',
+    continuous: resume && floor < length,
   }));
-  const pause = useCallback(
-    () =>
-      setState((previous) => ({
-        ...previous,
-        phase: previous.phase === 'playing' ? 'paused' : previous.phase,
-        continuous: false,
-      })),
-    [],
-  );
+  const pause = useCallback(() => {
+    stopped.current = true;
+    setState((previous) => ({
+      ...previous,
+      phase: previous.phase === 'playing' ? 'paused' : previous.phase,
+      continuous: false,
+    }));
+  }, []);
   const play = useCallback(
-    (continuous = true) =>
+    (continuous = true) => {
+      stopped.current = false;
       setState((previous) => {
         if (previous.phase === 'settled' && previous.cursor >= length) return previous;
         return {
@@ -37,22 +46,23 @@ export function useMatchPlayback(key: string, floor: number, length: number, bus
           phase: 'playing',
           continuous,
         };
-      }),
+      });
+    },
     [length],
   );
-  const finishPlay = useCallback(
-    () =>
-      setState((previous) =>
-        previous.phase !== 'playing'
-          ? previous
-          : {
-              ...previous,
-              phase: 'settled',
-              continuous: previous.continuous && previous.cursor < length,
-            },
-      ),
-    [length],
-  );
+  const finishPlay = useCallback(() => {
+    if (stopped.current) return;
+    setState((previous) =>
+      previous.phase !== 'playing'
+        ? previous
+        : {
+            ...previous,
+            phase: 'settled',
+            continuous:
+              previous.continuous && previous.cursor < length && !shouldPause(previous.cursor),
+          },
+    );
+  }, [length, shouldPause]);
   const [speed, setSpeed] = useState(() => {
     try {
       const value = localStorage.getItem('dugout:match-speed');
@@ -86,7 +96,12 @@ export function useMatchPlayback(key: string, floor: number, length: number, bus
   }, [pause]);
   useEffect(() => {
     if (!state.continuous || state.phase !== 'settled' || busy) return;
-    const timer = setTimeout(() => play(), 1000 / Number(speed));
+    const timer = setTimeout(
+      () => {
+        if (!stopped.current) play();
+      },
+      Math.max(700, 1000 / Number(speed)),
+    );
     return () => clearTimeout(timer);
   }, [state.continuous, state.phase, state.cursor, speed, busy, play]);
   return {

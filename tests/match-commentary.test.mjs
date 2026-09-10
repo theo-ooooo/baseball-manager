@@ -28,11 +28,11 @@ test('commentary withholds final outcomes and cheers until the result reveal bou
   const cues = matchCommentary(scene('homeRun'), 'one');
   assert.ok(cues.some((c) => c.sound === 'bat'));
   assert.ok(
-    !visibleMatchCues(cues, 0.89).some(
+    !visibleMatchCues(cues, 0.999).some(
       (c) => c.final || c.sound === 'cheer' || c.text.includes('완료된 결과'),
     ),
   );
-  const final = visibleMatchCues(cues, 0.9).at(-1);
+  const final = visibleMatchCues(cues, 1).at(-1);
   assert.equal(final.final, true);
   assert.equal(final.sound, 'cheer');
   assert.match(final.text, /1 대 0/);

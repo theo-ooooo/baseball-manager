@@ -7,6 +7,7 @@ import { lineupAuto } from '@dugout/shared/game-view';
 import { starterScore } from '@dugout/shared/pitching';
 import { matchEnergy } from '@dugout/shared/match-energy';
 import { nextMatchHalf } from '@dugout/shared/match-commands';
+import { matchDecision } from '@dugout/shared/match-decision';
 
 export type PlanSlot = number | 'P';
 export type MatchPlan = {
@@ -38,7 +39,10 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
     instructions: current?.instructions || g.instructions || defaults(g.tactic),
   };
   const [history, setHistory] = useState<MatchPlan[]>([initial]);
-  const [target, setTarget] = useState<PlanSlot | null>(null);
+  const decision = matchDecision(live, g.club, cursor);
+  const [target, setTarget] = useState<PlanSlot | null>(
+    cursor > 0 && decision.attacking ? decision.slot : null,
+  );
   const [incoming, setIncoming] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const plan = history.at(-1)!;
@@ -139,6 +143,7 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
     incoming,
     notice,
     canPitch,
+    decision,
     dirty: !equal(plan, initial),
     canUndo: history.length > 1,
     unavailable,
