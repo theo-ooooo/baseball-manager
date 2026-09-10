@@ -1,4 +1,4 @@
-import Game from '../src/features/career/game';
+import Game from '../src/features/career/game-entry';
 
 export default async function Page({
   searchParams,

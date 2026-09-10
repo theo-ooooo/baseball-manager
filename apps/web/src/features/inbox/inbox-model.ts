@@ -1,3 +1,4 @@
+import { lineupRecommendationError } from '@dugout/shared/lineup-recommendation';
 import type { GameState, NewsItem } from '@dugout/shared/types';
 export const newsKinds: Record<string, { label: string; sender: string; role: string }> = {
   league: { label: '세계 야구', sender: '야구 소식', role: '리그 동향' },
@@ -5,6 +6,7 @@ export const newsKinds: Record<string, { label: string; sender: string; role: st
   contract: { label: '계약 관리', sender: '계약 담당자', role: '선수 계약 관리' },
   transfer: { label: '이적 · 협상', sender: '영입 담당자', role: '영입 및 에이전트 연락' },
   scout: { label: '스카우팅', sender: '전력 분석팀', role: '상대 전력 분석' },
+  lineup: { label: '경기 준비', sender: '수석 코치', role: '추천 명단 · 타순 보고' },
   match: { label: '경기 보고', sender: '수석 코치', role: '경기 결과 브리핑' },
   training: { label: '훈련', sender: '코칭 스태프', role: '선수단 관리' },
   development: { label: '성장 보고', sender: '육성 담당 코치', role: '성장 및 기량 변화' },
@@ -23,6 +25,7 @@ export function contractReview(news: NewsItem) {
   );
 }
 export function newsNeedsAction(news: NewsItem, g: GameState) {
+  if (news.lineupRecommendation) return !lineupRecommendationError(g, news);
   if (news.managerOfferId)
     return (
       g.managerCareer?.offers.some(

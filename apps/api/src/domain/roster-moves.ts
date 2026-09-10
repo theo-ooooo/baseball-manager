@@ -1,3 +1,4 @@
+import { recordSquadMove, rememberRegistration } from './registration-log';
 import type { GameState, Player } from '@dugout/shared/types';
 import { firstTeam, defenseFor, defensivePositions } from '@dugout/shared/management';
 import { lineupAuto } from '@dugout/shared/game-view';
@@ -55,7 +56,11 @@ function updateSelection(g: GameState, outgoing?: Player, incoming?: Player) {
   preparePitching(g);
 }
 
-export function changeSquad(g: GameState, action: Record<string, unknown>) {
+export function changeSquad(
+  g: GameState,
+  action: Record<string, unknown>,
+  source: 'manager' | 'coach' = 'manager',
+) {
   if (
     typeof action.id !== 'string' ||
     !['first', 'reserve'].includes(String(action.value)) ||
@@ -69,8 +74,22 @@ export function changeSquad(g: GameState, action: Record<string, unknown>) {
   const player = g.roster.find((p) => p.id === action.id)!;
   if ((player.squad || 'first') === target) return g;
   const replacement = g.roster.find((p) => p.id === replaceId);
-  player.squad = target;
-  if (replacement) replacement.squad = target === 'first' ? 'reserve' : 'first';
+  recordSquadMove(
+    g,
+    player,
+    target,
+    source === 'coach' ? '코치 추천을 검토한 선수단 조정' : '감독의 선수단 등록 조정',
+    source,
+  );
+  if (replacement)
+    recordSquadMove(
+      g,
+      replacement,
+      target === 'first' ? 'reserve' : 'first',
+      `${player.name}과 함께 선수단 교체`,
+      source,
+    );
+  rememberRegistration(g);
   updateSelection(
     g,
     target === 'reserve' ? player : replacement,

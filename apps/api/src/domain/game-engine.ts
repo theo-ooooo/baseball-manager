@@ -1,3 +1,5 @@
+import { createLineupReports } from './lineup-reports';
+import { createAiRegistrations } from './ai-registrations';
 import { createTrades } from './trades';
 import { createRookieDraft } from './rookie-draft';
 import { medicalTick, medicalAction, repairMedicalSelection } from './medical';
@@ -93,6 +95,8 @@ export function createGameEngine(world: WorldCatalog) {
   const scouting = createScouting(world);
   const managerCareer = createManagerCareer(world);
   const worldSimulation = createWorldSimulation(world);
+  const registrations = createAiRegistrations(world);
+  const lineupReports = createLineupReports(world);
   const mediaAction = createMatchMediaActions(world);
   const { negotiate, signDeal } = recruitment;
   const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
@@ -207,6 +211,7 @@ export function createGameEngine(world: WorldCatalog) {
       'scout',
     );
     dailyReports(g, world);
+    lineupReports.prepare(g);
     if (options.unemployed) {
       g.managerCareer = {
         status: 'unemployed',
@@ -229,7 +234,7 @@ export function createGameEngine(world: WorldCatalog) {
     return g;
   }
   function teamStrength(g: GameState, id: string) {
-    const r = rosterFor(g, id);
+    const r = rosterFor(g, id).filter((p) => p.squad !== 'reserve');
     return r.reduce((s, p) => s + overall(p), 0) / (r.length || 1);
   }
   function doMatch(
@@ -275,6 +280,8 @@ export function createGameEngine(world: WorldCatalog) {
         if (g.worldResults?.some((m) => m.fixtureId === fixture.id && m.date === fixture.date))
           continue;
         if ((home === g.club || away === g.club) && g.phase !== 'regular') continue;
+        registrations.prepare(g, home);
+        registrations.prepare(g, away);
         const involved = home === g.club || away === g.club;
         let res: Result;
         if (involved) {
@@ -452,6 +459,7 @@ export function createGameEngine(world: WorldCatalog) {
       worldSimulation.tick(g);
       medicalTick(g, training);
       managerCareer.tick(g);
+      lineupReports.prepare(g);
       if (g.phase === 'preseason' && g.day === 0) {
         g.phase = 'regular';
         news(
@@ -657,6 +665,9 @@ export function createGameEngine(world: WorldCatalog) {
     g.day = g.rules?.preseason ? -PRESEASON_DAYS : 0;
     prepareCalendar(g, world, true);
     g.phase = g.rules?.preseason ? 'preseason' : 'regular';
+    // A new opening roster must not retain last season's retired/departed registration IDs.
+    if (g.registrations) g.registrations.clubs = {};
+    for (const p of g.roster) if (p.injury && p.injury.returnDate <= gameDate(g)) delete p.injury;
     g.reserve = undefined;
     prepareSquad(g, world);
     prepareKnowledge(g, world);
@@ -784,6 +795,7 @@ export function createGameEngine(world: WorldCatalog) {
     prepareKnowledge(s, world);
     if (!s.liveMatch) prepareWorld(s);
     managerCareer.prepare(s);
+    lineupReports.prepare(s);
     if (s.draft?.status === 'open' && ['resignManager', 'signManager'].includes(String(a.type)))
       rookieDraft.progress(s, true);
     const careerAction = managerCareer.action(s, a);
@@ -909,6 +921,8 @@ export function createGameEngine(world: WorldCatalog) {
     if (recruited) return recruited;
     const scouted = scouting.action(s, a);
     if (scouted) return scouted;
+    const lineupReport = lineupReports.action(s, a);
+    if (lineupReport) return lineupReport;
     const reportAction = coachReportAction(s, a);
     if (reportAction) return reportAction;
     const trained = individualTrainingAction(s, a);

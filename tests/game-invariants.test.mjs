@@ -251,8 +251,10 @@ test('Defensive swaps, bench replacements, position training and saved tactics r
 
 test('Promotion limits, demotion and reserve stats survive save boundaries without leaking into first-team selection', () => {
   let g = e.newGame('kbo-lotte', 'Reserves', 'short', 5);
+  const extra = g.roster.find((p) => p.squad === 'reserve' && p.pos !== 'P');
+  g = e.applyAction(g, { type: 'squad', id: extra.id, value: 'first' });
   const reserve = g.roster.find((p) => p.squad === 'reserve' && p.pos === 'P');
-  assert.throws(() => e.applyAction(g, { type: 'squad', id: reserve.id, value: 'first' }), /28명/);
+  assert.throws(() => e.applyAction(g, { type: 'squad', id: reserve.id, value: 'first' }), /29명/);
   const demote = g.roster.find((p) => p.squad === 'first' && p.pos === 'P' && p.id !== g.starter);
   g = e.applyAction(g, { type: 'squad', id: demote.id, value: 'reserve' });
   g = e.applyAction(g, { type: 'squad', id: reserve.id, value: 'first' });

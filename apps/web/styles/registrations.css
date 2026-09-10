@@ -1,0 +1,228 @@
+.registration-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.registration-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.registration-heading h2 {
+  font-size: 16px;
+}
+.registration-heading > span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.registration-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+}
+.registration-toolbar > div {
+  display: flex;
+  gap: 4px;
+}
+.registration-toolbar button {
+  padding: 8px 12px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.registration-toolbar button[aria-pressed='true'] {
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-color: var(--brand);
+}
+.registration-toolbar select {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-1);
+  font-size: 12px;
+  max-width: 100%;
+}
+.registration-toolbar .search-box {
+  margin-left: auto;
+  width: 210px;
+}
+.registration-summary {
+  display: flex;
+  gap: 24px;
+  padding: 12px 18px;
+  border-block: 1px solid var(--line);
+  font-size: 12px;
+}
+.registration-summary span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.registration-entries article {
+  display: grid;
+  grid-template-columns: 36px minmax(135px, 0.8fr) minmax(0, 1.8fr) 80px;
+  gap: 14px;
+  align-items: center;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.registration-direction {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.is-promotion .registration-direction {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+.is-demotion .registration-direction {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+.registration-person > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.registration-person button {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+.registration-person button:hover {
+  color: var(--brand);
+}
+.registration-person small {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.registration-person a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.registration-person .club-badge {
+  width: 18px;
+  height: 18px;
+}
+.registration-detail strong {
+  font-size: 12px;
+}
+.registration-detail p {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 5px;
+}
+.registration-detail small {
+  display: block;
+  color: var(--warn-text);
+  margin-top: 5px;
+  font-size: 11px;
+}
+.registration-date {
+  text-align: right;
+  font-size: 13px;
+}
+.registration-date small {
+  display: block;
+  color: var(--text-3);
+  font-size: 10px;
+  margin-top: 7px;
+}
+.registration-board > footer {
+  padding: 16px 18px;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text-3);
+}
+.registration-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  text-align: center;
+}
+.registration-empty strong {
+  font-size: 14px;
+}
+.registration-empty p {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.recall-note {
+  display: block;
+  color: var(--warn-text);
+  font-size: 10px;
+  margin-top: 4px;
+  white-space: normal;
+}
+.registration-history-link {
+  display: block;
+  color: var(--brand);
+  padding: 0 2px 18px;
+  font-size: 13px;
+}
+@media (max-width: 767px) {
+  .registration-heading {
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+  .registration-toolbar {
+    gap: 10px;
+    padding: 12px;
+  }
+  .registration-toolbar > div {
+    width: 100%;
+  }
+  .registration-toolbar > div button {
+    flex: 1;
+  }
+  .registration-toolbar select {
+    width: 44%;
+  }
+  .registration-toolbar .search-box {
+    width: auto;
+    flex: 1;
+    min-width: 80px;
+  }
+  .registration-entries article {
+    grid-template-columns: 30px minmax(0, 1fr) 55px;
+    padding: 14px 12px;
+    gap: 10px;
+  }
+  .registration-detail {
+    grid-column: 2/-1;
+    grid-row: 2;
+  }
+  .registration-date {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .registration-summary {
+    padding: 12px;
+    gap: 16px;
+  }
+}
+.registration-rule-note {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+}

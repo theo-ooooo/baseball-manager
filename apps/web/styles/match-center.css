@@ -1403,7 +1403,7 @@
   padding: 8px 12px;
   border-radius: 6px;
   background: var(--brand);
-  color: #fff;
+  color: var(--brand-fg);
 }
 .match-repeat-command small {
   display: block;
@@ -1418,18 +1418,19 @@
 .match-decision .match-repeat-command {
   width: 100%;
   color: var(--text);
-  background: #edf3ff;
-  padding: 10px 12px;
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  padding: 12px 14px;
 }
 .match-decision .match-repeat-command span {
   color: var(--text);
   margin-top: 0;
 }
 .match-decision .match-repeat-command b {
-  color: #173a8a;
+  color: var(--brand);
 }
 .match-decision .match-repeat-command small {
-  color: #4b5f78;
+  color: var(--text-2);
 }
 .match-decision .match-repeat-command button {
   font-size: 12px;

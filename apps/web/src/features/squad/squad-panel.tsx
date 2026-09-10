@@ -190,6 +190,10 @@ export function Squad({
             등록 · 말소 관리
             <ArrowRight size={15} />
           </Link>
+          <Link href="/?view=registrations">
+            어제 · 오늘 등록 공시
+            <ArrowRight size={15} />
+          </Link>
           <Link href="/?view=training">
             주간 훈련 계획
             <ArrowRight size={15} />

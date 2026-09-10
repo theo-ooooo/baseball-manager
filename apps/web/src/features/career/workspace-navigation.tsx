@@ -8,6 +8,7 @@ const groups = [
     items: [
       ['squad', '선수 명단'],
       ['reserves', '1군 · 2군'],
+      ['registrations', '등록 · 말소'],
       ['training', '훈련'],
       ['tactics', '전술 · 타순'],
       ['medical', '의무'],
@@ -44,6 +45,7 @@ const groups = [
     items: [
       ['world', '리그 · 선수 순위'],
       ['records', '통산 기록'],
+      ['registrations', '등록 · 말소'],
     ],
   },
   {
@@ -68,7 +70,10 @@ export function WorkspaceNavigation({
   onView: (view: string) => void;
 }) {
   if (['home', 'match', 'matchday', 'player', 'club'].includes(view)) return null;
-  const group = groups.find((g) => g.items.some(([id]) => id === view));
+  const group =
+    unemployed && view === 'registrations'
+      ? groups.find((g) => g.title === '리그')
+      : groups.find((g) => g.items.some(([id]) => id === view));
   const items =
     group?.items.filter(([id]) => !(unemployed && ['staff', 'media'].includes(id))) || [];
   const title = group?.title || nav.find((n) => n.id === view)?.label;

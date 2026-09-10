@@ -530,3 +530,42 @@
     font-size: 9px;
   }
 }
+.inbox-lineup-proposal {
+  margin: 22px 0 8px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.inbox-lineup-proposal h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+.inbox-lineup-proposal p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+.inbox-lineup-proposal > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.inbox-lineup-proposal .button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.inbox-lineup-proposal > .text-button {
+  margin-top: 12px;
+  min-height: 40px;
+}
+@media (max-width: 600px) {
+  .inbox-lineup-proposal {
+    padding: 14px;
+  }
+  .inbox-lineup-proposal > div {
+    display: grid;
+  }
+}

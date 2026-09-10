@@ -236,6 +236,12 @@ export function createGameView(world: WorldCatalog) {
       cached.transfers === g.transferred
     )
       return cached.groups;
+    const registered = new Map(
+      Object.entries(g.registrations?.clubs || {}).map(([club, entry]) => [
+        club,
+        new Set(entry.first),
+      ]),
+    );
     const retired = new Set(sim.retired);
     const pool = new Map<string, Player>();
     const apply = (p: Player): Player => {
@@ -257,6 +263,8 @@ export function createGameView(world: WorldCatalog) {
         next.careerBaseline = delta.stint;
         if (delta.observation) next.observation = delta.observation;
       }
+      const entry = registered.get(next.club);
+      if (entry) next.squad = entry.has(next.id) ? 'first' : 'reserve';
       const report = g.scouting?.reports.find((r) => r.playerId === next.id);
       if (next.observation && report)
         next.observation = {

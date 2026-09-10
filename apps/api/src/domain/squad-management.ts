@@ -58,7 +58,14 @@ export function prepareSquad(g: GameState, world: WorldCatalog) {
   }
   if (!g.reserve) {
     const { makePlayer } = createPlayerGenerator(world);
-    selectFirstTeam(g);
+    const registered = g.registrations?.clubs[g.club];
+    if (registered) {
+      const ids = new Set(registered.first);
+      for (const p of g.roster) p.squad = ids.has(p.id) ? 'first' : 'reserve';
+      g.lineup = lineupAuto(firstTeam(g).filter(isAvailable));
+      g.starter = firstTeam(g).find((p) => p.pos === 'P' && isAvailable(p))?.id || g.starter;
+      g.defense = autoDefense(g);
+    } else selectFirstTeam(g);
     // Every club begins with enough academy players to field a separate development team.
     let i = 1200;
     for (const [pos, min] of [

@@ -92,6 +92,7 @@ test('Daily continue saves each idle date and stops for reports even with a full
   while (!g.progress.stop) g = e.applyAction(g, { type: 'continueDay' });
   assert.equal(g.day, -15);
   assert.equal(g.progress.stop, 'fixture');
+  assert.ok(g.news.some((n) => n.lineupRecommendation && g.progress.newsIds.includes(n.id)));
   assert.deepEqual(g.history, history);
   const atGame = e.applyAction(g, { type: 'continueDay' });
   assert.equal(atGame.day, g.day);

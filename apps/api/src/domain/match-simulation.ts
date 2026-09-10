@@ -47,10 +47,14 @@ export function createMatchSimulator(world: WorldCatalog) {
     const rosters = [
       away === g.club
         ? firstTeam(g).filter(isAvailable)
-        : g.liveMatch?.opponents?.[0] || rosterFor(g, away),
+        : (g.liveMatch?.opponents?.[0] || rosterFor(g, away)).filter(
+            (p) => p.squad !== 'reserve' && isAvailable(p),
+          ),
       home === g.club
         ? firstTeam(g).filter(isAvailable)
-        : g.liveMatch?.opponents?.[1] || rosterFor(g, home),
+        : (g.liveMatch?.opponents?.[1] || rosterFor(g, home)).filter(
+            (p) => p.squad !== 'reserve' && isAvailable(p),
+          ),
     ];
     const lineups = rosters.map((r, i) => {
       const club = i ? home : away;

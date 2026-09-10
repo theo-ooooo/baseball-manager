@@ -38,6 +38,7 @@ export const nav = [
   { id: 'dynamics', label: '선수단 분위기', icon: Activity },
   { id: 'squad', label: '선수단', icon: Users },
   { id: 'reserves', label: '1군 · 2군 관리', icon: GraduationCap },
+  { id: 'registrations', label: '등록 · 말소', icon: ClipboardList },
   { id: 'training', label: '훈련', icon: GraduationCap },
   { id: 'tactics', label: '전술 · 타순', icon: ClipboardList },
   { id: 'schedule', label: '일정 · 결과', icon: CalendarDays },

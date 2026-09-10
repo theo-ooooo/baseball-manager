@@ -1,6 +1,8 @@
+import type { LineupRecommendation } from './lineup-recommendation';
 import type { ManagerCareer, ClubCareer, ClubManagerJob } from './manager-career';
 import type { ScoutingState } from './scouting';
 import type { TrainingPlan } from './training-plan';
+import type { RegistrationState } from './registrations';
 import type { TrainingCenter } from './training-center';
 import type { MatchCommand, MatchCommandKind } from './match-commands';
 import type { MatchMediaState } from './match-media';
@@ -218,6 +220,7 @@ export type GameState = {
   tacticFamiliarity?: number;
   instructions?: TeamInstructions;
   tacticBook?: SavedTactic[];
+  registrations?: RegistrationState;
   reserve?: { w: number; l: number; d: number; history: ReserveResult[] };
   saleOffers?: SaleOffer[];
   transferListed?: Record<string, number>;
@@ -494,10 +497,12 @@ export type NewsItem = {
     | 'job-offers'
     | 'vision'
     | 'finance'
-    | 'reserves';
+    | 'reserves'
+    | 'tactics';
   sender?: { name: string; role: string };
   dealId?: string;
   managerOfferId?: string;
+  lineupRecommendation?: LineupRecommendation;
   report?: {
     purpose?: 'contractReview' | 'squadReview';
     facts?: { label: string; value: string }[];
