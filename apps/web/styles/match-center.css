@@ -1468,3 +1468,14 @@
     min-width: 76px;
   }
 }
+@media (max-width: 767px) {
+  .match-view-settings-content {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
+  }
+}
