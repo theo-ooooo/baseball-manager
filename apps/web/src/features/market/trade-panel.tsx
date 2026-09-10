@@ -7,6 +7,8 @@ import { ratingText } from '@dugout/shared/ratings';
 import { useWorld } from '../career/world-context';
 import type { Act } from '../career/game-contracts';
 import { Choice } from '../../components/game-ui';
+import { isActiveTrade, tradeNeedsConfirmation } from '@dugout/shared/trade-status';
+import { TradeOfferCard } from './trade-offer-card';
 export function TradePanel({
   g,
   act,
@@ -18,7 +20,15 @@ export function TradePanel({
   busy: boolean;
   targetId?: string;
 }) {
-  const { getClub, rosterFor } = useWorld();
+  const { rosterFor } = useWorld();
+  const activeTrades = (g.trades || [])
+    .filter((offer) => isActiveTrade(g, offer))
+    .sort(
+      (a, b) =>
+        Number(tradeNeedsConfirmation(g, b)) - Number(tradeNeedsConfirmation(g, a)) ||
+        a.expires.localeCompare(b.expires),
+    );
+  const pastTrades = (g.trades || []).filter((offer) => !isActiveTrade(g, offer));
   const { others, club, setClub, outgoing, setOutgoing, incoming, setIncoming, cash, setCash } =
     useTradeDraft(g, targetId);
   const list = (players: Player[], selected: string[], set: (ids: string[]) => void) => (
@@ -47,68 +57,21 @@ export function TradePanel({
     <div className="manager-office">
       <section className="panel panel-content">
         <h2>협상 중인 트레이드</h2>
-        {!g.trades?.length && <p>아직 제안한 트레이드가 없습니다.</p>}
-        {g.trades?.map((o) => (
-          <article className="manager-offer" key={o.id}>
-            <h3>
-              {getClub(o.club).name} ·{' '}
-              {
-                {
-                  pending: '검토 중',
-                  accepted: '구단 수락',
-                  counter: '역제안',
-                  rejected: '거절',
-                  completed: '완료',
-                  withdrawn: '철회',
-                  expired: '만료',
-                }[o.status]
-              }
-            </h3>
-            <p>{o.message}</p>
-            <p>
-              답변 {o.due} · 만료 {o.expires} · 현금 {money(o.counterCash ?? o.cash)}
-            </p>
-            <p>
-              보낼 선수:{' '}
-              {o.outgoing
-                .map(
-                  (id) =>
-                    g.roster.find((p) => p.id === id)?.name ||
-                    rosterFor(g, o.club).find((p) => p.id === id)?.name ||
-                    id,
-                )
-                .join(', ')}
-              <br />
-              받을 선수:{' '}
-              {o.incoming
-                .map(
-                  (id) =>
-                    g.roster.find((p) => p.id === id)?.name ||
-                    rosterFor(g, o.club).find((p) => p.id === id)?.name ||
-                    id,
-                )
-                .join(', ')}
-            </p>
-            {['accepted', 'counter'].includes(o.status) && (
-              <button
-                className="button primary"
-                disabled={busy}
-                onClick={() => void act({ type: 'acceptTrade', id: o.id })}
-              >
-                위 조건으로 교환 확정
-              </button>
-            )}
-            {['pending', 'accepted', 'counter'].includes(o.status) && (
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() => void act({ type: 'withdrawTrade', id: o.id })}
-              >
-                철회
-              </button>
-            )}
-          </article>
+        {!activeTrades.length && (
+          <p>진행 중인 협상이 없습니다. 아래에서 새 트레이드를 제안할 수 있습니다.</p>
+        )}
+        {g.liveMatch && <p>경기를 마친 뒤 트레이드를 확정하거나 철회할 수 있습니다.</p>}
+        {activeTrades.map((offer) => (
+          <TradeOfferCard key={offer.id} {...{ g, offer, act, busy }} />
         ))}
+        {!!pastTrades.length && (
+          <details className="trade-history">
+            <summary>지난 협상 · {pastTrades.length}건</summary>
+            {pastTrades.map((offer) => (
+              <TradeOfferCard key={offer.id} {...{ g, offer, act, busy }} />
+            ))}
+          </details>
+        )}
       </section>
       <section className="panel panel-content">
         <h2>구단 간 트레이드</h2>

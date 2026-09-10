@@ -514,6 +514,8 @@ export type NewsItem = {
     | 'tactics';
   sender?: { name: string; role: string };
   dealId?: string;
+  tradeId?: string;
+  scoutAssignmentId?: string;
   managerOfferId?: string;
   contractResolution?: 'signed';
   employmentClosed?: boolean;

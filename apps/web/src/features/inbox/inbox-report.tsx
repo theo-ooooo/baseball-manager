@@ -14,6 +14,7 @@ import type { Act } from '../career/game-contracts';
 import { contractReview, newsMeta, newsNeedsAction } from './inbox-model';
 import { useWorld } from '../career/world-context';
 import { reportDestination } from './report-destination';
+import { tradeStatus, tradeStatusLabels, isActiveTrade } from '@dugout/shared/trade-status';
 
 export function InboxReport({
   news,
@@ -43,7 +44,8 @@ export function InboxReport({
     review = contractReview(news),
     resolution = isClosedClubReport(g, news) ? 'departed' : contractReportStatus(g, news),
     reviewComplete = review && !newsNeedsAction(news, g);
-  const destination = resolution ? null : reportDestination(news);
+  const destination = resolution ? null : reportDestination(news, g);
+  const trade = news.tradeId ? g.trades?.find((offer) => offer.id === news.tradeId) : undefined;
   const players =
     news.report?.players ||
     (review
@@ -128,6 +130,12 @@ export function InboxReport({
           </section>
         )}
         <p className="inbox-letter-greeting">{g.manager} 감독님께,</p>
+        {!resolution && trade && !isActiveTrade(g, trade) && (
+          <section className="inbox-resolved" role="status">
+            <strong>트레이드 {tradeStatusLabels[tradeStatus(g, trade)]}</strong>
+            <p>이 메일은 이전 협상 기록입니다. 아래에서 현재 처리 결과를 확인할 수 있습니다.</p>
+          </section>
+        )}
         <div className="inbox-letter-body">
           {news.body.split('\n').map((line, i) => (
             <p key={i}>{line}</p>

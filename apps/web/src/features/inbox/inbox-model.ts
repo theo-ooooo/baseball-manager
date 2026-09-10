@@ -3,6 +3,7 @@ import { isClubSeasonRest } from '@dugout/shared/season-status';
 import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
 import { lineupRecommendationError } from '@dugout/shared/lineup-recommendation';
 import type { GameState, NewsItem } from '@dugout/shared/types';
+import { tradeNeedsConfirmation } from '@dugout/shared/trade-status';
 export const newsKinds: Record<string, { label: string; sender: string; role: string }> = {
   league: { label: '세계 야구', sender: '야구 소식', role: '리그 동향' },
   manager: { label: '감독 · 채용', sender: '구단주 사무실', role: '감독 계약·채용' },
@@ -29,6 +30,11 @@ export function contractReview(news: NewsItem) {
 }
 export function newsNeedsAction(news: NewsItem, g: GameState) {
   if (contractReportStatus(g, news) || isClosedClubReport(g, news)) return false;
+  if (news.tradeId) {
+    const trade = g.trades?.find((offer) => offer.id === news.tradeId);
+    const latest = g.news.find((item) => item.tradeId === news.tradeId);
+    return latest?.id === news.id && !!trade && tradeNeedsConfirmation(g, trade);
+  }
   if (isClubSeasonRest(g) && (news.choiceKind === 'playingTime' || news.kind === 'training'))
     return false;
   if (news.lineupRecommendation) return !lineupRecommendationError(g, news);

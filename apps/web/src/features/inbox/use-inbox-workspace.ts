@@ -1,12 +1,22 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { presentScoutingNews } from '@dugout/shared/scouting-guide';
+import { presentTradeNews } from '@dugout/shared/trade-status';
+import { useWorld } from '../career/world-context';
 import { useIsMobile } from '../../hooks/use-mobile';
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { newsMeta, newsNeedsAction } from './inbox-model';
 export function useInboxWorkspace(g: GameState, act: Act, busy: boolean, initialReportId?: string) {
-  const news = useMemo(() => g.news.map(presentScoutingNews), [g.news]);
+  const { getClub } = useWorld();
+  const news = useMemo(
+    () =>
+      g.news.map((item) =>
+        presentTradeNews(presentScoutingNews(item), g, (id) => getClub(id).name),
+      ),
+    [g, getClub],
+  );
+  const displayGame = useMemo(() => ({ ...g, news }), [g, news]);
   const initialReport = news.find((n) => n.id === initialReportId);
   const [selectedId, setSelectedId] = useState(initialReport?.id || news[0]?.id || ''),
     [filter, setFilter] = useState('all'),
@@ -16,12 +26,12 @@ export function useInboxWorkspace(g: GameState, act: Act, busy: boolean, initial
   const attempted = useRef(new Set<string>());
   const mobile = useIsMobile();
   const unread = news.filter((n) => !n.read),
-    decisions = news.filter((n) => newsNeedsAction(n, g));
+    decisions = news.filter((n) => newsNeedsAction(n, displayGame));
   const items = news.filter(
     (n) =>
       (filter === 'all' ||
         (filter === 'unread' && (!n.read || n.id === selectedId)) ||
-        (filter === 'decision' && newsNeedsAction(n, g))) &&
+        (filter === 'decision' && newsNeedsAction(n, displayGame))) &&
       (category === 'all' || n.kind === category) &&
       `${n.title} ${n.body} ${newsMeta(n).sender}`.toLowerCase().includes(search.toLowerCase()),
   );
@@ -49,6 +59,7 @@ export function useInboxWorkspace(g: GameState, act: Act, busy: boolean, initial
   }
   const nextUnread = unread.find((n) => n.id !== selectedId);
   return {
+    displayGame,
     selectedId,
     filter,
     category,

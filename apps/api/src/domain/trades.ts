@@ -68,6 +68,8 @@ export function createTrades(world: WorldCatalog) {
   function notice(g: GameState, o: TradeOffer) {
     postNews(g, `${view.getClub(o.club).name} · 트레이드`, o.message, 'transfer', {
       actionView: 'trade',
+      tradeId: o.id,
+      id: `trade:${o.id}:${o.status}:${gameDate(g)}`,
     });
   }
   function tick(g: GameState) {
@@ -76,6 +78,7 @@ export function createTrades(world: WorldCatalog) {
       if (gameDate(g) > o.expires) {
         o.status = 'expired';
         o.message = '제안 기한이 지났습니다.';
+        notice(g, o);
         continue;
       }
       if (o.status !== 'pending' || gameDate(g) < o.due) continue;
@@ -144,6 +147,7 @@ export function createTrades(world: WorldCatalog) {
     if (a.type === 'withdrawTrade') {
       offer.status = 'withdrawn';
       offer.message = '감독이 제안을 철회했습니다.';
+      notice(g, offer);
       return g;
     }
     if (!['accepted', 'counter'].includes(offer.status) || gameDate(g) > offer.expires)

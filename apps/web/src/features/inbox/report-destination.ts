@@ -1,11 +1,12 @@
-import type { NewsItem } from '@dugout/shared/types';
+import type { GameState, NewsItem } from '@dugout/shared/types';
 import { scoutingGuide } from '@dugout/shared/scouting-guide';
+import { tradeNeedsConfirmation, tradeStatus, isActiveTrade } from '@dugout/shared/trade-status';
 
-export function reportDestination(news: NewsItem) {
+export function reportDestination(news: NewsItem, g?: GameState) {
   if (news.actionView === 'scouting') {
     const completed = !!news.report;
     return {
-      href: `/?view=scouting&tab=${completed ? 'reports' : 'missions'}`,
+      href: `/?view=scouting&tab=${completed ? 'reports' : 'missions'}${completed && news.scoutAssignmentId ? `&mission=${encodeURIComponent(news.scoutAssignmentId)}` : ''}`,
       label: completed ? '관찰 보고서 보기' : '스카우트 관찰 현황 열기',
       detail: completed
         ? '스카우트 → 보고 · 비교에서 선수별 능력 범위와 강점·우려 사항을 확인하세요.'
@@ -13,13 +14,26 @@ export function reportDestination(news: NewsItem) {
       guide: news.title === scoutingGuide.title,
     };
   }
-  if (news.actionView === 'trade')
+  if (news.actionView === 'trade') {
+    const offer = g?.trades?.find((offer) => offer.id === news.tradeId);
+    const ready = !!g && !!offer && tradeNeedsConfirmation(g, offer);
+    const closed = !!g && !!offer && !isActiveTrade(g, offer);
     return {
       href: '/?view=trade',
-      label: '트레이드 협상 · 최종 확정',
-      detail:
-        '협상 중인 트레이드에서 수락·역제안 조건을 확인하고 ‘위 조건으로 교환 확정’을 누르면 완료됩니다.',
+      label: closed
+        ? '트레이드 결과 확인'
+        : ready || !offer
+          ? '트레이드 협상 · 최종 확정'
+          : '트레이드 진행 상황 보기',
+      detail: closed
+        ? tradeStatus(g!, offer!) === 'completed'
+          ? '선수와 현금 교환이 완료됐습니다. 추가 확정은 필요하지 않습니다.'
+          : '종료된 제안입니다. 트레이드 화면의 지난 협상에서 결과를 확인하세요.'
+        : ready || !offer
+          ? '협상 중인 트레이드에서 수락·역제안 조건을 확인하고 ‘위 조건으로 교환 확정’을 누르면 완료됩니다.'
+          : '상대 구단이 제안을 검토하고 있습니다. 답변이 오면 조건을 확인하고 최종 확정하세요.',
       guide: false,
     };
+  }
   return null;
 }

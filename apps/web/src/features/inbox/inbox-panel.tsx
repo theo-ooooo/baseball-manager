@@ -26,6 +26,7 @@ export function InboxPanel({
   onReplay,
 }: Props) {
   const {
+    displayGame,
     selectedId,
     filter,
     category,
@@ -125,7 +126,7 @@ export function InboxPanel({
                     <div>
                       <span>{meta.name || meta.sender}</span>
                       {!n.read && <i aria-label="안 읽음" />}
-                      {newsNeedsAction(n, g) && <b>확인 필요</b>}
+                      {newsNeedsAction(n, displayGame) && <b>확인 필요</b>}
                     </div>
                     <strong>{n.title}</strong>
                     <p>{n.body}</p>
@@ -166,7 +167,11 @@ export function InboxPanel({
             </button>
           </div>
           {selected ? (
-            <InboxReport news={selected} {...{ g, act, busy, onPlayer, onNegotiate, onReplay }} />
+            <InboxReport
+              news={selected}
+              g={displayGame}
+              {...{ act, busy, onPlayer, onNegotiate, onReplay }}
+            />
           ) : (
             <div className="empty-state">읽을 보고를 선택해 주세요.</div>
           )}
