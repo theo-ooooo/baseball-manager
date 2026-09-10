@@ -22,6 +22,7 @@ import '../styles/season-start.css';
 import '../styles/app-version.css';
 import '../styles/league-records.css';
 import '../styles/match-center.css';
+import '../styles/training-center.css';
 import '../styles/overlays.css';
 import { DialogViewport } from '../src/features/career/dialog-viewport';
 

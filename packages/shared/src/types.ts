@@ -1,6 +1,7 @@
 import type { ManagerCareer, ClubCareer, ClubManagerJob } from './manager-career';
 import type { ScoutingState } from './scouting';
 import type { TrainingPlan } from './training-plan';
+import type { TrainingCenter } from './training-center';
 import type { MatchCommand, MatchCommandKind } from './match-commands';
 import type { MatchMediaState } from './match-media';
 import type { PitchingApproach } from './pitching-tactics';
@@ -191,6 +192,7 @@ export type GameState = {
   starter: string;
   tactic: string;
   training: string;
+  trainingCenter?: TrainingCenter;
   staff: Coach[];
   standings: Record<string, Standing[]>;
   history: Result[];
@@ -477,6 +479,7 @@ export type NewsItem = {
   response?: string;
   actionView?:
     | 'agents'
+    | 'training'
     | 'staff'
     | 'squad'
     | 'market'

@@ -78,6 +78,7 @@ export type ClubCareer = Pick<
   | 'starter'
   | 'tactic'
   | 'training'
+  | 'trainingCenter'
   | 'defense'
   | 'pitching'
   | 'instructions'

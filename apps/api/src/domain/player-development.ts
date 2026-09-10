@@ -12,6 +12,7 @@ import { detailedAttributes } from '@dugout/shared/player-attributes';
 import { isUnrated } from '@dugout/shared/ratings';
 import { postNews } from './club-dynamics';
 import { checkTrainingGoal, individualTrainingFactors } from './individual-training';
+import type { PlayerTrainingDay } from '@dugout/shared/training-center';
 
 function curveFor(p: Player): Pick<PlayerDevelopment, 'pattern' | 'curve'> {
   const seed = hash(`${p.id}:development-v1`);
@@ -61,7 +62,7 @@ export function prepareDevelopment(g: GameState) {
     p.development.stage = stage(p);
   }
 }
-export function developPlayers(g: GameState) {
+export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTrainingDay>) {
   prepareDevelopment(g);
   const date = gameDate(g),
     seasonDays = Math.max(60, g.rounds + (g.rules?.preseason ? 28 : 0));
@@ -85,7 +86,8 @@ export function developPlayers(g: GameState) {
             ? 1.2
             : 0.55
           : 1;
-    const planFactors = individualTrainingFactors(g, p);
+    const daily = trainingDays?.get(p.id);
+    const planFactors = individualTrainingFactors(g, p, !!daily);
     for (const key of abilityKeys) {
       if (
         (p.pos === 'P' && ['contact', 'power'].includes(key)) ||
@@ -110,20 +112,15 @@ export function developPlayers(g: GameState) {
           : 1;
       const individual = 0.85 + (hash(`${p.id}:${key}`) % 31) / 100;
       const planFactor = planFactors[key];
+      const developmentInput = daily
+        ? workload * freshness * (daily.factors[key] * planFactor + (appeared ? 0.5 : 0))
+        : coaching * workload * freshness * training * focus * planFactor;
       let delta = 0;
-      if (d.stage === 'growth')
-        delta =
-          (c.growth *
-            coaching *
-            workload *
-            freshness *
-            training *
-            focus *
-            individual *
-            planFactor) /
-          seasonDays;
+      if (d.stage === 'growth') delta = (c.growth * developmentInput * individual) / seasonDays;
       else if (d.stage === 'peak')
-        delta = (0.35 * coaching * workload * training * focus * planFactor) / seasonDays;
+        delta = daily
+          ? (0.35 * developmentInput) / seasonDays
+          : (0.35 * coaching * workload * training * focus * planFactor) / seasonDays;
       else {
         const ageLoss = (1 + (p.age - c.decline) * 0.3) * c.durability;
         const physical =

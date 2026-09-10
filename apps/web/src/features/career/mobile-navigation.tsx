@@ -37,7 +37,10 @@ export function MobileNavigation({
       </div>
       {ids.map((id) => {
         const item = nav.find((entry) => entry.id === id)!;
-        const active = view === id || (id === 'squad' && view === 'reserves');
+        const active =
+          view === id ||
+          (id === 'squad' &&
+            ['reserves', 'training', 'tactics', 'medical', 'dynamics'].includes(view));
         return (
           <button
             key={id}

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import type { Coach, GameState } from '@dugout/shared/types';
 import { coachRoles, money } from '@dugout/shared/game-view';
 import { useWorld } from '../career/world-context';
@@ -183,29 +184,12 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
       <section className="panel training-block">
         <div className="panel-header">
           <h2>팀 훈련</h2>
-          <span>1군·2군 모두 적용</span>
-        </div>
-        <div className="preset-buttons training-presets">
-          {Object.entries({
-            balanced: '균형 훈련',
-            power: '장타 훈련',
-            pitching: '투구 훈련',
-            defense: '수비 훈련',
-            rest: '회복',
-          }).map(([value, label]) => (
-            <button
-              key={value}
-              className={g.training === value ? 'selected' : ''}
-              disabled={busy}
-              onClick={() => void act({ type: 'training', value })}
-            >
-              {label}
-            </button>
-          ))}
+          <Link className="text-button" href="/?view=training">
+            훈련 센터로 →
+          </Link>
         </div>
         <p className="panel-content tiny">
-          타격·투수·수비 코치는 담당 능력 성장과 훈련에 영향을 줍니다. 체력 코치는 회복과 하락기
-          관리에 도움이 됩니다. 선수별 성장 기록에서 변화를 확인하세요.
+          선수단의 훈련 탭에서 주간 일정, 개인 강도, 코치 담당과 컨디션별 휴식을 함께 관리합니다.
         </p>
       </section>
     </>
