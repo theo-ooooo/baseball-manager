@@ -16,7 +16,7 @@ export type InterviewTurn = {
   score: number;
 };
 export function managerInterviewQuestions(
-  g: GameState,
+  g: Pick<GameState, 'managerCareer'>,
   o: ManagerOffer,
   clubName: string,
 ): InterviewQuestion[] {

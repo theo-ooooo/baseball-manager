@@ -3,7 +3,9 @@ import { overall, hash, createGameView, money } from '@dugout/shared/game-view';
 import { gameDate, dateLabel } from '@dugout/shared/calendar';
 const limit = (n: number) => Math.max(0, Math.min(100, n));
 export function postNews(
-  g: GameState,
+  g: Pick<GameState, 'year' | 'day' | 'news'> & {
+    calendar?: Pick<NonNullable<GameState['calendar']>, 'openingDate'>;
+  },
   title: string,
   body: string,
   kind = 'club',

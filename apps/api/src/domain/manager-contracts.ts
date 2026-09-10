@@ -1,4 +1,5 @@
 import type { GameState } from '@dugout/shared/types';
+import type { ManagerConversationState } from '@dugout/shared/manager-commands';
 import type { ManagerOffer } from '@dugout/shared/manager-career';
 import { addDays, gameDate } from '@dugout/shared/calendar';
 import { managerJobOpen } from '@dugout/shared/manager-career';
@@ -44,7 +45,10 @@ export function tickManagerTerms(g: GameState, o: ManagerOffer) {
   o.expires = addDays(gameDate(g), 14);
   return true;
 }
-export function managerContractAction(g: GameState, a: Record<string, unknown>) {
+export function managerContractAction<T extends ManagerConversationState>(
+  g: T,
+  a: Record<string, unknown>,
+) {
   if (!['negotiateManagerContract', 'acceptManagerTerms'].includes(String(a.type))) return null;
   if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
   const o = g.managerCareer?.offers.find((o) => o.id === a.id);
@@ -52,7 +56,8 @@ export function managerContractAction(g: GameState, a: Record<string, unknown>) 
     !o ||
     o.status !== 'offered' ||
     o.expires < gameDate(g) ||
-    !managerJobOpen(g.managerJobs![o.club])
+    !g.managerJobs?.[o.club] ||
+    !managerJobOpen(g.managerJobs[o.club])
   )
     throw new Error('유효한 계약 협상이 없습니다.');
   const t = prepareManagerTerms(o);

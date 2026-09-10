@@ -1,4 +1,5 @@
 'use client';
+import { useCareerSession } from './use-career-session';
 import { UnemployedHome } from './unemployed-home';
 import { managerOfferActionLabel } from './manager-offer-status';
 import { MedicalPanel } from '../squad/medical-panel';
@@ -14,7 +15,7 @@ import { ReservePanel } from '../squad/reserve-panel';
 import { useRouter } from 'next/navigation';
 import { ClubProfile } from '../clubs/club-profile';
 import { PlayerProfile } from '../players/player-profile';
-import { useState, useEffect, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import {
   ArrowUpRight,
   Check,
@@ -39,7 +40,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { WorldProvider, useWorld } from './world-context';
 import type { WorldCatalog } from '@dugout/shared/types';
-import { type GameState, type Player, type Result } from '@dugout/shared/game-view';
+import { type Player, type Result } from '@dugout/shared/game-view';
 import { DynamicsPanel } from '../clubs/club-panels';
 import { InboxPanel } from '../inbox/inbox-panel';
 import { PlayerContractDialog } from '../contracts/player-contract-room';
@@ -106,15 +107,22 @@ export function GameScreen({
     router.push(id === 'match' ? '/match' : '/?view=' + encodeURIComponent(id));
   const setPlayer = (p: Player) =>
     router.push('/players/' + encodeURIComponent(p.id) + '?from=' + encodeURIComponent(view));
-  const [g, setG] = useState<GameState | null>(initial.state),
-    [loading, setLoading] = useState(false),
-    [error, setError] = useState(''),
-    [busy, setBusy] = useState(false),
-    [setup, setSetup] = useState(false),
+  const {
+    g,
+    ledger,
+    loading,
+    error,
+    busy,
+    saveFailed,
+    pendingAction,
+    requestPhase,
+    load,
+    act: commitAction,
+  } = useCareerSession(initial);
+  const [setup, setSetup] = useState(false),
     [newConfirm, setNewConfirm] = useState(false),
     [replay, setReplay] = useState<Result | null>(null),
-    [help, setHelp] = useState(false),
-    [saveFailed, setSaveFailed] = useState(false);
+    [help, setHelp] = useState(false);
   const awayFromClub = !!g && (isUnemployed(g) || !!g.managerCareer?.vacationUntil);
   const view =
     awayFromClub &&
@@ -141,72 +149,14 @@ export function GameScreen({
         : requestedView;
   const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
   const [reportEpoch, setReportEpoch] = useState(0);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const [requestPhase, setRequestPhase] = useState<'request' | 'response'>('request');
-  const locked = useRef(false);
-  const revision = useRef(initial.revision);
-  const [ledger, setLedger] = useState(initial.ledger);
-  async function load() {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/career', { cache: 'no-store' });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || '커리어를 불러오지 못했습니다.');
-      setG(d.state);
-      revision.current = d.revision;
-      setLedger(d.ledger || []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '연결하지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }
   const act: Act = async (action) => {
-    if (locked.current) return null;
-    locked.current = true;
-    setBusy(true);
-    setPendingAction(String(action.type));
-    setRequestPhase('request');
-    try {
-      const res = await fetch('/api/career', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...action,
-          responseMode: 'compact',
-          revision: revision.current,
-          requestId: crypto.randomUUID(),
-        }),
-      });
-      setRequestPhase('response');
-      const d = await res.json();
-      if (!res.ok) {
-        if (res.status === 409 && 'state' in d) {
-          setG(d.state);
-          revision.current = d.revision;
-          setLedger(d.ledger || []);
-        }
-        throw new Error(d.error || d.message || '요청을 처리하지 못했습니다.');
-      }
-      setG(d.state);
-      revision.current = d.revision;
-      setLedger(d.ledger || []);
-      setSaveFailed(false);
-      if (action.type === 'signManager') await refreshCatalog();
-      if (['signManager', 'resignManager', 'startVacation'].includes(String(action.type)))
-        setView('manager');
-      if (action.type === 'startMatch') router.push('/match');
-      return d.state;
-    } catch (e) {
-      setSaveFailed(true);
-      toast.error(e instanceof Error ? e.message : '저장하지 못했습니다.');
-      return null;
-    } finally {
-      locked.current = false;
-      setBusy(false);
-      setPendingAction(null);
-    }
+    const state = await commitAction(action);
+    if (!state) return null;
+    if (action.type === 'signManager') await refreshCatalog();
+    if (['signManager', 'resignManager', 'startVacation'].includes(String(action.type)))
+      setView('manager');
+    if (action.type === 'startMatch') router.push('/match');
+    return state;
   };
   const calendarProgress = useCalendarProgress(act);
   const progressing = calendarProgress.journey?.running === true;
