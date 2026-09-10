@@ -1,3 +1,4 @@
+import { reachFixture } from './helpers/manager.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -168,14 +169,14 @@ test('A new career recommends a recorded starter and keeps the leading save pitc
   assert.equal(g.starter, g.pitching.rotation[0]);
   assert.notEqual(g.starter, leader.id);
   assert.equal(g.defense.P, g.starter);
-  assert.equal(g.manager, '신임 감독');
+  assert.equal(g.manager, '김태형');
 });
 
 test('New live games actually use saved bullpen priorities at each pitching change', () => {
   const situations = new Set();
   for (const seed of [51, 407, 931]) {
     let g = e.newGame('kbo-lotte', 'Relief integration', 'short', seed);
-    g = e.applyAction(g, { type: 'continue' });
+    g = reachFixture(e, g);
     const baseline = structuredClone(g);
     g = e.applyAction(g, { type: 'startMatch' });
     assert.equal(g.liveMatch.pitchingVersion, 2);

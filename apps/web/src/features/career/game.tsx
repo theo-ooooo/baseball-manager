@@ -1,11 +1,18 @@
 'use client';
+import { UnemployedHome } from './unemployed-home';
+import { managerOfferActionLabel } from './manager-offer-status';
+import { MedicalPanel } from '../squad/medical-panel';
+import { TradePanel } from '../market/trade-panel';
+import { DraftPanel } from '../market/draft-panel';
 import Link from 'next/link';
 import { ManagerJobsPanel } from './manager-jobs-panel';
+import { RecordsPanel } from '../players/career-records';
 import { ManagerPanel } from './manager-panel';
 import { CoachRecommendations } from '../squad/coach-recommendations';
 import { isUnemployed } from '@dugout/shared/manager-career';
 import { ReservePanel } from '../squad/reserve-panel';
 import { useRouter } from 'next/navigation';
+import { ClubProfile } from '../clubs/club-profile';
 import { PlayerProfile } from '../players/player-profile';
 import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import {
@@ -69,21 +76,29 @@ export function GameScreen({
   initialPlayerId,
   initialView,
   initialReportId,
+  initialOfferId,
+  initialClubId,
 }: {
   initial: CareerData;
   refreshCatalog: () => Promise<void>;
   initialPlayerId?: string;
   initialView?: string;
   initialReportId?: string;
+  initialOfferId?: string;
+  initialClubId?: string;
 }) {
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
   const router = useRouter();
-  const requestedView = initialPlayerId
-    ? 'player'
-    : nav.some((n) => n.id === initialView)
-      ? initialView!
-      : 'inbox';
+  const requestedView = initialClubId
+    ? 'club'
+    : initialOfferId
+      ? 'job-offers'
+      : initialPlayerId
+        ? 'player'
+        : nav.some((n) => n.id === initialView)
+          ? initialView!
+          : 'inbox';
   const setView = (id: string) =>
     router.push(id === 'match' ? '/match' : '/?view=' + encodeURIComponent(id));
   const setPlayer = (p: Player) =>
@@ -99,9 +114,28 @@ export function GameScreen({
     [saveFailed, setSaveFailed] = useState(false);
   const awayFromClub = !!g && (isUnemployed(g) || !!g.managerCareer?.vacationUntil);
   const view =
-    awayFromClub && !['inbox', 'world', 'manager', 'jobs'].includes(requestedView)
-      ? 'manager'
-      : requestedView;
+    awayFromClub &&
+    ![
+      'home',
+      'inbox',
+      'world',
+      'club',
+      'player',
+      'manager',
+      'manager-contract',
+      'manager-history',
+      'jobs',
+      'job-security',
+      'job-offers',
+      'staff',
+      'records',
+    ].includes(requestedView)
+      ? g && isUnemployed(g)
+        ? 'jobs'
+        : 'manager-contract'
+      : requestedView === 'staff' && g && isUnemployed(g)
+        ? 'jobs'
+        : requestedView;
   const [contractPlayer, setContractPlayer] = useState<Player | null>(null);
   const [reportEpoch, setReportEpoch] = useState(0);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -219,7 +253,16 @@ export function GameScreen({
   async function continueFlow() {
     if (!g || !step || busy || progressing) return;
     if (awayFromClub) {
-      await act({ type: g.phase === 'finished' ? 'nextSeason' : 'managerContinue', count: 7 });
+      if (step.reportId) {
+        openReport(step.reportId);
+        return;
+      }
+      const next = await act({ type: 'managerContinue', count: 7 });
+      if (next) {
+        const latest = next.progress?.newsIds?.[0];
+        if (latest) openReport(latest);
+        else setView('inbox');
+      }
       return;
     }
     if (g.liveMatch) {
@@ -284,7 +327,14 @@ export function GameScreen({
           busy={busy}
           existing={!!g}
           cancel={() => setSetup(false)}
-          onStart={async (club, manager, mode, firstSeasonTransferBan, revealPotential) => {
+          onStart={async (
+            club,
+            manager,
+            mode,
+            firstSeasonTransferBan,
+            revealPotential,
+            unemployed,
+          ) => {
             const result = await act({
               type: 'start',
               club,
@@ -292,13 +342,19 @@ export function GameScreen({
               mode,
               firstSeasonTransferBan,
               revealPotential,
+              unemployed,
               replace: !!g,
             });
             if (result) {
               await refreshCatalog();
               setSetup(false);
-              openReport(result.news.find((n) => n.kind === 'club')?.id);
-              toast.success(`${getClub(club).name}의 감독으로 취임했습니다.`);
+              if (unemployed) openReport(result.news.find((n) => n.kind === 'manager')?.id);
+              else openReport(result.news.find((n) => n.kind === 'club')?.id);
+              toast.success(
+                unemployed
+                  ? '무직 감독으로 시작했습니다. 첫 구단에 지원해 보세요.'
+                  : `${getClub(club).name}의 감독으로 취임했습니다.`,
+              );
             }
           }}
         />
@@ -318,102 +374,142 @@ export function GameScreen({
   return (
     <SidebarProvider style={{ '--sidebar-width': '224px' } as CSSProperties}>
       <ActionProgress action={pendingAction} phase={requestPhase} />
-      <div style={{ display: 'contents' }} inert={progressing || undefined}>
-        <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
-      </div>
-      <main className={`workspace ${view === 'match' ? 'match-workspace' : ''}`}>
-        <header className="topbar" inert={progressing || undefined}>
-          <div className="breadcrumb">
-            <SidebarTrigger className="mobile-menu" aria-label="메뉴 열기" />
-            <Badge club={club} size="small" />
-            <div>
-              <strong>{isUnemployed(g) ? `${g.manager} · 무직` : club.name}</strong>
-              <span>
-                {league.name}
-                <ChevronRight size={11} />
-                {view === 'player' ? '선수 상세' : nav.find((n) => n.id === view)?.label}
-              </span>
+      {!['player', 'match'].includes(view) && (
+        <div style={{ display: 'contents' }} inert={progressing || undefined}>
+          <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
+        </div>
+      )}
+      <main
+        className={`workspace ${view === 'match' ? 'match-workspace' : view === 'player' ? 'player-workspace' : ''}`}
+      >
+        {view !== 'match' && (
+          <header className="topbar" inert={progressing || undefined}>
+            <div className="breadcrumb">
+              {view === 'player' ? (
+                <Link
+                  className="button secondary compact"
+                  href={`/?view=${initialView && nav.some((n) => n.id === initialView) ? initialView : 'squad'}`}
+                >
+                  ← 목록으로
+                </Link>
+              ) : (
+                <SidebarTrigger className="mobile-menu" aria-label="메뉴 열기" />
+              )}
+              {!isUnemployed(g) && <Badge club={club} size="small" />}
+              <div>
+                <strong>
+                  {isUnemployed(g) ? (
+                    `${g.manager} · 무직`
+                  ) : (
+                    <Link href={`/clubs/${encodeURIComponent(g.club)}`}>{club.name}</Link>
+                  )}
+                </strong>
+                <span>
+                  {isUnemployed(g) ? '감독 사무실' : league.name}
+                  <ChevronRight size={11} />
+                  {view === 'player'
+                    ? '선수 상세'
+                    : initialOfferId
+                      ? managerOfferActionLabel(
+                          g.managerCareer?.offers.find((o) => o.id === initialOfferId),
+                          g,
+                        )
+                      : view === 'club'
+                        ? '구단 정보'
+                        : nav.find((n) => n.id === view)?.label}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="topbar-right">
-            <span className={`save-state ${saveFailed ? 'save-error' : ''}`} aria-live="polite">
-              {pending ? <LoaderCircle className="spin" size={12} /> : <Check size={12} />}{' '}
-              {pending ? '저장 중' : saveFailed ? '저장 확인 필요' : '자동 저장됨'}
-            </span>
-            <button className="icon-button" aria-label="게임 안내" onClick={() => setHelp(true)}>
-              <CircleHelp size={18} />
-            </button>
-            <div className="date">
-              <b>{g.year} 시즌</b>
-              <span>
-                {g.phase === 'preseason'
-                  ? dateLabel(g)
-                  : g.phase === 'regular'
-                    ? `${dateLabel(g)} · 정규 시즌`
-                    : g.phase === 'semifinal'
-                      ? '플레이오프 · 준결승'
-                      : g.phase === 'final'
-                        ? '플레이오프 · 결승'
-                        : '시즌 종료'}
+            <div className="topbar-right">
+              <details className="manager-quick-menu">
+                <summary>{g.manager} 감독</summary>
+                <div onClick={(e) => e.currentTarget.closest('details')?.removeAttribute('open')}>
+                  <Link href="/?view=manager">내 프로필</Link>
+                  <Link href="/?view=manager-contract">계약 · 휴가 · 사퇴</Link>
+                  <Link href="/?view=manager-history">감독 경력</Link>
+                  <Link href="/manager/offers">받은 면접 · 계약 제안</Link>
+                  <Link href="/?view=jobs">채용 센터</Link>
+                </div>
+              </details>
+              <span className={`save-state ${saveFailed ? 'save-error' : ''}`} aria-live="polite">
+                {pending ? <LoaderCircle className="spin" size={12} /> : <Check size={12} />}{' '}
+                {pending ? '저장 중' : saveFailed ? '저장 확인 필요' : '자동 저장됨'}
               </span>
-            </div>
-            <div className="page-actions">
-              {g.phase !== 'finished' ? (
-                <>
-                  <details className="advance-menu" hidden={awayFromClub}>
-                    <summary aria-label="자동 진행 옵션">
-                      <ChevronsRight size={18} />
-                    </summary>
-                    <div>
-                      <strong>자동 진행</strong>
-                      <p>
-                        기존 안 읽은 보고는 건너뛰고 경기를 자동 계산하며 최대 7일 진행합니다. 새
-                        보고나 필수 결정에서 멈춥니다.
-                      </p>
-                      <button
-                        className="button secondary"
-                        disabled={busy}
-                        onClick={(event) => {
-                          event.currentTarget.closest('details')?.removeAttribute('open');
-                          void simulate(7);
-                        }}
-                      >
-                        7일 자동 진행
-                      </button>
-                    </div>
-                  </details>
+              <button className="icon-button" aria-label="게임 안내" onClick={() => setHelp(true)}>
+                <CircleHelp size={18} />
+              </button>
+              <div className="date">
+                <b>{g.year} 시즌</b>
+                <span>
+                  {g.phase === 'preseason'
+                    ? dateLabel(g)
+                    : g.phase === 'regular'
+                      ? `${dateLabel(g)} · 정규 시즌`
+                      : g.phase === 'semifinal'
+                        ? '플레이오프 · 준결승'
+                        : g.phase === 'final'
+                          ? '플레이오프 · 결승'
+                          : '시즌 종료'}
+                </span>
+              </div>
+              <div className="page-actions">
+                {g.phase !== 'finished' ? (
+                  <>
+                    <details className="advance-menu" hidden={awayFromClub}>
+                      <summary aria-label="자동 진행 옵션">
+                        <ChevronsRight size={18} />
+                      </summary>
+                      <div>
+                        <strong>자동 진행</strong>
+                        <p>
+                          기존 안 읽은 보고는 건너뛰고 경기를 자동 계산하며 최대 7일 진행합니다. 새
+                          보고나 필수 결정에서 멈춥니다.
+                        </p>
+                        <button
+                          className="button secondary"
+                          disabled={busy}
+                          onClick={(event) => {
+                            event.currentTarget.closest('details')?.removeAttribute('open');
+                            void simulate(7);
+                          }}
+                        >
+                          7일 자동 진행
+                        </button>
+                      </div>
+                    </details>
+                    <button
+                      className="button primary continue-button"
+                      aria-keyshortcuts="Space"
+                      disabled={busy || (!!g.liveMatch && view === 'match')}
+                      onClick={continueFlow}
+                      title={step?.detail}
+                    >
+                      {busy ? (
+                        <LoaderCircle size={16} className="spin" />
+                      ) : (
+                        <>
+                          <span>{g.liveMatch ? '경기장으로' : step?.label}</span>
+                          <ChevronRight size={18} />
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
                   <button
                     className="button primary continue-button"
                     aria-keyshortcuts="Space"
-                    disabled={busy || (!!g.liveMatch && view === 'match')}
+                    disabled={busy}
                     onClick={continueFlow}
-                    title={step?.detail}
                   >
-                    {busy ? (
-                      <LoaderCircle size={16} className="spin" />
-                    ) : (
-                      <>
-                        <span>{g.liveMatch ? '경기장으로' : step?.label}</span>
-                        <ChevronRight size={18} />
-                      </>
-                    )}
+                    {step?.label}
+                    <ChevronRight size={18} />
                   </button>
-                </>
-              ) : (
-                <button
-                  className="button primary continue-button"
-                  aria-keyshortcuts="Space"
-                  disabled={busy}
-                  onClick={continueFlow}
-                >
-                  {step?.label}
-                  <ChevronRight size={18} />
-                </button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        </header>
-        {!g.liveMatch && step && (
+          </header>
+        )}
+        {view !== 'match' && !g.liveMatch && step && (
           <div className="manager-next-step">
             <span>
               <b>다음 할 일</b>
@@ -449,7 +545,7 @@ export function GameScreen({
               </button>
             </div>
           )}
-          {g.catalogVersion !== catalogVersion && (
+          {view !== 'match' && !isUnemployed(g) && g.catalogVersion !== catalogVersion && (
             <div className="preseason-banner">
               <strong>선수·코치 DB 업데이트</strong>
               <span>현재 계약과 시즌 기록을 유지하며 누락 선수를 추가합니다.</span>
@@ -477,7 +573,18 @@ export function GameScreen({
           )}
           {view !== 'home' && view !== 'match' && (
             <div className="page-title">
-              <h1>{view === 'player' ? '선수 상세' : nav.find((n) => n.id === view)?.label}</h1>
+              <h1>
+                {view === 'player'
+                  ? '선수 상세'
+                  : initialOfferId
+                    ? managerOfferActionLabel(
+                        g.managerCareer?.offers.find((o) => o.id === initialOfferId),
+                        g,
+                      )
+                    : view === 'club'
+                      ? '구단 정보'
+                      : nav.find((n) => n.id === view)?.label}
+              </h1>
               <p>
                 {view === 'squad'
                   ? `${g.roster.length}명 등록`
@@ -490,6 +597,16 @@ export function GameScreen({
                         : league.name}
               </p>
             </div>
+          )}
+          {view === 'club' && initialClubId && (
+            <ClubProfile
+              key={initialClubId}
+              g={g}
+              clubId={initialClubId}
+              act={act}
+              busy={busy}
+              onPlayer={setPlayer}
+            />
           )}
           {view === 'player' && (
             <>
@@ -520,6 +637,24 @@ export function GameScreen({
             </>
           )}
           {view === 'home' && (
+            <nav className="section-tabs" aria-label="홈">
+              <Link href="/?view=home" aria-current="page">
+                홈
+              </Link>
+              <Link href="/?view=manager">내 프로필</Link>
+              <Link href="/?view=manager-contract">계약 · 휴가</Link>
+              <Link href="/?view=manager-history">경력</Link>
+            </nav>
+          )}
+          {view === 'home' && isUnemployed(g) && (
+            <UnemployedHome
+              g={g}
+              busy={busy}
+              onContinue={continueFlow}
+              continueLabel={step!.label}
+            />
+          )}
+          {view === 'home' && !isUnemployed(g) && (
             <Dashboard
               g={g}
               setView={setView}
@@ -560,8 +695,55 @@ export function GameScreen({
               경기 준비로 돌아가기 <ChevronRight size={15} />
             </Link>
           )}
-          {view === 'jobs' && <ManagerJobsPanel g={g} act={act} busy={busy} />}
-          {view === 'manager' && <ManagerPanel key={g.club} g={g} act={act} busy={busy} />}
+          {['staff', 'jobs', 'job-security'].includes(view) && (
+            <nav className="section-tabs" aria-label="스태프">
+              {[
+                ...(!isUnemployed(g) ? [['staff', '코치진 · 훈련']] : []),
+                ['jobs', '채용 센터'],
+                ['job-security', '직업 안정성'],
+              ].map(([id, label]) => (
+                <Link
+                  key={id}
+                  href={`/?view=${id}`}
+                  aria-current={view === id ? 'page' : undefined}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          )}
+          {['jobs', 'job-security'].includes(view) && (
+            <ManagerJobsPanel
+              key={view}
+              g={g}
+              act={act}
+              busy={busy}
+              security={view === 'job-security'}
+            />
+          )}
+          {view === 'records' && <RecordsPanel g={g} act={act} busy={busy} />}
+          {['manager', 'manager-contract', 'manager-history', 'vision', 'job-offers'].includes(
+            view,
+          ) && (
+            <ManagerPanel
+              key={`${g.club}:${view}`}
+              g={g}
+              act={act}
+              busy={busy}
+              mode={
+                view === 'manager'
+                  ? 'profile'
+                  : view === 'manager-contract'
+                    ? 'contract'
+                    : view === 'manager-history'
+                      ? 'history'
+                      : view === 'vision'
+                        ? 'vision'
+                        : 'offers'
+              }
+              offerId={initialOfferId}
+            />
+          )}
           {view === 'reserves' && <CoachRecommendations g={g} act={act} busy={busy} />}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
@@ -569,6 +751,22 @@ export function GameScreen({
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
           {view === 'world' && <World g={g} onPlayer={setPlayer} />}
+          {['market', 'trade', 'draft'].includes(view) && (
+            <nav className="section-tabs" aria-label="영입">
+              <Link href="/?view=market" aria-current={view === 'market' ? 'page' : undefined}>
+                선수 시장
+              </Link>
+              <Link href="/?view=trade" aria-current={view === 'trade' ? 'page' : undefined}>
+                트레이드
+              </Link>
+              <Link href="/?view=draft" aria-current={view === 'draft' ? 'page' : undefined}>
+                신인 선발
+              </Link>
+            </nav>
+          )}
+          {view === 'medical' && <MedicalPanel g={g} act={act} busy={busy} />}
+          {view === 'trade' && <TradePanel g={g} act={act} busy={busy} />}
+          {view === 'draft' && <DraftPanel g={g} act={act} busy={busy} />}
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
           {view === 'scouting' && (
             <ScoutingPanel
@@ -640,7 +838,15 @@ export default function Game({
   initialPlayerId,
   initialView,
   initialReportId,
-}: { initialPlayerId?: string; initialView?: string; initialReportId?: string } = {}) {
+  initialOfferId,
+  initialClubId,
+}: {
+  initialPlayerId?: string;
+  initialView?: string;
+  initialReportId?: string;
+  initialOfferId?: string;
+  initialClubId?: string;
+} = {}) {
   const [data, setData] = useState<{ world: WorldCatalog; career: CareerData } | null>(null),
     [error, setError] = useState(''),
     [attempt, setAttempt] = useState(0);
@@ -699,6 +905,8 @@ export default function Game({
         initialPlayerId={initialPlayerId}
         initialView={initialView}
         initialReportId={initialReportId}
+        initialOfferId={initialOfferId}
+        initialClubId={initialClubId}
         refreshCatalog={async () => {
           const response = await fetch('/api/catalog', { cache: 'no-store' });
           if (!response.ok)

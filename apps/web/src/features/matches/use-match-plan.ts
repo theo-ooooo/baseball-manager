@@ -1,4 +1,5 @@
 'use client';
+import { isAvailable } from '@dugout/shared/long-term';
 import { useState } from 'react';
 import type { Defense, GameState, TeamInstructions } from '@dugout/shared/types';
 import { defaults, firstTeam, autoDefense } from '@dugout/shared/management';
@@ -41,7 +42,7 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
   const [incoming, setIncoming] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const plan = history.at(-1)!;
-  const players = firstTeam(g),
+  const players = firstTeam(g).filter(isAvailable),
     byId = new Map(players.map((p) => [p.id, p]));
   const usedBatters = new Set([
     ...team.lineup,

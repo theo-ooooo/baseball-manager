@@ -1,3 +1,4 @@
+import { isAvailable } from '@dugout/shared/long-term';
 import { pitchingAssignment, preparePitching } from '@dugout/shared/pitching';
 import { prepareCalendar } from '@dugout/shared/calendar';
 import { isPitchingApproach } from '@dugout/shared/pitching-tactics';
@@ -44,6 +45,7 @@ export function prepareSquad(g: GameState, world: WorldCatalog) {
       if (g.roster.length >= 85) break;
       if (
         !known.has(p.id) &&
+        !g.simulation?.retired.includes(p.id) &&
         !g.ownership[p.id] &&
         !g.roster.some(
           (v) => v.real && v.original === p.original && v.pos === p.pos && v.number === p.number,
@@ -87,7 +89,7 @@ export function prepareSquad(g: GameState, world: WorldCatalog) {
 }
 function activePlayer(g: GameState, id: unknown) {
   const p = firstTeam(g).find((p) => p.id === id);
-  if (!p) throw new Error('1군에 등록된 선수를 선택해 주세요.');
+  if (!p || !isAvailable(p)) throw new Error('출전 가능한 1군 선수를 선택해 주세요.');
   return p;
 }
 export function canRemove(g: GameState, p: Player) {
@@ -276,6 +278,7 @@ export function developSquad(g: GameState, random: () => number, opponents: stri
   );
   const d = defenseFor(g);
   for (const p of g.roster) {
+    if (!isAvailable(p)) continue;
     const pos = p.positionTraining || defensivePositions.find((k) => d[k] === p.id);
     if (pos && g.training !== 'rest') {
       p.familiarity ??= {};
@@ -283,7 +286,7 @@ export function developSquad(g: GameState, random: () => number, opponents: stri
     }
   }
   if (g.day % 3 !== 0 || !['preseason', 'regular'].includes(g.phase) || !g.reserve) return;
-  const roster = reserveTeam(g),
+  const roster = reserveTeam(g).filter(isAvailable),
     lineup = lineupAuto(roster).map((id) => roster.find((p) => p.id === id)!);
   const pitcher = roster
     .filter((p) => p.pos === 'P')

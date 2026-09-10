@@ -28,6 +28,7 @@ export function MatchPlanEditor({
   onCancel: () => void;
 }) {
   const draft = useMatchPlan(g, cursor, busy);
+  const [emergency, setEmergency] = useState(false);
   const [tab, setTab] = useState<'players' | 'pitchers' | 'tactics'>('players');
   const { plan, initial, dirty } = draft;
   useEffect(() => {
@@ -51,6 +52,7 @@ export function MatchPlanEditor({
             cursor,
             timelineVersion: g.liveMatch!.timelineVersion,
             ...plan,
+            emergency,
           })
         )
           onApplied();
@@ -98,7 +100,7 @@ export function MatchPlanEditor({
           </div>
         )}
         {tab === 'pitchers' ? (
-          <MatchPitchingPlan g={g} draft={draft} />
+          <MatchPitchingPlan g={g} draft={draft} act={act} cursor={cursor} busy={busy} />
         ) : tab === 'tactics' ? (
           <MatchTacticsBoard value={plan.instructions} onChange={draft.setInstructions} />
         ) : (
@@ -128,6 +130,16 @@ export function MatchPlanEditor({
           </>
         )}
       </fieldset>
+      {cursor > 0 && initial.pitcher !== plan.pitcher && g.liveMatch?.bullpenVersion && (
+        <label className="panel-content">
+          <input
+            type="checkbox"
+            checked={emergency}
+            onChange={(e) => setEmergency(e.target.checked)}
+          />{' '}
+          준비가 부족해도 긴급 투입 허용 · 추가 체력 12 소모
+        </label>
+      )}
       <footer className="plan-footer">
         <div className="plan-review" aria-live="polite">
           <strong>{dirty ? '적용할 변경' : '경기 계획 준비 완료'}</strong>

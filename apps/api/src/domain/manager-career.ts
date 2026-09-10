@@ -1,3 +1,7 @@
+import { managerContractAction, prepareManagerTerms, tickManagerTerms } from './manager-contracts';
+import { managerInterviewQuestions } from '@dugout/shared/manager-interview';
+import { createPlayerGenerator } from './player-generator';
+import { boardAction, boardFailure } from './board-objectives';
 import type { GameState, WorldCatalog } from '@dugout/shared/types';
 import type { ClubCareer, ManagerOffer } from '@dugout/shared/manager-career';
 import { isUnemployed, managerJobOpen } from '@dugout/shared/manager-career';
@@ -7,6 +11,7 @@ import {
   teamBudget,
   money,
   hash,
+  rng,
   lineupAuto,
   coachRoles,
 } from '@dugout/shared/game-view';
@@ -17,6 +22,7 @@ import { prepareKnowledge } from './scouting';
 import { postNews, prepareDynamics } from './club-dynamics';
 import { annualPayroll } from '@dugout/shared/club-finance';
 import { prepareFinances, settleClubDay } from './club-finance';
+import { saveWorldPlayer, worldEvent } from './world-simulation';
 
 export function createManagerCareer(world: WorldCatalog) {
   const view = createGameView(world),
@@ -28,7 +34,20 @@ export function createManagerCareer(world: WorldCatalog) {
       teamBudget(view.getClub(club).league) *
         (0.012 + ((count(club) - rank) / count(club)) * 0.018),
     );
+  const generator = createPlayerGenerator(world);
+  const generatedManager = (club: string, stamp: string) =>
+    generator.generatedName(
+      view.getLeague(view.getClub(club).league).country,
+      rng(hash(club + stamp)),
+    );
   function prepare(g: GameState) {
+    if (
+      !isUnemployed(g) &&
+      !g.managerCareer?.history.length &&
+      ['신임 감독', '감독'].includes(g.manager) &&
+      view.getClub(g.club).manager
+    )
+      g.manager = view.getClub(g.club).manager!.name;
     const firstContract = !g.managerCareer;
     g.managerJobs ??= {};
     for (const c of world.clubs) {
@@ -39,7 +58,7 @@ export function createManagerCareer(world: WorldCatalog) {
       const row = g.standings[c.league]?.find((s) => s.club === c.id);
       g.managerJobs[c.id] ??= {
         club: c.id,
-        managerName: `${c.short} 현 감독`,
+        managerName: c.manager?.name || `${generatedManager(c.id, 'initial')} (가상)`,
         confidence,
         baseConfidence: confidence,
         vacant: false,
@@ -48,6 +67,9 @@ export function createManagerCareer(world: WorldCatalog) {
         startWins: row?.w || 0,
         startLosses: row?.l || 0,
       };
+      const job = g.managerJobs[c.id];
+      if (!job.vacant && /현 감독$/.test(job.managerName))
+        job.managerName = c.manager?.name || `${generatedManager(c.id, 'initial')} (가상)`;
     }
     g.managerCareer ??= {
       status: 'employed',
@@ -71,10 +93,14 @@ export function createManagerCareer(world: WorldCatalog) {
       job.vacant = false;
     }
   }
-  function report(g: GameState, title: string, body: string) {
+  function report(g: GameState, title: string, body: string, offer?: ManagerOffer) {
     postNews(g, title, body, 'manager', {
-      actionView: 'manager',
-      sender: { name: '구단주 사무실', role: '감독 경력·계약' },
+      actionView: offer ? 'job-offers' : 'manager',
+      managerOfferId: offer?.id,
+      sender: {
+        name: offer ? `${view.getClub(offer.club).name} 이사회` : '구단주 사무실',
+        role: offer ? '감독 선임 담당' : '감독 경력·계약',
+      },
     });
   }
   function leave(g: GameState, reason: 'resigned' | 'sacked') {
@@ -91,6 +117,7 @@ export function createManagerCareer(world: WorldCatalog) {
     job.vacant = true;
     job.managerName = '공석';
     job.confidence = 0;
+    job.vacantSince = gameDate(g);
     job.reason = reason === 'resigned' ? '감독 사퇴' : '구단주 계약 종료';
     m.status = 'unemployed';
     m.unemployedSince = gameDate(g);
@@ -99,6 +126,8 @@ export function createManagerCareer(world: WorldCatalog) {
     g.deals = [];
     g.coachDeals = [];
     g.saleOffers = [];
+    g.trades = [];
+    g.draft = undefined;
     g.media = undefined;
     for (const n of g.news)
       if (n.choiceKind && !n.choice) {
@@ -123,17 +152,18 @@ export function createManagerCareer(world: WorldCatalog) {
     if (isUnemployed(g) || !c || c.reviewedYear === g.year || g.phase !== 'finished') return;
     const rank = view.standings(g).findIndex((s) => s.club === g.club) + 1;
     c.reviewedYear = g.year;
-    if (rank > c.targetRank) {
+    const failed = boardFailure(g);
+    if (rank > c.targetRank || failed) {
       m.reputation = Math.max(20, m.reputation - 6);
       report(
         g,
         '시즌 목표 미달',
-        `합의한 ${c.targetRank}위 이내 목표에 대해 정규시즌 ${rank}위를 기록했습니다.`,
+        `합의한 ${c.targetRank}위 이내 목표에 대해 정규시즌 ${rank}위를 기록했습니다. ${failed}`,
       );
       leave(g, 'sacked');
     } else {
       c.salary = Math.round(c.salary * 1.15 * 100) / 100;
-      c.throughYear = g.year + 1;
+      c.throughYear = Math.max(c.throughYear, g.year + 1);
       m.reputation = Math.min(99, m.reputation + 4);
       report(
         g,
@@ -147,7 +177,35 @@ export function createManagerCareer(world: WorldCatalog) {
     const m = g.managerCareer!,
       today = gameDate(g);
     for (const job of Object.values(g.managerJobs!)) {
-      if (job.vacant) continue;
+      if (job.vacant) {
+        job.vacantSince ??= today;
+        const pending = m.offers.some(
+          (o) =>
+            o.club === job.club &&
+            ['invited', 'pending', 'interview', 'offered'].includes(o.status) &&
+            o.expires >= today,
+        );
+        if (!pending && daysBetween(job.vacantSince, today) >= 7) {
+          const row = g.standings[view.getClub(job.club).league].find((s) => s.club === job.club)!;
+          Object.assign(job, {
+            vacant: false,
+            confidence: 60,
+            baseConfidence: 60,
+            appointed: today,
+            startWins: row.w,
+            startLosses: row.l,
+            managerName: `${generatedManager(job.club, today)} (가상)`,
+            reason: '공개 채용을 거쳐 새 감독 선임',
+          });
+          delete job.vacantSince;
+          worldEvent(g, {
+            kind: 'appointment',
+            club: job.club,
+            text: `${view.getClub(job.club).name} · 새 감독 선임`,
+          });
+        }
+        continue;
+      }
       const row = g.standings[view.getClub(job.club).league].find((s) => s.club === job.club)!;
       const wins = Math.max(0, row.w - job.startWins),
         losses = Math.max(0, row.l - job.startLosses);
@@ -174,26 +232,119 @@ export function createManagerCareer(world: WorldCatalog) {
           leave(g, 'sacked');
         } else {
           job.vacant = true;
+          job.vacantSince = today;
           job.managerName = '공석';
           job.reason = '신임도 하락으로 감독 해임';
         }
       }
     }
     for (const offer of m.offers) {
-      if (['pending', 'offered'].includes(offer.status) && offer.expires < today) {
+      if (offer.expires >= today && tickManagerTerms(g, offer))
+        report(g, `${view.getClub(offer.club).name} · 계약 협상 답변`, offer.message, offer);
+      if (
+        ['invited', 'pending', 'interview', 'offered'].includes(offer.status) &&
+        offer.expires < today
+      ) {
         offer.status = 'expired';
         offer.message = '제안 유효기간이 지나 채용 심사가 종료됐습니다.';
       } else if (offer.status === 'pending' && offer.due <= today) {
         const level = view.getLeague(view.getClub(offer.club).league).level;
-        const accepted = managerJobOpen(g.managerJobs![offer.club]) && m.reputation >= level - 18;
-        offer.status = accepted ? 'offered' : 'rejected';
+        const open = managerJobOpen(g.managerJobs![offer.club]);
+        const qualified = m.reputation >= level - 18;
+        const needsInterview = !!offer.priority && !offer.answer;
+        const score =
+          m.reputation +
+          (offer.interview?.length
+            ? Math.max(
+                -15,
+                Math.min(
+                  20,
+                  offer.interview.reduce((sum, t) => sum + t.score, 0),
+                ),
+              )
+            : offer.answer === offer.priority
+              ? 8
+              : 0);
+        const accepted =
+          open && qualified && (needsInterview || score >= (offer.rivalScore || level - 18));
+        offer.status = accepted ? (needsInterview ? 'interview' : 'offered') : 'rejected';
         offer.message = accepted
-          ? `연봉 ${money(offer.salary)} · 목표 ${offer.targetRank}위 이내. 계약서에 서명하면 취임합니다.`
-          : '현 감독의 신임도가 회복됐거나 구단이 요구하는 감독 평판에 미치지 못해 지원이 거절됐습니다.';
+          ? needsInterview
+            ? `최종 면접 초청 · 경쟁 후보 평가 ${offer.rivalScore}점. 구단은 ${{ win: '즉시 성적', youth: '유망주 육성', budget: '지출 관리' }[offer.priority!]}을 우선합니다. 운영 방향을 설명해 주세요.`
+            : `최종 후보 비교를 통과했습니다. 연봉 ${money(offer.salary)} · 목표 ${offer.targetRank}위 이내. 서명하면 취임합니다.`
+          : '현 감독의 신임도 회복, 평판 요건 또는 경쟁 후보 평가에 따라 채용이 종료됐습니다.';
+        if (offer.status === 'offered' && offer.interview?.length) prepareManagerTerms(offer);
         report(
           g,
-          `${view.getClub(offer.club).name} · ${accepted ? '감독 계약 제안' : '지원 결과'}`,
+          `${view.getClub(offer.club).name} · ${accepted ? (needsInterview ? '최종 면접 초청' : '감독 계약 제안') : '지원 결과'}`,
           offer.message,
+          offer,
+        );
+      }
+    }
+    for (const offer of m.offers) {
+      if (
+        ['invited', 'interview', 'offered'].includes(offer.status) &&
+        daysBetween(today, offer.expires) >= 0 &&
+        daysBetween(today, offer.expires) <= 2 &&
+        offer.reminderDate !== offer.expires
+      ) {
+        offer.reminderDate = offer.expires;
+        report(
+          g,
+          `${view.getClub(offer.club).name} · 답변 기한 안내`,
+          `${offer.expires}까지 답변을 기다립니다. 진행 중인 채용 조건을 확인하거나 제안을 거절해 주십시오.`,
+          offer,
+        );
+      }
+    }
+    const seeking = isUnemployed(g);
+    const approachDue = seeking
+      ? daysBetween(m.lastApproach || m.unemployedSince || today, today) >= (m.lastApproach ? 7 : 3)
+      : g.day > 0 && g.day % 28 === 0 && m.lastApproach !== today;
+    if (
+      approachDue &&
+      m.offers.filter((o) => ['invited', 'pending', 'interview', 'offered'].includes(o.status))
+        .length < 3
+    ) {
+      const candidates = Object.values(g.managerJobs!).filter(
+        (j) =>
+          (seeking || j.club !== g.club) &&
+          managerJobOpen(j) &&
+          m.reputation >= view.getLeague(view.getClub(j.club).league).level - 18 &&
+          !m.offers.some((o) => o.club === j.club && daysBetween(o.applied, today) < 28),
+      );
+      const candidate = candidates.sort(
+        (a, b) =>
+          Number(g.knowledge?.leagues.includes(view.getClub(b.club).league)) -
+            Number(g.knowledge?.leagues.includes(view.getClub(a.club).league)) ||
+          hash(`${a.club}:${today}`) - hash(`${b.club}:${today}`),
+      )[0];
+      if (candidate) {
+        const targetRank = Math.ceil(count(candidate.club) / 2);
+        const priority = (['win', 'youth', 'budget'] as const)[hash(candidate.club) % 3];
+        const offer: ManagerOffer = {
+          id: `approach-${candidate.club}-${today}`,
+          club: candidate.club,
+          targetRank,
+          salary: salary(candidate.club, targetRank),
+          applied: today,
+          due: today,
+          expires: addDays(today, 14),
+          status: 'invited',
+          source: 'approach',
+          priority,
+          rivalScore: Math.max(40, view.getLeague(view.getClub(candidate.club).league).level - 18),
+          message: `${g.manager} 감독님, 우리 구단의 다음 시즌을 함께 이끌어 주실 분을 찾고 있습니다. 감독님의 경력에 관심이 있어 비공개로 연락드립니다. 감독직 면접에 참여하시겠습니까?`,
+        };
+        m.offers.unshift(offer);
+        m.offers = m.offers.slice(0, 30);
+        m.lastApproach = today;
+        report(
+          g,
+          `${view.getClub(candidate.club).name} · 감독직에 관심 있으십니까?`,
+          offer.message,
+          offer,
         );
       }
     }
@@ -252,6 +403,7 @@ export function createManagerCareer(world: WorldCatalog) {
       reserve: g.reserve,
       reputation: g.reputation,
       finances: g.finances,
+      facilities: g.facilities,
     });
   }
   function join(g: GameState, offer: ManagerOffer) {
@@ -284,6 +436,9 @@ export function createManagerCareer(world: WorldCatalog) {
         if (key !== 'year') Object.assign(g, { [key]: value });
       g.club = offer.club;
       g.roster = roster;
+      if (g.simulation)
+        for (const p of roster)
+          saveWorldPlayer(g, p, !world.players.some((base) => base.id === p.id));
       g.transferred = g.transferred.filter((p) => p.club !== g.club);
       for (const p of roster) g.ownership[p.id] = g.club;
       // World date and standings never reset on employment. Local selections are restored where possible.
@@ -291,6 +446,8 @@ export function createManagerCareer(world: WorldCatalog) {
       g.deals = [];
       g.coachDeals = [];
       g.saleOffers = [];
+      g.trades = [];
+      g.draft = undefined;
       g.transferListed = {};
       g.media = undefined;
       g.coachRecommendations = [];
@@ -349,16 +506,27 @@ export function createManagerCareer(world: WorldCatalog) {
       startWins: row.w,
       startLosses: row.l,
     });
+    delete job.vacantSince;
     m.status = 'employed';
     m.contract = {
       club: g.club,
       salary: offer.salary,
       targetRank: offer.targetRank,
       signed: date,
-      throughYear: g.year,
-      ...(g.phase === 'finished' ? { reviewedYear: g.year, throughYear: g.year + 1 } : {}),
+      throughYear: g.year + (offer.contractTerms?.years || 1) - 1,
+      ...(g.phase === 'finished'
+        ? { reviewedYear: g.year, throughYear: g.year + (offer.contractTerms?.years || 1) }
+        : {}),
     };
     delete m.unemployedSince;
+    if (offer.budgetAdjustment) {
+      const adjustment = Math.round(
+        teamBudget(view.getClub(g.club).league) * offer.budgetAdjustment,
+      );
+      g.budget += adjustment;
+      if (adjustment > 0) g.income += adjustment;
+      else g.expenses -= adjustment;
+    }
     m.offers = [];
     prepareKnowledge(g, world);
     const league = view.getClub(g.club).league;
@@ -371,12 +539,24 @@ export function createManagerCareer(world: WorldCatalog) {
     );
   }
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
+    if (['negotiateManagerContract', 'acceptManagerTerms'].includes(String(a.type))) {
+      prepare(g);
+      return managerContractAction(g, a);
+    }
+    if (a.type === 'boardNegotiate') {
+      prepare(g);
+      return boardAction(g, a, world);
+    }
     if (
       ![
         'resignManager',
         'managerTarget',
         'applyManager',
         'signManager',
+        'managerInterview',
+        'submitManagerProposal',
+        'acceptManagerInvite',
+        'declineManager',
         'startVacation',
         'endVacation',
       ].includes(String(a.type))
@@ -385,7 +565,79 @@ export function createManagerCareer(world: WorldCatalog) {
     prepare(g);
     const m = g.managerCareer!;
     if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
-    if (a.type === 'resignManager') {
+    if (a.type === 'submitManagerProposal') {
+      const offer = m.offers.find((o) => o.id === a.id);
+      if (
+        !offer ||
+        offer.status !== 'interview' ||
+        offer.expires < gameDate(g) ||
+        offer.interview?.length !==
+          managerInterviewQuestions(g, offer, view.getClub(offer.club).name).length
+      )
+        throw new Error('면접 문항을 모두 마친 뒤 제안서를 제출해 주세요.');
+      const proposal = typeof a.proposal === 'string' ? a.proposal.trim() : '';
+      if (proposal.length < 20 || proposal.length > 1200)
+        throw new Error('운영 제안서는 20~1,200자로 작성해 주세요.');
+      offer.proposal = proposal;
+      offer.status = 'pending';
+      offer.due = addDays(gameDate(g), 2);
+      offer.expires = addDays(gameDate(g), 14);
+      offer.message =
+        '운영 제안서를 접수했습니다. 면접에서 합의한 방향과 다른 후보들을 비교해 2일 뒤 최종 결과를 알려드리겠습니다.';
+      report(g, `${view.getClub(offer.club).name} · 면접 및 제안서 접수`, offer.message, offer);
+      return g;
+    }
+    if (
+      a.type === 'managerInterview' ||
+      a.type === 'declineManager' ||
+      a.type === 'acceptManagerInvite'
+    ) {
+      const offer = m.offers.find((o) => o.id === a.id);
+      if (
+        !offer ||
+        !['invited', 'interview', 'offered', 'pending'].includes(offer.status) ||
+        offer.expires < gameDate(g)
+      )
+        throw new Error('진행 중인 채용 제안이 없습니다.');
+      if (a.type === 'declineManager') {
+        offer.status = 'rejected';
+        offer.message = '감독이 채용 절차를 철회했습니다.';
+        return g;
+      }
+      if (a.type === 'acceptManagerInvite') {
+        if (offer.status !== 'invited') throw new Error('유효한 면접 초청이 없습니다.');
+        offer.status = 'interview';
+        offer.message = `초청에 응해 주셔서 감사합니다. 우리 구단은 ${{ win: '당장의 성적 향상', youth: '젊은 선수 육성', budget: '안정적인 재정 운영' }[offer.priority || 'win']}을 중요하게 생각합니다. 어떤 계획을 갖고 계십니까?`;
+        report(g, `${view.getClub(offer.club).name} · 감독 면접`, offer.message, offer);
+        return g;
+      }
+      if (offer.status !== 'interview') throw new Error('진행 중인 면접이 없습니다.');
+      const questions = managerInterviewQuestions(g, offer, view.getClub(offer.club).name);
+      const question = questions[offer.interview?.length || 0];
+      if (!question || a.question !== question.id)
+        throw new Error('면접 질문이 변경됐습니다. 현재 질문에 답변해 주세요.');
+      const answer = question.answers.find((x) => x.id === a.answer);
+      if (!answer) throw new Error('면접 답변을 선택해 주세요.');
+      (offer.interview ??= []).push({
+        topic: question.topic,
+        question: question.question,
+        answer: answer.text,
+        answerId: answer.id,
+        reaction: answer.reaction,
+        score: answer.score,
+      });
+      if (question.id === 'style') offer.answer = answer.id as 'win' | 'youth' | 'budget';
+      if (question.id === 'target' && answer.id === 'ambitious') {
+        offer.targetRank = Math.max(1, offer.targetRank - 1);
+        offer.salary = salary(offer.club, offer.targetRank);
+      }
+      if (question.id === 'budget')
+        offer.budgetAdjustment = answer.id === 'extra' ? 0.1 : answer.id === 'lean' ? -0.1 : 0;
+      offer.message = answer.reaction;
+      if (offer.interview.length === questions.length)
+        offer.message =
+          '면접 문항을 모두 마쳤습니다. 논의한 내용을 운영 제안서로 정리해 제출해 주십시오.';
+    } else if (a.type === 'resignManager') {
       if (isUnemployed(g)) throw new Error('현재 소속 구단이 없습니다.');
       if (a.confirm !== true) throw new Error('감독 사퇴를 확인해 주세요.');
       leave(g, 'resigned');
@@ -408,12 +660,20 @@ export function createManagerCareer(world: WorldCatalog) {
       report(g, '휴가 조기 복귀', '오늘부터 직접 구단을 지휘합니다.');
     } else if (a.type === 'signManager') {
       const offer = m.offers.find((o) => o.id === a.id);
-      if (!isUnemployed(g) || !offer || offer.status !== 'offered' || offer.expires < gameDate(g))
+      if (!offer || offer.status !== 'offered' || offer.expires < gameDate(g))
         throw new Error('유효한 감독 계약 제안이 없습니다.');
+      if (offer.contractTerms) {
+        const t = offer.contractTerms;
+        if (t.status !== 'agreed' || a.termsVersion !== t.version || a.signature !== g.manager)
+          throw new Error('계약 조건에 합의한 뒤 최신 계약서에 감독 이름으로 서명해 주세요.');
+        offer.salary = t.salary;
+        offer.targetRank = t.targetRank;
+      }
       if (g.phase === 'semifinal' || g.phase === 'final')
         throw new Error('포스트시즌을 마친 뒤 취임할 수 있습니다.');
       if (!managerJobOpen(g.managerJobs![offer.club]))
         throw new Error('현 감독의 신임도가 회복되어 채용이 종료됐습니다.');
+      if (!isUnemployed(g)) leave(g, 'resigned');
       join(g, offer);
     } else {
       const club = a.type === 'managerTarget' ? g.club : String(a.club);
@@ -426,6 +686,8 @@ export function createManagerCareer(world: WorldCatalog) {
         if (isUnemployed(g) || !m.contract) throw new Error('현재 소속 구단이 없습니다.');
         if (g.day >= 0 && m.contract.signed !== gameDate(g))
           throw new Error('시즌 목표는 개막 전 또는 취임 당일에만 변경할 수 있습니다.');
+        if (m.contract.negotiatedYear === g.year && target > m.contract.targetRank)
+          throw new Error('추가 지원을 받은 시즌의 순위 약속은 낮출 수 없습니다.');
         m.contract.targetRank = target;
         m.contract.salary = salary(club, target);
         report(
@@ -434,11 +696,13 @@ export function createManagerCareer(world: WorldCatalog) {
           `정규시즌 ${target}위 이내 · 연봉 ${money(m.contract.salary)}. 목표 달성 시 15% 인상과 계약 연장, 미달 시 해고됩니다.`,
         );
       } else {
-        if (!isUnemployed(g))
-          throw new Error('사퇴 또는 계약 종료 후 감독직에 지원할 수 있습니다.');
+        if (!isUnemployed(g) && club === g.club)
+          throw new Error('현재 재직 중인 구단에는 지원할 수 없습니다.');
         if (!managerJobOpen(g.managerJobs![club]))
           throw new Error('공석이거나 구단주 신임도 35% 미만인 팀에만 지원할 수 있습니다.');
-        const active = m.offers.filter((o) => ['pending', 'offered'].includes(o.status));
+        const active = m.offers.filter((o) =>
+          ['invited', 'pending', 'interview', 'offered'].includes(o.status),
+        );
         if (active.length >= 3 || active.some((o) => o.club === club))
           throw new Error('동시에 최대 세 구단에 한 번씩 지원할 수 있습니다.');
         if (m.offers.some((o) => o.club === club && daysBetween(o.applied, gameDate(g)) < 14))
@@ -453,13 +717,33 @@ export function createManagerCareer(world: WorldCatalog) {
           due: addDays(today, 3),
           expires: addDays(today, 17),
           status: 'pending',
+          source: 'application',
+          public: a.public === true,
+          priority: (['win', 'youth', 'budget'] as const)[hash(club) % 3],
+          rivalScore: Math.max(
+            40,
+            view.getLeague(view.getClub(club).league).level - 18 + (hash(club + today) % 6),
+          ),
           message: '구단이 지원서를 검토합니다. 3일 뒤 답변 예정입니다.',
         });
         m.offers = m.offers.slice(0, 30);
+        if (!isUnemployed(g) && a.public === true) {
+          const own = g.managerJobs![g.club];
+          own.baseConfidence = Math.max(0, own.baseConfidence - 8);
+          own.confidence = Math.max(0, own.confidence - 8);
+          report(
+            g,
+            '타 구단 공개 지원 · 신임도 하락',
+            '현재 구단주가 공개 지원에 실망했습니다. 신임도 8%p 하락.',
+          );
+        }
         report(
           g,
           `${view.getClub(club).name} 감독직 지원`,
-          '제안한 순위 목표와 감독 평판을 검토한 뒤 답변합니다.',
+          a.public === true
+            ? '감독직에 대한 공개적인 관심을 구단에 전달했습니다. 구단은 평판과 제안한 목표를 검토한 뒤 3일 안에 연락할 예정입니다.'
+            : '비공개 접촉을 전달했습니다. 구단은 외부 발표 없이 경력과 운영 계획을 검토하고 3일 안에 연락합니다.',
+          m.offers[0],
         );
       }
     }

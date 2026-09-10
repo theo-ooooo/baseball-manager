@@ -1,3 +1,5 @@
+import { bullpenState } from '@dugout/shared/bullpen';
+import { isAvailable } from '@dugout/shared/long-term';
 import type {
   Defense,
   GameState,
@@ -117,7 +119,14 @@ export function applyMatchEffects(g: GameState) {
     if (effect)
       Object.assign(p, {
         stats: structuredClone(effect.stats),
-        condition: effect.condition,
+        condition: Math.max(
+          10,
+          effect.condition -
+            (live.bullpenVersion
+              ? (live.warmups || []).filter((w) => w.playerId === p.id && w.mode === 'warm')
+                  .length * 2
+              : 0),
+        ),
         familiarity: effect.familiarity && { ...effect.familiarity },
       });
   }
@@ -139,10 +148,13 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
   const cursor = validateCursor(live, a);
   if (cursor >= live.timeline!.log.length || live.finished)
     throw new Error('종료된 경기는 변경할 수 없습니다.');
-  if ((live.changes?.length || 0) + (live.commands?.length || 0) >= MAX_MATCH_CHANGES)
+  if (
+    (live.changes?.length || 0) + (live.commands?.length || 0) + (live.warmups?.length || 0) >=
+    MAX_MATCH_CHANGES
+  )
     throw new Error('한 경기의 변경 횟수를 초과했습니다.');
   const lineup = a.lineup;
-  const eligible = firstTeam(g),
+  const eligible = firstTeam(g).filter(isAvailable),
     players = new Map(eligible.map((p) => [p.id, p]));
   if (
     !Array.isArray(lineup) ||
@@ -168,6 +180,7 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
   const previous = pastChanges.at(-1);
   const input = live.prepared!.input;
   const priorLineup = previous?.lineup || input.lineup;
+  let coldEntry = false;
   if (cursor > 0) {
     const used = new Set([...input.lineup, ...pastChanges.flatMap((c) => c.lineup)]);
     for (let i = 0; i < 9; i++)
@@ -183,6 +196,14 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
     const currentPitcher = pitched.at(-1) || input.starter;
     if (pitcher !== currentPitcher && new Set([input.starter, ...pitched]).has(pitcher))
       throw new Error('이미 교체된 투수는 다시 등판할 수 없습니다.');
+    if (pitcher !== currentPitcher && live.bullpenVersion) {
+      const warm = bullpenState(live, pitcher, cursor).status;
+      coldEntry = warm === 'standby' || warm === 'warming' || warm === 'tired';
+      if (coldEntry && a.emergency !== true)
+        throw new Error(
+          '불펜 준비가 부족합니다. 2타석 이상 몸을 풀거나 피로를 감수한 긴급 투입을 확인해 주세요.',
+        );
+    }
     if (pitcher !== currentPitcher && live.timeline!.log[cursor]?.half === ownHalf)
       throw new Error('투수 교체는 우리 팀 수비 타석 직전에 확정해 주세요.');
   }
@@ -217,6 +238,7 @@ export function reviseTimeline(g: GameState, a: Record<string, unknown>, simulat
     defense.P = pitcher;
   }
   const change: MatchChange = {
+    ...(coldEntry ? { coldEntry: true } : {}),
     cursor,
     lineup: [...lineup],
     pitcher,

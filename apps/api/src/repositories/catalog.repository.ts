@@ -15,12 +15,18 @@ export class CatalogRepository {
   private readonly cache = new WeakMap<D1Database, { version: string; world: WorldCatalog }>();
 
   async getWorld(db: D1Database): Promise<WorldCatalog> {
+    const cached = this.cache.get(db);
+    if (cached) {
+      const version = await db
+        .prepare("SELECT value FROM catalog_meta WHERE key='version'")
+        .first<{ value: string }>();
+      if (version?.value === cached.version) return cached.world;
+    }
     const meta = await db
       .prepare('SELECT key, value FROM catalog_meta')
       .all<{ key: string; value: string }>();
     const values = Object.fromEntries(meta.results.map((row) => [row.key, row.value]));
     if (!values.version) throw new Error('World database migrations have not been applied');
-    const cached = this.cache.get(db);
     if (cached?.version === values.version) return cached.world;
     const world = await this.readWorld(db, values);
     // Store resolved data only: Worker requests must not share in-flight D1 I/O.
@@ -82,13 +88,18 @@ export class CatalogRepository {
       !agentRows.results.length
     )
       throw new Error('World database is incomplete');
+    const managers: Record<string, Club['manager']> = JSON.parse(meta.club_managers || '{}');
     return {
       version: meta.version,
       year: Number(meta.year),
       rosterNote: meta.roster_note,
       leagues: leagueRows.results as unknown as League[],
       clubs: (clubRows.results as unknown as (Omit<Club, 'logo'> & { logo: string | null })[]).map(
-        (club) => ({ ...club, logo: club.logo ? JSON.parse(club.logo) : undefined }),
+        (club) => ({
+          ...club,
+          manager: managers[club.id],
+          logo: club.logo ? JSON.parse(club.logo) : undefined,
+        }),
       ),
       players,
       fixtures: fixtureRows.results as unknown as Fixture[],

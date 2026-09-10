@@ -1,5 +1,6 @@
 import { battingProfile } from '@dugout/shared/player-attributes';
 import { createCalendarView } from '@dugout/shared/calendar';
+import { unpackStats } from './long-term';
 import type { WorldCatalog, GameState, Player, Stats, Pos, Coach } from '@dugout/shared/types';
 export * from '@dugout/shared/types';
 export const blankStats = (): Stats => ({
@@ -122,6 +123,14 @@ const catalogIndexes = new WeakMap<
     byClub: Map<string, Player[]>;
   }
 >();
+type RosterIndex = {
+  revision: number;
+  year: number;
+  own: Player[];
+  transfers: Player[];
+  groups: Map<string, Player[]>;
+};
+const worldRosterIndexes = new WeakMap<WorldCatalog, WeakMap<GameState, RosterIndex>>();
 export function createGameView(world: WorldCatalog) {
   const { clubs, leagues, rosterNote } = world;
   const calendar = createCalendarView(world);
@@ -168,6 +177,10 @@ export function createGameView(world: WorldCatalog) {
     return world.agents[hash(p.id) % world.agents.length];
   }
   function marketPlayers(g: GameState) {
+    if (g.simulation) {
+      const own = new Set(g.roster.map((p) => p.id));
+      return [...worldRosterIndex(g).values()].flat().filter((p) => !own.has(p.id));
+    }
     const own = new Set(g.roster.map((p) => p.id)),
       seen = new Set<string>();
     return [
@@ -202,10 +215,105 @@ export function createGameView(world: WorldCatalog) {
   }
   function rosterFor(g: GameState, id: string) {
     if (id === g.club) return g.roster;
+    if (g.simulation) return worldRosterIndex(g).get(id) || [];
     return [
       ...baseRoster(id, g.year).filter((p) => !g.ownership[p.id]),
       ...(g.transferred || []).filter((p) => p.club === id),
     ];
+  }
+  let rosterIndexes = worldRosterIndexes.get(world);
+  if (!rosterIndexes) {
+    rosterIndexes = new WeakMap();
+    worldRosterIndexes.set(world, rosterIndexes);
+  }
+  function worldRosterIndex(g: GameState) {
+    const sim = g.simulation!;
+    const cached = rosterIndexes!.get(g);
+    if (
+      cached?.revision === sim.revision &&
+      cached.year === g.year &&
+      cached.own === g.roster &&
+      cached.transfers === g.transferred
+    )
+      return cached.groups;
+    const retired = new Set(sim.retired);
+    const pool = new Map<string, Player>();
+    const apply = (p: Player): Player => {
+      const delta = sim.players[p.id];
+      const next = {
+        ...p,
+        club: g.ownership[p.id] || p.club,
+        stats: delta ? unpackStats(delta.stats) : blankStats(),
+      };
+      if (delta) {
+        if (delta.ratings)
+          [next.contact, next.power, next.speed, next.field, next.stuff, next.control] =
+            delta.ratings;
+        next.reserveStats = unpackStats(delta.reserve);
+        next.age = delta.age ?? next.age;
+        next.salary = delta.salary ?? next.salary;
+        next.years = delta.years ?? next.years;
+        next.condition = delta.condition ?? 100;
+        next.careerBaseline = delta.stint;
+        if (delta.observation) next.observation = delta.observation;
+      }
+      const report = g.scouting?.reports.find((r) => r.playerId === next.id);
+      if (next.observation && report)
+        next.observation = {
+          status: 'scouted',
+          overall: report.overall,
+          abilities: report.abilities,
+          date: report.date,
+        };
+      return next;
+    };
+    for (const c of [...clubs.map((c) => c.id), 'fa'])
+      for (const p of baseRoster(c, g.year)) if (!retired.has(p.id)) pool.set(p.id, apply(p));
+    for (const [id, delta] of Object.entries(sim.players)) {
+      const generated = delta.generated;
+      if (!generated || retired.has(id)) continue;
+      pool.set(
+        id,
+        apply({
+          id,
+          name: generated.name,
+          original: generated.name,
+          club: g.ownership[id] || 'fa',
+          pos: generated.pos,
+          country: generated.country,
+          number: generated.number,
+          age: g.year - generated.born,
+          real: false,
+          contact: 40,
+          power: 40,
+          speed: 40,
+          field: 40,
+          stuff: 40,
+          control: 40,
+          potential: generated.potential,
+          salary: 1,
+          years: 1,
+          condition: 100,
+          stats: blankStats(),
+        }),
+      );
+    }
+    for (const p of g.transferred) if (!retired.has(p.id)) pool.set(p.id, p);
+    for (const p of g.roster) pool.set(p.id, p);
+    const groups = new Map<string, Player[]>();
+    for (const p of pool.values()) {
+      const list = groups.get(p.club) || [];
+      list.push(p);
+      groups.set(p.club, list);
+    }
+    rosterIndexes!.set(g, {
+      revision: sim.revision,
+      year: g.year,
+      own: g.roster,
+      transfers: g.transferred,
+      groups,
+    });
+    return groups;
   }
   function standings(g: GameState, league = getClub(g.club).league) {
     return [...g.standings[league]].sort(

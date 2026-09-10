@@ -1,4 +1,4 @@
-import { build } from 'esbuild';
+import { build, context } from 'esbuild';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -20,7 +20,7 @@ const optional = {
     }));
   },
 };
-await build({
+const options = {
   absWorkingDir: root,
   entryPoints: ['apps/api/src/worker.ts'],
   outfile: 'apps/api/.build/worker.mjs',
@@ -34,5 +34,12 @@ await build({
   banner: {
     js: "import { createRequire as createNodeRequire } from 'node:module'; const require = createNodeRequire(import.meta.url || '/worker.js');",
   },
-});
-console.log('NestJS Worker bundle built.');
+};
+if (process.argv.includes('--watch')) {
+  const watcher = await context(options);
+  await watcher.watch();
+  console.log('NestJS Worker source watcher ready.');
+} else {
+  await build(options);
+  console.log('NestJS Worker bundle built.');
+}

@@ -1,3 +1,4 @@
+import { reachFixture } from './helpers/manager.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildSync } from 'esbuild';
@@ -45,7 +46,7 @@ test('Continue handles required decisions and unread reports before the fixture 
 
 test('Match preparation rejects unresolved decisions and completion identifies the exact stored match report', () => {
   let g = e.newGame('kbo-lotte', 'Matchday', 'short', 321);
-  g = e.applyAction(g, { type: 'continue' });
+  g = reachFixture(e, g);
   const pending = structuredClone(g);
   pending.news.push({
     id: 'choice',

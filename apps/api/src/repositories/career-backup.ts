@@ -9,6 +9,7 @@ export const careerTables = [
   'transfers',
   'finance_entries',
   'career_actions',
+  'career_player_records',
 ] as const;
 
 /** Read the original persisted values in one D1 batch without presentation masking. */

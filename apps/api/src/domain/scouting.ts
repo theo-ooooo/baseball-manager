@@ -31,7 +31,7 @@ export function createScouting(world: WorldCatalog) {
       delete task.candidateIds;
       return g;
     }
-    const market = view.marketPlayers(g);
+    const market = [...view.marketPlayers(g), ...(g.draft?.prospects || [])];
     if (a.type === 'shortlistPlayer') {
       if (typeof a.add !== 'boolean') throw new Error('관심 명단 등록 여부를 선택해 주세요.');
       const id = String(a.id);
@@ -170,7 +170,9 @@ export function createScouting(world: WorldCatalog) {
     const s = g.scouting;
     const due = s?.assignments.filter((t) => t.status === 'active' && t.due <= gameDate(g));
     if (!s || !due?.length) return;
-    const market = new Map(view.marketPlayers(g).map((p) => [p.id, p]));
+    const market = new Map(
+      [...view.marketPlayers(g), ...(g.draft?.prospects || [])].map((p) => [p.id, p]),
+    );
     for (const task of due) {
       const reports = (task.candidateIds || []).slice(0, 3).flatMap((id) => {
         const p = market.get(id);

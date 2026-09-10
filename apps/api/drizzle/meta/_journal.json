@@ -92,6 +92,20 @@
       "when": 1788872908147,
       "tag": "0012_catalog_chunks",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1788937639154,
+      "tag": "0013_silly_pyro",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1788940600588,
+      "tag": "0014_club_managers",
+      "breakpoints": true
     }
   ]
 }

@@ -187,11 +187,11 @@ test('Manager job listings show board confidence and vacancies separately from t
     );
   const jobs = render(ManagerJobsPanel),
     office = render(ManagerPanel);
-  assert.match(jobs, /감독 채용 현황/);
-  assert.match(jobs, /35%/);
+  assert.match(jobs, /직업 안정성/);
+  assert.match(jobs, /role="meter"/);
   assert.match(jobs, /공석/);
-  assert.match(jobs, /지원 조건 선택/);
-  assert.match(office, /무직/);
+  assert.match(jobs, /관심 전하기/);
+  assert.match(office, /소속 없음/);
   assert.match(office, /\?view=jobs/);
-  assert.match(office, /구직 기간 진행/);
+  assert.match(office, /내 프로필/);
 });

@@ -17,8 +17,19 @@ import {
 } from 'lucide-react';
 
 export const nav = [
-  { id: 'jobs', label: '감독 채용 현황', icon: Handshake },
-  { id: 'manager', label: '감독 경력 · 구단주', icon: Handshake },
+  ...[
+    { id: 'manager-contract', label: '감독 계약' },
+    { id: 'manager-history', label: '감독 경력' },
+    { id: 'job-security', label: '직업 안정성' },
+    { id: 'job-offers', label: '면접 · 계약 제안' },
+    { id: 'vision', label: '구단 비전' },
+    { id: 'medical', label: '의무 센터' },
+    { id: 'trade', label: '트레이드' },
+    { id: 'draft', label: '신인 선발' },
+  ].map((n) => ({ ...n, icon: ClipboardList })),
+  { id: 'records', label: '통산 기록 · 은퇴 선수', icon: ClipboardList },
+  { id: 'jobs', label: '채용 센터', icon: Handshake },
+  { id: 'manager', label: '내 프로필', icon: Handshake },
   { id: 'home', label: '홈', icon: House },
   { id: 'inbox', label: '수신함', icon: MessageSquare },
   { id: 'matchday', label: '경기 준비', icon: CircleDot },
@@ -33,6 +44,6 @@ export const nav = [
   { id: 'market', label: '영입 · 이적', icon: ArrowUpRight },
   { id: 'scouting', label: '스카우팅', icon: Binoculars },
   { id: 'agents', label: '에이전트', icon: Handshake },
-  { id: 'staff', label: '코치 · 훈련', icon: GraduationCap },
+  { id: 'staff', label: '스태프', icon: GraduationCap },
   { id: 'finance', label: '구단 재정', icon: Wallet },
 ];

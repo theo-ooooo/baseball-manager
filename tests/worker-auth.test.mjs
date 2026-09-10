@@ -6,7 +6,7 @@ import { productionWorker } from './helpers/worker.mjs';
 
 async function backupSchema(worker) {
   const db = await worker.getD1Database('DB');
-  for (const name of ['0000_regular_redwing', '0001_lonely_zuras']) {
+  for (const name of ['0000_regular_redwing', '0001_lonely_zuras', '0013_silly_pyro']) {
     const sql = await readFile(`apps/api/drizzle/${name}.sql`, 'utf8');
     for (const query of sql
       .split('--> statement-breakpoint')

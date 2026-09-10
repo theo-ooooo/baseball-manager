@@ -147,7 +147,7 @@ test('A manual relief pitcher is used on the next defensive PA and cannot re-ent
   const incoming = g.roster.find(
     (p) => p.squad !== 'reserve' && p.pos === 'P' && !used.has(p.id) && p.id !== g.starter,
   );
-  const next = e.applyAction(g, plan(g, cursor, { pitcher: incoming.id }));
+  const next = e.applyAction(g, plan(g, cursor, { pitcher: incoming.id, emergency: true }));
   assert.deepEqual(next.liveMatch.timeline.log.slice(0, cursor), prefix);
   assert.equal(next.liveMatch.timeline.log[cursor].play.pitcher, incoming.id);
   const later = next.liveMatch.timeline.log.findIndex((x, i) => i > cursor && x.half !== own);

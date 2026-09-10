@@ -55,7 +55,7 @@ export function createMatchEnergy(
     if (changed.length) energy.runners = changed;
     play.energy = energy;
   }
-  return { get, record };
+  return { get, record, spend };
 }
 /** Starting condition already affects the engine; apply only additional match workload here. */
 export const fatigueFactor = (condition: number, energy: number) =>

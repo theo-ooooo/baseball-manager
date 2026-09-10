@@ -1,3 +1,4 @@
+import { bullpenAction } from './bullpen';
 import type { WorldCatalog, GameState } from '@dugout/shared/types';
 import { createGameView } from '@dugout/shared/game-view';
 import type { createMatchSimulator } from './match-simulation';
@@ -13,6 +14,7 @@ export function createLiveMatchActions(
 ) {
   const { nextFixture, rosterFor } = createGameView(world);
   function liveAction(g: GameState, a: Record<string, unknown>) {
+    if (a.type === 'bullpen') return bullpenAction(g, a);
     if (a.type === 'matchCommand' || a.type === 'cancelMatchCommand')
       return matchCommandAction(g, a, simulateMatch);
     if (a.type === 'startMatch') {
@@ -29,6 +31,8 @@ export function createLiveMatchActions(
         seed: g.seed,
         pitchingVersion: 2,
         energyVersion: 1,
+        bullpenVersion: 1,
+        warmups: [],
         cursor: 0,
         finished: false,
         result: {
