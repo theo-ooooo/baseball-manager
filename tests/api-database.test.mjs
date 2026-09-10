@@ -1177,3 +1177,117 @@ test('Player career archives leave the hot save, isolate users and supply truste
     count.n,
   );
 });
+
+test('D1 stores the season start choice, validates it, and a retried preseason skip lands on opening day once', async () => {
+  const opener = 'preseason-opening-db';
+  const fresh = await call('/api/career', undefined, opener);
+  const invalid = await call(
+    '/api/career',
+    {
+      type: 'start',
+      club: 'kbo-lotte',
+      manager: '검증',
+      mode: 'short',
+      preseason: 'yes',
+      revision: fresh.body.revision,
+      requestId: crypto.randomUUID(),
+    },
+    opener,
+  );
+  assert.equal(invalid.status, 400);
+  assert.equal((await call('/api/career', undefined, opener)).body.state, null);
+  const opened = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '개막 DB', mode: 'short', preseason: false },
+    opener,
+  );
+  assert.equal(opened.state.day, 0);
+  assert.equal(opened.state.phase, 'regular');
+  assert.equal(opened.state.rules.preseason, false);
+  assert.equal(opened.state.managerCareer.contract.signed, opened.state.calendar.openingDate);
+  const storedOpener = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(opener).first()).state,
+  );
+  assert.equal(storedOpener.rules.preseason, false);
+  assert.equal(storedOpener.day, 0);
+  const refused = await call(
+    '/api/career',
+    { type: 'skipPreseason', revision: opened.revision, requestId: crypto.randomUUID() },
+    opener,
+  );
+  assert.equal(refused.status, 400);
+  assert.equal((await call('/api/career', undefined, opener)).body.revision, opened.revision);
+  const jobless = await action(
+    {
+      type: 'start',
+      club: 'kbo-lg',
+      manager: '',
+      mode: 'short',
+      unemployed: true,
+      preseason: false,
+    },
+    'preseason-unemployed-db',
+  );
+  assert.equal(jobless.state.day, 0);
+  assert.equal(jobless.state.managerCareer.status, 'unemployed');
+  assert.equal(jobless.state.managerCareer.unemployedSince, jobless.state.calendar.openingDate);
+
+  const user = 'preseason-skip-db';
+  const start = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '위임 DB', mode: 'short' },
+    user,
+  );
+  assert.equal(start.state.day, -28);
+  assert.equal(start.state.rules.preseason, true);
+  const command = {
+    type: 'skipPreseason',
+    futureSeasons: false,
+    revision: start.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const skipped = await call('/api/career', command, user);
+  assert.equal(skipped.status, 201);
+  assert.equal(skipped.body.state.day, 0);
+  assert.equal(skipped.body.state.phase, 'regular');
+  assert.equal(skipped.body.state.progress.stop, 'season');
+  assert.equal(skipped.body.state.progress.from, -28);
+  assert.equal(skipped.body.revision, start.revision + 1);
+  assert.equal(skipped.body.state.history.filter((r) => r.friendly).length, 4);
+  assert.equal(skipped.body.state.rules.preseason, true);
+  assert.equal(skipped.body.state.year, start.state.year);
+  assert.equal(
+    skipped.body.state.managerCareer.contract.signed,
+    start.state.managerCareer.contract.signed,
+  );
+  assert.ok(skipped.body.state.roster.every((p) => p.stats.g === 0));
+  const repeated = await call('/api/career', command, user);
+  assert.equal(repeated.status, 201);
+  assert.equal(repeated.body.revision, skipped.body.revision);
+  assert.equal(repeated.body.state.day, 0);
+  assert.equal(repeated.body.state.history.length, skipped.body.state.history.length);
+  const stale = await call('/api/career', { ...command, requestId: crypto.randomUUID() }, user);
+  assert.equal(stale.status, 409);
+  const loaded = (await call('/api/career', undefined, user)).body;
+  assert.equal(loaded.revision, skipped.body.revision);
+  assert.equal(loaded.state.day, 0);
+  assert.equal(loaded.state.phase, 'regular');
+  assert.equal(
+    (
+      await db
+        .prepare('SELECT COUNT(*) AS n FROM career_matches WHERE user_id=?')
+        .bind(user)
+        .first()
+    ).n,
+    4,
+  );
+  assert.equal(
+    (
+      await db
+        .prepare(
+          "SELECT COUNT(*) AS n FROM career_actions WHERE user_id=? AND kind='skipPreseason'",
+        )
+        .bind(user)
+        .first()
+    ).n,
+    1,
+  );
+});

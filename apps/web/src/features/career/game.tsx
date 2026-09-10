@@ -68,6 +68,7 @@ import { MatchdayBriefing } from '../matches/matchday-briefing';
 import { ActionProgress } from './action-progress';
 import { isSpaceShortcut } from './space-shortcut';
 import { conversationKey } from '@dugout/shared/match-media';
+import { preseasonSkipBlockers } from '@dugout/shared/preseason';
 import { MatchConversationPanel } from '../matches/match-conversation-panel';
 
 export function GameScreen({
@@ -111,6 +112,8 @@ export function GameScreen({
     [newConfirm, setNewConfirm] = useState(false),
     [replay, setReplay] = useState<Result | null>(null),
     [help, setHelp] = useState(false),
+    [skipOpen, setSkipOpen] = useState(false),
+    [skipFuture, setSkipFuture] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
   const awayFromClub = !!g && (isUnemployed(g) || !!g.managerCareer?.vacationUntil);
   const view =
@@ -291,6 +294,34 @@ export function GameScreen({
       if (next) openReport(next.news[0]?.id);
     } else await simulate();
   }
+  /** Hand the remaining preseason to the coaches; the server stops on opening day or at a new offer. */
+  async function delegatePreseason() {
+    if (!g || g.liveMatch || busy || progressing || g.phase !== 'preseason') return;
+    if (document.querySelector('[data-unsaved-plan="true"]')) {
+      toast.error('변경한 타순·전술을 적용하거나 되돌린 뒤 진행해 주세요.');
+      return;
+    }
+    setSkipOpen(false);
+    calendarProgress.close();
+    const next = await act({ type: 'skipPreseason', futureSeasons: skipFuture });
+    if (!next) return;
+    const arrived = next.progress?.newsIds || [];
+    // Interrupted: land on the contact that needs the manager, not on the delegation summary.
+    const report =
+      (next.progress?.stop === 'report'
+        ? next.news.find((n) => arrived.includes(n.id) && n.managerOfferId)?.id
+        : undefined) || arrived[0];
+    if (next.progress?.stop === 'season') {
+      toast.success(
+        `${next.progress.to - next.progress.from}일을 코치진에게 맡기고 개막일에 도착했습니다.`,
+      );
+      if (report) openReport(report);
+      else setView('matchday');
+    } else {
+      toast.info('감독의 답변이 필요한 연락이 도착해 개막 전에 멈췄습니다.');
+      openReport(report);
+    }
+  }
   const matchAct: Act = async (action) => {
     const next = await act(action);
     if (next && g && action.type === 'completeMatch') {
@@ -327,24 +358,9 @@ export function GameScreen({
           busy={busy}
           existing={!!g}
           cancel={() => setSetup(false)}
-          onStart={async (
-            club,
-            manager,
-            mode,
-            firstSeasonTransferBan,
-            revealPotential,
-            unemployed,
-          ) => {
-            const result = await act({
-              type: 'start',
-              club,
-              manager,
-              mode,
-              firstSeasonTransferBan,
-              revealPotential,
-              unemployed,
-              replace: !!g,
-            });
+          onStart={async (options) => {
+            const { club, unemployed, preseason } = options;
+            const result = await act({ type: 'start', ...options, replace: !!g });
             if (result) {
               await refreshCatalog();
               setSetup(false);
@@ -353,7 +369,7 @@ export function GameScreen({
               toast.success(
                 unemployed
                   ? '무직 감독으로 시작했습니다. 첫 구단에 지원해 보세요.'
-                  : `${getClub(club).name}의 감독으로 취임했습니다.`,
+                  : `${getClub(club).name}의 감독으로 ${preseason ? '취임했습니다.' : '개막일에 취임했습니다.'}`,
               );
             }
           }}
@@ -475,6 +491,22 @@ export function GameScreen({
                         >
                           7일 자동 진행
                         </button>
+                        {g.phase === 'preseason' && (
+                          <div className="advance-menu-skip">
+                            <strong>프리시즌 건너뛰기</strong>
+                            <p>남은 {-g.day}일을 코치진에게 맡기고 정규시즌 개막일에서 멈춥니다.</p>
+                            <button
+                              className="button secondary"
+                              disabled={busy}
+                              onClick={(event) => {
+                                event.currentTarget.closest('details')?.removeAttribute('open');
+                                setSkipOpen(true);
+                              }}
+                            >
+                              개막으로 넘어가기
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </details>
                     <button
@@ -554,16 +586,30 @@ export function GameScreen({
               </button>
             </div>
           )}
-          {g.phase === 'preseason' && view === 'tactics' && (
-            <div className="preseason-banner">
-              <strong>정규시즌 개막까지 {-g.day}일</strong>
-              <span>
-                전술 숙련도 {Math.round(g.tacticFamiliarity ?? 55)}% · 연습경기{' '}
-                {g.history.filter((r) => r.friendly).length}/4회
-              </span>
-              <button onClick={() => setView('tactics')}>전술 준비 →</button>
-            </div>
-          )}
+          {g.phase === 'preseason' &&
+            !awayFromClub &&
+            !g.liveMatch &&
+            ['home', 'matchday', 'tactics', 'schedule'].includes(view) && (
+              <div className="preseason-banner" data-testid="preseason-banner">
+                <strong>정규시즌 개막까지 {-g.day}일</strong>
+                <span>
+                  전술 숙련도 {Math.round(g.tacticFamiliarity ?? 55)}% · 연습경기{' '}
+                  {g.history.filter((r) => r.friendly).length}/4회
+                </span>
+                <div className="preseason-banner-actions">
+                  {view !== 'tactics' && (
+                    <button onClick={() => setView('tactics')}>전술 준비 →</button>
+                  )}
+                  <button
+                    className="preseason-skip-link"
+                    disabled={busy || progressing}
+                    onClick={() => setSkipOpen(true)}
+                  >
+                    남은 프리시즌 코치에게 맡기고 개막으로 →
+                  </button>
+                </div>
+              </div>
+            )}
           {g.liveMatch && view !== 'match' && (
             <div className="preseason-banner">
               <strong>진행 중인 경기가 있습니다</strong>
@@ -815,6 +861,108 @@ export function GameScreen({
         />
       )}
       <Help open={help} close={() => setHelp(false)} />
+      <AlertDialog open={skipOpen} onOpenChange={setSkipOpen}>
+        <AlertDialogContent className="confirm-dialog preseason-skip-dialog">
+          {(() => {
+            const blockers = preseasonSkipBlockers(g);
+            const friendliesLeft = Math.max(0, 4 - g.history.filter((r) => r.friendly).length);
+            const blockerLabel = {
+              managerOffer: '감독 면접·계약 제안',
+              deal: '선수 계약 답변',
+              coachDeal: '코치 계약 답변',
+              saleOffer: '선수 매각 제안',
+              draft: '진행 중인 신인 선발',
+              trade: '트레이드 답변',
+            } as const;
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>남은 프리시즌을 코치진에게 맡길까요?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {dateLabel(g)}부터 개막일까지 {-g.day}일을 하루씩 진행하고 정규시즌 개막일에
+                    멈춥니다. 커리어와 기록은 초기화되지 않습니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="preseason-skip-summary">
+                  <span>
+                    <b>연습경기 {friendliesLeft}회</b> · 코치가 자동으로 지휘하며 정규 기록에는
+                    포함되지 않습니다.
+                  </span>
+                  <span>
+                    <b>급여 · 부상 회복 · 다른 리그 경기</b> · 날짜별로 그대로 정산되고 기록됩니다.
+                  </span>
+                </div>
+                <ul className="preseason-skip-list">
+                  <li>선수 면담은 코치가 대신 답합니다. 경기 전후 인터뷰는 생략됩니다.</li>
+                  <li>
+                    감독 채용 연락이나 계약 답변이 새로 도착하면 그 날짜에서 멈추고 수신함으로
+                    안내합니다. 어떤 제안도 감독 확인 없이 만료·수락되지 않습니다.
+                  </li>
+                </ul>
+                {blockers.length > 0 && (
+                  <div className="preseason-skip-blockers" role="alert">
+                    <strong>먼저 답변이 필요한 제안 {blockers.length}건</strong>
+                    <ul>
+                      {blockers.map((b) => (
+                        <li key={`${b.kind}:${b.id}`}>
+                          {blockerLabel[b.kind]} ·{' '}
+                          {b.kind === 'managerOffer' || b.kind === 'draft' || b.kind === 'trade'
+                            ? clubs.find((c) => c.id === b.subject)?.name ||
+                              leagues.find((l) => l.id === b.subject)?.name ||
+                              b.subject
+                            : b.subject}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        setSkipOpen(false);
+                        setView(
+                          blockers[0].kind === 'managerOffer'
+                            ? 'job-offers'
+                            : blockers[0].kind === 'coachDeal'
+                              ? 'staff'
+                              : blockers[0].kind === 'trade'
+                                ? 'trade'
+                                : blockers[0].kind === 'draft'
+                                  ? 'draft'
+                                  : 'agents',
+                        );
+                      }}
+                    >
+                      제안 확인하러 가기 →
+                    </button>
+                  </div>
+                )}
+                <label className="preseason-skip-check">
+                  <input
+                    type="checkbox"
+                    checked={skipFuture}
+                    onChange={(e) => setSkipFuture(e.target.checked)}
+                  />
+                  <span>
+                    다음 시즌부터 프리시즌 없이 개막일에 시작
+                    <small>
+                      현재 설정: {g.rules?.preseason === false ? '개막일 시작' : '프리시즌 4주'} ·
+                      체크하면 이후 시즌은 개막일부터 시작합니다.
+                    </small>
+                  </span>
+                </label>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>돌아가기</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={busy || blockers.length > 0}
+                    onClick={() => void delegatePreseason()}
+                  >
+                    코치에게 맡기고 개막으로
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={newConfirm} onOpenChange={setNewConfirm}>
         <AlertDialogContent className="confirm-dialog">
           <AlertDialogHeader>

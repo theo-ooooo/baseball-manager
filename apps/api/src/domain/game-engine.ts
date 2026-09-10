@@ -34,6 +34,11 @@ import {
 } from './club-dynamics';
 import { createTransferMarket } from './transfer-market';
 import { createCalendarView, prepareCalendar, gameDate, addDays } from '@dugout/shared/calendar';
+import {
+  PRESEASON_DAYS,
+  describePreseasonSkipBlockers,
+  preseasonSkipBlockers,
+} from '@dugout/shared/preseason';
 import type { Coach, GameState, Pos, Result, WorldCatalog } from '@dugout/shared/types';
 import {
   blankStats,
@@ -92,16 +97,19 @@ export function createGameEngine(world: WorldCatalog) {
       firstSeasonTransferBan?: boolean;
       revealPotential?: boolean;
       unemployed?: boolean;
+      /** Default true: the career opens four weeks before the league's first fixture. */
+      preseason?: boolean;
     } = {},
   ): GameState {
     if (!getClub(club)) throw new Error('구단을 선택해 주세요.');
     const league = getClub(club).league;
+    const preseason = options.preseason !== false;
     const roster = structuredClone(baseRoster(club));
     const n = clubs.filter((c) => c.league === league).length;
     const g: GameState = {
       version: 1,
       year: world.year,
-      day: -28,
+      day: preseason ? -PRESEASON_DAYS : 0,
       club,
       manager:
         manager.trim().slice(0, 24) ||
@@ -134,11 +142,11 @@ export function createGameEngine(world: WorldCatalog) {
       ownership: {},
       transferred: [],
       past: [],
-      phase: 'preseason',
+      phase: preseason ? 'preseason' : 'regular',
       rules: {
         firstSeasonTransferBan: !!options.firstSeasonTransferBan,
         startYear: world.year,
-        preseason: true,
+        preseason,
         revealPotential: options.revealPotential === true,
       },
       catalogVersion: world.version,
@@ -175,7 +183,9 @@ export function createGameEngine(world: WorldCatalog) {
     news(
       g,
       `${getClub(club).name}, ${g.manager} 감독 선임`,
-      '4주간의 프리시즌이 시작됩니다. 주 1회 연습경기, 2군 육성, 전술 훈련과 계약을 준비하세요.',
+      preseason
+        ? '4주간의 프리시즌이 시작됩니다. 주 1회 연습경기, 2군 육성, 전술 훈련과 계약을 준비하세요.'
+        : '정규시즌 개막일에 취임합니다. 프리시즌 없이 개막전 타순과 선발 로테이션을 바로 확인하세요.',
     );
     news(
       g,
@@ -198,7 +208,7 @@ export function createGameEngine(world: WorldCatalog) {
       news(
         g,
         '무직 감독으로 커리어 시작',
-        `${getLeague(league).name}에 친숙한 감독으로 시작합니다. 감독 채용 현황에서 공석 또는 신임도 35% 미만 구단에 지원해 주세요. 무직 기간에는 급여가 없습니다.`,
+        `${getLeague(league).name}에 친숙한 감독으로 ${preseason ? '개막 4주 전부터' : '정규시즌 개막일부터'} 시작합니다. 감독 채용 현황에서 공석 또는 신임도 35% 미만 구단에 지원해 주세요. 무직 기간에는 급여가 없습니다.`,
         'manager',
         { actionView: 'jobs' },
       );
@@ -599,7 +609,7 @@ export function createGameEngine(world: WorldCatalog) {
     g.lineup = lineupAuto(g.roster);
     g.starter = g.roster.find((p) => p.pos === 'P')!.id;
     g.calendar = undefined;
-    g.day = g.rules?.preseason ? -28 : 0;
+    g.day = g.rules?.preseason ? -PRESEASON_DAYS : 0;
     prepareCalendar(g, world, true);
     g.phase = g.rules?.preseason ? 'preseason' : 'regular';
     g.reserve = undefined;
@@ -642,6 +652,77 @@ export function createGameEngine(world: WorldCatalog) {
       `${departed.length}명 계약 만료. 베테랑 은퇴와 노쇠화가 반영됐습니다. 신인 선발에서 새 유망주를 지명하세요.`,
       'league',
     );
+    return g;
+  }
+  /**
+   * Delegate the rest of an existing preseason to the coaching staff and stop on opening day.
+   * Every calendar day still runs: friendlies, wages, injury recovery, other leagues' results.
+   * The manager's own contract, interview and sale decisions are never expired or accepted
+   * silently: the command refuses while any wait, and stops as soon as a new one arrives.
+   */
+  function skipPreseason(g: GameState, a: Record<string, unknown>) {
+    if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+    if (g.phase !== 'preseason')
+      throw new Error('프리시즌 중에만 남은 기간을 코치에게 맡기고 개막으로 넘어갈 수 있습니다.');
+    if (!Number.isInteger(g.day) || g.day < -PRESEASON_DAYS || g.day >= 0)
+      throw new Error('프리시즌 날짜를 확인해 주세요.');
+    if (a.futureSeasons !== undefined && typeof a.futureSeasons !== 'boolean')
+      throw new Error('다음 시즌 프리시즌 진행 여부를 확인해 주세요.');
+    const waiting = preseasonSkipBlockers(g);
+    if (waiting.length)
+      throw new Error(
+        `답변을 기다리는 제안이 있어 개막으로 넘어갈 수 없습니다: ${describePreseasonSkipBlockers(waiting)}. 먼저 처리하거나 거절해 주세요.`,
+      );
+    const from = g.day,
+      friendliesBefore = g.history.filter((r) => r.friendly).length,
+      before = new Set(g.news.map((n) => n.id));
+    let interrupted = false;
+    while (g.phase === 'preseason') {
+      const previousDay = g.day;
+      // Player conversations are delegated to the coaching staff, as during a vacation.
+      for (const n of g.news)
+        if (n.choiceKind && !n.choice)
+          dynamicsAction(g, { type: 'respondNews', id: n.id, choice: 'explain' });
+      finishPendingConversation(g);
+      g.media = undefined;
+      advance(g, 1);
+      if (g.day <= previousDay)
+        throw new Error('프리시즌 날짜가 진행되지 않았습니다. 현재 일정을 확인해 주세요.');
+      if (
+        preseasonSkipBlockers(g).length ||
+        g.news.some((n) => !before.has(n.id) && n.managerOfferId)
+      ) {
+        interrupted = g.phase === 'preseason';
+        break;
+      }
+    }
+    if (a.futureSeasons === true)
+      g.rules = {
+        firstSeasonTransferBan: false,
+        startYear: g.rules?.startYear ?? g.year,
+        ...g.rules,
+        preseason: false,
+      };
+    const friendlies = g.history.filter((r) => r.friendly).length - friendliesBefore;
+    news(
+      g,
+      interrupted ? '프리시즌 위임 중단 · 확인할 연락 도착' : '프리시즌 위임 완료 · 개막 준비',
+      `${g.day - from}일을 코치진에게 맡겨 진행했습니다. 연습경기 ${friendlies}회는 코치가 지휘했고 선수 면담은 코치가 대신 답했습니다.${
+        interrupted
+          ? ' 감독의 답변이 필요한 연락이 도착해 개막 전에 멈췄습니다. 처리한 뒤 다시 개막으로 넘어갈 수 있습니다.'
+          : a.futureSeasons === true
+            ? ' 다음 시즌부터는 프리시즌 없이 개막일에 시작합니다.'
+            : ''
+      }`,
+      'club',
+      interrupted ? undefined : { actionView: 'squad' },
+    );
+    g.progress = {
+      from,
+      to: g.day,
+      stop: interrupted ? 'report' : 'season',
+      newsIds: g.news.filter((n) => !before.has(n.id)).map((n) => n.id),
+    };
     return g;
   }
   function applyAction(g: GameState, a: Record<string, unknown>) {
@@ -692,7 +773,10 @@ export function createGameEngine(world: WorldCatalog) {
             { ...s, year: s.year + 1, calendar: undefined },
             getClub(s.club).league,
           );
-          if (addDays(gameDate(s), 1) >= addDays(nextOpening, s.rules?.preseason ? -28 : 0)) {
+          if (
+            addDays(gameDate(s), 1) >=
+            addDays(nextOpening, s.rules?.preseason ? -PRESEASON_DAYS : 0)
+          ) {
             nextSeason(s);
             medicalTick(s);
             managerCareer.tick(s);
@@ -766,7 +850,9 @@ export function createGameEngine(world: WorldCatalog) {
     if (medical) return medical;
     const media = mediaAction(s, a);
     if (media) return media;
-    if (['continue', 'continueDay', 'advance', 'nextSeason'].includes(String(a.type)))
+    if (
+      ['continue', 'continueDay', 'advance', 'nextSeason', 'skipPreseason'].includes(String(a.type))
+    )
       finishPendingConversation(s);
     const social = dynamicsAction(s, a);
     if (social) return social;
@@ -850,6 +936,8 @@ export function createGameEngine(world: WorldCatalog) {
         return sellPlayer(s, String(a.id), String(a.offerId || ''));
       case 'nextSeason':
         return nextSeason(s);
+      case 'skipPreseason':
+        return skipPreseason(s, a);
       default:
         throw new Error('지원하지 않는 요청입니다.');
     }
@@ -859,6 +947,7 @@ export function createGameEngine(world: WorldCatalog) {
     applyAction,
     advance,
     nextSeason,
+    skipPreseason,
     negotiate,
     signDeal,
     sellPlayer,
