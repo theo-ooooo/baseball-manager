@@ -1,9 +1,8 @@
 'use client';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMatchReadout } from './use-match-readout';
 import type { GameState, Result } from '@dugout/shared/types';
 import { ClubBadge } from '../../components/club-badge';
 import { useWorld } from '../career/world-context';
-import { matchReadout } from './match-readout';
 export function MatchAtBat({
   result,
   cursor,
@@ -13,7 +12,7 @@ export function MatchAtBat({
   cursor: number;
   settled?: boolean;
 }) {
-  const view = useMemo(() => matchReadout(result, cursor), [result, cursor]);
+  const view = useMatchReadout(result, cursor);
   return (
     <div className="match-at-bat" aria-live="polite">
       <span>
@@ -32,47 +31,10 @@ export function MatchAtBat({
     </div>
   );
 }
-export function MobileMatchView({
-  g,
-  cursor,
-  playing = false,
-  speed = 2,
-  reduced = false,
-  onEnd = () => {},
-}: {
-  g: GameState;
-  cursor: number;
-  playing?: boolean;
-  speed?: number;
-  reduced?: boolean;
-  onEnd?: () => void;
-}) {
-  const result = g.liveMatch!.timeline!,
-    changes = g.liveMatch!.changes;
-  const view = useMemo(
-    () => matchReadout(result, cursor, result.home === g.club ? 1 : 0, changes),
-    [result, cursor, g.club, changes],
-  );
+export function MobileMatchView({ g, cursor }: { g: GameState; cursor: number }) {
+  const result = g.liveMatch!.timeline!;
+  const view = useMatchReadout(result, cursor, g);
   const { getClub } = useWorld();
-  const columns = useRef<HTMLDivElement>(null);
-  const callback = useRef(onEnd);
-  useEffect(() => {
-    callback.current = onEnd;
-  }, [onEnd]);
-  useEffect(() => {
-    if (!playing || cursor === 0) return;
-    const timer = setTimeout(() => callback.current(), (reduced ? 100 : 4200) / speed);
-    return () => clearTimeout(timer);
-  }, [cursor, playing, speed, reduced]);
-  useEffect(() => {
-    const pane = columns.current,
-      row = pane?.querySelector<HTMLElement>('.current-batter');
-    if (!pane || !row) return;
-    const top = row.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop;
-    if (top < pane.scrollTop) pane.scrollTop = top;
-    else if (top + row.offsetHeight > pane.scrollTop + pane.clientHeight)
-      pane.scrollTop = top + row.offsetHeight - pane.clientHeight;
-  }, [cursor]);
   return (
     <section className="mobile-match-view" aria-label="홈 원정 선수 경기 현황">
       <div className="mobile-match-score">
@@ -112,7 +74,7 @@ export function MobileMatchView({
           <p>{view.current?.text}</p>
         </div>
       )}
-      <div className="mobile-team-columns" ref={columns}>
+      <div className="mobile-team-columns">
         {view.teams?.map((team, side) => (
           <section
             className={view.current?.half === side ? 'is-batting' : ''}

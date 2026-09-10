@@ -1,10 +1,9 @@
 'use client';
 import { Stadium3D } from './stadium-3d';
 import { Stadium2DField } from './stadium-2d-field';
-import { useIsMobile } from '../../hooks/use-mobile';
 import { ClubBadge } from '../../components/club-badge';
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useReducedMotion } from '../../hooks/use-reduced-motion';
+import type { CSSProperties } from 'react';
+import { useArchivedReplay } from './use-archived-replay';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Flag } from 'lucide-react';
 import {
   Dialog,
@@ -23,76 +22,28 @@ import {
 import { Slider } from '@/components/ui/slider';
 import type { Result } from '@dugout/shared/types';
 import { dayLabel } from '@dugout/shared/management';
-import {
-  ballPoint,
-  bases,
-  between,
-  fieldPoints,
-  replayScene,
-  runnerPoint,
-} from '@dugout/shared/replay';
+import { ballPoint, bases, between, fieldPoints, runnerPoint } from '@dugout/shared/replay';
 import { useWorld } from '../career/world-context';
+import { useStadiumReplay, type StadiumSceneProps } from './use-stadium-replay';
 
-export function StadiumScene({
-  result,
-  index,
-  playing,
-  speed,
-  reduced,
-  onEnd,
-  replayKey = 0,
-}: {
-  result: Result;
-  index: number;
-  playing: boolean;
-  speed: number;
-  reduced: boolean;
-  onEnd: () => void;
-  replayKey?: string | number;
-}) {
+export function StadiumScene(props: StadiumSceneProps) {
+  const { result, index } = props;
   const { getClub } = useWorld();
-  const animationKey = `${result.id}:${index}:${replayKey}`;
-  const [frameState, setFrameState] = useState({ key: animationKey, progress: 0 });
-  const [display, setDisplay] = useState<'3d' | '2d'>('3d');
-  const [camera, setCamera] = useState<'overview' | 'broadcast'>('broadcast');
-  const [unavailable, setUnavailable] = useState(false);
-  const mobile = useIsMobile();
-  const [zoomOverride, setZoomOverride] = useState<boolean | null>(null);
-  const zoom2d = zoomOverride ?? mobile;
-  const fieldView = zoom2d ? '240 95 1056 930' : '0 0 1536 1024';
-  const show3D = display === '3d' && !unavailable;
-  const progress = frameState.key === animationKey ? frameState.progress : 0;
-  const elapsed = useRef(0),
-    ended = useRef(false),
-    callback = useRef(onEnd);
-  useEffect(() => {
-    callback.current = onEnd;
-  }, [onEnd]);
-  const scene = useMemo(() => replayScene(result, index), [result, index]);
-  useEffect(() => {
-    elapsed.current = 0;
-    ended.current = false;
-  }, [animationKey]);
-  useEffect(() => {
-    if (!playing || ended.current) return;
-    let frame = 0,
-      last = 0;
-    const tick = (time: number) => {
-      if (last) elapsed.current += Math.min(100, time - last) * speed;
-      last = time;
-      const p = Math.min(1, elapsed.current / (reduced ? 100 : 4200));
-      setFrameState({ key: animationKey, progress: p });
-      if (p < 1) frame = requestAnimationFrame(tick);
-      else {
-        ended.current = true;
-        callback.current();
-      }
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [playing, speed, reduced, animationKey]);
-  const t = reduced ? 1 : progress,
-    ball = ballPoint(scene, t),
+  const {
+    scene,
+    t,
+    currentCue,
+    show3D,
+    setDisplay,
+    camera,
+    setCamera,
+    unavailable,
+    setUnavailable,
+    zoom2d,
+    setZoomOverride,
+    fieldView,
+  } = useStadiumReplay(props);
+  const ball = ballPoint(scene, t),
     batting = getClub(scene.event?.half === 1 ? result.home : result.away),
     defending = getClub(scene.event?.half === 1 ? result.away : result.home);
   const trail = Array.from({ length: 16 }, (_, i) => {
@@ -318,52 +269,32 @@ export function StadiumScene({
         <span>
           {after ? '타석 결과' : t < 0.2 ? '투구' : t < 0.65 ? '플레이 진행' : '주자 이동'}
         </span>
-        <strong>
-          {after
-            ? scene.event?.text || '경기 시작'
-            : scene.batter
-              ? `${scene.batter} 타석`
-              : '경기 준비'}
-        </strong>
+        <strong>{currentCue?.text || '선발 명단을 확인하고 플레이볼을 눌러 주세요.'}</strong>
       </div>
       <div className="stadium-broadcast-tag">
-        DUGOUT <span>MATCH REPLAY</span>
+        DUGOUT <span>LIVE BROADCAST</span>
       </div>
     </div>
   );
 }
 function ReplayViewer({ result, close }: { result: Result; close: () => void }) {
   const { getClub } = useWorld();
-  const [index, setIndex] = useState(0),
-    [playOverride, setPlaying] = useState<boolean | null>(null),
-    [speed, setSpeed] = useState('1'),
-    [run, setRun] = useState(0);
-  const reduced = useReducedMotion(),
-    playing = playOverride ?? !reduced;
-  const last = Math.max(0, result.log.length - 1),
-    event = result.log[index];
-  const scene = useMemo(() => replayScene(result, index), [result, index]);
-  useEffect(() => {
-    const query = matchMedia('(prefers-reduced-motion: reduce)');
-    const change = () => {
-      if (query.matches) setPlaying(false);
-    };
-    query.addEventListener('change', change);
-    return () => query.removeEventListener('change', change);
-  }, []);
-  useEffect(() => {
-    const pause = () => {
-      if (document.hidden) setPlaying(false);
-    };
-    document.addEventListener('visibilitychange', pause);
-    return () => document.removeEventListener('visibilitychange', pause);
-  }, []);
-  function jump(value: number) {
-    setIndex(Math.max(0, Math.min(last, value)));
-    setRun((n) => n + 1);
-  }
-  const innings = Array.from(new Set(result.log.map((e) => e.inning)));
-  const finished = index === last && !playing;
+  const {
+    index,
+    run,
+    last,
+    event,
+    scene,
+    playing,
+    reduced,
+    speed,
+    setSpeed,
+    setPlaying,
+    jump,
+    innings,
+    finished,
+    onEnd,
+  } = useArchivedReplay(result);
   return (
     <DialogContent className="stadium-replay-dialog">
       <DialogHeader className="stadium-replay-header">
@@ -384,10 +315,7 @@ function ReplayViewer({ result, close }: { result: Result; close: () => void }) 
             playing={playing}
             speed={Number(speed)}
             reduced={reduced}
-            onEnd={() => {
-              if (index < last) setIndex((n) => n + 1);
-              else setPlaying(false);
-            }}
+            onEnd={onEnd}
           />
           <div className="stadium-transport">
             <div className="stadium-timeline">

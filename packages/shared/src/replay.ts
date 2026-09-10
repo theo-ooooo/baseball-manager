@@ -139,7 +139,8 @@ export function ballPoint(scene: ReturnType<typeof replayScene>, progress: numbe
       bases[scene.play.steal?.to || 2],
       Math.max(0, Math.min(1, (progress - 0.15) / 0.65)),
     );
-  if (progress < 0.2) return between(fieldPoints.P, bases[0], progress / 0.2);
+  if (progress < 0.2)
+    return between(fieldPoints.P, bases[0], Math.max(0, (progress - 0.06) / 0.14));
   if (['walk', 'strikeout', 'tiebreak'].includes(scene.kind))
     return between(bases[0], fieldPoints.C, Math.min(1, (progress - 0.2) / 0.2));
   if (progress < 0.65) return between(bases[0], scene.target, (progress - 0.2) / 0.45);
