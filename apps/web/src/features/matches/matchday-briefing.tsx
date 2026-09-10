@@ -6,6 +6,7 @@ import { dateLabel } from '@dugout/shared/calendar';
 import { ratingText } from '@dugout/shared/ratings';
 import { Badge } from '../../components/game-ui';
 import { useWorld } from '../career/world-context';
+import { MatchClubStanding } from './match-club-standing';
 
 export function MatchdayBriefing({
   g,
@@ -64,12 +65,14 @@ export function MatchdayBriefing({
             <Badge club={away} size="large" />
             <h2>{away.name}</h2>
             <small>원정</small>
+            <MatchClubStanding g={g} clubId={away.id} />
           </div>
           <strong>VS</strong>
           <div>
             <Badge club={home} size="large" />
             <h2>{home.name}</h2>
             <small>홈</small>
+            <MatchClubStanding g={g} clubId={home.id} />
           </div>
         </div>
         <p className="matchday-coach-note">

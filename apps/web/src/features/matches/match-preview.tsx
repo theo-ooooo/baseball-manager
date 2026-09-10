@@ -5,6 +5,7 @@ import { useWorld } from '../career/world-context';
 import { matchReadout } from './match-readout';
 import { Stadium2DField } from './stadium-2d-field';
 import { Play, ClipboardList, ArrowRight } from 'lucide-react';
+import { MatchClubStanding } from './match-club-standing';
 
 export function MatchPreview({
   g,
@@ -39,6 +40,7 @@ export function MatchPreview({
               <small>{side ? 'HOME · 홈' : 'AWAY · 원정'}</small>
               <ClubBadge club={getClub(id)} size="large" />
               <h2>{getClub(id).name}</h2>
+              <MatchClubStanding g={g} clubId={id} />
               <span>
                 {id === g.club
                   ? `${g.manager} 감독의 팀`

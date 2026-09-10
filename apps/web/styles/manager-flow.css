@@ -67,6 +67,17 @@
 .matchday-clubs h2 {
   font-size: 21px;
 }
+.match-club-standing {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.match-club-standing strong {
+  font-weight: 700;
+}
 .matchday-clubs small,
 .matchday-clubs > strong {
   color: var(--text-3);
