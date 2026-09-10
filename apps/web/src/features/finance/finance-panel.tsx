@@ -24,7 +24,7 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
     coaches = g.staff.reduce((s, c) => s + c.salary, 0);
   return (
     <>
-      <div className="metrics">
+      <div className="metrics finance-metrics">
         <Metric
           label="현재 잔액"
           value={money(g.budget)}

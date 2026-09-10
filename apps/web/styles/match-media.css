@@ -445,6 +445,13 @@
 .finance-board {
   margin-bottom: 20px;
 }
+.finance-metrics .metric-value {
+  min-width: 0;
+  /* Keep full currency values inside mobile cards despite the shared metric override. */
+  font-size: clamp(18px, 4.8vw, 27px) !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .finance-board dl {
   display: grid;
   gap: 12px;
