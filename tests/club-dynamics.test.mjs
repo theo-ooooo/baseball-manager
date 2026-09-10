@@ -44,12 +44,15 @@ test('Outgoing sale requires a live buyer offer; forged and expired offers canno
   assert.throws(() => e.applyAction(g, { type: 'sell', id: p.id, offerId: o.id }));
 });
 test('Morale concern produces a persistent inbox decision, tracks promises and penalizes breaking them', () => {
-  let g = e.newGame('kbo-lotte', 'Manager', 'short', 12);
-  const p = g.roster.find((p) => p.squad === 'reserve' && p.pos !== 'P');
+  let g = e.newGame('kbo-lotte', 'Manager', 'short', 12, { preseason: false });
+  const p = g.roster.find(
+    (p) => p.squad !== 'reserve' && p.pos !== 'P' && !g.lineup.includes(p.id),
+  );
+  p.mood.recent = Array(12).fill(false);
   p.mood.value = 30;
   p.mood.reason = '출전 부족';
   g = e.advance(g, 7);
-  assert.equal(g.day, -27);
+  assert.equal(g.day, 1);
   const n = g.news.find((n) => n.playerId === p.id && n.choiceKind);
   assert.ok(n);
   g = e.applyAction(g, { type: 'respondNews', id: n.id, choice: 'promise' });
@@ -107,18 +110,20 @@ test('Daily continue saves each idle date and stops for reports even with a full
 });
 
 test('Continue stops on a rest-day report and unresolved decisions cannot be skipped', () => {
-  let g = e.newGame('kbo-lotte', 'Reports', 'full', 8);
-  g.day = -2;
-  g.roster[0].mood.value = 30;
+  let g = e.newGame('kbo-lotte', 'Reports', 'full', 8, { preseason: false });
+  const underused = g.roster.find((p) => p.squad !== 'reserve' && p.pos !== 'P');
+  underused.mood.value = 30;
+  underused.mood.role = 'core';
+  underused.mood.recent = Array(12).fill(false);
   const original = structuredClone(g);
-  g = e.applyAction(g, { type: 'continueDay' });
+  g = e.applyAction(g, { type: 'continueDay', simulateGames: true });
   assert.equal(g.progress.stop, 'decision');
-  assert.equal(g.day, -1);
+  assert.equal(g.day, 1);
   const paused = e.applyAction(g, { type: 'continueDay', simulateGames: true });
-  assert.equal(paused.day, -1);
+  assert.equal(paused.day, 1);
   assert.equal(paused.budget, g.budget);
   assert.deepEqual(paused.history, g.history);
-  assert.equal(original.day, -2);
+  assert.equal(original.day, 0);
   const clean = e.newGame('kbo-lotte', 'Report stop', 'full', 8);
   clean.day = -7;
   clean.roster[0].mood.promise = { due: -6, games: 1, startGames: 0 };

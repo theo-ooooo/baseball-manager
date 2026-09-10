@@ -23,6 +23,7 @@ export class InboxReadService {
             ? `SELECT revision,json_extract(state,'$.news') AS news,
               json_extract(state,'$.roster') AS roster,json_extract(state,'$.day') AS day,
               json_extract(state,'$.year') AS year,json_extract(state,'$.calendar') AS calendar,
+              json_extract(state,'$.phase') AS phase,json_extract(state,'$.pitching') AS pitching,
               json_extract(state,'$.managerCareer.status') AS employment,
               json_extract(state,'$.managerCareer.vacationUntil') AS vacation
               FROM careers WHERE user_id=?`
@@ -40,6 +41,8 @@ export class InboxReadService {
           roster?: string;
           day: number;
           year: number;
+          phase: GameState['phase'];
+          pitching?: string;
           calendar?: string;
           employment?: string;
           vacation?: string;
@@ -83,6 +86,8 @@ export class InboxReadService {
             roster,
             day: row.day,
             year: row.year,
+            phase: row.phase,
+            pitching: row.pitching ? JSON.parse(row.pitching) : undefined,
             calendar: row.calendar ? JSON.parse(row.calendar) : undefined,
           },
           action,

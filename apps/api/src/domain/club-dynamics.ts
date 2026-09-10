@@ -1,3 +1,4 @@
+import { playingTimeAssessment } from '@dugout/shared/playing-time';
 import type { GameState, Result, WorldCatalog, NewsItem } from '@dugout/shared/types';
 import { overall, hash, createGameView, money } from '@dugout/shared/game-view';
 import { gameDate, dateLabel } from '@dugout/shared/calendar';
@@ -48,6 +49,7 @@ export function prepareDynamics(g: GameState) {
       reason: '새 감독 체제에 적응 중',
       recent: [],
     };
+  reconcilePlayingTimeNews(g);
 }
 export function matchMorale(g: GameState, res: Result) {
   prepareDynamics(g);
@@ -55,6 +57,12 @@ export function matchMorale(g: GameState, res: Result) {
   const side = res.home === g.club ? 1 : 0,
     team = res.replayTeams?.[side],
     played = new Set(team ? [...team.lineup, team.defense.P] : [...g.lineup, g.starter]);
+  for (const entry of res.log)
+    if (entry.play) {
+      played.add(entry.play.batter);
+      played.add(entry.play.pitcher);
+      for (const id of Object.values(entry.play.defense || {})) played.add(id);
+    }
   const win = (side ? res.homeScore : res.awayScore) > (side ? res.awayScore : res.homeScore),
     draw = res.homeScore === res.awayScore;
   for (const p of g.roster) {
@@ -62,10 +70,7 @@ export function matchMorale(g: GameState, res: Result) {
       appeared = played.has(p.id);
     m.recent = [...m.recent, appeared].slice(-12);
     if (appeared) m.lastPlayedDay = g.day;
-    const target =
-      p.pos === 'P' ? 0.18 : { core: 0.75, regular: 0.6, rotation: 0.3, prospect: 0.05 }[m.role];
-    const ratio = m.recent.filter(Boolean).length / m.recent.length;
-    const shortage = m.recent.length >= 6 && ratio < target;
+    const shortage = playingTimeAssessment(g, p)?.shortage === true;
     m.value = limit(
       m.value + (draw ? 0 : win ? 1.3 : -1.3) + (shortage ? -2.4 : appeared ? 0.8 : 0),
     );
@@ -102,7 +107,9 @@ export function dailyReports(
       );
       m.promise = undefined;
     }
+    const usage = playingTimeAssessment(g, p);
     if (
+      usage?.shortage &&
       m.value < 45 &&
       !m.promise &&
       g.day - (m.lastConcernDay ?? -1000) >= 28 &&
@@ -112,7 +119,7 @@ export function dailyReports(
       postNews(
         g,
         `${p.name}, 감독 면담 요청`,
-        `현재 사기 ${Math.round(m.value)} · ${m.reason}. 선수는 자신의 역할과 출전 계획을 듣고 싶어 합니다.`,
+        `최근 팀 ${usage.sample}경기 중 ${usage.played}경기 출전 · ${usage.role}의 출전 기대 기준 ${usage.expected}경기에 미달했습니다. 선수는 실제 출전 부족에 대해 면담을 요청했습니다.`,
         'morale',
         { playerId: p.id, choiceKind: 'playingTime' },
       );
@@ -154,7 +161,7 @@ export function dailyReports(
             {
               title: '다음 주 운용 의견',
               body: tired.length
-                ? '피로가 누적된 선수의 선발 출전을 줄이고 2군 선수와 교체를 검토하세요. 출전 약속이 있는 선수는 약속 기한과 실제 출전 수를 함께 확인하세요.'
+                ? '피로가 누적된 선수는 1군에서 휴식과 로테이션으로 관리하세요. 피로만으로 2군 강등을 권고하지 않습니다. 출전 약속은 실제 출전 수를 함께 확인하세요.'
                 : '선수단 컨디션은 안정적입니다. 주요 선수의 연속 출전과 유망주의 기회를 함께 관리하세요.',
             },
           ],
@@ -265,7 +272,7 @@ export function dynamicsAction(g: GameState, a: Record<string, unknown>): GameSt
 }
 
 export function respondPlayerNews<
-  T extends Pick<GameState, 'news' | 'roster' | 'year' | 'day' | 'calendar'>,
+  T extends Pick<GameState, 'news' | 'roster' | 'year' | 'day' | 'calendar' | 'phase' | 'pitching'>,
 >(g: T, a: Record<string, unknown>): T {
   const n = g.news.find((n) => n.id === a.id),
     choice = String(a.choice);
@@ -273,6 +280,10 @@ export function respondPlayerNews<
     throw new Error('답변할 면담과 선택지를 확인해 주세요.');
   const p = g.roster.find((p) => p.id === n.playerId);
   if (!p) throw new Error('현재 소속 선수가 아닙니다.');
+  if (playingTimeAssessment(g, p)?.shortage !== true) {
+    reconcilePlayingTimeNews(g);
+    return g;
+  }
   const m = p.mood!;
   if (choice === 'promise') {
     const games = p.pos === 'P' ? 1 : 4;
@@ -288,4 +299,18 @@ export function respondPlayerNews<
   n.response = m.reason;
   postNews(g, `${p.name} 면담 완료`, m.reason, 'morale', { playerId: p.id });
   return g;
+}
+
+export function reconcilePlayingTimeNews(
+  g: Pick<GameState, 'roster' | 'news' | 'phase' | 'pitching'>,
+) {
+  for (const n of g.news) {
+    if (n.choiceKind !== 'playingTime' || n.choice) continue;
+    const p = g.roster.find((p) => p.id === n.playerId);
+    if (!p || playingTimeAssessment(g, p)?.shortage !== true) {
+      n.choice = 'resolved';
+      n.response =
+        '최근 출전과 선수 역할을 재검토했습니다. 현재 출전 보장이 필요한 근거가 없어 면담을 정리했습니다.';
+    }
+  }
 }

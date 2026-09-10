@@ -1544,6 +1544,7 @@ test('D1 player conversation patches the target mood and news atomically without
     );
   const initial = await raw(),
     player = initial.roster.find((p) => p.pos !== 'P');
+  player.mood.recent = Array(12).fill(false);
   initial.news = [
     {
       id: 'playing-time',
