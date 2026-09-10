@@ -405,6 +405,7 @@
   .lineup-order-panel .lineup-draft-actions {
     position: static;
   }
+  body:has(.lineup-workspace[data-mobile-view='order']) .mobile-progress,
   body:has(.lineup-order-panel[data-unsaved-plan='true']) .mobile-progress {
     display: none;
   }
