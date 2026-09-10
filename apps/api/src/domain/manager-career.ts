@@ -1,5 +1,6 @@
-import { managerContractAction, prepareManagerTerms, tickManagerTerms } from './manager-contracts';
-import { managerInterviewQuestions } from '@dugout/shared/manager-interview';
+import { prepareManagerTerms, tickManagerTerms } from './manager-contracts';
+import { managerConversationAction } from './manager-conversation';
+import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { createPlayerGenerator } from './player-generator';
 import { boardAction, boardFailure } from './board-objectives';
 import type { GameState, WorldCatalog } from '@dugout/shared/types';
@@ -539,9 +540,15 @@ export function createManagerCareer(world: WorldCatalog) {
     );
   }
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
-    if (['negotiateManagerContract', 'acceptManagerTerms'].includes(String(a.type))) {
+    if (isManagerConversationCommand(a.type)) {
       prepare(g);
-      return managerContractAction(g, a);
+      const offer = g.managerCareer?.offers.find((o) => o.id === a.id);
+      const club = view.getClub(offer?.club || g.club);
+      return managerConversationAction(g, a, {
+        name: club.name,
+        league: club.league,
+        count: count(club.id),
+      });
     }
     if (a.type === 'boardNegotiate') {
       prepare(g);
@@ -553,10 +560,6 @@ export function createManagerCareer(world: WorldCatalog) {
         'managerTarget',
         'applyManager',
         'signManager',
-        'managerInterview',
-        'submitManagerProposal',
-        'acceptManagerInvite',
-        'declineManager',
         'startVacation',
         'endVacation',
       ].includes(String(a.type))
@@ -565,79 +568,7 @@ export function createManagerCareer(world: WorldCatalog) {
     prepare(g);
     const m = g.managerCareer!;
     if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
-    if (a.type === 'submitManagerProposal') {
-      const offer = m.offers.find((o) => o.id === a.id);
-      if (
-        !offer ||
-        offer.status !== 'interview' ||
-        offer.expires < gameDate(g) ||
-        offer.interview?.length !==
-          managerInterviewQuestions(g, offer, view.getClub(offer.club).name).length
-      )
-        throw new Error('면접 문항을 모두 마친 뒤 제안서를 제출해 주세요.');
-      const proposal = typeof a.proposal === 'string' ? a.proposal.trim() : '';
-      if (proposal.length < 20 || proposal.length > 1200)
-        throw new Error('운영 제안서는 20~1,200자로 작성해 주세요.');
-      offer.proposal = proposal;
-      offer.status = 'pending';
-      offer.due = addDays(gameDate(g), 2);
-      offer.expires = addDays(gameDate(g), 14);
-      offer.message =
-        '운영 제안서를 접수했습니다. 면접에서 합의한 방향과 다른 후보들을 비교해 2일 뒤 최종 결과를 알려드리겠습니다.';
-      report(g, `${view.getClub(offer.club).name} · 면접 및 제안서 접수`, offer.message, offer);
-      return g;
-    }
-    if (
-      a.type === 'managerInterview' ||
-      a.type === 'declineManager' ||
-      a.type === 'acceptManagerInvite'
-    ) {
-      const offer = m.offers.find((o) => o.id === a.id);
-      if (
-        !offer ||
-        !['invited', 'interview', 'offered', 'pending'].includes(offer.status) ||
-        offer.expires < gameDate(g)
-      )
-        throw new Error('진행 중인 채용 제안이 없습니다.');
-      if (a.type === 'declineManager') {
-        offer.status = 'rejected';
-        offer.message = '감독이 채용 절차를 철회했습니다.';
-        return g;
-      }
-      if (a.type === 'acceptManagerInvite') {
-        if (offer.status !== 'invited') throw new Error('유효한 면접 초청이 없습니다.');
-        offer.status = 'interview';
-        offer.message = `초청에 응해 주셔서 감사합니다. 우리 구단은 ${{ win: '당장의 성적 향상', youth: '젊은 선수 육성', budget: '안정적인 재정 운영' }[offer.priority || 'win']}을 중요하게 생각합니다. 어떤 계획을 갖고 계십니까?`;
-        report(g, `${view.getClub(offer.club).name} · 감독 면접`, offer.message, offer);
-        return g;
-      }
-      if (offer.status !== 'interview') throw new Error('진행 중인 면접이 없습니다.');
-      const questions = managerInterviewQuestions(g, offer, view.getClub(offer.club).name);
-      const question = questions[offer.interview?.length || 0];
-      if (!question || a.question !== question.id)
-        throw new Error('면접 질문이 변경됐습니다. 현재 질문에 답변해 주세요.');
-      const answer = question.answers.find((x) => x.id === a.answer);
-      if (!answer) throw new Error('면접 답변을 선택해 주세요.');
-      (offer.interview ??= []).push({
-        topic: question.topic,
-        question: question.question,
-        answer: answer.text,
-        answerId: answer.id,
-        reaction: answer.reaction,
-        score: answer.score,
-      });
-      if (question.id === 'style') offer.answer = answer.id as 'win' | 'youth' | 'budget';
-      if (question.id === 'target' && answer.id === 'ambitious') {
-        offer.targetRank = Math.max(1, offer.targetRank - 1);
-        offer.salary = salary(offer.club, offer.targetRank);
-      }
-      if (question.id === 'budget')
-        offer.budgetAdjustment = answer.id === 'extra' ? 0.1 : answer.id === 'lean' ? -0.1 : 0;
-      offer.message = answer.reaction;
-      if (offer.interview.length === questions.length)
-        offer.message =
-          '면접 문항을 모두 마쳤습니다. 논의한 내용을 운영 제안서로 정리해 제출해 주십시오.';
-    } else if (a.type === 'resignManager') {
+    if (a.type === 'resignManager') {
       if (isUnemployed(g)) throw new Error('현재 소속 구단이 없습니다.');
       if (a.confirm !== true) throw new Error('감독 사퇴를 확인해 주세요.');
       leave(g, 'resigned');

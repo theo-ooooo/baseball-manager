@@ -1291,3 +1291,156 @@ test('D1 stores the season start choice, validates it, and a retried preseason s
     1,
   );
 });
+
+test('D1 bounded manager conversations preserve the rest of a career and safely retry lost responses', async () => {
+  const user = 'bounded-manager-qa';
+  const started = await action(
+    {
+      type: 'start',
+      club: 'kbo-lotte',
+      manager: '무료 검증',
+      mode: 'short',
+      unemployed: true,
+      preseason: false,
+    },
+    user,
+  );
+  const raw = async () =>
+    JSON.parse(
+      (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+    );
+  const state = await raw();
+  const id = 'bounded-invitation';
+  state.managerCareer.offers = [
+    {
+      id,
+      club: 'kbo-samsung',
+      status: 'invited',
+      salary: 100,
+      targetRank: 5,
+      priority: 'youth',
+      visibility: 'private',
+      expires: '2099-12-31',
+      due: '2099-12-31',
+      message: '면접 초청',
+    },
+  ];
+  state.managerJobs['kbo-samsung'].vacant = true;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(state), user)
+    .run();
+  const baseline = structuredClone(state);
+  delete baseline.managerCareer;
+  delete baseline.news;
+  const tables = async () => {
+    const names = [
+      'career_players',
+      'contracts',
+      'career_staff',
+      'career_standings',
+      'negotiations',
+      'finance_entries',
+      'career_matches',
+    ];
+    return Promise.all(
+      names.map(
+        async (name) =>
+          (await db.prepare(`SELECT * FROM ${name} WHERE user_id=?`).bind(user).all()).results,
+      ),
+    );
+  };
+  const projected = await tables();
+  let revision = started.revision;
+  const send = async (payload) => {
+    const command = {
+      ...payload,
+      id,
+      responseMode: 'patch',
+      revision,
+      requestId: crypto.randomUUID(),
+    };
+    const result = await call('/api/career', command, user);
+    assert.equal(result.status, 201, JSON.stringify(result));
+    assert.equal(result.body.baseRevision, revision);
+    assert.equal(result.body.revision, revision + 1);
+    assert.deepEqual(Object.keys(result.body.patch).sort(), ['managerCareer', 'news']);
+    assert.equal(result.body.state, undefined);
+    assert.ok(JSON.stringify(result.body).length < 50000);
+    assert.deepEqual((await call('/api/career', command, user)).body, result.body);
+    revision = result.body.revision;
+    const after = await raw();
+    delete after.managerCareer;
+    delete after.news;
+    assert.deepEqual(after, baseline);
+    return { command, result: result.body };
+  };
+  const invited = await send({ type: 'acceptManagerInvite' });
+  assert.equal(invited.result.patch.managerCareer.status, 'unemployed');
+  assert.equal(invited.result.patch.managerCareer.offers[0].status, 'interview');
+  assert.equal(invited.result.patch.news[0].managerOfferId, id);
+  const futureQuestion = await call(
+    '/api/career',
+    {
+      type: 'managerInterview',
+      id,
+      question: 'staff',
+      answer: 'keep',
+      revision,
+      responseMode: 'patch',
+    },
+    user,
+  );
+  assert.equal(futureQuestion.status, 400);
+  assert.equal((await call('/api/career', invited.command, 'different-user')).status, 409);
+  for (const [question, answer] of [
+    ['motivation', 'project'],
+    ['career', 'responsibility'],
+    ['style', 'youth'],
+    ['target', 'ambitious'],
+    ['budget', 'lean'],
+    ['staff', 'keep'],
+  ]) {
+    const response = await send({ type: 'managerInterview', question, answer });
+    assert.equal(response.result.patch.managerCareer.offers[0].interview.at(-1).answerId, answer);
+  }
+  const stale = await call('/api/career', invited.command, user);
+  assert.equal(stale.status, 409);
+  assert.equal(stale.body.reload, true);
+  const proposal = await send({
+    type: 'submitManagerProposal',
+    proposal: '젊은 선수들의 강점을 점검하고 코치진과 협력하여 합의한 목표를 달성하겠습니다.',
+  });
+  assert.equal(proposal.result.patch.managerCareer.offers[0].status, 'pending');
+  const current = await raw();
+  current.managerCareer.offers[0].status = 'offered';
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(current), user)
+    .run();
+  const terms = await send({ type: 'acceptManagerTerms', termsVersion: 1 });
+  assert.equal(terms.result.patch.managerCareer.offers[0].contractTerms.status, 'agreed');
+  assert.equal(terms.result.patch.managerCareer.status, 'unemployed');
+  assert.equal(
+    (
+      await call(
+        '/api/career',
+        { type: 'acceptManagerTerms', id, termsVersion: 1, revision, responseMode: 'patch' },
+        user,
+      )
+    ).status,
+    400,
+  );
+  assert.deepEqual(await tables(), projected);
+  const next = { type: 'declineManager', id, revision, responseMode: 'patch' };
+  const race = await Promise.all([
+    call('/api/career', { ...next, requestId: crypto.randomUUID() }, user),
+    call('/api/career', { ...next, requestId: crypto.randomUUID() }, user),
+  ]);
+  assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+  const count = await db
+    .prepare('SELECT COUNT(*) AS n FROM career_actions WHERE user_id=?')
+    .bind(user)
+    .first();
+  assert.equal(count.n, revision + 1);
+});
