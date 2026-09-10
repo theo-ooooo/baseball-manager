@@ -7,7 +7,7 @@
   },
   "scripts": {
     "install:ci": "bash scripts/install-ci.sh",
-    "dev": "npm run db:migrate:local && npm run build:api && npm run dev --workspace @dugout/web",
+    "dev": "npm run db:migrate:local && npm run build:api && node scripts/dev.mjs",
     "build": "bash scripts/build-verified.sh",
     "start": "npm run start --workspace @dugout/web",
     "test": "npm run build && node --test tests/*.test.mjs",
