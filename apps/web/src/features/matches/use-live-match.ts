@@ -12,7 +12,7 @@ import { previousMatchCommand } from '@dugout/shared/match-commands';
 import { sendMatchCommand } from './use-match-command';
 import { matchDecision } from '@dugout/shared/match-decision';
 import { useDecisionPrompt } from './use-decision-prompt';
-import { useMatchPauseSettings } from './use-match-pause-settings';
+import { useMatchPauseSettings, type MatchPauseSettings } from './use-match-pause-settings';
 import { useMatchResume } from './use-match-resume';
 
 export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
@@ -23,9 +23,9 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const shouldPause = useCallback(
     (cursor: number) => {
       const kind = matchDecision(live, g.club, cursor).kind;
-      return !!kind && autoPause.settings[kind];
+      return !!kind && autoPause.enabled(kind);
     },
-    [live, g.club, autoPause.settings],
+    [live, g.club, autoPause],
   );
   const playback = useMatchPlayback(
     `dugout:playback:${live.playbackId}:${live.timelineVersion}`,
@@ -58,13 +58,6 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     pausePlayback();
     setSoundPaused(true);
   }, [pausePlayback]);
-  useEffect(() => {
-    const hide = () => {
-      if (document.hidden) pause();
-    };
-    document.addEventListener('visibilitychange', hide);
-    return () => document.removeEventListener('visibilitychange', hide);
-  }, [pause]);
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
   const decision = useMemo(() => matchDecision(live, g.club, consumed), [live, g.club, consumed]);
   const previousCommand = previousMatchCommand(live, g.club, consumed);
@@ -72,7 +65,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     playback.cursor,
     !playback.playing,
     playback.settled,
-    !!decision.kind,
+    playback.pauseReason === 'automatic',
   );
   const sceneResult = useMemo(
     () => (playback.cursor === 0 ? { ...result, log: [], homeScore: 0, awayScore: 0 } : result),
@@ -130,7 +123,13 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   };
   return {
     ...playback,
-    autoPause,
+    autoPause: {
+      ...autoPause,
+      toggle: (kind: keyof MatchPauseSettings, checked: boolean) => {
+        autoPause.toggle(kind, checked);
+        if (!checked && playback.pauseReason === 'automatic' && decision.kind === kind) play();
+      },
+    },
     live,
     result,
     dialogRef,

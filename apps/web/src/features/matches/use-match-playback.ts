@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+export type MatchPauseReason = 'ready' | 'manual' | 'hidden' | 'automatic' | null;
+
 function savedCursor(key: string, floor: number, length: number) {
   try {
     const n = Number(localStorage.getItem(key));
@@ -23,17 +25,20 @@ export function useMatchPlayback(
     cursor: number;
     phase: 'settled' | 'playing' | 'paused';
     continuous: boolean;
+    pauseReason: MatchPauseReason;
   }>(() => ({
     cursor: Math.min(length, savedCursor(key, floor, length) + (resume ? 1 : 0)),
     phase: resume && floor < length ? 'playing' : 'settled',
     continuous: resume && floor < length,
+    pauseReason: resume ? null : 'ready',
   }));
-  const pause = useCallback(() => {
+  const pause = useCallback((reason: 'manual' | 'hidden' = 'manual') => {
     stopped.current = true;
     setState((previous) => ({
       ...previous,
       phase: previous.phase === 'playing' ? 'paused' : previous.phase,
       continuous: false,
+      pauseReason: reason,
     }));
   }, []);
   const play = useCallback(
@@ -45,6 +50,7 @@ export function useMatchPlayback(
           cursor: previous.cursor + (previous.phase === 'settled' ? 1 : 0),
           phase: 'playing',
           continuous,
+          pauseReason: null,
         };
       });
     },
@@ -52,16 +58,17 @@ export function useMatchPlayback(
   );
   const finishPlay = useCallback(() => {
     if (stopped.current) return;
-    setState((previous) =>
-      previous.phase !== 'playing'
-        ? previous
-        : {
-            ...previous,
-            phase: 'settled',
-            continuous:
-              previous.continuous && previous.cursor < length && !shouldPause(previous.cursor),
-          },
-    );
+    setState((previous) => {
+      if (previous.phase !== 'playing') return previous;
+      const automatic =
+        previous.continuous && previous.cursor < length && shouldPause(previous.cursor);
+      return {
+        ...previous,
+        phase: 'settled',
+        continuous: previous.continuous && previous.cursor < length && !automatic,
+        pauseReason: automatic ? 'automatic' : null,
+      };
+    });
   }, [length, shouldPause]);
   const [speed, setSpeed] = useState(() => {
     try {
@@ -89,7 +96,7 @@ export function useMatchPlayback(
   }, [speed]);
   useEffect(() => {
     const hide = () => {
-      if (document.hidden) pause();
+      if (document.hidden) pause('hidden');
     };
     document.addEventListener('visibilitychange', hide);
     return () => document.removeEventListener('visibilitychange', hide);
