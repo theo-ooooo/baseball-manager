@@ -196,6 +196,7 @@ export type GameState = {
   training: string;
   trainingCenter?: TrainingCenter;
   staff: Coach[];
+  coachAssignments?: Record<string, { club: string; coach: Coach }>;
   standings: Record<string, Standing[]>;
   history: Result[];
   news: NewsItem[];
@@ -371,9 +372,20 @@ export type ReserveResult = {
 };
 
 export type ReplayState = { outs: number; bases: (string | null)[]; score: number[] };
+export type AutomaticPitchingChange = {
+  from: string;
+  reason: 'fatigue' | 'starter-limit' | 'runs' | 'relief-limit' | 'save' | 'protect-closer';
+  outs: number;
+  runs: number;
+  energy?: number;
+  lead: number;
+  role: 'closer' | 'setup' | 'chase' | 'relief';
+};
 export type ReplayPlay = {
   batter: string;
   pitcher: string;
+  /** Automatic change immediately before this play; manual substitutions use MatchChange. */
+  pitchingChange?: AutomaticPitchingChange;
   before: ReplayState;
   after: ReplayState;
   steal?: { runner: string; safe: boolean; to?: 2 | 3 };
@@ -545,7 +557,7 @@ export type LiveMatch = {
   result: Result;
   opponents?: Player[][];
   /** Existing matches retain their original relief decisions when resumed. */
-  pitchingVersion?: 2;
+  pitchingVersion?: 2 | 3;
   /** Older in-progress games keep their original outcomes and fatigue rules. */
   energyVersion?: 1;
   bullpenVersion?: 1;

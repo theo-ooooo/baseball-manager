@@ -33,7 +33,7 @@ export function createLiveMatchActions(
         home,
         away,
         seed: g.seed,
-        pitchingVersion: 2,
+        pitchingVersion: 3,
         energyVersion: 1,
         bullpenVersion: 1,
         warmups: [],

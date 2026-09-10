@@ -89,7 +89,7 @@ test('Situation, fatigue and used pitchers determine relief priority without usi
   assert.equal(select(7, 0), 'setup');
   assert.equal(select(8, 2), 'setup');
   assert.equal(select(7, -1), 'chase');
-  assert.equal(select(7, 5), 'general');
+  assert.equal(select(7, 5), 'chase');
   assert.equal(select(9, 3), 'closer');
   assert.equal(select(9, 0), 'setup');
   assert.equal(select(9, -3), 'chase');
@@ -114,6 +114,26 @@ test('Situation, fatigue and used pitchers determine relief priority without usi
   );
   assert.equal(select(8, 1, plan.bullpen), undefined);
   assert.equal(select(10, 1, [...plan.bullpen, plan.closer]), undefined);
+  for (const lead of [-12, -4, 4, 12]) {
+    assert.equal(select(9, lead), 'chase');
+    assert.equal(select(9, lead, plan.bullpen), undefined);
+    assert.equal(
+      select(
+        9,
+        lead,
+        [],
+        roster.map((p) => ({ ...p, condition: p.id === 'closer' ? 100 : 30 })),
+      ),
+      'chase',
+    );
+  }
+  assert.equal(select(9, 0, plan.bullpen), 'closer');
+  assert.equal(select(9, -1, plan.bullpen), undefined);
+  assert.equal(
+    selectReliever({ plan, roster, used: new Set(plan.bullpen), inning: 9, lead: 8, version: 2 })
+      .id,
+    'closer',
+  );
   assert.equal(
     select(
       7,
@@ -179,7 +199,7 @@ test('New live games actually use saved bullpen priorities at each pitching chan
     g = reachFixture(e, g);
     const baseline = structuredClone(g);
     g = e.applyAction(g, { type: 'startMatch' });
-    assert.equal(g.liveMatch.pitchingVersion, 2);
+    assert.equal(g.liveMatch.pitchingVersion, 3);
     const defending = g.liveMatch.home === g.club ? 1 : 0;
     for (let n = 0; !g.liveMatch.finished && n < 400; n++)
       g = e.applyAction(g, { type: 'stepMatch' });
@@ -202,4 +222,67 @@ test('New live games actually use saved bullpen priorities at each pitching chan
     assert.ok(used.size > 1);
   }
   assert.deepEqual([...situations].sort(), ['behind', 'level-or-ahead']);
+});
+
+test('Version 2 saved pitching still regenerates its deployed timeline exactly', () => {
+  const outfile = join(tmpdir(), 'dugout-v2-timeline-regression.cjs');
+  buildSync({
+    stdin: {
+      contents:
+        "export * from './apps/api/src/domain/match-timeline';export * from './apps/api/src/domain/match-simulation';export { world } from './tests/fixtures/engine';",
+      resolveDir: process.cwd(),
+      loader: 'ts',
+    },
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile,
+  });
+  const { generateTimeline, createMatchSimulator, world } = require(outfile);
+  let g = e.newGame('kbo-lotte', 'V2 frozen', 'full', 407);
+  g.day = -22;
+  g = e.applyAction(g, { type: 'startMatch' });
+  g.liveMatch.pitchingVersion = 2;
+  generateTimeline(g, createMatchSimulator(world));
+  // Captured from HEAD's deployed version-2 simulator, before this policy change.
+  assert.equal(
+    createHash('sha256').update(JSON.stringify(g.liveMatch.timeline)).digest('hex'),
+    '10c7afaec5864976cc264a63a8f20d0df5e2ccec39fafa6069fa4eb851fb782d',
+  );
+});
+
+test('Automatic changes carry accurate outgoing evidence and preserve the closer in lopsided games', () => {
+  let observed = 0,
+    blowouts = 0;
+  for (const seed of [51, 407, 931, 502, 802]) {
+    let g = e.newGame('kbo-lotte', 'Notice evidence', 'full', seed);
+    g.day = -22;
+    g = e.applyAction(g, { type: 'startMatch' });
+    const own = g.liveMatch.home === g.club ? 1 : 0;
+    const log = g.liveMatch.timeline.log;
+    for (const [i, row] of log.entries()) {
+      const change = row.play?.pitchingChange;
+      if (!change) continue;
+      observed++;
+      const prior = log
+        .slice(0, i)
+        .filter((e) => e.half === row.half && e.play?.pitcher === change.from);
+      assert.ok(prior.length);
+      assert.equal(
+        change.outs,
+        prior.reduce((sum, e) => sum + Math.max(0, e.play.after.outs - e.play.before.outs), 0),
+      );
+      assert.equal(
+        change.lead,
+        row.play.before.score[1 - row.half] - row.play.before.score[row.half],
+      );
+      assert.notEqual(change.from, row.play.pitcher);
+      if (row.half !== own && Math.abs(change.lead) >= 4) {
+        blowouts++;
+        assert.notEqual(row.play.pitcher, g.pitching.closer);
+      }
+    }
+  }
+  assert.ok(observed > 5);
+  assert.ok(blowouts > 0);
 });
