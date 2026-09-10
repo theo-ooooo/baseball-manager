@@ -21,6 +21,7 @@ import '../styles/player-portrait.css';
 import '../styles/stadium-3d.css';
 import '../styles/season-start.css';
 import '../styles/app-version.css';
+import '../styles/league-records.css';
 
 export const metadata: Metadata = {
   title: 'DUGOUT | 월드 베이스볼 매니저',

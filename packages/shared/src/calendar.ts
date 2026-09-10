@@ -4,8 +4,12 @@ export const addDays = (date: string, days: number) =>
   new Date(Date.parse(date + 'T12:00:00Z') + days * DAY).toISOString().slice(0, 10);
 export const daysBetween = (a: string, b: string) =>
   Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / DAY);
-export const gameDate = (g: GameState, day = g.day) =>
-  addDays(g.calendar?.openingDate || `${g.year}-03-28`, day);
+export const gameDate = (
+  g: Pick<GameState, 'year' | 'day'> & {
+    calendar?: Pick<NonNullable<GameState['calendar']>, 'openingDate'>;
+  },
+  day = g.day,
+) => addDays(g.calendar?.openingDate || `${g.year}-03-28`, day);
 export const dateLabel = (g: GameState, day = g.day) =>
   new Intl.DateTimeFormat('ko-KR', {
     month: 'numeric',
