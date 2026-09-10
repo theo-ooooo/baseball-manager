@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import { careerMemory } from './career-memory';
 import { toast } from 'sonner';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { careerResponse, mergeCareerResponse } from './career-response';
@@ -17,6 +18,7 @@ export function useCareerSession(initial: CareerData) {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [requestPhase, setRequestPhase] = useState<'request' | 'response'>('request');
   function install(next: CareerData) {
+    careerMemory.career(next);
     current.current = next;
     setData(next);
   }
