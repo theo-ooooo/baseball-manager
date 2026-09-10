@@ -4,9 +4,15 @@ import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { scoutingCost } from '@dugout/shared/scouting';
 import { useWorld } from '../career/world-context';
-export function useScoutCenter(g: GameState, act: Act) {
+export function useScoutCenter(g: GameState, act: Act, initialTab?: string) {
   const { getClub, marketPlayers } = useWorld();
-  const [tab, setTab] = useState(g.scouting?.reports.length ? 'reports' : 'missions'),
+  const [tab, setTab] = useState(
+      initialTab && ['reports', 'missions', 'shortlist'].includes(initialTab)
+        ? initialTab
+        : g.scouting?.reports.length
+          ? 'reports'
+          : 'missions',
+    ),
     [league, setLeague] = useState(getClub(g.club).league),
     [pos, setPos] = useState('all'),
     [maxAge, setMaxAge] = useState(25),

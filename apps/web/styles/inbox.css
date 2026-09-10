@@ -363,6 +363,27 @@
 .inbox-report-actions .button {
   font-size: 12px;
 }
+.inbox-report-destination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.inbox-report-destination .button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}
+.inbox-report-destination p {
+  flex-basis: 100%;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.7;
+}
 .inbox-decision {
   background: var(--surface-2);
   padding: 18px;

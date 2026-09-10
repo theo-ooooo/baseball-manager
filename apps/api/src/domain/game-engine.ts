@@ -1,4 +1,5 @@
 import { prepareSeasonRest } from './season-rest';
+import { scoutingGuide } from '@dugout/shared/scouting-guide';
 import { createLineupReports } from './lineup-reports';
 import { createAiRegistrations } from './ai-registrations';
 import { createTrades } from './trades';
@@ -208,12 +209,7 @@ export function createGameEngine(world: WorldCatalog) {
         ? '4주간의 프리시즌이 시작됩니다. 주 1회 연습경기, 2군 육성, 전술 훈련과 계약을 준비하세요.'
         : '정규시즌 개막일에 취임합니다. 프리시즌 없이 개막전 타순과 선발 로테이션을 바로 확인하세요.',
     );
-    news(
-      g,
-      '스카우팅 리포트 도착',
-      '세계 선수 시장에서 실명 선수와 가상 유망주를 확인할 수 있습니다. 에이전트에게 계약 조건을 제안하세요.',
-      'scout',
-    );
+    news(g, scoutingGuide.title, scoutingGuide.body, 'scout', { actionView: 'scouting' });
     dailyReports(g, world);
     lineupReports.prepare(g);
     if (options.unemployed) {

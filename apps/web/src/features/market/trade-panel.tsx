@@ -46,53 +46,6 @@ export function TradePanel({
   return (
     <div className="manager-office">
       <section className="panel panel-content">
-        <h2>구단 간 트레이드</h2>
-        <p>
-          같은 리그 구단끼리 최대 3명 대 3명과 현금을 교환합니다. 구단 답변 후 최종 확정하며 기존
-          연봉·계약·성적을 승계합니다.
-        </p>
-        <Choice
-          label="협상 구단"
-          value={club}
-          onChange={(v) => {
-            setClub(v);
-            setIncoming([]);
-          }}
-          items={others.map((c) => ({ value: c.id, label: c.name }))}
-        />
-        <div className="trade-columns">
-          <section>
-            <h3>보낼 선수 {outgoing.length}/3</h3>
-            {list(g.roster, outgoing, setOutgoing)}
-          </section>
-          <section>
-            <h3>받을 선수 {incoming.length}/3</h3>
-            {list(rosterFor(g, club), incoming, setIncoming)}
-          </section>
-        </div>
-        <div className="manager-form">
-          <label>
-            현금 (백만원){' '}
-            <input type="number" step="1" value={cash} onChange={(e) => setCash(e.target.value)} />
-            <small>양수: 지급 · 음수: 수령 요청</small>
-          </label>
-          <button
-            className="button primary"
-            disabled={busy || !incoming.length || !outgoing.length}
-            onClick={async () => {
-              if (
-                await act({ type: 'proposeTrade', club, outgoing, incoming, cash: Number(cash) })
-              ) {
-                setOutgoing([]);
-                setIncoming([]);
-              }
-            }}
-          >
-            트레이드 제안
-          </button>
-        </div>
-      </section>
-      <section className="panel panel-content">
         <h2>협상 중인 트레이드</h2>
         {!g.trades?.length && <p>아직 제안한 트레이드가 없습니다.</p>}
         {g.trades?.map((o) => (
@@ -156,6 +109,53 @@ export function TradePanel({
             )}
           </article>
         ))}
+      </section>
+      <section className="panel panel-content">
+        <h2>구단 간 트레이드</h2>
+        <p>
+          같은 리그 구단끼리 최대 3명 대 3명과 현금을 교환합니다. 구단 답변 후 최종 확정하며 기존
+          연봉·계약·성적을 승계합니다.
+        </p>
+        <Choice
+          label="협상 구단"
+          value={club}
+          onChange={(v) => {
+            setClub(v);
+            setIncoming([]);
+          }}
+          items={others.map((c) => ({ value: c.id, label: c.name }))}
+        />
+        <div className="trade-columns">
+          <section>
+            <h3>보낼 선수 {outgoing.length}/3</h3>
+            {list(g.roster, outgoing, setOutgoing)}
+          </section>
+          <section>
+            <h3>받을 선수 {incoming.length}/3</h3>
+            {list(rosterFor(g, club), incoming, setIncoming)}
+          </section>
+        </div>
+        <div className="manager-form">
+          <label>
+            현금 (백만원){' '}
+            <input type="number" step="1" value={cash} onChange={(e) => setCash(e.target.value)} />
+            <small>양수: 지급 · 음수: 수령 요청</small>
+          </label>
+          <button
+            className="button primary"
+            disabled={busy || !incoming.length || !outgoing.length}
+            onClick={async () => {
+              if (
+                await act({ type: 'proposeTrade', club, outgoing, incoming, cash: Number(cash) })
+              ) {
+                setOutgoing([]);
+                setIncoming([]);
+              }
+            }}
+          >
+            트레이드 제안
+          </button>
+        </div>
       </section>
       <Link className="text-button" href="/?view=market">
         선수 시장으로

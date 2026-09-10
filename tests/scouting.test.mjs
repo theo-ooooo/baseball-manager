@@ -6,13 +6,24 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const out = join(tmpdir(), 'dugout-scouting-test.cjs');
 buildSync({
-  entryPoints: ['tests/fixtures/engine.ts'],
+  stdin: {
+    contents: `export * from './tests/fixtures/engine';
+      export * from './packages/shared/src/scouting-guide';
+      export * from './apps/web/src/features/inbox/report-destination';`,
+    resolveDir: process.cwd(),
+    loader: 'ts',
+  },
   bundle: true,
   platform: 'node',
   format: 'cjs',
   outfile: out,
 });
-const { engine: e } = createRequire(import.meta.url)(out);
+const {
+  engine: e,
+  scoutingGuide,
+  presentScoutingNews,
+  reportDestination,
+} = createRequire(import.meta.url)(out);
 const game = () => e.newGame('kbo-lotte', 'Scouting', 'full', 76);
 const scout = (g) => g.staff.find((c) => c.role === '스카우트');
 const candidate = (g) => e.marketPlayers(g).find((p) => p.club === 'fa');
@@ -21,6 +32,35 @@ const request = (g, p, days = 7) => ({
   playerId: p.id,
   scoutId: scout(g).id,
   days,
+});
+
+test('Scouting guidance does not announce nonexistent reports and corrects only the old introduction', () => {
+  const g = game();
+  const guide = g.news.find((n) => n.title === scoutingGuide.title);
+  assert.ok(guide);
+  assert.equal(guide.report, undefined);
+  assert.equal(reportDestination(guide).href, '/?view=scouting&tab=missions');
+  assert.ok(!g.news.some((n) => n.title === '스카우팅 리포트 도착'));
+  const legacy = {
+    ...guide,
+    actionView: undefined,
+    read: true,
+    title: '스카우팅 리포트 도착',
+    body: '세계 선수 시장에서 실명 선수와 가상 유망주를 확인할 수 있습니다. 에이전트에게 계약 조건을 제안하세요.',
+  };
+  const before = structuredClone(legacy);
+  const presented = presentScoutingNews(legacy);
+  assert.deepEqual(legacy, before);
+  assert.equal(presented.id, legacy.id);
+  assert.equal(presented.read, true);
+  assert.equal(presented.title, guide.title);
+  assert.equal(reportDestination(presented).href, '/?view=scouting&tab=missions');
+  assert.equal(presented.report, undefined);
+  const actualReport = { ...legacy, actionView: 'scouting', report: { players: [] } };
+  assert.equal(presentScoutingNews(actualReport), actualReport);
+  assert.equal(reportDestination(actualReport).href, '/?view=scouting&tab=reports');
+  const otherNews = { ...legacy, kind: 'league' };
+  assert.equal(presentScoutingNews(otherNews), otherNews);
 });
 
 // The catalog is consulted on assignment and completion, not on each replay event.
@@ -54,6 +94,11 @@ test('Scouting adds a saved watchlist and reports only after the observation per
       (n) => n.actionView === 'scouting' && n.report?.players?.some((p) => p.id === r.playerId),
     ),
   );
+  const reportNews = g.news.find(
+    (n) => n.actionView === 'scouting' && n.report?.players?.some((p) => p.id === r.playerId),
+  );
+  assert.equal(presentScoutingNews(reportNews), reportNews);
+  assert.equal(reportDestination(reportNews).href, '/?view=scouting&tab=reports');
   assert.equal(g.progress.stop, 'report');
   g = e.applyAction(g, { type: 'advance', count: 1 });
   assert.equal(g.scouting.reports.length, 1);

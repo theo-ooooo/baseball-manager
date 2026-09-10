@@ -23,12 +23,14 @@ export function ScoutingPanel({
   busy,
   onPlayer,
   onNegotiate,
+  initialTab,
 }: {
   g: GameState;
   act: Act;
   busy: boolean;
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
+  initialTab?: string;
 }) {
   const { leagues, getClub } = useWorld();
   const {
@@ -52,7 +54,7 @@ export function ScoutingPanel({
     reports,
     cost,
     toggle,
-  } = useScoutCenter(g, act);
+  } = useScoutCenter(g, act, initialTab);
   const s = g.scouting;
   return (
     <div className="scouting-center">
@@ -133,9 +135,25 @@ export function ScoutingPanel({
       )}
       {tab === 'reports' && (
         <>
-          <ScoutComparison reports={reports.filter((r) => selected.includes(r.playerId))} g={g} />
+          {!!reports.length && (
+            <ScoutComparison reports={reports.filter((r) => selected.includes(r.playerId))} g={g} />
+          )}
           {!reports.length && (
-            <p className="scout-empty">관찰 기간이 끝나면 보고가 도착하고 날짜 진행이 멈춥니다.</p>
+            <section className="panel panel-content">
+              <h3>아직 완성된 관찰 보고서가 없습니다</h3>
+              <p className="scout-empty">
+                {active.length
+                  ? '관찰 중입니다. 관찰 임무에서 보고 예정일을 확인하세요. 관찰이 끝나면 이곳에 보고서가 표시됩니다.'
+                  : '새 파견으로 관찰을 의뢰하세요. 7일·14일·28일 중 선택한 기간이 끝나면 이곳에 보고서가 표시됩니다.'}
+              </p>
+              <button
+                className="button primary"
+                disabled={busy}
+                onClick={() => (active.length ? setTab('missions') : setAssignmentOpen(true))}
+              >
+                {active.length ? '관찰 임무 · 예정일 확인' : '새 스카우트 파견'}
+              </button>
+            </section>
           )}
           <div className="scout-report-grid">
             {reports.map((r) => {

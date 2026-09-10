@@ -1,21 +1,23 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { presentScoutingNews } from '@dugout/shared/scouting-guide';
 import { useIsMobile } from '../../hooks/use-mobile';
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { newsMeta, newsNeedsAction } from './inbox-model';
 export function useInboxWorkspace(g: GameState, act: Act, busy: boolean, initialReportId?: string) {
-  const initialReport = g.news.find((n) => n.id === initialReportId);
-  const [selectedId, setSelectedId] = useState(initialReport?.id || g.news[0]?.id || ''),
+  const news = useMemo(() => g.news.map(presentScoutingNews), [g.news]);
+  const initialReport = news.find((n) => n.id === initialReportId);
+  const [selectedId, setSelectedId] = useState(initialReport?.id || news[0]?.id || ''),
     [filter, setFilter] = useState('all'),
     [category, setCategory] = useState('all'),
     [search, setSearch] = useState(''),
     [detailOpen, setDetailOpen] = useState(!!initialReport || !!g.progress?.newsIds.length);
   const attempted = useRef(new Set<string>());
   const mobile = useIsMobile();
-  const unread = g.news.filter((n) => !n.read),
-    decisions = g.news.filter((n) => newsNeedsAction(n, g));
-  const items = g.news.filter(
+  const unread = news.filter((n) => !n.read),
+    decisions = news.filter((n) => newsNeedsAction(n, g));
+  const items = news.filter(
     (n) =>
       (filter === 'all' ||
         (filter === 'unread' && (!n.read || n.id === selectedId)) ||
@@ -24,7 +26,7 @@ export function useInboxWorkspace(g: GameState, act: Act, busy: boolean, initial
       `${n.title} ${n.body} ${newsMeta(n).sender}`.toLowerCase().includes(search.toLowerCase()),
   );
   // Keep the open letter in place after it becomes read; unread filters must not jump to another report.
-  const selected = g.news.find((n) => n.id === selectedId);
+  const selected = news.find((n) => n.id === selectedId);
   useEffect(() => {
     if (
       !selected ||

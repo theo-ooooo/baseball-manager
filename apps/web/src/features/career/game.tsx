@@ -89,6 +89,7 @@ export function GameScreen({
   initialOfferId,
   initialClubId,
   initialTradeTarget,
+  initialScoutTab,
 }: {
   initial: CareerData;
   refreshCatalog: () => Promise<void>;
@@ -98,6 +99,7 @@ export function GameScreen({
   initialOfferId?: string;
   initialClubId?: string;
   initialTradeTarget?: string;
+  initialScoutTab?: string;
 }) {
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
@@ -691,6 +693,8 @@ export function GameScreen({
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
           {view === 'scouting' && (
             <ScoutingPanel
+              key={initialScoutTab || 'scouting'}
+              initialTab={initialScoutTab}
               g={g}
               act={act}
               busy={busy}
@@ -879,6 +883,7 @@ export default function Game({
   initialOfferId,
   initialClubId,
   initialTradeTarget,
+  initialScoutTab,
 }: {
   initialPlayerId?: string;
   initialView?: string;
@@ -886,6 +891,7 @@ export default function Game({
   initialOfferId?: string;
   initialClubId?: string;
   initialTradeTarget?: string;
+  initialScoutTab?: string;
 } = {}) {
   const { data, error, reconnect, refreshCatalog } = useGameResources();
   if (!data)
@@ -924,6 +930,7 @@ export default function Game({
         initialOfferId={initialOfferId}
         initialClubId={initialClubId}
         initialTradeTarget={initialTradeTarget}
+        initialScoutTab={initialScoutTab}
         refreshCatalog={refreshCatalog}
       />
     </WorldProvider>

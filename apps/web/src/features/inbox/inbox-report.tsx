@@ -13,6 +13,7 @@ import { dateLabel } from '@dugout/shared/calendar';
 import type { Act } from '../career/game-contracts';
 import { contractReview, newsMeta, newsNeedsAction } from './inbox-model';
 import { useWorld } from '../career/world-context';
+import { reportDestination } from './report-destination';
 
 export function InboxReport({
   news,
@@ -42,6 +43,7 @@ export function InboxReport({
     review = contractReview(news),
     resolution = isClosedClubReport(g, news) ? 'departed' : contractReportStatus(g, news),
     reviewComplete = review && !newsNeedsAction(news, g);
+  const destination = resolution ? null : reportDestination(news);
   const players =
     news.report?.players ||
     (review
@@ -131,6 +133,19 @@ export function InboxReport({
             <p key={i}>{line}</p>
           ))}
         </div>
+        {destination && (
+          <section className="inbox-report-destination" aria-label="관련 화면 바로 열기">
+            <Link className="button primary" href={destination.href}>
+              {destination.label} <ArrowUpRight size={15} />
+            </Link>
+            {destination.guide && (
+              <Link className="button secondary" href="/?view=market">
+                선수 시장 열기 <ArrowUpRight size={15} />
+              </Link>
+            )}
+            <p>{destination.detail}</p>
+          </section>
+        )}
         {!!news.report?.facts?.length && (
           <dl className="inbox-facts">
             {news.report.facts.map((fact) => (
@@ -282,6 +297,7 @@ export function InboxReport({
                     </button>
                   ))}
           {!resolution &&
+            !destination &&
             news.actionView &&
             !news.lineupRecommendation &&
             news.actionView !== 'medical' &&
