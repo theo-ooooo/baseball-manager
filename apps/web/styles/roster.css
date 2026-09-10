@@ -391,3 +391,12 @@
     gap: 3px 8px;
   }
 }
+@media (max-width: 900px) {
+  .roster-list {
+    max-height: none;
+    overflow: visible;
+  }
+  .roster-player {
+    min-height: 54px;
+  }
+}

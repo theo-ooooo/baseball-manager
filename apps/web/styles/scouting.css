@@ -193,3 +193,53 @@
     flex-wrap: wrap;
   }
 }
+.scout-knowledge summary {
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 28px;
+}
+.scout-knowledge[open] summary {
+  margin-bottom: 12px;
+}
+@media (max-width: 767px) {
+  .scouting-center .market-notice {
+    padding: 14px;
+    align-items: center;
+    gap: 12px;
+  }
+  .scouting-center .market-notice p {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .scouting-center .preset-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .scouting-center .preset-buttons button {
+    min-height: 44px;
+    padding: 8px 5px;
+    font-size: 12px;
+  }
+  .scout-form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 10px;
+  }
+  .scout-form-grid input,
+  .scout-form-grid select {
+    min-height: 46px;
+    width: 100%;
+  }
+  .scout-assignment-form {
+    padding: 16px;
+  }
+  .scout-assignment-form .button {
+    width: 100%;
+    min-height: 48px;
+  }
+  .scout-mission {
+    padding: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}

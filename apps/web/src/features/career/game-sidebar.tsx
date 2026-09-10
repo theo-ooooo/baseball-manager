@@ -41,16 +41,17 @@ export function AppSidebar({
         { label: '야구 세계', ids: ['world', 'records'] },
       ]
     : [
-        {
-          label: unemployed ? '감독 사무실' : '내 구단',
-          ids: ['home', 'inbox', 'matchday', 'media', 'vision'],
-        },
-        { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'medical', 'dynamics'] },
-        {
-          label: '시즌 · 운영',
-          ids: ['schedule', 'world', 'records', 'market', 'scouting', 'agents', 'finance'],
-        },
+        { label: '더그아웃', ids: ['home', 'inbox', 'squad', 'matchday', 'schedule'] },
+        { label: '구단과 리그', ids: ['scouting', 'world', 'staff', 'vision'] },
       ];
+  const children: Record<string, string[]> = {
+    home: ['manager', 'manager-contract', 'manager-history', 'job-offers', 'media'],
+    squad: ['reserves', 'tactics', 'medical', 'dynamics'],
+    scouting: ['market', 'trade', 'draft', 'agents'],
+    world: ['records', 'club'],
+    staff: ['jobs', 'job-security'],
+    vision: ['finance'],
+  };
   return (
     <Sidebar className="app-sidebar">
       <SidebarHeader>
@@ -108,19 +109,14 @@ export function AppSidebar({
                       <SidebarMenuItem key={id}>
                         <SidebarMenuButton
                           className="nav-button"
-                          isActive={
-                            view === id ||
-                            (id === 'home' &&
-                              (view.startsWith('manager') || view === 'job-offers')) ||
-                            (id === 'staff' && (view === 'jobs' || view === 'job-security'))
-                          }
+                          isActive={view === id || !!children[id]?.includes(view)}
                           onClick={() => {
                             onView(id);
                             setOpenMobile(false);
                           }}
                         >
                           <n.icon />
-                          <span>{n.label}</span>
+                          <span>{id === 'vision' ? '구단 운영' : n.label}</span>
                           {id === 'inbox' && g.news.some((item) => !item.read) && (
                             <b className="nav-count">
                               {g.news.filter((item) => !item.read).length}

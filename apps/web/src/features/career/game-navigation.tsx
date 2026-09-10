@@ -42,7 +42,7 @@ export const nav = [
   { id: 'schedule', label: '일정 · 결과', icon: CalendarDays },
   { id: 'world', label: '리그 · 세계', icon: Globe2 },
   { id: 'market', label: '영입 · 이적', icon: ArrowUpRight },
-  { id: 'scouting', label: '스카우팅', icon: Binoculars },
+  { id: 'scouting', label: '스카우트', icon: Binoculars },
   { id: 'agents', label: '에이전트', icon: Handshake },
   { id: 'staff', label: '스태프', icon: GraduationCap },
   { id: 'finance', label: '구단 재정', icon: Wallet },
