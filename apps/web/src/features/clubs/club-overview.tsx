@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { isUnemployed } from '@dugout/shared/manager-career';
 import {
   Table,
   TableHeader,
@@ -50,13 +51,13 @@ export function StandingsTable({
       </TableHeader>
       <TableBody>
         {show.map((s, i) => (
-          <TableRow key={s.club} className={s.club === g.club ? 'my-team' : ''}>
+          <TableRow key={s.club} className={s.club === g.club && !isUnemployed(g) ? 'my-team' : ''}>
             <TableCell>{rows.indexOf(s) + 1}</TableCell>
             <TableCell>
               <Link className="table-club" href={`/clubs/${encodeURIComponent(s.club)}`}>
                 <Badge club={getClub(s.club)} size="tiny" />
                 {compact ? getClub(s.club).short : getClub(s.club).name}
-                {s.club === g.club && <span className="you">MY</span>}
+                {s.club === g.club && !isUnemployed(g) && <span className="you">MY</span>}
               </Link>
             </TableCell>
             <TableCell>{s.w}</TableCell>
