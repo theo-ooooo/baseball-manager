@@ -1,0 +1,411 @@
+/* The batting order and defensive board share one preparation workspace. */
+.lineup-workspace {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.92fr) minmax(420px, 1.08fr);
+  gap: 16px;
+  align-items: start;
+}
+.lineup-workspace > .panel {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+}
+.lineup-workspace .panel-header {
+  min-height: 64px;
+  padding: 12px 16px;
+  background: var(--surface-1);
+}
+.lineup-eyebrow {
+  display: block;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.lineup-workspace h2 {
+  font-size: 15px;
+}
+.lineup-workspace h2 small {
+  font-size: 11px;
+  margin-left: 8px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.lineup-order-panel .panel-header > button {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 40px;
+}
+.lineup-column-labels {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 76px;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--surface-2);
+  border-block: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.lineup-column-labels > :last-child {
+  text-align: center;
+}
+.lineup-order-panel .management-lineup > div {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 76px;
+  gap: 8px;
+  padding: 5px 12px;
+  min-height: 57px;
+}
+.lineup-order-panel .management-lineup > div > b {
+  width: 26px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.lineup-order-panel .management-lineup select {
+  width: 100%;
+  height: 28px;
+  min-height: 28px;
+  border: 0;
+  background-color: transparent;
+  padding: 2px 22px 2px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.lineup-player-detail {
+  display: block;
+  padding: 0;
+  color: var(--text-3);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: left;
+}
+.lineup-player-detail:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.lineup-order-panel .lineup-arrows {
+  display: flex;
+  gap: 4px;
+}
+.lineup-order-panel .lineup-arrows button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-2);
+}
+.lineup-order-panel .lineup-arrows button:hover:not(:disabled) {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.lineup-order-panel .lineup-arrows button:disabled {
+  opacity: 0.3;
+}
+.lineup-order-panel .lineup-draft-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.lineup-order-panel .lineup-draft-actions > span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.lineup-order-panel .lineup-draft-actions > div {
+  display: flex;
+  gap: 6px;
+}
+.lineup-order-panel .lineup-draft-actions button {
+  min-height: 38px;
+  font-size: 11px;
+}
+.lineup-selection-notes {
+  padding: 12px 16px;
+  font-size: 11px;
+  color: var(--text-2);
+  border-top: 1px solid var(--line);
+}
+.lineup-selection-notes summary {
+  cursor: pointer;
+}
+.lineup-selection-notes ol {
+  padding-left: 20px;
+  line-height: 1.9;
+  margin: 12px 0;
+}
+.lineup-selection-notes b {
+  color: var(--text);
+}
+.lineup-selection-notes p {
+  font-size: 11px;
+}
+.lineup-starter {
+  padding: 10px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-block: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.lineup-starter-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+.lineup-starter label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.lineup-starter label > span {
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.lineup-starter select {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  font-size: 12px;
+  background-color: var(--surface-1);
+}
+.lineup-defense-panel .field {
+  height: auto;
+  aspect-ratio: 1.36;
+  min-height: 330px;
+  background: #1d4939;
+  border: 0;
+  border-radius: 0;
+}
+.lineup-defense-panel .field-topline {
+  color: #c8ddd2;
+  font-size: 9px;
+}
+.lineup-defense-panel .field-player {
+  width: 88px;
+  transform: translate(-50%, -50%);
+  min-height: 54px;
+  gap: 2px;
+}
+.lineup-defense-panel .field-player > span {
+  width: 24px;
+  height: 22px;
+  font-size: 9px;
+  border: 0;
+  background: #eaf3ee;
+  color: #264537;
+}
+.lineup-defense-panel .field-player > span.pitcher {
+  background: #bdf177;
+  color: #203c2a;
+}
+.lineup-defense-panel .field-player > strong {
+  font-size: 11px;
+  font-weight: 650;
+  padding: 2px 7px;
+  color: #203c2a;
+  background: #f5faf7;
+  box-shadow: 0 2px 4px #102d2530;
+}
+.lineup-defense-panel .field-player small {
+  padding: 0;
+  font-size: 9px;
+  line-height: 12px;
+  background: transparent;
+  color: #d1e6da;
+  margin: 0;
+}
+.lineup-defense-panel .field-player.unfamiliar small {
+  color: #ffe39a;
+}
+.lineup-defense-panel .field-player.picked strong,
+.lineup-defense-panel .field-player:focus-visible strong {
+  outline: 2px solid #bdf177;
+  outline-offset: 2px;
+}
+.lineup-defense-panel .placement-hint {
+  min-height: 45px;
+  font-size: 11px;
+  padding: 10px 14px;
+}
+.lineup-bench-heading {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px 0;
+  font-size: 11px;
+}
+.lineup-bench-heading span {
+  color: var(--text-3);
+  font-size: 10px;
+}
+.lineup-defense-panel .bench-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 10px 14px;
+}
+.lineup-defense-panel .bench-list button {
+  min-height: 38px;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 5px;
+  font-size: 11px;
+}
+.lineup-defense-panel .bench-list button > small {
+  margin-left: auto;
+  font-size: 10px;
+}
+.lineup-defense-note {
+  font-size: 10px;
+  color: var(--text-3);
+  padding: 0 14px 12px;
+  margin: 0;
+}
+.lineup-view-switch {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .lineup-workspace {
+    grid-template-columns: minmax(310px, 0.95fr) minmax(340px, 1.05fr);
+    gap: 10px;
+  }
+  .lineup-defense-panel .bench-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lineup-starter label {
+    display: grid;
+    gap: 4px;
+  }
+}
+@media (max-width: 800px) {
+  .lineup-view-switch {
+    display: flex;
+    padding: 4px;
+    gap: 4px;
+    margin: 0 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-2);
+  }
+  .lineup-view-switch button {
+    flex: 1;
+    min-height: 40px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+  .lineup-view-switch button[aria-pressed='true'] {
+    background: var(--surface-1);
+    color: var(--brand);
+    box-shadow: 0 1px 3px #23343b15;
+    font-weight: 650;
+  }
+  .lineup-workspace {
+    display: block;
+  }
+  .lineup-workspace[data-mobile-view='order'] .lineup-defense-panel,
+  .lineup-workspace[data-mobile-view='defense'] .lineup-order-panel {
+    display: none;
+  }
+  .lineup-workspace .panel-header {
+    min-height: 48px;
+    padding: 6px 12px;
+  }
+  .lineup-workspace .lineup-eyebrow {
+    display: none;
+  }
+  .lineup-workspace h2 {
+    font-size: 13px;
+  }
+  .lineup-column-labels {
+    display: none;
+  }
+  .lineup-order-panel .management-lineup > div {
+    min-height: 50px;
+    padding: 2px 8px;
+    grid-template-columns: 24px minmax(0, 1fr) 76px;
+    gap: 6px;
+  }
+  .lineup-order-panel .management-lineup > div > b {
+    width: 24px;
+  }
+  .lineup-order-panel .management-lineup select {
+    font-size: 12px;
+  }
+  .lineup-order-panel .lineup-draft-actions {
+    padding: 8px;
+  }
+  .lineup-order-panel .lineup-draft-actions button {
+    min-height: 40px;
+  }
+  .lineup-defense-panel .field {
+    min-height: 320px;
+    aspect-ratio: 1.1;
+  }
+  .lineup-defense-panel .field-player {
+    width: 74px;
+  }
+  .lineup-defense-panel .field-player > strong {
+    font-size: 10px;
+  }
+  .lineup-defense-panel .bench-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lineup-defense-panel .bench-list button {
+    min-height: 44px;
+  }
+  .lineup-starter label {
+    display: flex;
+    gap: 8px;
+  }
+}
+.lineup-order-panel .lineup-draft-actions {
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  border-inline: 0;
+  border-bottom: 0;
+}
+@media (max-width: 800px) {
+  .lineup-order-panel .panel-header {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+  .lineup-order-panel .panel-header > button {
+    min-height: 36px;
+  }
+}
+@media (max-width: 800px) {
+  .lineup-order-panel .lineup-draft-actions {
+    position: static;
+  }
+  body:has(.lineup-order-panel[data-unsaved-plan='true']) .mobile-progress {
+    display: none;
+  }
+}
