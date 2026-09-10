@@ -27,6 +27,7 @@ import { DevelopmentPanel } from './development-panel';
 import { ScoutPlayer } from '../scouting/scout-player';
 import { PlayerAttributes, PlayerGrowth } from './growth-indicator';
 import { TrainingPlanForm } from './training-plan-form';
+import { CareerRecords } from './career-records';
 
 type Props = {
   player: Player;
@@ -138,7 +139,14 @@ export function PlayerProfile(props: Props) {
           <p>
             {player.original !== player.name && `${player.original} · `}
             {positionNames[player.pos]} · {player.ageEstimated ? '게임 나이 ' : ''}
-            {player.age}세 · {player.club === 'fa' ? 'FA · 자유계약' : getClub(player.club)?.name}
+            {player.age}세 ·{' '}
+            {player.club === 'fa' ? (
+              'FA · 자유계약'
+            ) : (
+              <Link href={`/clubs/${encodeURIComponent(player.club)}`}>
+                {getClub(player.club)?.name}
+              </Link>
+            )}
             {own && player.pos === 'P' && (
               <>
                 {' · '}
@@ -251,6 +259,7 @@ export function PlayerProfile(props: Props) {
           )}
         </TabsContent>
         <TabsContent value="records">
+          <CareerRecords playerId={player.id} current={player} year={game.year} />
           <PerformanceEvidence player={player} />
           <section className="profile-evidence">
             <h3>게임 내 1군 시즌 기록</h3>

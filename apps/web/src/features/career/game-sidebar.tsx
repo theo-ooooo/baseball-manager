@@ -32,14 +32,24 @@ export function AppSidebar({
   const { getClub, getLeague } = useWorld();
   const { setOpenMobile } = useSidebar();
   const club = getClub(g.club);
-  const groups = [
-    {
-      label: '내 구단',
-      ids: ['manager', 'jobs', 'home', 'inbox', 'matchday', 'media'],
-    },
-    { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'dynamics'] },
-    { label: '시즌 · 운영', ids: ['schedule', 'world', 'market', 'scouting', 'agents', 'finance'] },
-  ];
+  const unemployed = g.managerCareer?.status === 'unemployed';
+  const groups = unemployed
+    ? [
+        { label: '감독 사무실', ids: ['home', 'inbox'] },
+        { label: '새 직장 찾기', ids: ['jobs', 'job-security'] },
+        { label: '야구 세계', ids: ['world', 'records'] },
+      ]
+    : [
+        {
+          label: unemployed ? '감독 사무실' : '내 구단',
+          ids: ['home', 'inbox', 'matchday', 'media', 'vision'],
+        },
+        { label: '선수단', ids: ['squad', 'reserves', 'tactics', 'staff', 'medical', 'dynamics'] },
+        {
+          label: '시즌 · 운영',
+          ids: ['schedule', 'world', 'records', 'market', 'scouting', 'agents', 'finance'],
+        },
+      ];
   return (
     <Sidebar className="app-sidebar">
       <SidebarHeader>
@@ -56,14 +66,25 @@ export function AppSidebar({
             DUGOUT<i>BASEBALL MANAGEMENT</i>
           </span>
         </div>
-        <div className="sidebar-club" style={{ '--club': club.color } as CSSProperties}>
-          <Badge club={club} />
+        <div
+          className="sidebar-club"
+          style={{ '--club': unemployed ? '#627189' : club.color } as CSSProperties}
+        >
+          <>
+            {unemployed ? (
+              <span className="unemployed-avatar">
+                <UserRound aria-label="소속 구단 없음" />
+              </span>
+            ) : (
+              <Badge club={club} />
+            )}
+          </>
           <span>
-            <strong>
-              {g.managerCareer?.status === 'unemployed' ? '무직 · 감독 채용' : club.name}
-            </strong>
+            <strong>{unemployed ? g.manager : club.name}</strong>
             <small>
-              {getLeague(club.league).name} · {g.year}
+              {unemployed
+                ? '무직 · 새 구단을 찾는 중'
+                : `${getLeague(club.league).name} · ${g.year}`}
             </small>
           </span>
         </div>
@@ -78,7 +99,7 @@ export function AppSidebar({
                   .filter(
                     (id) =>
                       g.managerCareer?.status !== 'unemployed' ||
-                      ['manager', 'jobs', 'inbox', 'world'].includes(id),
+                      ['home', 'inbox', 'jobs', 'job-security', 'world', 'records'].includes(id),
                   )
                   .map((id) => {
                     const n = nav.find((n) => n.id === id)!;
@@ -86,7 +107,12 @@ export function AppSidebar({
                       <SidebarMenuItem key={id}>
                         <SidebarMenuButton
                           className="nav-button"
-                          isActive={view === id}
+                          isActive={
+                            view === id ||
+                            (id === 'home' &&
+                              (view.startsWith('manager') || view === 'job-offers')) ||
+                            (id === 'staff' && (view === 'jobs' || view === 'job-security'))
+                          }
                           onClick={() => {
                             onView(id);
                             setOpenMobile(false);
@@ -118,15 +144,22 @@ export function AppSidebar({
         <button className="new-career" onClick={onNew}>
           <RotateCcw size={14} />새 커리어
         </button>
-        <div className="manager">
+        <button
+          className="manager manager-profile-link"
+          onClick={() => {
+            onView('manager');
+            setOpenMobile(false);
+          }}
+          aria-label="내 감독 프로필 열기"
+        >
           <span className="manager-avatar">
             <UserRound size={18} />
           </span>
           <span>
             <strong>{g.manager}</strong>
-            <small>감독 · 평판 {g.reputation}</small>
+            <small>내 프로필 · 평판 {g.managerCareer?.reputation ?? g.reputation}</small>
           </span>
-        </div>
+        </button>
       </SidebarFooter>
     </Sidebar>
   );

@@ -70,6 +70,24 @@ export function World({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
           <Empty text="구단을 선택하면 실명 선수와 유망주를 살펴볼 수 있습니다." />
         )}
       </section>
+      <section className="panel panel-content">
+        <h2>세계 구단 소식</h2>
+        <p className="muted">
+          다른 구단도 영입과 감독 선임을 진행합니다. 타 구단의 일반 경기는 점수에 맞춘 간이 선수
+          기록을 집계합니다.
+        </p>
+        {(g.simulation?.events || [])
+          .filter(
+            (e) => getClub(e.club)?.league === lid || getClub(e.otherClub || '')?.league === lid,
+          )
+          .slice(0, 25)
+          .map((e) => (
+            <p key={e.id}>
+              <small>{e.date}</small> · {e.text}
+            </p>
+          ))}
+        {!g.simulation?.events.length && <p>날짜가 진행되면 구단들의 활동이 이곳에 쌓입니다.</p>}
+      </section>
     </>
   );
 }

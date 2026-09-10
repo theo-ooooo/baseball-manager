@@ -1,4 +1,6 @@
+import { MedicalDecision } from '../squad/medical-decision';
 import { CoachRecommendations } from '../squad/coach-recommendations';
+import { managerOfferActionLabel } from '../career/manager-offer-status';
 import Link from 'next/link';
 import { ArrowUpRight, FileSignature, UserRound } from 'lucide-react';
 import type { GameState, NewsItem, Player, Result } from '@dugout/shared/types';
@@ -52,6 +54,9 @@ export function InboxReport({
     (d) => d.id === news.dealId || (!news.dealId && d.player.id === news.playerId),
   );
   const subject = player || deal?.player;
+  const managerOffer = news.managerOfferId
+    ? g.managerCareer?.offers.find((o) => o.id === news.managerOfferId)
+    : undefined;
   return (
     <article className="inbox-report">
       <header className="inbox-report-header">
@@ -204,6 +209,29 @@ export function InboxReport({
             </div>
           </section>
         )}
+        {news.actionView === 'medical' && player && (
+          <MedicalDecision g={g} player={player} act={act} busy={busy} />
+        )}
+        {managerOffer && (
+          <section className="inbox-interview-invitation">
+            <h3>
+              {managerOffer.status === 'invited'
+                ? '구단의 초청장이 도착했습니다.'
+                : managerOffer.status === 'interview'
+                  ? '이사회가 면접 참석을 요청했습니다.'
+                  : managerOffer.status === 'offered'
+                    ? '최종 계약서를 확인해 주세요.'
+                    : '진행 중인 채용 확인'}
+            </h3>
+            <p>구단의 연락을 확인하고 현재 진행 중인 절차를 이어가세요.</p>
+            <Link
+              className="button primary"
+              href={`/interviews/${encodeURIComponent(managerOffer.id)}`}
+            >
+              {managerOfferActionLabel(managerOffer, g)} <ArrowUpRight size={15} />
+            </Link>
+          </section>
+        )}
         <div className="inbox-report-actions">
           {news.actionView === 'manager'
             ? '감독 경력 · 계약 확인'
@@ -220,26 +248,34 @@ export function InboxReport({
                     {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
                   </button>
                 )}
-          {news.actionView && !(news.actionView === 'agents' && subject) && (
-            <Link className="button secondary" href={`/?view=${news.actionView}`}>
-              {news.actionView === 'manager'
-                ? '감독 경력 · 계약 확인'
-                : news.actionView === 'reserves'
-                  ? '1군 · 2군 등록 확인'
-                  : news.actionView === 'agents'
-                    ? '전체 계약 협상'
-                    : news.actionView === 'media'
-                      ? '인터뷰 · 라커룸으로'
-                      : news.actionView === 'staff'
-                        ? '코치 협상 확인'
-                        : news.actionView === 'scouting'
-                          ? '관찰 보고 · 선수 비교'
-                          : news.actionView === 'market'
-                            ? '영입 대상 확인'
-                            : '선수단 확인'}
-              <ArrowUpRight size={15} />
-            </Link>
-          )}
+          {news.actionView &&
+            news.actionView !== 'medical' &&
+            !(news.actionView === 'agents' && subject) && (
+              <Link className="button secondary" href={`/?view=${news.actionView}`}>
+                {news.actionView === 'job-offers'
+                  ? '모든 구단 연락'
+                  : news.actionView === 'jobs'
+                    ? '채용 센터'
+                    : news.actionView === 'vision'
+                      ? '구단 비전'
+                      : news.actionView === 'manager'
+                        ? '감독 경력 · 계약 확인'
+                        : news.actionView === 'reserves'
+                          ? '1군 · 2군 등록 확인'
+                          : news.actionView === 'agents'
+                            ? '전체 계약 협상'
+                            : news.actionView === 'media'
+                              ? '인터뷰 · 라커룸으로'
+                              : news.actionView === 'staff'
+                                ? '코치 협상 확인'
+                                : news.actionView === 'scouting'
+                                  ? '관찰 보고 · 선수 비교'
+                                  : news.actionView === 'market'
+                                    ? '영입 대상 확인'
+                                    : '선수단 확인'}
+                <ArrowUpRight size={15} />
+              </Link>
+            )}
           {player && !review && (
             <button className="button secondary" onClick={() => onPlayer(player)}>
               선수 상세 보기

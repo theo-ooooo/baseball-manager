@@ -1,11 +1,25 @@
 'use client';
+import { bullpenLabels, bullpenState } from '@dugout/shared/bullpen';
+import type { Act } from '../career/game-contracts';
 import type { GameState } from '@dugout/shared/types';
 import { pitchingRole } from '@dugout/shared/pitching';
 import type { MatchPlanDraft } from './use-match-plan';
 import { PitchingInstructions } from './pitching-instructions';
 import { MatchEnergyMeter } from './match-energy-meter';
 
-export function MatchPitchingPlan({ g, draft }: { g: GameState; draft: MatchPlanDraft }) {
+export function MatchPitchingPlan({
+  g,
+  draft,
+  act,
+  cursor,
+  busy,
+}: {
+  g: GameState;
+  draft: MatchPlanDraft;
+  act: Act;
+  cursor: number;
+  busy: boolean;
+}) {
   const current = draft.byId.get(draft.plan.pitcher)!;
   const pitchers = draft.players.filter((p) => p.pos === 'P' && p.id !== current.id);
   const groups = [...new Set(pitchers.map((p) => pitchingRole(g, p)))];
@@ -39,6 +53,42 @@ export function MatchPitchingPlan({ g, draft }: { g: GameState; draft: MatchPlan
         <h3>불펜 · 대기 투수</h3>
         <span>투수 선택 → 변경 확인 → 적용</span>
       </div>
+      {!!g.liveMatch?.bullpenVersion && (
+        <div className="panel-content">
+          <p>
+            두 명까지 몸 풀기 · 2타석 후 준비 완료 · 8타석 초과 시 피로. 준비 1회마다 경기 후 체력
+            2를 소모합니다.
+          </p>
+          {draft.players
+            .filter((p) => p.pos === 'P' && p.id !== draft.initial.pitcher)
+            .map((p) => {
+              const state = bullpenState(g.liveMatch!, p.id, cursor);
+              return (
+                <div className="manager-form" key={p.id}>
+                  <span>
+                    {p.name} · {bullpenLabels[state.status]} ({state.batters}타석)
+                  </span>
+                  <button
+                    type="button"
+                    className="button secondary compact"
+                    disabled={busy}
+                    onClick={() =>
+                      void act({
+                        type: 'bullpen',
+                        id: p.id,
+                        mode: state.status === 'standby' ? 'warm' : 'standby',
+                        cursor,
+                        timelineVersion: g.liveMatch!.timelineVersion,
+                      })
+                    }
+                  >
+                    {state.status === 'standby' ? '몸 풀기' : '대기로 전환'}
+                  </button>
+                </div>
+              );
+            })}
+        </div>
+      )}
       {!draft.canPitch && (
         <p className="plan-help">우리 팀 공격 중입니다. 투수 교체는 수비 타석 직전에 가능합니다.</p>
       )}

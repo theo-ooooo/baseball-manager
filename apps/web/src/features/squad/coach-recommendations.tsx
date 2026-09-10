@@ -25,11 +25,13 @@ export function CoachRecommendations({
         const p = g.roster.find((p) => p.id === r.playerId),
           replacement = g.roster.find((p) => p.id === r.replacementId);
         const error =
-          daysBetween(r.date, gameDate(g)) > 14
-            ? '보고 유효기간이 지났습니다.'
-            : !p || (p.squad || 'first') === r.target
-              ? '보고 이후 선수 등록이 변경됐습니다.'
-              : squadMoveError(g, r.playerId, r.target, r.replacementId);
+          r.target === 'reserve' && r.reason.includes('컨디션')
+            ? '이전 피로 보고입니다. 1군 소속을 유지하며 휴식을 주세요.'
+            : daysBetween(r.date, gameDate(g)) > 14
+              ? '보고 유효기간이 지났습니다.'
+              : !p || (p.squad || 'first') === r.target
+                ? '보고 이후 선수 등록이 변경됐습니다.'
+                : squadMoveError(g, r.playerId, r.target, r.replacementId);
         return (
           <article className="manager-offer" key={r.id}>
             <h3>

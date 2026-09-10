@@ -30,12 +30,20 @@ export function NewCareer({
   error: string;
   retry: () => void;
   busy: boolean;
-  onStart: (c: string, m: string, mode: string, ban: boolean, reveal: boolean) => void;
+  onStart: (
+    c: string,
+    m: string,
+    mode: string,
+    ban: boolean,
+    reveal: boolean,
+    unemployed: boolean,
+  ) => void;
   existing: boolean;
   cancel: () => void;
 }) {
   const { clubs, leagues, getClub, getLeague, baseRoster } = useWorld();
   const [step, setStep] = useState<'club' | 'manager'>('club'),
+    [unemployed, setUnemployed] = useState(false),
     [region, setRegion] = useState('전체'),
     [lid, setLid] = useState('kbo'),
     [cid, setCid] = useState('kbo-lg'),
@@ -56,7 +64,8 @@ export function NewCareer({
     setLid(id);
     setCid(clubs.find((c) => c.league === id)!.id);
   };
-  const start = () => onStart(cid, manager.trim() || DEFAULT_MANAGER, mode, ban, reveal);
+  const defaultManager = (!unemployed && club.manager?.name) || DEFAULT_MANAGER;
+  const start = () => onStart(cid, manager.trim() || defaultManager, mode, ban, reveal, unemployed);
 
   return (
     <div className="ui-setup">
@@ -83,7 +92,7 @@ export function NewCareer({
         <ol className="ui-steps" aria-label="새 커리어 진행 단계">
           <li className={step === 'club' ? 'current' : 'done'}>
             <span className="ui-step-no">{step === 'club' ? '1' : <Check size={13} />}</span>
-            구단 선택
+            {unemployed ? '시작 리그 선택' : '구단 선택'}
           </li>
           <li className={step === 'manager' ? 'current' : ''}>
             <span className="ui-step-no">2</span>
@@ -103,13 +112,34 @@ export function NewCareer({
         {step === 'club' ? (
           <section className="ui-step-body" aria-labelledby="ui-step1-title">
             <div className="ui-step-title">
-              <h1 id="ui-step1-title">어느 구단을 맡을까요?</h1>
+              <h1 id="ui-step1-title">
+                {unemployed ? '무직 감독 · 친숙한 리그 선택' : '어느 구단을 맡을까요?'}
+              </h1>
               <p>
-                {leagues.length}개 리그 · {clubs.length}개 구단 중 하나를 고르면 다음 단계에서
-                감독과 시즌을 설정합니다.
+                {unemployed
+                  ? '잘 아는 리그를 고르세요. 구단의 연락을 기다리거나 직접 새 자리에 도전할 수 있습니다.'
+                  : `${leagues.length}개 리그 · ${clubs.length}개 구단에서 감독 경력을 시작하세요.`}
               </p>
             </div>
 
+            <div className="career-start-options" role="group" aria-label="커리어 시작 상태">
+              <button aria-pressed={!unemployed} onClick={() => setUnemployed(false)}>
+                <span className="start-option-icon">⚾</span>
+                <span>
+                  <strong>구단을 맡아서 시작</strong>
+                  <small>선수단을 이어받아 곧바로 시즌에 도전합니다.</small>
+                </span>
+                {!unemployed && <Check size={18} />}
+              </button>
+              <button aria-pressed={unemployed} onClick={() => setUnemployed(true)}>
+                <span className="start-option-icon">✉</span>
+                <span>
+                  <strong>무직으로 시작</strong>
+                  <small>뉴스와 구단의 제의를 보며 첫 직장을 구합니다.</small>
+                </span>
+                {unemployed && <Check size={18} />}
+              </button>
+            </div>
             <div className="ui-region-row" role="group" aria-label="대륙">
               {regions.map((r) => (
                 <button
@@ -146,7 +176,7 @@ export function NewCareer({
               ))}
             </div>
 
-            <div className="ui-club-head">
+            <div hidden={unemployed} className="ui-club-head">
               <h2>
                 {league.flag} {league.name}
                 <small>
@@ -154,7 +184,12 @@ export function NewCareer({
                 </small>
               </h2>
             </div>
-            <div className="ui-club-grid" role="group" aria-label={`${league.name} 구단`}>
+            <div
+              hidden={unemployed}
+              className="ui-club-grid"
+              role="group"
+              aria-label={`${league.name} 구단`}
+            >
               {leagueClubs.map((v) => (
                 <button
                   key={v.id}
@@ -176,10 +211,18 @@ export function NewCareer({
 
             <div className="ui-action-bar">
               <div className="ui-selected">
-                <Badge club={club} size="small" />
+                <>
+                  {unemployed ? (
+                    <span className="start-option-icon">{league.flag}</span>
+                  ) : (
+                    <Badge club={club} size="small" />
+                  )}
+                </>
                 <span>
-                  <small>선택한 구단 · {league.name}</small>
-                  <strong>{club.name}</strong>
+                  <small>
+                    {unemployed ? '친숙한 리그' : '선택한 구단'} · {league.name}
+                  </small>
+                  <strong>{unemployed ? '무직 감독' : club.name}</strong>
                 </span>
               </div>
               <button
@@ -187,7 +230,7 @@ export function NewCareer({
                 disabled={loading || !!error}
                 onClick={() => setStep('manager')}
               >
-                {club.name} 선택하고 계속
+                {unemployed ? '감독 설정으로 계속' : `${club.name} 선택하고 계속`}
                 <ChevronRight size={18} />
               </button>
             </div>
@@ -204,63 +247,72 @@ export function NewCareer({
             </div>
 
             <div className="ui-setup-grid">
-              <aside className="ui-club-card" style={{ '--club': club.color } as CSSProperties}>
-                <div className="ui-club-card-head">
-                  <Badge club={club} size="large" />
-                  <div>
-                    <small>
-                      {league.flag} {league.name} · {league.country}
-                    </small>
-                    <h2>{club.name}</h2>
-                    <span>{club.city}</span>
+              {unemployed ? (
+                <aside className="ui-club-card">
+                  <h2>무직 감독</h2>
+                  <p>친숙한 리그 · {league.name}</p>
+                  <p>평판 60 · 급여 없음</p>
+                  <p>지원 → 면접 → 계약 → 해당 구단 시즌 이어받기</p>
+                </aside>
+              ) : (
+                <aside className="ui-club-card" style={{ '--club': club.color } as CSSProperties}>
+                  <div className="ui-club-card-head">
+                    <Badge club={club} size="large" />
+                    <div>
+                      <small>
+                        {league.flag} {league.name} · {league.country}
+                      </small>
+                      <h2>{club.name}</h2>
+                      <span>{club.city}</span>
+                    </div>
                   </div>
-                </div>
-                <dl className="ui-facts">
-                  <div>
-                    <dt>운영 예산</dt>
-                    <dd>{money(teamBudget(lid))}</dd>
-                  </div>
-                  <div>
-                    <dt>선수단</dt>
-                    <dd>{roster.length}명</dd>
-                  </div>
-                  <div>
-                    <dt>실명 선수</dt>
-                    <dd>{roster.filter((p) => p.real).length}명</dd>
-                  </div>
-                </dl>
-                <button
-                  className="ui-disclosure"
-                  aria-expanded={showPlayers}
-                  onClick={() => setShowPlayers((v) => !v)}
-                >
-                  주요 선수 {featured.length}명
-                  <ChevronDown size={15} className={showPlayers ? 'open' : ''} />
-                </button>
-                {showPlayers && (
-                  <ul className="ui-player-list">
-                    {featured.map((p) => (
-                      <li key={p.id}>
-                        <span className="ui-pos">{p.pos}</span>
-                        <span className="ui-player-text">
-                          <strong>{p.name}</strong>
-                          <small>
-                            {p.real ? '실명' : '가상'} · {p.ageEstimated ? '게임 나이 ' : ''}
-                            {p.age}세
-                          </small>
-                        </span>
-                        <Rating value={overall(p)} player={p} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="ui-note">
-                  실명·가상 선수 포함.{' '}
-                  <button className="ui-link" onClick={() => setHelp(true)}>
-                    데이터 안내
+                  <dl className="ui-facts">
+                    <div>
+                      <dt>운영 예산</dt>
+                      <dd>{money(teamBudget(lid))}</dd>
+                    </div>
+                    <div>
+                      <dt>선수단</dt>
+                      <dd>{roster.length}명</dd>
+                    </div>
+                    <div>
+                      <dt>실명 선수</dt>
+                      <dd>{roster.filter((p) => p.real).length}명</dd>
+                    </div>
+                  </dl>
+                  <button
+                    className="ui-disclosure"
+                    aria-expanded={showPlayers}
+                    onClick={() => setShowPlayers((v) => !v)}
+                  >
+                    주요 선수 {featured.length}명
+                    <ChevronDown size={15} className={showPlayers ? 'open' : ''} />
                   </button>
-                </p>
-              </aside>
+                  {showPlayers && (
+                    <ul className="ui-player-list">
+                      {featured.map((p) => (
+                        <li key={p.id}>
+                          <span className="ui-pos">{p.pos}</span>
+                          <span className="ui-player-text">
+                            <strong>{p.name}</strong>
+                            <small>
+                              {p.real ? '실명' : '가상'} · {p.ageEstimated ? '게임 나이 ' : ''}
+                              {p.age}세
+                            </small>
+                          </span>
+                          <Rating value={overall(p)} player={p} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="ui-note">
+                    실명·가상 선수 포함.{' '}
+                    <button className="ui-link" onClick={() => setHelp(true)}>
+                      데이터 안내
+                    </button>
+                  </p>
+                </aside>
+              )}
 
               <form
                 className="ui-form"
@@ -274,12 +326,12 @@ export function NewCareer({
                   <input
                     className="ui-input"
                     maxLength={24}
-                    placeholder={DEFAULT_MANAGER}
+                    placeholder={defaultManager}
                     autoComplete="off"
                     value={manager}
                     onChange={(e) => setManager(e.target.value)}
                   />
-                  <small>비워 두면 &lsquo;{DEFAULT_MANAGER}&rsquo;으로 표시됩니다.</small>
+                  <small>비워 두면 &lsquo;{defaultManager}&rsquo;으로 표시됩니다.</small>
                 </label>
 
                 <fieldset className="ui-field">
@@ -344,7 +396,7 @@ export function NewCareer({
                       <LoaderCircle size={18} className="spin" />
                     ) : (
                       <>
-                        {club.name} 감독으로 취임
+                        {unemployed ? '무직으로 커리어 시작' : `${club.name} 감독으로 취임`}
                         <ChevronRight size={18} />
                       </>
                     )}

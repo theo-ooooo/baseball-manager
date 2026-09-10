@@ -16,6 +16,7 @@ import '../styles/mobile-match.css';
 import '../styles/manager-flow.css';
 import '../styles/action-progress.css';
 import '../styles/match-media.css';
+import '../styles/career-office.css';
 
 export const metadata: Metadata = {
   title: 'DUGOUT | 월드 베이스볼 매니저',

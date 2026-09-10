@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 import { gameDate } from '@dugout/shared/calendar';
 import type { GameState } from '@dugout/shared/types';
 import {
@@ -9,31 +10,44 @@ import {
   MANAGER_APPLICATION_THRESHOLD,
 } from '@dugout/shared/manager-career';
 import { useWorld } from './world-context';
-import { Choice, SearchBox } from '../../components/game-ui';
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-} from '@/components/ui/table';
+import { Badge, Choice, SearchBox } from '../../components/game-ui';
+import { ManagerApplication } from './manager-application';
 import type { Act } from './game-contracts';
-
-export function ManagerJobsPanel({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
-  const { clubs, leagues, getClub, standings, fixtures } = useWorld();
+const stability = (confidence: number) =>
+  confidence < 15
+    ? ['매우 불안정', '#cf4d4d']
+    : confidence < 35
+      ? ['불안정', '#d58435']
+      : confidence < 60
+        ? ['안정적', '#758798']
+        : confidence < 80
+          ? ['확고함', '#329276']
+          : ['절대적 신임', '#3d79b5'];
+export function ManagerJobsPanel({
+  g,
+  act,
+  busy,
+  security = false,
+}: {
+  g: GameState;
+  act: Act;
+  busy: boolean;
+  security?: boolean;
+}) {
+  const { leagues, getClub, standings } = useWorld();
   const [league, setLeague] = useState('all'),
-    [filter, setFilter] = useState('open'),
+    [filter, setFilter] = useState(security ? 'all' : 'open'),
     [query, setQuery] = useState(''),
-    [selected, setSelected] = useState<string | null>(null),
-    [target, setTarget] = useState(1);
-  const jobs = Object.values(g.managerJobs || {})
+    [selected, setSelected] = useState<string | null>(null);
+  const all = Object.values(g.managerJobs || {}),
+    employed = !isUnemployed(g);
+  const jobs = all
     .filter((job) => {
-      const c = getClub(job.club);
+      const club = getClub(job.club);
       return (
-        (league === 'all' || c.league === league) &&
-        (filter === 'all' || managerJobOpen(job)) &&
-        `${c.name} ${job.managerName}`.toLowerCase().includes(query.toLowerCase())
+        (league === 'all' || club.league === league) &&
+        (filter === 'all' || (filter === 'vacant' ? job.vacant : managerJobOpen(job))) &&
+        `${club.name} ${job.managerName}`.toLowerCase().includes(query.toLowerCase())
       );
     })
     .sort(
@@ -42,35 +56,49 @@ export function ManagerJobsPanel({ g, act, busy }: { g: GameState; act: Act; bus
         a.confidence - b.confidence ||
         a.club.localeCompare(b.club),
     );
-  const chosen = selected ? g.managerJobs?.[selected] : undefined;
-  const completedLeagues = new Set(
-    leagues
-      .filter((l) => {
-        const last = fixtures(g, l.id).at(-1);
-        return last && last.date < gameDate(g);
-      })
-      .map((l) => l.id),
-  );
-  const max = selected
-    ? Math.ceil(clubs.filter((c) => c.league === getClub(selected).league).length * 0.75)
-    : 1;
+  const tables = new Map(leagues.map((l) => [l.id, standings(g, l.id)]));
   return (
-    <div className="manager-office">
-      <section className="panel panel-content">
-        <h2>감독 채용 현황</h2>
-        <p>
-          공석 또는 구단주 신임도 {MANAGER_APPLICATION_THRESHOLD}% 미만인 구단에 지원할 수 있습니다.
-          신임도는 낮을수록 현 감독과 구단주의 관계가 나쁩니다. 수치와 채용 상태는 이 세이브 안의
-          게임 평가입니다.
-        </p>
-        <div className="manager-form">
+    <div className="job-market">
+      <header className="job-market-heading">
+        <div>
+          <h2>{security ? '감독들의 직업 안정성' : '새로운 도전을 찾아서'}</h2>
+          <p>
+            {security
+              ? '이사회가 보내는 신뢰와 흔들리는 감독 자리를 확인하세요.'
+              : '공석과 입지가 불안한 구단을 살펴보고, 관심 있는 팀과 이야기를 시작하세요.'}
+            {employed
+              ? ' 현재 감독직을 유지하며 지원할 수 있습니다.'
+              : ' 구단이 먼저 연락하면 수신함으로 제의가 도착합니다.'}
+          </p>
+        </div>
+        <div className="job-market-counts">
+          <div>
+            <strong>{all.filter((j) => j.vacant).length}</strong>
+            <small>감독 공석</small>
+          </div>
+          <div>
+            <strong>{all.filter((j) => !j.vacant && j.confidence < 35).length}</strong>
+            <small>입지 불안</small>
+          </div>
+          <div>
+            <strong>
+              {g.managerCareer?.offers.filter((o) =>
+                ['invited', 'pending', 'interview', 'offered'].includes(o.status),
+              ).length || 0}
+            </strong>
+            <small>진행 중인 대화</small>
+          </div>
+        </div>
+      </header>
+      <section className="panel">
+        <div className="job-market-toolbar">
           <Choice
             label="채용 리그"
             value={league}
             onChange={setLeague}
             items={[
               { value: 'all', label: '전 세계 리그' },
-              ...leagues.map((l) => ({ value: l.id, label: l.name })),
+              ...leagues.map((l) => ({ value: l.id, label: `${l.flag} ${l.name}` })),
             ]}
           />
           <Choice
@@ -78,131 +106,143 @@ export function ManagerJobsPanel({ g, act, busy }: { g: GameState; act: Act; bus
             value={filter}
             onChange={setFilter}
             items={[
-              { value: 'open', label: '지원 가능한 자리' },
+              { value: 'open', label: '지원 가능한 구단' },
+              { value: 'vacant', label: '감독 공석' },
               { value: 'all', label: '모든 구단' },
             ]}
           />
-          <SearchBox value={query} onChange={setQuery} placeholder="구단·감독 검색" />
+          <SearchBox value={query} onChange={setQuery} placeholder="구단 또는 감독 검색" />
         </div>
-        {!isUnemployed(g) && (
-          <p>현재 재직 중입니다. 신임도와 공석을 살펴보고, 퇴임 후 지원할 수 있습니다.</p>
-        )}
-      </section>
-      <section className="panel">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>구단 · 리그</TableHead>
-              <TableHead>현 감독</TableHead>
-              <TableHead>구단주 신임도</TableHead>
-              <TableHead>자리 상태</TableHead>
-              <TableHead>순위</TableHead>
-              <TableHead>지원</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {jobs.map((job) => {
-              const c = getClub(job.club),
-                offer = g.managerCareer?.offers.find(
-                  (o) => o.club === c.id && ['pending', 'offered'].includes(o.status),
+        <div className="job-table-scroll">
+          <table className="job-market-table">
+            <thead>
+              <tr>
+                <th scope="col">구단</th>
+                <th scope="col">현 감독</th>
+                <th scope="col">직업 안정성</th>
+                <th scope="col">시즌 성적</th>
+                <th scope="col">접촉</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => {
+                const c = getClub(job.club),
+                  l = leagues.find((l) => l.id === c.league)!,
+                  table = tables.get(c.league)!,
+                  rank = table.findIndex((s) => s.club === c.id) + 1,
+                  row = table[rank - 1];
+                const own = employed && c.id === g.club,
+                  offer = g.managerCareer?.offers.find(
+                    (o) =>
+                      o.club === c.id &&
+                      ['invited', 'pending', 'interview', 'offered'].includes(o.status) &&
+                      o.expires >= gameDate(g),
+                  ),
+                  [status, tone] = stability(job.confidence);
+                return (
+                  <tr key={c.id} data-own={own} style={{ '--job-tone': tone } as CSSProperties}>
+                    <td>
+                      <div className="job-club-cell">
+                        <Badge club={c} size="small" />
+                        <div>
+                          <strong>
+                            <Link href={`/clubs/${encodeURIComponent(c.id)}`}>{c.name}</Link>
+                            {own && <span className="job-current-club">내 구단</span>}
+                          </strong>
+                          <small>
+                            {l.flag} {l.name}
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="job-manager-cell">
+                      <span>{job.vacant ? '—' : job.managerName}</span>
+                      <small>{job.vacant ? '선임 절차 진행 중' : `${job.appointed} 취임`}</small>
+                    </td>
+                    <td>
+                      {job.vacant ? (
+                        <span className="job-vacant">감독 공석</span>
+                      ) : (
+                        <div className="job-confidence" title={job.reason}>
+                          <div>
+                            <b>
+                              <i className="job-state-dot" />
+                              {status}
+                            </b>
+                            <small>{job.confidence}%</small>
+                          </div>
+                          <div
+                            className="confidence-track"
+                            role="meter"
+                            aria-label={`${c.name} 이사회 신임도`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={job.confidence}
+                          >
+                            <span style={{ width: `${job.confidence}%` }} />
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="job-record">
+                      {row && row.w + row.l + row.d > 0 ? `${rank}위` : '시즌 준비'}
+                      <small>
+                        {row ? `${row.w}승 ${row.l}패${row.d ? ` ${row.d}무` : ''}` : '—'}
+                      </small>
+                    </td>
+                    <td>
+                      <div className="job-row-action">
+                        {offer ? (
+                          <Link className="button secondary compact" href="/manager/offers">
+                            {offer.status === 'pending' ? '심사 중' : '연락 확인'}
+                            <ArrowUpRight size={13} />
+                          </Link>
+                        ) : own ? (
+                          <span className="muted">재직 중</span>
+                        ) : managerJobOpen(job) ? (
+                          <button
+                            className="button secondary compact"
+                            disabled={busy}
+                            onClick={() => setSelected(c.id)}
+                          >
+                            관심 전하기
+                            <ArrowUpRight size={13} />
+                          </button>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
                 );
-              return (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <strong>{c.name}</strong>
-                    <small className="block muted">
-                      {leagues.find((l) => l.id === c.league)?.name}
-                      {completedLeagues.has(c.league) ? ' · 정규시즌 종료' : ''}
-                    </small>
-                  </TableCell>
-                  <TableCell>{job.managerName}</TableCell>
-                  <TableCell>
-                    {job.vacant ? '—' : `${job.confidence}%`}
-                    <small className="block muted">{job.reason}</small>
-                  </TableCell>
-                  <TableCell>
-                    {job.vacant
-                      ? '공석'
-                      : managerJobOpen(job)
-                        ? '입지 불안 · 지원 가능'
-                        : '재직 중'}
-                  </TableCell>
-                  <TableCell>
-                    {standings(g, c.league).findIndex((s) => s.club === c.id) + 1}위
-                  </TableCell>
-                  <TableCell>
-                    {offer?.status === 'offered' ? (
-                      <Link className="button primary compact" href="/?view=manager">
-                        제안 확인 · 계약
-                      </Link>
-                    ) : (
-                      <button
-                        className="button secondary compact"
-                        disabled={busy || !isUnemployed(g) || !managerJobOpen(job) || !!offer}
-                        onClick={() => {
-                          setSelected(c.id);
-                          setTarget(
-                            Math.ceil(clubs.filter((x) => x.league === c.league).length / 2),
-                          );
-                        }}
-                      >
-                        {offer
-                          ? offer.status === 'pending'
-                            ? '심사 중'
-                            : '제안 도착'
-                          : '지원 조건 선택'}
-                      </button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              })}
+            </tbody>
+          </table>
+        </div>
         {!jobs.length && (
-          <p className="panel-content">
-            조건에 맞는 자리가 없습니다. 다른 리그나 모든 구단을 확인하세요.
-          </p>
+          <div className="job-market-empty">
+            <h3>조건에 맞는 구단이 없습니다</h3>
+            <p>
+              다른 리그나 자리 상태를 선택해 보세요. 날짜가 흐르면 새 공석과 구단의 연락이 생깁니다.
+            </p>
+          </div>
         )}
       </section>
-      {chosen && (
-        <section className="panel panel-content">
-          <h2>{getClub(chosen.club).name} · 감독직 지원</h2>
-          <p>
-            감독 평판과 채용 상태를 심사해 3일 뒤 답변합니다. 지원만으로 현 감독이 교체되지는
-            않습니다.
-          </p>
-          {completedLeagues.has(getClub(chosen.club).league) && (
-            <p>
-              정규시즌이 끝난 구단입니다. 취임 후 남은 월드 일정을 진행하고 다음 시즌부터 목표
-              평가를 받습니다.
-            </p>
-          )}
-          <div className="manager-form">
-            <Choice
-              label="지원 순위 목표"
-              value={String(target)}
-              onChange={(v) => setTarget(Number(v))}
-              items={Array.from({ length: max }, (_, i) => ({
-                value: String(i + 1),
-                label: `${i + 1}위 이내`,
-              }))}
-            />
-            <button
-              className="button primary"
-              disabled={busy || !managerJobOpen(chosen)}
-              onClick={async () => {
-                if (await act({ type: 'applyManager', club: chosen.club, targetRank: target }))
-                  setSelected(null);
-              }}
-            >
-              지원서 제출
-            </button>
-            <button className="button secondary" onClick={() => setSelected(null)}>
-              닫기
-            </button>
-          </div>
-        </section>
+      <footer className="job-market-legend">
+        <span>{jobs.length}개 구단 · 이 세이브 안의 이사회 평가</span>
+        <span>
+          공석 또는 신임도 {MANAGER_APPLICATION_THRESHOLD}% 미만이면 지원 가능 · 실제 감독의 현실
+          평가와 무관
+        </span>
+      </footer>
+      {selected && (
+        <ManagerApplication
+          g={g}
+          clubId={selected}
+          act={act}
+          busy={busy}
+          close={() => setSelected(null)}
+        />
       )}
     </div>
   );

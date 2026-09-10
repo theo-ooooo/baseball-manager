@@ -3039,3 +3039,76 @@ input,
   padding-top: 1rem;
   border-top: 1px solid var(--border);
 }
+
+.section-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.section-tabs a {
+  padding: 12px 16px;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+}
+.section-tabs a[aria-current='page'] {
+  color: var(--text);
+  border-bottom-color: var(--brand);
+}
+.section-tabs a:hover {
+  background: var(--surface-2);
+}
+.manager-profile-link {
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.manager-profile-link:hover {
+  background: var(--sidebar-accent);
+}
+.trade-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 20px 0;
+}
+.trade-player-list {
+  display: grid;
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.trade-player-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.trade-player-list small {
+  display: block;
+  color: var(--muted);
+}
+.trade-player-list input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.ui-club-grid[hidden] {
+  display: none;
+}
+@media (max-width: 700px) {
+  .trade-columns {
+    grid-template-columns: 1fr;
+  }
+  .section-tabs a {
+    padding: 10px;
+    font-size: 12px;
+  }
+}

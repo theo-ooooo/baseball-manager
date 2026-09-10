@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Play, Pause, Settings2 } from 'lucide-react';
+import Link from 'next/link';
+import { Play, Pause, Settings2, Maximize } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { useWorld } from '../career/world-context';
@@ -150,6 +151,21 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
       className={`match-page live-match-dialog ${mobile && !editor ? 'mobile-live-layout' : ''} ${commandOpen ? 'command-open' : ''} ${queuedCommand ? 'has-queued-command' : ''}`}
     >
       <header className="stadium-replay-header">
+        <div className="match-display-actions">
+          <Link href="/?view=home" className="text-button">
+            ← 구단 화면
+          </Link>
+          <button
+            className="icon-button"
+            aria-label="브라우저 전체 화면"
+            onClick={() => {
+              if (document.fullscreenElement) void document.exitFullscreen();
+              else void document.documentElement.requestFullscreen().catch(() => {});
+            }}
+          >
+            <Maximize size={16} />
+          </button>
+        </div>
         <h2>
           {getClub(live.away).name} <span>vs</span> {getClub(live.home).name}
         </h2>

@@ -1,6 +1,7 @@
 import type { GameState, NewsItem } from '@dugout/shared/types';
 export const newsKinds: Record<string, { label: string; sender: string; role: string }> = {
-  manager: { label: '감독 경력', sender: '구단주 사무실', role: '감독 계약·채용' },
+  league: { label: '세계 야구', sender: '야구 소식', role: '리그 동향' },
+  manager: { label: '감독 · 채용', sender: '구단주 사무실', role: '감독 계약·채용' },
   contract: { label: '계약 관리', sender: '계약 담당자', role: '선수 계약 관리' },
   transfer: { label: '이적 · 협상', sender: '영입 담당자', role: '영입 및 에이전트 연락' },
   scout: { label: '스카우팅', sender: '전력 분석팀', role: '상대 전력 분석' },
@@ -22,6 +23,13 @@ export function contractReview(news: NewsItem) {
   );
 }
 export function newsNeedsAction(news: NewsItem, g: GameState) {
+  if (news.managerOfferId)
+    return (
+      g.managerCareer?.offers.some(
+        (o) =>
+          o.id === news.managerOfferId && ['invited', 'interview', 'offered'].includes(o.status),
+      ) || false
+    );
   if (news.id === `media-pending:${g.media?.pending?.key}`) return true;
   if (
     g.coachRecommendations?.some(
