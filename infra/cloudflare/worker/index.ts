@@ -35,7 +35,7 @@ const worker = {
     const respond = async () => {
       if (url.pathname.startsWith('/api/')) {
         const { default: api } = await import('../../../apps/api/.build/worker.mjs');
-        return api.fetch(request, env, ctx);
+        return api.fetch(request);
       }
 
       if (url.pathname === '/_vinext/image') {

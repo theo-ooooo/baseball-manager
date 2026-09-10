@@ -709,3 +709,11 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - 버전 표시를 모바일에서 확인하던 중 좁은 상단 탐색 경로의 ‘수신함’이 한 글자씩 줄바꿈되어 높이 48px을 차지함을 발견했다. 경로를 한 줄로 유지하고 넘치는 내용을 잘라 상단 높이를 보존한다.
 - 390px 브라우저에서 해당 경로 높이 16px, scrollWidth 390px을 확인했다. 스타일 포맷 검사와 diff 검사를 통과했다. 0.2.0 공개 전 점검에 포함한다.
+
+### 2026-09-10 · 공개 Worker 1102 CPU 초과 긴급 진단·API 경량화
+
+- 사용자 제공 Ray `a38b0abe8f02c12a`를 실제 Workers Observability에서 대조했다. 02:35:54 UTC `GET /`가 CPU 18ms, `exceededCpu`로 실패했고, 직전 `/api/career` POST 5건도 CPU 10~15ms에서 실패했다. 해당 시간대 삼성 면접 화면 이동과 정상 저장 요청 CPU 77ms가 관찰됐다. 메모리 초과나 프리뷰/사운드 미배포 변경의 장애로 분류하지 않는다.
+- NestJS DI·컨트롤러·서비스·D1 저장을 유지하고 Node HTTP 서버/Express 브리지를 Worker의 Request/Response로 교체했다. JSON을 한 번만 파싱하며 스트림을 읽는 도중 기존 12KB/백업 이전 8MB 바이트 제한을 적용한다. 라우트·POST 201/복구 200·예외 상태·HEAD·세션 쿠키·요청 출처 검사를 유지한다. 사용하지 않는 Nest Express transport를 Worker 번들에서 제외한다.
+- 저장 동작 이름만 로그에 기록하여 다음 장애에서 Ray와 동작을 대조할 수 있게 했다. 복구 키, 면접 답변, 저장 원문이나 사용자 식별자는 기록하지 않는다. 프로그램 버전은 0.2.1이다.
+- 운영 빌드와 전체 170개 테스트가 통과했다. 새 Worker transport 회귀는 잘못된 경로/식별자/JSON, 배열 입력, 멀티바이트 크기 제한, 콘텐츠 형식, 출처와 HEAD를 검사한다. 실제 공개 CPU 개선과 배포 결과는 후속 기록을 따른다.
+- 현재 실행 제한은 Workers Free 10ms와 일치하며, 일시적인 초과 허용이 끝나면 정상 요청도 중단되는 공식 동작과 일치한다. API 경량화만으로 날짜 진행·시즌 시뮬레이션을 포함한 모든 요청의 10ms 준수를 보장하지 않는다. Workers Paid 전환 또는 서버 연산 구조의 추가 변경이 남은 안정성 조건이다. 구독을 임의 변경하지 않았다.
