@@ -1,4 +1,5 @@
 import { isAvailable } from '@dugout/shared/long-term';
+import type { PlayerTrainingDay } from '@dugout/shared/training-center';
 import { pitchingAssignment, preparePitching } from '@dugout/shared/pitching';
 import { prepareCalendar } from '@dugout/shared/calendar';
 import { isPitchingApproach } from '@dugout/shared/pitching-tactics';
@@ -271,20 +272,39 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
       return null;
   }
 }
-export function developSquad(g: GameState, random: () => number, opponents: string[]) {
-  g.tacticFamiliarity = Math.min(
-    100,
-    (g.tacticFamiliarity || 55) + (g.training === 'rest' ? 0.15 : 0.7),
-  );
+export function developTrainingFamiliarity(
+  g: GameState,
+  training?: Map<string, PlayerTrainingDay>,
+) {
+  const first = g.roster.filter((p) => p.squad !== 'reserve');
+  const tactical = training
+    ? first.reduce((sum, p) => sum + (training.get(p.id)?.tactical || 0), 0) /
+      Math.max(1, first.length)
+    : g.training === 'rest'
+      ? 0.15
+      : 0.7;
+  g.tacticFamiliarity = Math.min(100, (g.tacticFamiliarity || 55) + tactical);
   const d = defenseFor(g);
   for (const p of g.roster) {
     if (!isAvailable(p)) continue;
     const pos = p.positionTraining || defensivePositions.find((k) => d[k] === p.id);
-    if (pos && g.training !== 'rest') {
+    const practice = training ? training.get(p.id)?.positional || 0 : g.training === 'rest' ? 0 : 1;
+    if (pos && practice > 0) {
       p.familiarity ??= {};
-      p.familiarity[pos] = Math.min(100, familiarity(p, pos) + 0.12 + coachSkill(g, '수비') / 400);
+      p.familiarity[pos] = Math.min(
+        100,
+        familiarity(p, pos) + (0.12 + coachSkill(g, '수비') / 400) * practice,
+      );
     }
   }
+}
+export function developSquad(
+  g: GameState,
+  random: () => number,
+  opponents: string[],
+  trainingManaged = false,
+) {
+  if (!trainingManaged) developTrainingFamiliarity(g);
   if (g.day % 3 !== 0 || !['preseason', 'regular'].includes(g.phase) || !g.reserve) return;
   const roster = reserveTeam(g).filter(isAvailable),
     lineup = lineupAuto(roster).map((id) => roster.find((p) => p.id === id)!);

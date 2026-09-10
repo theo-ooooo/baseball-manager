@@ -5,6 +5,7 @@ import { hash, lineupAuto } from '@dugout/shared/game-view';
 import { firstTeam, defenseFor } from '@dugout/shared/management';
 import { preparePitching } from '@dugout/shared/pitching';
 import { postNews } from './club-dynamics';
+import type { PlayerTrainingDay } from '@dugout/shared/training-center';
 function report(g: GameState, p: Player, title: string, body: string) {
   postNews(g, `${p.name} · ${title}`, body, 'squad', {
     playerId: p.id,
@@ -24,7 +25,7 @@ export function repairMedicalSelection(g: GameState) {
   preparePitching(g);
   g.defense = defenseFor(g);
 }
-export function medicalTick(g: GameState) {
+export function medicalTick(g: GameState, trainingDays?: Map<string, PlayerTrainingDay>) {
   if (g.liveMatch) return;
   const today = gameDate(g);
   let added = false;
@@ -62,7 +63,8 @@ export function medicalTick(g: GameState) {
     }
     if (added || g.phase === 'finished') continue;
     const risk =
-      ((p.condition < 65 ? 12 : 3) * (g.training === 'rest' ? 0.5 : 1)) /
+      ((p.condition < 65 ? 12 : 3) *
+        (trainingDays?.get(p.id)?.risk ?? (g.training === 'rest' ? 0.5 : 1))) /
       Math.max(1, g.facilities?.medical || 1);
     if (hash(`${g.seed}:${p.id}:${today}:injury`) % 1000 >= risk) continue;
     const peers = firstTeam(g).filter(isAvailable);

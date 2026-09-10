@@ -11,6 +11,7 @@ export function individualTrainingAction(
   a: Record<string, unknown>,
 ): GameState | null {
   if (a.type !== 'setTrainingPlan' && a.type !== 'clearTrainingPlan') return null;
+  if (g.liveMatch) throw new Error('개인 훈련은 진행 중인 경기를 마친 뒤 변경해 주세요.');
   const p = g.roster.find((p) => p.id === a.id);
   if (!p) throw new Error('육성할 소속 선수를 선택해 주세요.');
   if (a.type === 'clearTrainingPlan') {
@@ -69,10 +70,10 @@ const neutralFactors = Object.fromEntries(abilityKeys.map((key) => [key, 1])) as
   AbilityKey,
   number
 >;
-export function individualTrainingFactors(g: GameState, p: Player) {
+export function individualTrainingFactors(g: GameState, p: Player, loadHandled = false) {
   const plan = p.trainingPlan;
   if (!plan) return neutralFactors;
-  const resting = trainingRest(g, p);
+  const resting = !loadHandled && trainingRest(g, p);
   const intensity =
     plan.intensity === 'light'
       ? 0.65
@@ -89,7 +90,10 @@ export function individualTrainingFactors(g: GameState, p: Player) {
       const focus = plan.focus === 'balanced' ? 1 : plan.focus === key ? 1.5 : 0.85;
       const mentoring =
         mentor && mentor[key] > p[key] && (mentor.mood?.value ?? 65) >= 45 ? 1.08 : 1;
-      return [key, resting ? 0.12 : intensity * focus * mentoring];
+      return [
+        key,
+        loadHandled ? focus * mentoring : resting ? 0.12 : intensity * focus * mentoring,
+      ];
     }),
   ) as Record<AbilityKey, number>;
 }

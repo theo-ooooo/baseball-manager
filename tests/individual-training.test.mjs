@@ -100,7 +100,7 @@ test('Mentoring needs an eligible teammate with stronger abilities and good mora
   );
 });
 
-test('Daily training uses the elapsed weekday for recovery and stops at a once-only goal report', () => {
+test('Automatic rest overrides intense plans, and recovered players stop at a once-only goal report', () => {
   const { g, p } = setup();
   p.condition = 40;
   const base = e.applyAction(g, { type: 'continueDay', simulateGames: true });
@@ -115,12 +115,15 @@ test('Daily training uses the elapsed weekday for recovery and stops at a once-o
   });
   assert.equal(
     rested.roster.find((x) => x.id === p.id).condition,
-    base.roster.find((x) => x.id === p.id).condition + 4,
+    base.roster.find((x) => x.id === p.id).condition,
   );
   assert.equal(
     intense.roster.find((x) => x.id === p.id).condition,
-    base.roster.find((x) => x.id === p.id).condition - 3,
+    base.roster.find((x) => x.id === p.id).condition,
   );
+  // A tired player cannot gain an instant training goal while automatic rest applies.
+  assert.equal(base.roster.find((x) => x.id === p.id).contact, p.contact);
+  p.condition = 80;
   let goal = e.applyAction(g, plan(p, { target: 50.001 }));
   goal = e.applyAction(goal, { type: 'continueDay', simulateGames: true });
   const achieved = goal.roster.find((x) => x.id === p.id).trainingPlan;

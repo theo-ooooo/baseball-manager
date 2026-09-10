@@ -21,7 +21,12 @@ import { createRecruitment } from './recruitment';
 import { createScouting, prepareKnowledge } from './scouting';
 import { individualTrainingAction } from './individual-training';
 import { createMatchMediaActions, finishPendingConversation } from './match-media-actions';
-import { trainingRecovery } from '@dugout/shared/training-plan';
+import {
+  defaultTrainingCenter,
+  trainingDay,
+  reserveTrainingMatch,
+} from '@dugout/shared/training-center';
+import { trainingCenterAction, prepareDailyTraining, recordDailyTraining } from './training-center';
 import { developPlayers, developmentReports } from './player-development';
 
 import { autoPitching, preparePitching, nextStarter } from '@dugout/shared/pitching';
@@ -59,7 +64,13 @@ import {
   firstTeam,
   preseasonFixtures,
 } from '@dugout/shared/management';
-import { prepareSquad, managementAction, canRemove, developSquad } from './squad-management';
+import {
+  prepareSquad,
+  managementAction,
+  canRemove,
+  developSquad,
+  developTrainingFamiliarity,
+} from './squad-management';
 import { releasePlayer } from './player-release';
 export function createGameEngine(world: WorldCatalog) {
   const {
@@ -128,6 +139,7 @@ export function createGameEngine(world: WorldCatalog) {
       starter: roster.filter((p) => p.pos === 'P').sort((a, b) => overall(b) - overall(a))[0].id,
       tactic: 'balanced',
       training: 'balanced',
+      trainingCenter: defaultTrainingCenter(),
       staff: coachPool().filter((c) => c.id.endsWith('-0')),
       standings: Object.fromEntries(
         leagues.map((l) => [
@@ -328,6 +340,20 @@ export function createGameEngine(world: WorldCatalog) {
     const r = rng(g.seed);
     for (let n = 0; n < clamp(count, 1, 14) && g.phase !== 'finished'; n++) {
       const ownLeague = getClub(g.club).league;
+      const trainingDate = gameDate(g);
+      const firstMatch =
+        !!nextFixture(g) ||
+        g.history.some(
+          (m) =>
+            (m.date || gameDate(g, m.day)) === trainingDate &&
+            (m.home === g.club || m.away === g.club),
+        );
+      const previousMatch = g.history.some(
+        (m) =>
+          (m.date || gameDate(g, m.day)) === addDays(trainingDate, -1) &&
+          (m.home === g.club || m.away === g.club),
+      );
+      const reserveMatch = reserveTrainingMatch(g);
       const pendingBefore = g.news.filter((n) => n.choiceKind && !n.choice).length;
       if (scheduledGames(g, r, pauseAfterOwn)) return g;
       if (g.phase === 'preseason') {
@@ -391,23 +417,32 @@ export function createGameEngine(world: WorldCatalog) {
         g,
         r,
         clubs.filter((c) => c.league === ownLeague && c.id !== g.club).map((c) => c.id),
+        true,
       );
-      developPlayers(g);
+      const training = prepareDailyTraining(g, {
+        first: trainingDay(g, 'first', trainingDate, firstMatch, previousMatch),
+        reserve: trainingDay(
+          g,
+          'reserve',
+          trainingDate,
+          reserveMatch,
+          reserveTrainingMatch(g, g.day - 1),
+        ),
+      });
+      developTrainingFamiliarity(g, training);
+      developPlayers(g, training);
+      recordDailyTraining(g, training);
       g.day++;
       for (const p of g.roster) {
         p.condition = clamp(
-          p.condition +
-            4 +
-            coachSkill(g, '체력') * 0.09 +
-            trainingRecovery(g, p, g.day - 1) +
-            (g.training === 'rest' ? 9 : g.training === 'intense' ? -5 : 0),
+          p.condition + 4 + coachSkill(g, '체력') * 0.09 + (training.get(p.id)?.recovery || 0),
           20,
           100,
         );
       }
       settleClubDay(g, ownLeague);
       // Rest dates retain the selected starter; afterMatch rotates only after an appearance.
-      dailyReports(g, world);
+      dailyReports(g, world, training);
       transfers.offerTick(g);
       recruitment.tick(g);
       trades.tick(g);
@@ -415,7 +450,7 @@ export function createGameEngine(world: WorldCatalog) {
       developmentReports(g);
       coachReports(g);
       worldSimulation.tick(g);
-      medicalTick(g);
+      medicalTick(g, training);
       managerCareer.tick(g);
       if (g.phase === 'preseason' && g.day === 0) {
         g.phase = 'regular';
@@ -541,6 +576,15 @@ export function createGameEngine(world: WorldCatalog) {
         offer.message = '새 시즌으로 넘어가 이전 채용 절차가 종료됐습니다.';
       }
     g.year++;
+    for (const center of [
+      g.trainingCenter,
+      ...Object.values(g.clubCareers || {}).map((c) => c.trainingCenter),
+    ]) {
+      if (!center) continue;
+      center.tally = undefined;
+      center.lastDay = undefined;
+      for (const program of Object.values(center.programs)) program.days = {};
+    }
     const departed: string[] = [];
     for (const [club, saved] of Object.entries(g.clubCareers || {})) {
       const gap = g.year - saved.year;
@@ -869,6 +913,8 @@ export function createGameEngine(world: WorldCatalog) {
     if (reportAction) return reportAction;
     const trained = individualTrainingAction(s, a);
     if (trained) return trained;
+    const teamTraining = trainingCenterAction(s, a);
+    if (teamTraining) return teamTraining;
     const managed = managementAction(s, a);
     if (managed) return managed;
     switch (a.type) {
@@ -911,11 +957,6 @@ export function createGameEngine(world: WorldCatalog) {
         s.tactic = String(a.value);
         s.instructions = defaults(s.tactic);
         s.tacticFamiliarity = Math.max(20, (s.tacticFamiliarity || 55) - 10);
-        return s;
-      case 'training':
-        if (!['balanced', 'power', 'pitching', 'defense', 'rest'].includes(String(a.value)))
-          throw new Error('훈련을 확인해 주세요.');
-        s.training = String(a.value);
         return s;
       case 'negotiate':
         return negotiate(

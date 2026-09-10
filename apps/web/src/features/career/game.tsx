@@ -50,6 +50,7 @@ import { StadiumReplay } from '../matches/stadium-replay';
 import { LiveMatchScreen } from '../matches/live-match-screen';
 import { TacticalBoard } from '../squad/management-panels';
 import { CoachPanel } from '../squad/coach-panel';
+import { TrainingCenterPanel } from '../squad/training-center-panel';
 import { Badge } from '../../components/game-ui';
 import { AppVersion } from '@/components/app-version';
 import { nav } from './game-navigation';
@@ -554,7 +555,7 @@ export function GameScreen({
               <button onClick={() => setView('match')}>경기장으로 →</button>
             </div>
           )}
-          {!['home', 'match', 'matchday'].includes(view) && (
+          {!['home', 'match', 'matchday', 'training'].includes(view) && (
             <div className="page-title">
               <h1>
                 {view === 'player'
@@ -682,7 +683,7 @@ export function GameScreen({
           {['staff', 'jobs', 'job-security'].includes(view) && (
             <nav className="section-tabs" aria-label="스태프">
               {[
-                ...(!isUnemployed(g) ? [['staff', '코치진 · 훈련']] : []),
+                ...(!isUnemployed(g) ? [['staff', '코치진']] : []),
                 ['jobs', '채용 센터'],
                 ['job-security', '직업 안정성'],
               ].map(([id, label]) => (
@@ -728,11 +729,12 @@ export function GameScreen({
               offerId={initialOfferId}
             />
           )}
-          {['squad', 'reserves', 'tactics', 'medical', 'dynamics'].includes(view) && (
+          {['squad', 'reserves', 'training', 'tactics', 'medical', 'dynamics'].includes(view) && (
             <nav className="section-tabs" aria-label="선수단 관리">
               {[
                 ['squad', '선수 명단'],
                 ['reserves', '1군 · 2군'],
+                ['training', '훈련'],
                 ['tactics', '전술 · 타순'],
                 ['medical', '의무'],
                 ['dynamics', '분위기'],
@@ -771,6 +773,7 @@ export function GameScreen({
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
+          {view === 'training' && <TrainingCenterPanel key={g.club} g={g} act={act} busy={busy} />}
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
           {view === 'world' && <World g={g} onPlayer={setPlayer} />}

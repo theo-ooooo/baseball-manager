@@ -78,12 +78,17 @@ export function matchMorale(g: GameState, res: Result) {
           : '패배로 자신감 하락';
   }
 }
-export function dailyReports(g: GameState, world: WorldCatalog) {
+export function dailyReports(
+  g: GameState,
+  world: WorldCatalog,
+  training?: Map<string, { rest: boolean }>,
+) {
   prepareDynamics(g);
   const view = createGameView(world);
   for (const p of g.roster) {
     const m = p.mood!;
-    if (g.training === 'rest' && p.condition < 70) m.value = limit(m.value + 0.5);
+    if ((training?.get(p.id)?.rest ?? g.training === 'rest') && p.condition < 70)
+      m.value = limit(m.value + 0.5);
     if (m.promise && g.day >= m.promise.due) {
       const completed = p.stats.g - m.promise.startGames >= m.promise.games;
       m.value = limit(m.value + (completed ? 8 : -16));

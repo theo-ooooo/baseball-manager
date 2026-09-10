@@ -404,6 +404,7 @@ export function createManagerCareer(world: WorldCatalog) {
       starter: g.starter,
       tactic: g.tactic,
       training: g.training,
+      trainingCenter: g.trainingCenter,
       defense: g.defense,
       pitching: g.pitching,
       instructions: g.instructions,
@@ -460,6 +461,7 @@ export function createManagerCareer(world: WorldCatalog) {
       g.transferListed = {};
       g.media = undefined;
       g.coachRecommendations = [];
+      g.trainingCenter = saved?.trainingCenter ? structuredClone(saved.trainingCenter) : undefined;
       if (!saved) {
         g.lineup = lineupAuto(roster);
         g.starter = roster.find((p) => p.pos === 'P')!.id;
