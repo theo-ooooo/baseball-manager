@@ -3,7 +3,7 @@
   inset: 0 0 auto;
   z-index: 1000;
   pointer-events: none;
-  color: #fff;
+  color: var(--text);
 }
 .action-progress-rail {
   height: 5px;

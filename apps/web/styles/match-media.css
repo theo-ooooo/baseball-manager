@@ -15,7 +15,7 @@
   align-items: center;
   gap: 12px;
   padding: 22px 26px;
-  background: var(--surface-2);
+  background: #1c3033;
   color: #fff;
 }
 .media-room-header span {

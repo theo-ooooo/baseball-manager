@@ -10,13 +10,13 @@ html {
   background: var(--surface-2);
 }
 .app-sidebar .brand > svg {
-  color: var(--brand);
+  color: #bcf16b;
 }
 .sidebar-club {
   padding: 14px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--nav-line);
   border-radius: 8px;
-  background: var(--surface-1);
+  background: var(--nav-bg-2);
 }
 .workspace-body {
   padding: 24px;
@@ -144,4 +144,30 @@ input[type='radio'] {
   .dashboard-card > header {
     padding: 14px 16px;
   }
+}
+
+/* Keep navigation dark while the working area uses light paper surfaces. */
+.app-sidebar .nav-button[data-active='true'] {
+  background: #bcf16b !important;
+  color: #15221a !important;
+  border-color: #bcf16b;
+}
+.app-sidebar .nav-count {
+  background: #253d2d;
+  color: #bcf16b;
+}
+.app-sidebar .nav-button:not([data-active='true']):hover {
+  background: var(--nav-bg-2);
+  color: var(--nav-fg);
+}
+.app-sidebar .sidebar-club .club-badge {
+  background: #fff;
+}
+.app-sidebar .manager,
+.app-sidebar .new-career {
+  color: var(--nav-fg);
+}
+
+.app-sidebar .app-version {
+  color: var(--nav-muted);
 }

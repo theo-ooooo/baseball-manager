@@ -315,7 +315,7 @@ export function GameScreen({
         <Link className="setup-save-link text-button" href="/saves">
           저장 관리 · 복구
         </Link>
-        <Toaster theme="dark" position="bottom-right" />
+        <Toaster theme="light" position="bottom-right" />
       </>
     );
   const club = getClub(g.club),
@@ -870,7 +870,7 @@ export function GameScreen({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Toaster theme="dark" position="bottom-right" />
+      <Toaster theme="light" position="bottom-right" />
     </SidebarProvider>
   );
 }

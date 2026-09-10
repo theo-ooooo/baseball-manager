@@ -204,7 +204,7 @@ input,
   color: var(--brand);
 }
 .gen-tag {
-  color: #ceb8fa;
+  color: #6944a7;
 }
 .player-avatar {
   width: 27px;
@@ -216,8 +216,8 @@ input,
   font-size: 11px;
 }
 .player-avatar.generated {
-  background: #342b48;
-  color: #ceb8fa;
+  background: #efe9f8;
+  color: #6944a7;
 }
 .player-name {
   gap: 8px;
@@ -863,7 +863,7 @@ input,
   font-size: 10px;
 }
 .potential {
-  color: #ceb8fa;
+  color: #6944a7;
   font-size: 12px;
 }
 .condition {
@@ -1604,8 +1604,8 @@ input,
   font-size: 30px;
 }
 .profile-number.generated {
-  background: #342b48;
-  color: #ceb8fa;
+  background: #efe9f8;
+  color: #6944a7;
   border-color: #c4b5fd;
 }
 .profile-tabs {
