@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { careerMemory } from './career-memory';
 import { toast } from 'sonner';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
-import { careerResponse, mergeCareerResponse } from './career-response';
+import { careerResponse, mergeCareerResponse, careerErrorMessage } from './career-response';
 import type { Act, CareerData } from './game-contracts';
 
 export function useCareerSession(initial: CareerData) {
@@ -38,7 +38,7 @@ export function useCareerSession(initial: CareerData) {
     try {
       await read();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '연결하지 못했습니다.');
+      setError(careerErrorMessage(e));
     } finally {
       locked.current = false;
       setLoading(false);
@@ -86,7 +86,7 @@ export function useCareerSession(initial: CareerData) {
       return merged.state;
     } catch (e) {
       setSaveFailed(true);
-      toast.error(e instanceof Error ? e.message : '저장하지 못했습니다.');
+      toast.error(careerErrorMessage(e));
       return null;
     } finally {
       locked.current = false;

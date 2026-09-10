@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { WorldCatalog } from '@dugout/shared/types';
 import type { CareerData } from './game-contracts';
 import { careerMemory } from './career-memory';
-import { careerResponse } from './career-response';
+import { careerResponse, careerErrorMessage } from './career-response';
 
 async function read(path: string) {
   const response = await fetch(path, { cache: 'no-store' });
@@ -26,7 +26,7 @@ export function useGameResources() {
         if (active) setData(resources);
       })
       .catch((e) => {
-        if (active) setError(e instanceof Error ? e.message : '연결하지 못했습니다.');
+        if (active) setError(careerErrorMessage(e));
       });
     // A route may unmount while another route uses the same read. Only stop this subscriber.
     return () => {
