@@ -2122,7 +2122,8 @@ export class StadiumController {
       t = this.progress,
       replay = this.replay;
     const portrait = cam.aspect < 1;
-    let fov = 30;
+    let fov = 30,
+      cameraCut = false;
     const pos = this.wantPos,
       target = this.wantTarget;
     if (this.mode === 'overview' || !replay) {
@@ -2149,21 +2150,20 @@ export class StadiumController {
         pos.set(-5, 19, 25);
         target.lerpVectors(new THREE.Vector3(0, 1, -8), bag, smooth(clamp01((t - 0.1) / 0.3)));
         fov = 24;
-      } else if (!replay.play || t < 0.2 || (noContact && !(runnersMove && t > 0.32))) {
+      } else if (!replay.play || t < 0.24 || (noContact && !(runnersMove && t > 0.32))) {
         // Centre-field pitch camera: pitcher in the foreground, batter and catcher framed.
         const push = smooth(clamp01((t - 0.3) / 0.4)) * (noContact ? 1 : 0);
         pos.copy(cfPos).add(new THREE.Vector3(-0.6 * push, -0.4 * push, 2.5 * push));
         target.copy(cfTarget).add(new THREE.Vector3(-0.4 * push, -0.1 * push, 1.5 * push));
         fov = 13.5 - push * 1.5;
       } else {
-        // Contact: swoop from the centre-field camera to a high-home broadcast position that
-        // follows the ball, keeping the fielder in frame, then settle on the decisive bag.
-        const from = noContact ? 0.32 : 0.2;
-        const f = smooth(clamp01((t - from) / 0.16));
+        // A broadcast cut changes cameras after contact; flying across the diamond makes
+        // the ball harder to follow and creates unnecessary motion on a small screen.
+        const cutAt = noContact ? 0.32 : 0.24;
+        cameraCut = this.lastProgress < cutAt && t >= cutAt;
         const side = replay.target.x >= HOME.x ? -1 : 1;
         const highHome = new THREE.Vector3(side * 8, 22, 27);
-        pos.lerpVectors(cfPos, highHome, f);
-        pos.y += Math.sin(f * Math.PI) * 9;
+        pos.copy(highHome);
         const ballTarget = ballWorld.clone().setY(Math.min(ballWorld.y * 0.5, 8));
         const fielder = toWorld(replay.target).setY(1);
         let follow: THREE.Vector3;
@@ -2172,18 +2172,16 @@ export class StadiumController {
           const settle = toWorld(this.destination()).setY(1).lerp(ballTarget, 0.4);
           follow = ballTarget.lerp(settle, clamp01((t - 0.9) / 0.1));
         } else follow = ballTarget.lerp(fielder, replay.kind === 'homeRun' ? 0.15 : 0.35);
-        target.lerpVectors(cfTarget, follow, f);
+        target.copy(follow);
         const dist = target.distanceTo(pos);
         fov = THREE.MathUtils.clamp(2600 / dist, 18, 36);
         if (replay.kind === 'homeRun' && t > 0.4) fov = Math.max(fov, 34);
-        fov = lerp(13.5, fov, f);
       }
     }
     if (portrait) fov *= 1.3;
-    // Smooth the camera so cuts between phases become short glides. Snap on scene changes or
-    // when progress jumps (reduced motion / seeking).
+    // Track smoothly within a shot, but cut directly between the pitch and field cameras.
     const jump = Math.abs(t - this.lastProgress) > 0.12 || this.lastProgress < 0;
-    if (this.snapCamera || jump) {
+    if (this.snapCamera || jump || cameraCut) {
       this.camPos.copy(pos);
       this.camTarget.copy(target);
       this.camFov = fov;

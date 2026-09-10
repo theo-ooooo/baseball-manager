@@ -1,35 +1,19 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Play, Pause, Settings2, Maximize } from 'lucide-react';
+import { Play, Pause, Settings2, Maximize, ArrowLeft } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { useWorld } from '../career/world-context';
-import { useIsMobile } from '../../hooks/use-mobile';
 import { MobileMatchView, MatchAtBat } from './mobile-match-view';
-import { useReducedMotion } from '../../hooks/use-reduced-motion';
 import { StadiumScene } from './stadium-replay';
 import { MatchPlanEditor } from './match-plan-editor';
 import { MatchCommandPanel } from './match-command-panel';
 import { matchCommandLabels } from '@dugout/shared/match-commands';
-import { isSpaceShortcut } from '../career/space-shortcut';
-
-function readCursor(key: string, floor: number, length: number) {
-  try {
-    const stored = Number(localStorage.getItem(key));
-    return Number.isInteger(stored) ? Math.max(floor, Math.min(length, stored)) : floor;
-  } catch {
-    return floor;
-  }
-}
-function readSpeed() {
-  try {
-    const value = localStorage.getItem('dugout:match-speed');
-    return value && ['1', '2', '4', '8'].includes(value) ? value : '2';
-  } catch {
-    return '2';
-  }
-}
+import { useLiveMatch } from './use-live-match';
+import { MatchPreview } from './match-preview';
+import { MatchOverview } from './match-overview';
+import { MatchAudioSettings } from './match-audio-settings';
+import { AppVersion } from '../../components/app-version';
 export function LiveMatchScreen({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
   const live = g.liveMatch!;
   // Old partial matches are prepared by an explicit action, never by rendering or GET.
@@ -59,304 +43,230 @@ export function LiveMatchScreen({ g, act, busy }: { g: GameState; act: Act; busy
   );
 }
 function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    dialogRef.current?.focus({ preventScroll: true });
-  }, []);
-  const live = g.liveMatch!,
-    result = live.timeline!,
-    length = result.log.length;
-  const { getClub } = useWorld(),
-    reduced = useReducedMotion(),
-    mobile = useIsMobile();
-  const storageKey = `dugout:playback:${live.playbackId}:${live.timelineVersion}`;
-  const [cursor, setCursor] = useState(() => readCursor(storageKey, live.cursor, length));
-  const [playing, setPlaying] = useState(false),
-    [commandOpen, setCommandOpen] = useState(false),
-    [settled, setSettled] = useState(true),
-    [editorOverride, setEditor] = useState<boolean | null>(null),
-    [planDirty, setPlanDirty] = useState(false),
-    [speed, setSpeed] = useState(readSpeed);
-  const editor = editorOverride ?? (cursor === 0 && !mobile);
-  const finished = cursor >= length;
-  const queuedCommand = live.commands?.find((command) => command.cursor === cursor);
-  const event = result.log[cursor - 1];
-  useEffect(() => {
-    try {
-      localStorage.setItem('dugout:match-speed', speed);
-    } catch {
-      /* Playback works without storage. */
-    }
-  }, [speed]);
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, String(cursor));
-    } catch {
-      /* Server timeline remains durable. */
-    }
-  }, [cursor, storageKey]);
-  useEffect(() => {
-    const pause = () => {
-      if (document.hidden) {
-        setPlaying(false);
-        setSettled(true);
-      }
-    };
-    document.addEventListener('visibilitychange', pause);
-    return () => document.removeEventListener('visibilitychange', pause);
-  }, []);
-  function next() {
-    if (cursor < length) {
-      setCommandOpen(false);
-      setEditor(false);
-      setSettled(false);
-      setCursor(cursor + 1);
-    }
-  }
-  function pause() {
-    setPlaying(false);
-    setSettled(true);
-  }
-  function finishPlay() {
-    if (playing && cursor < length) setCursor(cursor + 1);
-    else {
-      setPlaying(false);
-      setSettled(true);
-    }
-  }
-  const sceneResult = cursor === 0 ? { ...result, log: [], homeScore: 0, awayScore: 0 } : result;
+  const { dialogRef, ...m } = useLiveMatch(g, act, busy);
+  const { getClub } = useWorld();
+  const { live, result, cursor, settled, finished, playing, panel, queuedCommand } = m;
+  const editor = panel === 'plan';
+  const event = result.log[Math.max(0, cursor - 1)];
   return (
     <section
       ref={dialogRef}
-      onKeyDown={(event) => {
-        if (!isSpaceShortcut(event.nativeEvent)) return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (busy) return;
-        if (editor && planDirty) {
-          dialogRef.current?.querySelector('form')?.requestSubmit();
-          return;
-        }
-        if (finished) {
-          if (settled)
-            void act({ type: 'completeMatch', cursor, timelineVersion: live.timelineVersion });
-        } else if (playing) pause();
-        else {
-          setPlaying(true);
-          next();
-        }
-      }}
+      onKeyDown={m.onKeyDown}
       tabIndex={-1}
       aria-label="경기 지휘"
-      className={`match-page live-match-dialog ${!editor ? 'is-watching' : ''} ${mobile && !editor ? 'mobile-live-layout' : ''} ${commandOpen ? 'command-open' : ''} ${queuedCommand ? 'has-queued-command' : ''}`}
+      className={`match-page match-center live-match-dialog ${panel === 'watch' ? 'is-watching' : ''} ${editor ? 'is-planning' : ''}`}
     >
-      <header className="stadium-replay-header">
-        <div className="match-display-actions">
-          <Link href="/?view=home" className="text-button">
-            ← 구단 화면
-          </Link>
-          <button
-            className="icon-button"
-            aria-label="브라우저 전체 화면"
-            onClick={() => {
-              if (document.fullscreenElement) void document.exitFullscreen();
-              else void document.documentElement.requestFullscreen().catch(() => {});
-            }}
-          >
-            <Maximize size={16} />
-          </button>
+      <header className="match-center-header">
+        <Link href="/?view=home" className="match-back" aria-label="구단 화면으로">
+          <ArrowLeft size={18} />
+        </Link>
+        <div className="match-center-title">
+          <strong>
+            {getClub(live.away).short} <span>vs</span> {getClub(live.home).short}
+          </strong>
+          <small>
+            {result.date} ·{' '}
+            {finished
+              ? '경기 종료'
+              : cursor === 0
+                ? '경기 시작 전'
+                : `${event?.inning}회 ${event?.half ? '말' : '초'}`}
+          </small>
         </div>
-        <h2>
-          {getClub(live.away).name} <span>vs</span> {getClub(live.home).name}
-        </h2>
-        <p>
-          {result.date} ·{' '}
-          {finished
-            ? '경기 종료'
-            : cursor === 0
-              ? '경기 프리뷰'
-              : `${event?.inning}회 ${event?.half ? '말' : '초'}`}
-        </p>
-      </header>
-      <ol className="match-flow-steps" aria-label="경기 진행 단계">
-        {['경기 준비', '경기 지휘', '경기 후 보고'].map((label, i) => (
-          <li
-            key={label}
-            aria-current={(finished ? 2 : cursor === 0 ? 0 : 1) === i ? 'step' : undefined}
+        <nav aria-label="경기 화면">
+          <button
+            aria-current={panel === 'preview' ? 'page' : undefined}
+            disabled={m.planDirty || busy || cursor > 0}
+            onClick={() => m.showPanel('preview')}
           >
-            {label}
-          </li>
-        ))}
-      </ol>
-      {editor && !finished && mobile && (
-        <details className="mobile-preview-teams">
-          <summary>홈 · 원정 선발 명단 비교</summary>
-          <MobileMatchView g={g} cursor={cursor} />
-        </details>
-      )}
-      {editor && !finished && (
-        <MatchPlanEditor
-          key={`${cursor}:${live.timelineVersion}`}
+            프리뷰
+          </button>
+          <button
+            aria-current={editor ? 'page' : undefined}
+            disabled={m.planDirty || busy || finished}
+            onClick={() => m.showPanel('plan')}
+          >
+            선수·전술
+          </button>
+          <button
+            aria-current={panel === 'watch' ? 'page' : undefined}
+            disabled={m.planDirty || busy}
+            onClick={() => m.showPanel('watch')}
+          >
+            경기 중계
+          </button>
+        </nav>
+        <MatchAudioSettings audio={m.audio} />
+        <button
+          className="match-fullscreen"
+          aria-label="브라우저 전체 화면"
+          onClick={m.toggleFullscreen}
+        >
+          <Maximize size={17} />
+        </button>
+      </header>
+      {panel === 'preview' && (
+        <MatchPreview
           g={g}
-          cursor={cursor}
           busy={busy}
-          act={act}
-          onDirty={setPlanDirty}
-          onCancel={() => {
-            setPlanDirty(false);
-            setEditor(false);
-          }}
-          onApplied={() => setEditor(false)}
-          onResume={() => {
-            setPlaying(true);
-            next();
-          }}
+          onPlan={() => m.showPanel('plan')}
+          onPlay={() => m.play()}
         />
       )}
-
-      <div className={`stadium-replay-layout ${editor && !finished ? 'is-planning' : ''}`}>
-        <div className="stadium-main">
-          {!editor && (
-            <>
-              <MatchAtBat result={result} cursor={cursor} settled={settled} />
-              <StadiumScene
-                replayKey={`${cursor}:${settled}`}
-                result={sceneResult}
-                index={Math.max(0, cursor - 1)}
-                playing={!settled && cursor > 0}
-                speed={Number(speed)}
-                reduced={reduced || settled}
-                onEnd={finishPlay}
-              />
-              {mobile && (
-                <details className="mobile-preview-teams">
-                  <summary>타순 · 선수 상태</summary>
-                  <MobileMatchView g={g} cursor={Math.max(0, cursor - (settled ? 0 : 1))} />
-                </details>
-              )}
-            </>
+      {editor && (
+        <div className="match-plan-page">
+          <div className="match-plan-heading">
+            <div>
+              <small>{cursor ? '더그아웃 지시' : '경기 전 준비'}</small>
+              <h2>선수 기용과 경기 계획</h2>
+            </div>
+            <button onClick={m.closePlan} disabled={m.planDirty || busy}>
+              중계로 돌아가기
+            </button>
+          </div>
+          <MatchPlanEditor
+            key={`${m.consumed}:${live.timelineVersion}`}
+            g={g}
+            cursor={m.consumed}
+            busy={busy}
+            act={act}
+            onDirty={m.setPlanDirty}
+            onCancel={m.closePlan}
+            onApplied={m.closePlan}
+            onResume={() => m.play()}
+          />
+        </div>
+      )}
+      <div className="match-broadcast" hidden={panel !== 'watch'}>
+        <div className="match-broadcast-main">
+          <MatchAtBat result={result} cursor={cursor} settled={settled} />
+          <StadiumScene
+            replayKey={cursor}
+            result={m.sceneResult}
+            index={Math.max(0, cursor - 1)}
+            playing={m.animating && panel === 'watch'}
+            speed={Number(m.speed)}
+            reduced={m.reduced}
+            complete={settled}
+            onEnd={m.finishPlay}
+            onCue={m.onCue}
+          />
+          {m.commandOpen && !finished && (
+            <MatchCommandPanel g={g} cursor={m.consumed} busy={busy} act={act} />
           )}
-          {!editor && !finished && commandOpen && (
-            <MatchCommandPanel g={g} cursor={cursor} busy={busy} act={act} />
-          )}
-          <div className="stadium-controls live-controls" hidden={editor}>
-            {queuedCommand && !finished && (
-              <div className="match-command-queued" role="status">
-                <strong>{matchCommandLabels[queuedCommand.kind]} 지시 대기</strong>
-                <button
-                  disabled={busy || playing || !settled}
-                  onClick={() =>
-                    void act({
-                      type: 'cancelMatchCommand',
-                      cursor,
-                      timelineVersion: live.timelineVersion,
-                    })
-                  }
-                >
-                  지시 취소
-                </button>
-              </div>
-            )}
-            <button
-              className="replay-play"
-              disabled={busy || finished || planDirty}
-              onClick={() => {
-                if (playing) pause();
-                else {
-                  setPlaying(true);
-                  next();
-                }
-              }}
-            >
-              {playing ? <Pause size={18} /> : <Play size={18} />}{' '}
-              {playing ? '일시정지' : cursor === 0 ? '플레이볼' : '경기 계속'}
-            </button>
-            <button
-              className="button secondary compact"
-              disabled={busy || playing || !settled || finished || planDirty}
-              onClick={next}
-            >
-              다음 플레이
-            </button>
-            <select aria-label="경기 속도" value={speed} onChange={(e) => setSpeed(e.target.value)}>
-              {['1', '2', '4', '8'].map((n) => (
-                <option key={n} value={n}>
-                  {n}×
-                </option>
-              ))}
-            </select>
-            <button
-              className="button secondary compact"
-              disabled={busy || finished || planDirty}
-              onClick={() => {
-                pause();
-                setCommandOpen(false);
-                setEditor(!editor);
-              }}
-            >
-              <Settings2 size={15} /> 선수·전술
-            </button>
-            <button
-              className="button secondary compact"
-              disabled={busy || finished || planDirty}
-              aria-expanded={commandOpen}
-              aria-controls="match-command-panel"
-              onClick={() => {
-                pause();
-                setCommandOpen(!commandOpen);
-              }}
-            >
-              작전 지시
-            </button>
-            <span className="tiny">
-              {planDirty
-                ? '선수·전술 변경을 적용하거나 취소해 주세요.'
-                : cursor === 0
-                  ? '선수·전술에서 경기 계획을 준비하세요.'
-                  : 'Space 재생·일시정지 · 작전 지시나 선수·전술을 누르면 잠시 멈춥니다.'}
-            </span>
-            {finished && (
+        </div>
+        <aside className={`match-center-report ${m.report === 'lineup' ? 'is-lineup' : ''}`}>
+          <nav aria-label="중계 정보">
+            {(
+              [
+                ['overview', '전황'],
+                ['commentary', '문자 중계'],
+                ['lineup', '타순'],
+              ] as const
+            ).map(([tab, label]) => (
               <button
-                className="button primary compact"
-                disabled={busy || !settled}
+                key={tab}
+                aria-current={m.report === tab ? 'page' : undefined}
+                onClick={() => m.setReport(tab)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          {m.report === 'overview' && <MatchOverview result={result} consumed={m.consumed} />}
+          {m.report === 'lineup' && <MobileMatchView g={g} cursor={m.consumed} />}
+          {m.report === 'commentary' && (
+            <div
+              className="match-commentary-feed"
+              role="log"
+              aria-label="경기 문자 중계"
+              aria-live="off"
+            >
+              {m.commentary.length ? (
+                m.commentary.toReversed().map((cue) => (
+                  <p key={cue.id} className={cue.final ? 'is-result' : ''}>
+                    <small>{cue.final ? '타석 결과' : '현장 중계'}</small>
+                    {cue.text}
+                  </p>
+                ))
+              ) : (
+                <p>플레이볼을 누르면 상황에 맞춰 중계가 시작됩니다.</p>
+              )}
+            </div>
+          )}
+        </aside>
+      </div>
+      {panel === 'watch' && (
+        <footer className="match-center-controls">
+          {queuedCommand && !finished && (
+            <div className="match-command-queued">
+              <strong>{matchCommandLabels[queuedCommand.kind]} 지시 대기</strong>
+              <button
+                disabled={busy || playing || !settled}
                 onClick={() =>
                   void act({
-                    type: 'completeMatch',
-                    cursor,
+                    type: 'cancelMatchCommand',
+                    cursor: m.consumed,
                     timelineVersion: live.timelineVersion,
                   })
                 }
               >
-                결과 저장 · 경기 후 보고 →
+                지시 취소
               </button>
-            )}
-          </div>
-        </div>
-        {!editor && !mobile && (
-          <aside className="stadium-match-report">
-            <>
-              <h3>경기 중계</h3>
-              <p className="tiny">{finished ? '최종 기록' : '진행한 타석만 표시합니다.'}</p>
-              <div className="replay-events">
-                {result.log
-                  .slice(0, Math.max(0, cursor - (settled ? 0 : 1)))
-                  .slice(-12)
-                  .map((e, i) => (
-                    <div className="live-log" key={i}>
-                      <small>
-                        {e.inning}회 {e.half ? '말' : '초'}
-                      </small>
-                      <p>{e.text}</p>
-                      <b>
-                        {e.score[0]} : {e.score[1]}
-                      </b>
-                    </div>
-                  ))}
-              </div>
-            </>
-          </aside>
-        )}
-      </div>
+            </div>
+          )}
+          <button
+            className="match-start"
+            disabled={busy || finished || m.planDirty}
+            onClick={() => (playing ? m.pause() : m.play())}
+          >
+            {playing ? <Pause size={17} /> : <Play size={17} />}
+            {playing
+              ? '일시정지'
+              : cursor === 0
+                ? '플레이볼'
+                : !settled
+                  ? '이 장면 계속'
+                  : '경기 계속'}
+          </button>
+          <button
+            disabled={busy || playing || finished || m.planDirty}
+            onClick={() => m.play(false)}
+          >
+            {settled ? '다음 플레이' : '이 장면만 재생'}
+          </button>
+          <select
+            aria-label="경기 속도"
+            value={m.speed}
+            onChange={(e) => m.setSpeed(e.target.value)}
+          >
+            {['1', '2', '4', '8'].map((n) => (
+              <option key={n} value={n}>
+                {n}×
+              </option>
+            ))}
+          </select>
+          <button disabled={busy || finished || m.planDirty} onClick={() => m.showPanel('plan')}>
+            <Settings2 size={15} /> 선수·전술
+          </button>
+          <button
+            disabled={busy || finished || m.planDirty}
+            aria-expanded={m.commandOpen}
+            aria-controls="match-command-panel"
+            onClick={m.toggleCommand}
+          >
+            작전 지시
+          </button>
+          {finished ? (
+            <button className="match-start match-complete" disabled={busy} onClick={m.complete}>
+              경기 후 보고 →
+            </button>
+          ) : (
+            <span className="match-shortcut">Space 재생·일시정지</span>
+          )}
+          <AppVersion />
+        </footer>
+      )}
     </section>
   );
 }
