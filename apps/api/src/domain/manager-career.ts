@@ -22,7 +22,7 @@ import { prepareSquad } from './squad-management';
 import { prepareKnowledge } from './scouting';
 import { postNews, prepareDynamics } from './club-dynamics';
 import { annualPayroll } from '@dugout/shared/club-finance';
-import { prepareFinances, settleClubDay } from './club-finance';
+import { prepareFinances, settleClubDay, reviewFinances } from './club-finance';
 import { saveWorldPlayer, worldEvent } from './world-simulation';
 
 export function createManagerCareer(world: WorldCatalog) {
@@ -177,6 +177,7 @@ export function createManagerCareer(world: WorldCatalog) {
     prepare(g);
     const m = g.managerCareer!,
       today = gameDate(g);
+    const finance = !isUnemployed(g) ? reviewFinances(g, view.getClub(g.club).league) : undefined;
     for (const job of Object.values(g.managerJobs!)) {
       if (job.vacant) {
         job.vacantSince ??= today;
@@ -218,7 +219,12 @@ export function createManagerCareer(world: WorldCatalog) {
         0,
         Math.min(
           100,
-          Math.round(job.baseConfidence + wins * 1.5 - losses * (1.5 + targetPressure * 0.3)),
+          Math.round(
+            job.baseConfidence +
+              wins * 1.5 -
+              losses * (1.5 + targetPressure * 0.3) -
+              (job.club === g.club ? finance?.penalty || 0 : 0),
+          ),
         ),
       );
       job.reason =
@@ -227,6 +233,8 @@ export function createManagerCareer(world: WorldCatalog) {
           : job.confidence >= 70
             ? '성적과 운영 방향에 신뢰'
             : '성적과 운영 방향을 평가 중';
+      if (job.club === g.club && finance?.penalty)
+        job.reason = `${finance.status} · ${finance.reasons.join(' · ')} (신뢰도 −${finance.penalty})`;
       if (wins + losses >= 10 && job.confidence < 15) {
         if (job.club === g.club && !isUnemployed(g)) {
           m.reputation = Math.max(20, m.reputation - 5);

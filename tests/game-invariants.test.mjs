@@ -143,7 +143,7 @@ test('Agent negotiation, signing, resale and coach hiring update actual resource
   const d = g.deals[0];
   g = e.signDeal(g, d.id);
   assert.ok(g.roster.some((x) => x.id === p.id));
-  assert.equal(g.budget, before - d.fee - d.agentFee - d.salary * 0.15);
+  assert.equal(g.budget, before - d.fee - d.agentFee - d.salary * 0.05);
   assert.throws(() => e.signDeal(g, d.id));
   assert.throws(() => e.sellPlayer(g, p.id), /제안/);
   g = e.applyAction(g, { type: 'listPlayer', id: p.id });

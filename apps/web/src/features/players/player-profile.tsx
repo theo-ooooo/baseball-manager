@@ -30,6 +30,7 @@ import { TrainingPlanForm } from './training-plan-form';
 import { CareerRecords } from './career-records';
 import { PlayerPortrait } from './player-portrait';
 import { officialPortrait } from '@dugout/shared/player-portrait';
+import { PlayerRelease } from './player-release';
 
 type Props = {
   player: Player;
@@ -118,6 +119,7 @@ function ContractPanel({ player, game, busy, act }: Props) {
     <>
       <PlayerContractRoom player={player} g={game} act={act} busy={busy} />
       {own && <OutgoingTransferPanel p={player} g={game} act={act} busy={busy} />}
+      {own && <PlayerRelease player={player} g={game} act={act} busy={busy} />}
     </>
   );
 }
@@ -171,7 +173,9 @@ export function PlayerProfile(props: Props) {
           <TabsTrigger value="records">성적</TabsTrigger>
           {own && <TabsTrigger value="development">성장 기록</TabsTrigger>}
           {!own && <TabsTrigger value="scouting">관찰 · 관심 명단</TabsTrigger>}
-          <TabsTrigger value="contract">{own ? '계약 · 이적' : '계약 협상'}</TabsTrigger>
+          <TabsTrigger value="contract">
+            {own ? '계약 · 방출' : player.club === 'fa' ? 'FA 계약' : '트레이드'}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="profile">
           <div className="profile-facts">

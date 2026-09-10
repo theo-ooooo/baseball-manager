@@ -126,7 +126,7 @@ export function Agents({
                   </div>
                   <div className="cost-line">
                     <span>지금 지출 · 계약금 15% + 수수료 + 이적료</span>
-                    <strong>{money(d.fee + d.agentFee + d.salary * 0.15)}</strong>
+                    <strong>{money(d.fee + d.agentFee + d.salary * 0.05)}</strong>
                   </div>
                   <button
                     className="button primary full-width"

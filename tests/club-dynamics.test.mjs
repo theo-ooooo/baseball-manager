@@ -15,19 +15,16 @@ buildSync({
   outfile: out,
 });
 const { engine: e } = createRequire(import.meta.url)(out);
-test('A selling club protects its core player even when the agent salary offer is high', () => {
-  let g = e.newGame('kbo-lotte', 'Transfer', 'full', 8);
-  while (g.phase === 'preseason') g = e.advance(g, 7);
+test('A rival club contract blocks direct salary negotiation even with unlimited cash', () => {
+  const g = e.newGame('kbo-lotte', 'Transfer', 'full', 8);
   const target = e
     .marketPlayers(g)
     .filter((p) => p.club === 'kbo-lg')
     .sort((a, b) => e.overall(b) - e.overall(a))[0];
   g.budget = 1e8;
-  g = e.negotiate(g, target.id, 1e5, 3);
-  g = waitForReply(e, g, g.deals[0].id);
-  assert.equal(g.deals[0].seller.status, 'refused');
-  assert.equal(g.deals[0].status, 'rejected');
-  assert.throws(() => e.signDeal(g, g.deals[0].id));
+  const before = structuredClone(g);
+  assert.throws(() => e.negotiate(g, target.id, 1e5, 3), /트레이드/);
+  assert.deepEqual(g, before);
 });
 test('Outgoing sale requires a live buyer offer; forged and expired offers cannot move money or a player', () => {
   let g = e.newGame('mlb-dodgers', 'Transfer', 'short', 7);

@@ -6,3 +6,5 @@ export { presentState, presentWorld } from '../../apps/api/src/services/presenta
 export { gameDate } from '@dugout/shared/calendar';
 export { ratingText } from '@dugout/shared/ratings';
 export { detailedAttributes } from '@dugout/shared/player-attributes';
+
+export { financeAssessment, annualPayroll } from '@dugout/shared/club-finance';

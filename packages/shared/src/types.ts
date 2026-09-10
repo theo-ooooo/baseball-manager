@@ -140,6 +140,7 @@ export type NegotiationRound = {
   salary: number;
   years: number;
   message: string;
+  side?: 'club' | 'player';
 };
 export type Deal = {
   id: string;
@@ -232,6 +233,10 @@ export type GameState = {
   clubCareers?: Record<string, ClubCareer>;
   worldRevenue?: Record<string, number>;
   finances?: {
+    balanceVersion?: number;
+    wageBudget?: number;
+    lastWarningDay?: number;
+    lastWarningPenalty?: number;
     days?: number;
     annualSupport: number;
     year: number;
@@ -247,6 +252,13 @@ export type GameState = {
     date: string;
     status: 'pending' | 'accepted' | 'dismissed';
     reason: string;
+    evidence?: {
+      category: 'performance' | 'promotion';
+      stats: string;
+      threshold: string;
+      condition: number;
+      replacementReason?: string;
+    };
   }[];
   media?: MatchMediaState;
   simulation?: WorldSimulation;
@@ -478,6 +490,7 @@ export type NewsItem = {
     | 'jobs'
     | 'job-offers'
     | 'vision'
+    | 'finance'
     | 'reserves';
   sender?: { name: string; role: string };
   dealId?: string;

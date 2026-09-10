@@ -95,8 +95,8 @@ export function CoachOfferDialog({
               <strong>{outgoing?.name || '공석'}</strong>
             </div>
             <div>
-              <span>계약금 · 연봉의 50%</span>
-              <strong>{money(amount * 0.5 || 0)}</strong>
+              <span>계약금 · 연봉의 10%</span>
+              <strong>{money(amount * 0.1 || 0)}</strong>
             </div>
             <div>
               <span>기존 계약 보상금</span>
@@ -179,7 +179,7 @@ export function CoachNegotiations({
                 </div>
                 <div className="cost-line">
                   <span>계약금 + 기존 코치 보상금</span>
-                  <strong>{money(d.salary * 0.5 + d.compensation)}</strong>
+                  <strong>{money(d.salary * 0.1 + d.compensation)}</strong>
                 </div>
                 {d.status === 'counter' && !expired && (
                   <button
@@ -234,7 +234,7 @@ export function CoachNegotiations({
             salary: signing.salary,
             years: signing.years,
             costs: [
-              { label: '계약금 · 연봉의 50%', amount: signing.salary * 0.5 },
+              { label: '계약금 · 연봉의 10%', amount: signing.salary * 0.1 },
               { label: '기존 코치 계약 보상금', amount: signing.compensation },
             ],
           }}
@@ -245,7 +245,7 @@ export function CoachNegotiations({
             !!(await act({ type: 'reviseContractSalary', kind: 'coach', id: signing.id, salary }))
           }
           estimateCosts={(salary) => [
-            { label: '계약금 · 연봉의 50%', amount: salary * 0.5 },
+            { label: '계약금 · 연봉의 10%', amount: salary * 0.1 },
             { label: '기존 코치 계약 보상금', amount: signing.compensation },
           ]}
           close={() => setSigning(null)}

@@ -39,6 +39,30 @@ export function CoachRecommendations({
               {r.target === 'first' ? '1군 기용 추천' : '2군 재정비 추천'}
             </h3>
             <p>{r.reason}</p>
+            {r.evidence && (
+              <div className="coach-evidence">
+                <strong>
+                  {r.evidence.category === 'performance'
+                    ? '성적 부진에 따른 재정비'
+                    : '2군 성적과 등록 경쟁에 따른 추천'}
+                </strong>
+                <dl>
+                  <div>
+                    <dt>평가한 기록</dt>
+                    <dd>{r.evidence.stats}</dd>
+                  </div>
+                  <div>
+                    <dt>권고 기준</dt>
+                    <dd>{r.evidence.threshold}</dd>
+                  </div>
+                  <div>
+                    <dt>보고 당시 컨디션</dt>
+                    <dd>{r.evidence.condition}% · 휴식 필요 여부는 별도 판단</dd>
+                  </div>
+                </dl>
+                {r.evidence.replacementReason && <p>{r.evidence.replacementReason}</p>}
+              </div>
+            )}
             <p>
               {r.date} 보고 · {replacement ? `${replacement.name}과 맞교체` : '등록 구분 변경'}
             </p>

@@ -2,14 +2,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Globe2 } from 'lucide-react';
 import { useWorld } from '../career/world-context';
-import {
-  type GameState,
-  type Player,
-  overall,
-  money,
-  askPrice,
-  coachSkill,
-} from '@dugout/shared/game-view';
+import { type GameState, type Player, overall, money } from '@dugout/shared/game-view';
 import { transfersBlocked } from '@dugout/shared/management';
 import { Choice, SearchBox, Empty, positions } from '../../components/game-ui';
 import { PlayerTable } from '../players/player-table';
@@ -37,7 +30,7 @@ export function Market({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) =>
         )
         .sort((a, b) =>
           sort === 'value'
-            ? askPrice(a) - askPrice(b)
+            ? a.salary - b.salary
             : sort === 'potential' && g.rules?.revealPotential
               ? b.potential - a.potential
               : overall(b) - overall(a),
@@ -59,8 +52,8 @@ export function Market({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) =>
           <strong>선수 검색 · 영입 현황</strong>
           <p>
             {market.filter((p) => p.real).length.toLocaleString()}명의 실명 선수와{' '}
-            {market.filter((p) => !p.real).length.toLocaleString()}명의 가상 선수 · 스카우트 능력{' '}
-            {coachSkill(g, '스카우트')}
+            {market.filter((p) => !p.real).length.toLocaleString()}명의 가상 선수 · 계약 선수는
+            트레이드, FA는 직접 협상
           </p>
         </div>
         <div>
@@ -125,7 +118,7 @@ export function Market({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) =>
               ...(g.rules?.revealPotential
                 ? [{ value: 'potential', label: '잠재력 높은 순' }]
                 : []),
-              { value: 'value', label: '이적료 낮은 순' },
+              { value: 'value', label: '연봉 낮은 순' },
             ]}
           />
         </div>
