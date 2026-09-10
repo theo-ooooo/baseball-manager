@@ -1,0 +1,115 @@
+/* Preseason choice at career setup and the "hand the rest to the coaches" flow. */
+.season-start-options .ui-option {
+  gap: 6px;
+}
+.season-start-options .ui-option-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.season-start-options .ui-option small {
+  line-height: 1.55;
+}
+.season-start-options .ui-option-tag {
+  align-self: flex-start;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--ui-brand-soft);
+  color: var(--ui-brand);
+}
+
+.preseason-banner .preseason-banner-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.preseason-banner .preseason-banner-actions button {
+  margin-left: 0;
+}
+.preseason-banner .preseason-banner-actions .preseason-skip-link {
+  font-weight: 600;
+}
+
+.preseason-skip-dialog .preseason-skip-summary {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 12px;
+  display: grid;
+  gap: 4px;
+}
+.preseason-skip-dialog .preseason-skip-summary b {
+  font-weight: 600;
+}
+.preseason-skip-dialog .preseason-skip-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  display: grid;
+  gap: 6px;
+}
+.preseason-skip-dialog .preseason-skip-list li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.preseason-skip-dialog .preseason-skip-list li::before {
+  content: '';
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.preseason-skip-dialog .preseason-skip-blockers {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #ecd19a;
+  background: #fff3d9;
+  font-size: 12px;
+}
+.preseason-skip-dialog .preseason-skip-blockers strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.preseason-skip-dialog .preseason-skip-blockers li {
+  margin-left: 16px;
+}
+.preseason-skip-dialog .preseason-skip-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  margin: 4px 0 6px;
+  cursor: pointer;
+}
+.preseason-skip-dialog .preseason-skip-check input {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--brand);
+  flex: 0 0 auto;
+}
+.preseason-skip-dialog .preseason-skip-check small {
+  display: block;
+  color: var(--text-2);
+}
+.advance-menu .advance-menu-skip {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.advance-menu .advance-menu-skip p {
+  margin: 0 0 10px;
+}
+@media (max-width: 640px) {
+  .preseason-banner .preseason-banner-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}

@@ -17,6 +17,34 @@ import { Help } from './help-dialog';
 const regions = ['전체', '아시아', '아메리카', '유럽', '오세아니아'];
 const DEFAULT_MANAGER = '신임 감독';
 
+export type CareerStartOptions = {
+  club: string;
+  manager: string;
+  mode: string;
+  firstSeasonTransferBan: boolean;
+  revealPotential: boolean;
+  unemployed: boolean;
+  /** false opens the career on the league's first fixture date instead of four weeks earlier. */
+  preseason: boolean;
+};
+
+const seasonStartOptions = [
+  {
+    value: true,
+    icon: '🏕',
+    title: '프리시즌 4주부터 시작',
+    desc: '연습경기 4회 · 전술 훈련 · 선수단 정비 후 개막',
+    tag: '기본',
+  },
+  {
+    value: false,
+    icon: '🎉',
+    title: '정규시즌 개막부터 시작',
+    desc: '프리시즌 없이 개막전에서 바로 지휘 · 다음 시즌도 개막일 시작',
+    tag: '빠른 시작',
+  },
+];
+
 export function NewCareer({
   loading,
   error,
@@ -30,14 +58,7 @@ export function NewCareer({
   error: string;
   retry: () => void;
   busy: boolean;
-  onStart: (
-    c: string,
-    m: string,
-    mode: string,
-    ban: boolean,
-    reveal: boolean,
-    unemployed: boolean,
-  ) => void;
+  onStart: (options: CareerStartOptions) => void;
   existing: boolean;
   cancel: () => void;
 }) {
@@ -50,6 +71,7 @@ export function NewCareer({
     [manager, setManager] = useState(''),
     [mode, setMode] = useState('short'),
     [ban, setBan] = useState(false),
+    [preseason, setPreseason] = useState(true),
     [reveal, setReveal] = useState(false),
     [showPlayers, setShowPlayers] = useState(false),
     [help, setHelp] = useState(false);
@@ -65,7 +87,16 @@ export function NewCareer({
     setCid(clubs.find((c) => c.league === id)!.id);
   };
   const defaultManager = (!unemployed && club.manager?.name) || DEFAULT_MANAGER;
-  const start = () => onStart(cid, manager.trim() || defaultManager, mode, ban, reveal, unemployed);
+  const start = () =>
+    onStart({
+      club: cid,
+      manager: manager.trim() || defaultManager,
+      mode,
+      firstSeasonTransferBan: ban,
+      revealPotential: reveal,
+      unemployed,
+      preseason,
+    });
 
   return (
     <div className="ui-setup">
@@ -243,7 +274,7 @@ export function NewCareer({
                 구단 다시 선택
               </button>
               <h1 id="ui-step2-title">감독과 시즌을 설정하세요</h1>
-              <p>여기서 정한 시즌 길이와 규칙은 커리어 시작 후 바꿀 수 없습니다.</p>
+              <p>시즌 길이와 잠재력 공개 여부는 시작 후 바꿀 수 없습니다.</p>
             </div>
 
             <div className="ui-setup-grid">
@@ -252,6 +283,7 @@ export function NewCareer({
                   <h2>무직 감독</h2>
                   <p>친숙한 리그 · {league.name}</p>
                   <p>평판 60 · 급여 없음</p>
+                  <p>{preseason ? '개막 4주 전부터 구직 시작' : '정규시즌 개막일부터 구직 시작'}</p>
                   <p>지원 → 면접 → 계약 → 해당 구단 시즌 이어받기</p>
                 </aside>
               ) : (
@@ -357,11 +389,42 @@ export function NewCareer({
                 </fieldset>
 
                 <fieldset className="ui-field">
-                  <legend className="ui-field-label">시작 규칙</legend>
-                  <div className="ui-rule">
-                    <strong>프리시즌 4주부터 시작</strong>
-                    <small>연습경기 4회 · 전술 훈련 · 선수단 정비 후 개막</small>
+                  <legend className="ui-field-label">시즌 시작 시점</legend>
+                  <div className="ui-option-row season-start-options">
+                    {seasonStartOptions.map((option) => (
+                      <label
+                        key={String(option.value)}
+                        className={`ui-option ${preseason === option.value ? 'active' : ''}`}
+                      >
+                        <input
+                          type="radio"
+                          name="preseason"
+                          value={String(option.value)}
+                          checked={preseason === option.value}
+                          onChange={() => setPreseason(option.value)}
+                        />
+                        <span className="ui-option-icon" aria-hidden="true">
+                          {option.icon}
+                        </span>
+                        <strong>{option.title}</strong>
+                        <small>{option.desc}</small>
+                        <span className="ui-option-tag">{option.tag}</span>
+                      </label>
+                    ))}
                   </div>
+                  <small className="ui-note">
+                    {unemployed
+                      ? preseason
+                        ? '개막 4주 전 날짜에서 구직을 시작합니다. 개막 전에 계약하면 해당 구단의 프리시즌을 맡습니다.'
+                        : '리그 개막일 날짜에서 구직을 시작합니다. 계약한 구단의 정규시즌을 바로 이어받습니다.'
+                      : preseason
+                        ? '진행 중에도 홈이나 경기 준비에서 남은 프리시즌을 코치에게 맡기고 개막으로 넘어갈 수 있습니다.'
+                        : `${league.name} 개막일에 취임합니다. 감독 계약일과 시즌 기록은 개막일부터 시작됩니다.`}
+                  </small>
+                </fieldset>
+
+                <fieldset className="ui-field">
+                  <legend className="ui-field-label">시작 규칙</legend>
                   <label className={`ui-check ${ban ? 'active' : ''}`}>
                     <input
                       type="checkbox"

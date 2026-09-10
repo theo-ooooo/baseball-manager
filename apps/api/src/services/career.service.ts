@@ -77,6 +77,9 @@ export class CareerService {
           throw new Error('구단을 선택해 주세요.');
         if (action.mode !== 'short' && action.mode !== 'full')
           throw new Error('시즌 길이를 선택해 주세요.');
+        // Older clients omit the flag; the career then opens with the four-week preseason.
+        if (action.preseason !== undefined && typeof action.preseason !== 'boolean')
+          throw new Error('프리시즌 진행 여부를 선택해 주세요.');
         next = engine.newGame(
           String(action.club),
           String(action.manager || ''),
@@ -86,6 +89,7 @@ export class CareerService {
             firstSeasonTransferBan: action.firstSeasonTransferBan === true,
             revealPotential: action.revealPotential === true,
             unemployed: action.unemployed === true,
+            preseason: action.preseason !== false,
           },
         );
       } else {

@@ -18,6 +18,7 @@ const labels: Record<string, string> = {
   completeMatch: '경기 결과를 저장하고 있습니다',
   matchConversation: '인터뷰와 팀 메시지를 전달하고 있습니다',
   continueDay: '다음 날짜를 진행하고 있습니다',
+  skipPreseason: '남은 프리시즌을 코치진에게 맡기고 개막을 준비하고 있습니다',
   readNews: '보고를 확인하고 있습니다',
 };
 export function ActionProgress({
