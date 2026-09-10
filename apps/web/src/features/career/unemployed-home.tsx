@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { departureLabel, departureDetail } from '@dugout/shared/manager-departure';
 import { UserRound, ArrowRight } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
 import { managerJobOpen } from '@dugout/shared/manager-career';
@@ -45,6 +46,14 @@ export function UnemployedHome({
           <ArrowRight size={16} />
         </button>
       </header>
+      {m.history[0] && (
+        <section className="panel panel-content" aria-label="최근 퇴임 사유">
+          <h2>
+            {getClub(m.history[0].club).name} · {departureLabel(m.history[0])}
+          </h2>
+          <p>{departureDetail(g, m.history[0])}</p>
+        </section>
+      )}
       <div className="unemployed-home-grid">
         <section className="panel panel-content">
           <h2>

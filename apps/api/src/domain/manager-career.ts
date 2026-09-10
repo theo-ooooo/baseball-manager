@@ -1,3 +1,4 @@
+import { isClubDutyReport } from '@dugout/shared/employment-reports';
 import { rememberRegistration } from './registration-log';
 import { rememberCoaches } from './coach-employment';
 import { prepareManagerTerms, tickManagerTerms } from './manager-contracts';
@@ -51,6 +52,13 @@ export function createManagerCareer(world: WorldCatalog) {
       view.getClub(g.club).manager
     )
       g.manager = view.getClub(g.club).manager!.name;
+    if (isUnemployed(g)) {
+      for (const n of g.news)
+        if (isClubDutyReport(n)) {
+          n.employmentClosed = true;
+          n.read = true;
+        }
+    }
     const firstContract = !g.managerCareer;
     g.managerJobs ??= {};
     for (const c of world.clubs) {
@@ -106,7 +114,12 @@ export function createManagerCareer(world: WorldCatalog) {
       },
     });
   }
-  function leave(g: GameState, reason: 'resigned' | 'sacked') {
+  function leave(
+    g: GameState,
+    reason: 'resigned' | 'sacked',
+    detail = '감독 본인이 사퇴 의사를 전달했습니다.',
+    endKind: 'resignation' | 'nonrenewal' | 'dismissal' = 'resignation',
+  ) {
     const m = g.managerCareer!,
       contract = m.contract!;
     m.history.unshift({
@@ -114,6 +127,10 @@ export function createManagerCareer(world: WorldCatalog) {
       from: contract.signed,
       to: gameDate(g),
       reason,
+      endKind,
+      detail,
+      targetRank: contract.targetRank,
+      confidence: g.managerJobs![g.club].confidence,
       rank: view.standings(g).findIndex((s) => s.club === g.club) + 1,
     });
     const job = g.managerJobs![g.club];
@@ -121,7 +138,7 @@ export function createManagerCareer(world: WorldCatalog) {
     job.managerName = '공석';
     job.confidence = 0;
     job.vacantSince = gameDate(g);
-    job.reason = reason === 'resigned' ? '감독 사퇴' : '구단주 계약 종료';
+    job.reason = detail;
     m.status = 'unemployed';
     m.unemployedSince = gameDate(g);
     delete m.contract;
@@ -132,11 +149,20 @@ export function createManagerCareer(world: WorldCatalog) {
     g.trades = [];
     g.draft = undefined;
     g.media = undefined;
-    for (const n of g.news)
+    for (const recommendation of g.coachRecommendations || [])
+      if (recommendation.status === 'pending') recommendation.status = 'dismissed';
+    for (const player of g.roster) if (player.mood) delete player.mood.promise;
+    for (const n of g.news) {
+      if (isClubDutyReport(n)) {
+        n.employmentClosed = true;
+        n.read = true;
+      }
+      if (n.lineupRecommendation?.status === 'pending') n.lineupRecommendation.status = 'dismissed';
       if (n.choiceKind && !n.choice) {
         n.choice = 'departed';
         n.response = '감독 퇴임으로 구단에 인계했습니다.';
       }
+    }
     for (const task of g.scouting?.assignments || [])
       if (task.status === 'active') {
         task.status = 'cancelled';
@@ -144,8 +170,12 @@ export function createManagerCareer(world: WorldCatalog) {
       }
     report(
       g,
-      reason === 'resigned' ? '감독직에서 사퇴했습니다' : '구단주가 감독 계약을 종료했습니다',
-      '현재 무직입니다. 감독 채용에 지원하고 제안을 받은 뒤 계약하면 해당 구단의 시즌을 이어갑니다. 무직 기간에는 감독 급여가 지급되지 않습니다.',
+      reason === 'resigned'
+        ? '감독직에서 사퇴했습니다'
+        : endKind === 'nonrenewal'
+          ? '감독 계약 만료 · 재계약하지 않기로 결정했습니다'
+          : '구단주가 감독을 경질했습니다',
+      `${view.getClub(g.club).name} 이사회 결정: ${detail}\n현재 무직입니다. 감독 채용에 지원하고 제안을 받은 뒤 계약하면 해당 구단의 시즌을 이어갑니다. 무직 기간에는 감독 급여가 지급되지 않습니다.`,
     );
   }
   function review(g: GameState) {
@@ -163,7 +193,17 @@ export function createManagerCareer(world: WorldCatalog) {
         '시즌 목표 미달',
         `합의한 ${c.targetRank}위 이내 목표에 대해 정규시즌 ${rank}위를 기록했습니다. ${failed}`,
       );
-      leave(g, 'sacked');
+      const detail = [
+        `정규시즌 ${rank}위 · 계약 목표 ${c.targetRank}위 이내${rank > c.targetRank ? ' 미달' : ' 달성'}.`,
+        failed,
+        `평가 당시 이사회 신뢰도 ${g.managerJobs![g.club].confidence}%.`,
+        c.throughYear <= g.year
+          ? '계약 기간이 끝나며, 위 평가를 근거로 재계약하지 않습니다.'
+          : '계약 기간이 남아 있으나 위 목표 미달을 근거로 감독직을 해임합니다.',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      leave(g, 'sacked', detail, c.throughYear <= g.year ? 'nonrenewal' : 'dismissal');
     } else {
       c.salary = Math.round(c.salary * 1.15 * 100) / 100;
       c.throughYear = Math.max(c.throughYear, g.year + 1);
@@ -240,7 +280,12 @@ export function createManagerCareer(world: WorldCatalog) {
       if (wins + losses >= 10 && job.confidence < 15) {
         if (job.club === g.club && !isUnemployed(g)) {
           m.reputation = Math.max(20, m.reputation - 5);
-          leave(g, 'sacked');
+          leave(
+            g,
+            'sacked',
+            `취임 후 ${wins}승 ${losses}패 · 이사회 신뢰도 ${job.confidence}%. 10경기 이상 치른 뒤 신뢰도가 해임 기준 15% 미만으로 하락했습니다. ${finance?.penalty ? `재정 평가: ${finance.reasons.join(' · ')} (신뢰도 −${finance.penalty}).` : ''}`,
+            'dismissal',
+          );
         } else {
           job.vacant = true;
           job.vacantSince = today;
@@ -554,6 +599,8 @@ export function createManagerCareer(world: WorldCatalog) {
       if (adjustment > 0) g.income += adjustment;
       else g.expenses -= adjustment;
     }
+    for (const news of g.news)
+      if (news.managerOfferId === offer.id) news.contractResolution = 'signed';
     m.offers = [];
     prepareKnowledge(g, world);
     const league = view.getClub(g.club).league;

@@ -2968,7 +2968,20 @@ input,
 }
 @media (max-width: 767px) {
   .advance-menu > div {
-    right: -110px;
+    position: fixed;
+    inset: calc(72px + env(safe-area-inset-top, 0px)) 12px auto;
+    width: auto;
+    max-height: calc(
+      100dvh - 100px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    overflow-y: auto;
+    white-space: normal;
+  }
+  .advance-menu > div > .button,
+  .advance-menu-skip > .button {
+    width: 100%;
+    min-height: 44px;
+    white-space: normal;
   }
   .topbar .date {
     display: none;

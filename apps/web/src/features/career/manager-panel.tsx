@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { departureLabel, departureDetail } from '@dugout/shared/manager-departure';
 import { ManagerInterviewSession } from './manager-interview-session';
 import { ManagerOfferCard } from './manager-offer-card';
 import { ClubVision } from './club-vision';
@@ -113,10 +114,7 @@ export function ManagerPanel({
           <header className="offers-page-heading">
             <span>MANAGER · OPPORTUNITIES</span>
             <h2>받은 면접 · 계약 제안</h2>
-            <p>
-              나에게 도착한 구단의 연락입니다. 제안을 열어 면접과 운영 제안서, 계약 협상을
-              이어가세요.
-            </p>
+            <p>나에게 도착한 구단의 연락입니다. 제안을 열어 면접과 계약 협상을 이어가세요.</p>
           </header>
           {!m?.offers.length && (
             <section className="panel panel-content">
@@ -247,8 +245,10 @@ export function ManagerPanel({
           )}
           {m?.history.map((h, i) => (
             <p key={`${h.from}-${i}`}>
-              <strong>{getClub(h.club).name}</strong> · {h.from} ~ {h.to} ·{' '}
-              {h.reason === 'resigned' ? '사퇴' : '해고'} · 퇴임 당시 {h.rank}위
+              <strong>{getClub(h.club).name}</strong> · {h.from} ~ {h.to} · {departureLabel(h)} ·
+              퇴임 당시 {h.rank}위
+              <br />
+              {departureDetail(g, h)}
             </p>
           ))}
           {!m?.history.length && !m?.contract && <p>아직 맡은 구단이 없습니다.</p>}

@@ -16,6 +16,7 @@ import {
   type TrainingSession,
 } from '@dugout/shared/training-center';
 import { useWorld } from '../career/world-context';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 import type { Act } from '../career/game-contracts';
 
 export function useTrainingCenter(g: GameState, act: Act, busy: boolean) {
@@ -34,7 +35,7 @@ export function useTrainingCenter(g: GameState, act: Act, busy: boolean) {
   const [lightBelow, setLightBelow] = useState(center.lightBelow);
   const [coaches, setCoaches] = useState(center.coaches);
   const [responsibility, setResponsibility] = useState(center.responsibility);
-  const blocked = busy || !!g.liveMatch;
+  const blocked = busy || !!g.liveMatch || isClubSeasonRest(g);
   const dirty = Object.keys(draft).length > 0 || template !== null;
   const activeTemplate = template ?? center.programs[squad].template;
   const calendar = useMemo(() => {

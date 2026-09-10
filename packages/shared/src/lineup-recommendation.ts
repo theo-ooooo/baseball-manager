@@ -1,6 +1,7 @@
 import type { GameState, NewsItem } from './types';
 import { gameDate } from './calendar';
 import { isAvailable } from './long-term';
+import { isClubSeasonRest } from './season-status';
 export type LineupRecommendation = {
   club: string;
   fixture: string;
@@ -11,6 +12,7 @@ export type LineupRecommendation = {
   status: 'pending' | 'applied' | 'dismissed';
 };
 export function lineupRecommendationError(g: GameState, news: NewsItem) {
+  if (isClubSeasonRest(g)) return '우리 팀 시즌이 끝나 선수단 휴식 중입니다.';
   const r = news.lineupRecommendation;
   if (!r || r.club !== g.club || g.managerCareer?.status === 'unemployed')
     return '현재 소속 구단의 추천이 아닙니다.';

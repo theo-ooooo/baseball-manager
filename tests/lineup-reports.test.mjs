@@ -8,7 +8,7 @@ const output = join(tmpdir(), 'dugout-lineup-report-tests.cjs');
 buildSync({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine'; export * from './apps/api/src/domain/lineup-reports'; export * from './packages/shared/src/lineup-recommendation'; export * from './packages/shared/src/calendar';",
+      "export * from './tests/fixtures/engine'; export * from './apps/api/src/domain/lineup-reports'; export * from './apps/api/src/domain/lineup-rotation'; export * from './packages/shared/src/lineup-recommendation'; export * from './packages/shared/src/calendar';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -23,9 +23,52 @@ const {
   createLineupReports,
   lineupRecommendationError,
   gameDate,
+  rotateLineup,
 } = createRequire(import.meta.url)(output);
 const setup = () => e.newGame('kbo-lotte', '추천 검증', 'full', 72, { preseason: false });
 const latest = (g) => g.news.find((n) => n.lineupRecommendation);
+test('Coaches share starts between comparable same-position players while preserving pitcher order and strong mismatches', () => {
+  const g = setup();
+  g.staff.find((c) => c.role === '타격').skill = 100;
+  const base = g.roster.find((p) => p.id === g.lineup[0]);
+  const player = (id, pos, played, ability = 60) => ({
+    ...structuredClone(base),
+    id,
+    pos,
+    squad: 'first',
+    condition: 100,
+    contact: ability,
+    power: ability,
+    field: ability,
+    speed: ability,
+    mood: { ...base.mood, recent: Array.from({ length: 12 }, (_, i) => i < played) },
+  });
+  const regular = player('regular', 'C', 12),
+    reserve = player('underused', 'C', 0),
+    star = player('star', 'OF', 12, 90),
+    weak = player('weak', 'OF', 0, 40);
+  const before = structuredClone(g.pitching),
+    result = rotateLineup(g, [regular, reserve, star, weak], ['regular', 'star']);
+  assert.deepEqual(result.ids, ['underused', 'star']);
+  assert.equal(result.changes[0].recent, 0);
+  const lowMorale = { ...reserve, id: 'low-morale', mood: { ...reserve.mood, value: 25 } };
+  const highMorale = { ...reserve, id: 'high-morale', mood: { ...reserve.mood, value: 85 } };
+  assert.deepEqual(rotateLineup(g, [regular, highMorale, lowMorale], ['regular']).ids, [
+    'low-morale',
+  ]);
+  assert.deepEqual(g.pitching, before);
+  assert.deepEqual(rotateLineup(g, [regular, { ...reserve, condition: 60 }], ['regular']).ids, [
+    'regular',
+  ]);
+  assert.deepEqual(
+    rotateLineup(g, [regular, { ...reserve, injury: { phase: 'treatment' } }], ['regular']).ids,
+    ['regular'],
+  );
+  assert.deepEqual(rotateLineup(g, [regular, { ...reserve, pos: 'IF' }], ['regular']).ids, [
+    'regular',
+  ]);
+  assert.deepEqual(rotateLineup(g, [regular, reserve, star, weak], ['regular', 'star']), result);
+});
 test('A coach sends one report per upcoming game and applies nine eligible batters plus starter atomically without roster moves', () => {
   let g = setup();
   const reports = createLineupReports(world);

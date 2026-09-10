@@ -1,3 +1,6 @@
+import { isClosedClubReport } from '@dugout/shared/employment-reports';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
+import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
 import { lineupRecommendationError } from '@dugout/shared/lineup-recommendation';
 import type { GameState, NewsItem } from '@dugout/shared/types';
 export const newsKinds: Record<string, { label: string; sender: string; role: string }> = {
@@ -25,6 +28,9 @@ export function contractReview(news: NewsItem) {
   );
 }
 export function newsNeedsAction(news: NewsItem, g: GameState) {
+  if (contractReportStatus(g, news) || isClosedClubReport(g, news)) return false;
+  if (isClubSeasonRest(g) && (news.choiceKind === 'playingTime' || news.kind === 'training'))
+    return false;
   if (news.lineupRecommendation) return !lineupRecommendationError(g, news);
   if (news.managerOfferId)
     return (
@@ -44,8 +50,8 @@ export function newsNeedsAction(news: NewsItem, g: GameState) {
   if (contractReview(news))
     return (
       news.report?.players?.map((p) => p.id) ||
-      g.roster.filter((p) => p.years === 1).map((p) => p.id)
-    ).some((id) => g.roster.some((p) => p.id === id && p.years === 1));
+      g.roster.filter((p) => needsContractReview(g, p)).map((p) => p.id)
+    ).some((id) => g.roster.some((p) => p.id === id && needsContractReview(g, p)));
   return [...g.deals, ...(g.coachDeals || [])].some(
     (d) =>
       (d.id === news.dealId || (!news.dealId && 'player' in d && d.player.id === news.playerId)) &&

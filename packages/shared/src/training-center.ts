@@ -1,3 +1,4 @@
+import { isClubSeasonRest } from './season-status';
 import type { AbilityKey, GameState, Player } from './types';
 import { addDays } from './calendar';
 import { isAvailable } from './long-term';
@@ -187,11 +188,14 @@ export function trainingDay(
   let slots: TrainingSlots = [...trainingTemplates[program.template].slots];
   if (previousMatch) slots[0] = 'recovery';
   if (match) slots = ['tactics', 'match', 'recovery'];
-  if (g.phase === 'finished') slots = ['rest', 'rest', 'rest'];
   if (custom) slots = [...custom];
   // Fixtures always reserve their slot, including rescheduled games after a plan was saved.
   if (match) slots[1] = 'match';
   else slots = slots.map((s) => (s === 'match' ? 'rest' : s)) as TrainingSlots;
+  if (isClubSeasonRest(g)) {
+    slots = ['rest', 'rest', 'rest'];
+    match = false;
+  }
   return {
     date,
     weekday: new Date(date + 'T12:00:00Z').getUTCDay(),

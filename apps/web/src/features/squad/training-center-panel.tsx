@@ -10,6 +10,7 @@ import {
   LockKeyhole,
 } from 'lucide-react';
 import { addDays } from '@dugout/shared/calendar';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 import type { GameState } from '@dugout/shared/types';
 import {
   trainingSessions,
@@ -40,8 +41,12 @@ export function TrainingCenterPanel({ g, act, busy }: { g: GameState; act: Act; 
       <header className="training-hero">
         <div>
           <small>TRAINING GROUND</small>
-          <h2>다음 경기를 만드는 시간</h2>
-          <p>주간 일정과 개인 훈련을 함께 관리하세요.</p>
+          <h2>{isClubSeasonRest(g) ? '시즌 종료 · 선수단 휴식' : '다음 경기를 만드는 시간'}</h2>
+          <p>
+            {isClubSeasonRest(g)
+              ? '우리 팀 경기가 끝나 1·2군 모두 휴식합니다. 다음 시즌부터 훈련과 기용 추천을 다시 시작합니다.'
+              : '주간 일정과 개인 훈련을 함께 관리하세요.'}
+          </p>
         </div>
         <span className="training-owner">
           <ClipboardList size={16} />

@@ -268,6 +268,7 @@ export function createRecruitment(world: WorldCatalog) {
       club: g.club,
       salary: deal.salary,
       years: deal.years,
+      contractSigned: { year: g.year, day: g.day, dealId: deal.id },
       condition: current.condition,
       stats: current.stats,
     };
@@ -279,6 +280,9 @@ export function createRecruitment(world: WorldCatalog) {
       g.transferred = g.transferred.filter((v) => v.id !== p.id);
     }
     prepareDevelopment(g);
+    const closedIds = new Set(g.deals.filter((old) => old.player.id === p.id).map((old) => old.id));
+    for (const news of g.news)
+      if (news.dealId && closedIds.has(news.dealId)) news.contractResolution = 'signed';
     g.deals = g.deals.filter((old) => old.player.id !== p.id);
     postNews(
       g,
@@ -360,6 +364,7 @@ export function createRecruitment(world: WorldCatalog) {
     notify(g, d, '코치 협상 답변');
   }
   function tick(g: GameState) {
+    if (g.managerCareer?.status === 'unemployed') return;
     for (const d of [...g.deals, ...(g.coachDeals || [])]) {
       if (d.status === 'pending' && (d.year !== g.year || g.day >= (d.responseDay ?? g.day))) {
         if (d.year !== g.year) {
@@ -435,6 +440,7 @@ export function createRecruitment(world: WorldCatalog) {
         { ...d.coach, role: d.role, salary: d.salary, contractUntil: g.year + d.years },
       ];
       rememberCoaches(g);
+      for (const news of g.news) if (news.dealId === d.id) news.contractResolution = 'signed';
       g.coachDeals = g.coachDeals!.filter((old) => old.id !== d.id);
       postNews(
         g,

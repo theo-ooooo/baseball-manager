@@ -1,3 +1,4 @@
+import { prepareSeasonRest } from './season-rest';
 import { createLineupReports } from './lineup-reports';
 import { createAiRegistrations } from './ai-registrations';
 import { createTrades } from './trades';
@@ -451,6 +452,7 @@ export function createGameEngine(world: WorldCatalog) {
         );
       }
       settleClubDay(g, ownLeague);
+      prepareSeasonRest(g);
       // Rest dates retain the selected starter; afterMatch rotates only after an appearance.
       dailyReports(g, world, training);
       transfers.offerTick(g);
@@ -474,16 +476,20 @@ export function createGameEngine(world: WorldCatalog) {
         break;
       }
       if (g.phase === 'regular' && g.day >= g.rounds) {
-        const top = standings(g).slice(0, 4);
+        const ranked = standings(g),
+          top = ranked.slice(0, 4);
+        const rank = ranked.findIndex((s) => s.club === g.club) + 1;
+        const qualified = top.some((s) => s.club === g.club);
         g.phase = 'semifinal';
         g.series = [
           { a: top[0].club, b: top[3].club, aw: 0, bw: 0 },
           { a: top[1].club, b: top[2].club, aw: 0, bw: 0 },
         ];
+        prepareSeasonRest(g);
         news(
           g,
-          '포스트시즌 개막',
-          '상위 4개 구단이 3전 2선승 준결승에 진출했습니다. 결승은 5전 3선승입니다.',
+          qualified ? '포스트시즌 진출' : `정규시즌 종료 · ${rank}위`,
+          `${getClub(g.club).name}는 정규시즌 ${rank}위로 ${qualified ? '포스트시즌에 진출했습니다.' : '포스트시즌에 진출하지 못했습니다. 우리 팀 경기는 끝났으며 다른 구단의 포스트시즌이 진행됩니다.'} 진출 구단: ${top.map((s) => getClub(s.club).name).join(', ')}. 현재 게임 규칙은 상위 4개 구단의 3전 2선승 준결승과 5전 3선승 결승입니다.`,
           'league',
         );
         break;
@@ -795,6 +801,7 @@ export function createGameEngine(world: WorldCatalog) {
       prepareDynamics(s);
       preparePitching(s);
       repairMedicalSelection(s);
+      prepareSeasonRest(s);
     }
     prepareKnowledge(s, world);
     if (!s.liveMatch) prepareWorld(s);

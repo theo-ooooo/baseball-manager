@@ -12,6 +12,7 @@ import { useWorld } from './world-context';
 import { type GameState, type Player, type Result, money } from '@dugout/shared/game-view';
 import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
 import { Badge } from '../../components/game-ui';
+import { clubSeasonStatus } from '@dugout/shared/season-status';
 const tactics: Record<string, string> = {
   balanced: '균형 잡힌 야구',
   power: '장타 중심',
@@ -45,6 +46,7 @@ export function Dashboard({
   replay: (r: Result) => void;
 }) {
   const { getClub, getLeague, standings, nextFixture, fixtures } = useWorld();
+  const season = clubSeasonStatus(g);
   const club = getClub(g.club),
     league = getLeague(club.league),
     rows = standings(g),
@@ -94,9 +96,10 @@ export function Dashboard({
         : g.phase === 'semifinal' || g.phase === 'final'
           ? {
               value: series ? `${ownWins}승 ${oppWins}패` : `${rank}위`,
-              sub: series
-                ? `${phaseLabel[g.phase]} · ${seriesTarget}승 선취 · ${own.w}승 ${own.l}패`
-                : `${phaseLabel[g.phase]} 관전 · 정규 ${own.w}승 ${own.l}패`,
+              sub:
+                !season.eliminated && series
+                  ? `${phaseLabel[g.phase]} · ${seriesTarget}승 선취 · ${own.w}승 ${own.l}패`
+                  : `우리 팀 시즌 종료 · 정규 ${own.w}승 ${own.l}패 · 타 구단 포스트시즌 진행 중`,
             }
           : {
               value: (
@@ -132,19 +135,17 @@ export function Dashboard({
       <header className="dashboard-heading">
         <div>
           <p>
-            {club.name} · {phaseLabel[g.phase]}
+            {club.name} · {season.label}
           </p>
           <h1>감독의 하루</h1>
-          <span>
-            {club.name} · {g.manager} 감독
-          </span>
+          <span>{season.detail || `${club.name} · ${g.manager} 감독`}</span>
         </div>
         <div className="dashboard-date">
           <CalendarDays size={17} />
           <span>
             {dateLabel(g)}
             <small>
-              {g.year} · {phaseLabel[g.phase]}
+              {g.year} · {season.label}
             </small>
           </span>
         </div>
