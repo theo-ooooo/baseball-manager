@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useWorld } from './world-context';
+import { AppVersion } from '@/components/app-version';
 
 export function Help({ open, close }: { open: boolean; close: () => void }) {
   const { rosterNote } = useWorld();
@@ -23,6 +24,7 @@ export function Help({ open, close }: { open: boolean; close: () => void }) {
           <DialogDescription>구단 선택부터 챔피언십까지</DialogDescription>
         </DialogHeader>
         <div className="help-copy">
+          <AppVersion details />
           <h3>프리시즌 · 전술</h3>
           <p>
             새 커리어는 기본으로 개막 4주 전 시작하며, 설정에서 정규시즌 개막일부터 시작할 수도

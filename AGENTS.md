@@ -10,3 +10,5 @@
 - Update `WORKLOG.md` with meaningful changes, validation, known limitations, and any remaining publication blocker.
 - Avoid claiming full league-rule parity, complete current rosters, realistic contracts, or completed browser/API verification without evidence.
 - Never store credentials, dependency directories, build output, or local save data in Git.
+- 프론트엔드의 상태·비동기 흐름·외부 리소스 생명주기는 적절한 커스텀 훅으로 분리한다. 컴포넌트는 화면 구성에 집중하며 게임 변경 로직은 서버에 유지한다.
+- 프론트엔드에 공개 릴리스 버전을 표시하고 빌드 식별자를 확인할 수 있게 유지한다.

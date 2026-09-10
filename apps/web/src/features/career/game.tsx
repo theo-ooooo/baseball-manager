@@ -50,6 +50,7 @@ import { LiveMatchScreen } from '../matches/live-match-screen';
 import { TacticalBoard } from '../squad/management-panels';
 import { CoachPanel } from '../squad/coach-panel';
 import { Badge } from '../../components/game-ui';
+import { AppVersion } from '@/components/app-version';
 import { nav } from './game-navigation';
 import type { Act, CareerData } from './game-contracts';
 import { NewCareer } from './career-setup';
@@ -823,8 +824,11 @@ export function GameScreen({
             ))}
         </div>
         <footer className="game-footer" inert={progressing || undefined}>
-          <span>
-            DUGOUT <b>2026</b> · {leagues.length} 리그 · {clubs.length} 구단
+          <span className="game-footer-info">
+            <AppVersion />
+            <span>
+              2026 · {leagues.length} 리그 · {clubs.length} 구단
+            </span>
           </span>
           <button onClick={() => setHelp(true)}>
             게임 규칙 · 데이터 안내 <ArrowUpRight size={13} />

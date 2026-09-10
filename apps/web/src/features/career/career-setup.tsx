@@ -1,4 +1,5 @@
 'use client';
+import { AppVersion } from '@/components/app-version';
 import { useState, type CSSProperties } from 'react';
 import {
   ArrowLeft,
@@ -472,6 +473,7 @@ export function NewCareer({
         )}
 
         <footer className="ui-setup-foot">
+          <AppVersion />
           <span>
             2026 시즌 · {leagues.length}개 리그 · {clubs.length}개 구단
           </span>

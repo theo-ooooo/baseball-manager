@@ -1,0 +1,32 @@
+.app-version {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.app-sidebar .app-version {
+  padding: 2px 8px 4px;
+}
+.app-version-details {
+  display: flex;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+.game-footer-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.game-footer {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
