@@ -35,7 +35,26 @@ import { createMatchEnergy, fatigueFactor } from './match-energy';
 import { pitchingModifiers } from './pitching-tactics';
 
 export function createMatchSimulator(world: WorldCatalog) {
-  const { getClub, rosterFor } = createGameView(world);
+  return createSimulator(createGameView(world));
+}
+
+/** An active match already owns frozen rosters; only the home league is needed from D1. */
+export function createPreparedMatchSimulator(homeLeague: string) {
+  return createSimulator({
+    getClub: () => ({ league: homeLeague }),
+    rosterFor: () => {
+      throw new Error('저장된 경기의 상대 선수 명단을 확인해 주세요.');
+    },
+  });
+}
+
+function createSimulator({
+  getClub,
+  rosterFor,
+}: {
+  getClub: (id: string) => { league: string };
+  rosterFor: (g: GameState, club: string) => Player[];
+}) {
   const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
   function* simulateMatch(
     g: GameState,

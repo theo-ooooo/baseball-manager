@@ -66,15 +66,28 @@ export class CareerRepository {
           .prepare('SELECT revision FROM career_actions WHERE user_id=? AND request_id=? LIMIT 1')
           .bind(user, requestId),
       );
+    statements.push(
+      db
+        .prepare('SELECT part,data FROM career_snapshot_parts WHERE user_id=? ORDER BY part')
+        .bind(user),
+    );
     const results = await db.batch(statements);
     const row = results[0].results[0] as CareerRow | undefined;
+    const state = row ? (JSON.parse(row.state) as GameState & { __worldParts?: number }) : null;
+    if (state?.__worldParts) {
+      const parts = results.at(-1)!.results as { part: number; data: string }[];
+      if (parts.length !== state.__worldParts || parts.some((p, i) => p.part !== i))
+        throw new Error('세계 선수 기록을 불러오지 못했습니다. 저장 데이터를 다시 불러와 주세요.');
+      state.simulation = JSON.parse(parts.map((p) => p.data).join(''));
+      delete state.__worldParts;
+    }
     return {
       current: {
-        state: row ? (JSON.parse(row.state) as GameState) : null,
+        state,
         revision: row?.revision || 0,
         ledger: results[1].results as FinanceEntry[],
       },
-      seen: !!results[2]?.results.length,
+      seen: !!requestId && !!results[2]?.results.length,
     };
   }
   async ledger(db: D1Database, user: string): Promise<FinanceEntry[]> {
@@ -124,8 +137,34 @@ export class CareerRepository {
       history: next.history.map((m, i) => (i < 5 ? m : { ...m, log: [], replayTeams: undefined })),
     };
     delete state.pendingRecords;
-    const serialized = JSON.stringify(state);
-    if (serialized.length > 1_800_000) throw new Error('커리어 저장 용량을 초과했습니다.');
+    let serialized = JSON.stringify(state);
+    let archiveMatches = newMatches;
+    if (serialized.length > 1_600_000) {
+      // Backfill retained logs in the same transaction before removing duplicate playback.
+      // Scores and fixture metadata remain in the career; replay stays available by match ID.
+      archiveMatches = [
+        ...new Map(
+          [...newMatches, ...next.history.filter((m) => m.log.length)].map((m) => [m.id, m]),
+        ).values(),
+      ];
+      state.history = next.history.map((m) => ({ ...m, log: [], replayTeams: undefined }));
+      serialized = JSON.stringify(state);
+    }
+    // World-player progression grows independently of the managed club. Persist it in indexed,
+    // bounded rows while keeping the JSON paths used by match/inbox patches in the main snapshot.
+    const worldParts: { part: number; data: string }[] = [];
+    if (serialized.length > 1_200_000 && state.simulation) {
+      const worldJson = JSON.stringify(state.simulation);
+      for (let i = 0; i < worldJson.length; i += 200_000)
+        worldParts.push({ part: worldParts.length, data: worldJson.slice(i, i + 200_000) });
+      serialized = JSON.stringify({
+        ...state,
+        simulation: undefined,
+        __worldParts: worldParts.length,
+      });
+    }
+    if (serialized.length > 1_800_000 || new TextEncoder().encode(serialized).length > 1_950_000)
+      throw new Error('커리어 저장 용량을 초과했습니다.');
     const statements: D1PreparedStatement[] = [];
     if (before) {
       statements.push(
@@ -166,6 +205,10 @@ export class CareerRepository {
           .bind(user, JSON.stringify(rows), user, token),
       );
     };
+    clear('career_snapshot_parts');
+    // Two chunks remain below D1's value limit even when escaping multilingual text.
+    for (let i = 0; i < worldParts.length; i += 2)
+      insert('career_snapshot_parts', ['part', 'data'], worldParts.slice(i, i + 2));
     if (resetting)
       for (const table of [
         'career_matches',
@@ -193,7 +236,11 @@ export class CareerRepository {
       );
     // A PA only changes liveMatch. Keep all projections and accounting intact.
     // Revision and request-id are still committed atomically with the snapshot.
-    if (['stepMatch', 'matchCursor', 'prepareMatch'].includes(kind) && before?.liveMatch) {
+    if (
+      ['stepMatch', 'matchCursor', 'prepareMatch'].includes(kind) &&
+      before?.liveMatch &&
+      archiveMatches === newMatches
+    ) {
       insert(
         'career_actions',
         ['revision', 'kind', 'request_id', 'created_at'],
@@ -242,7 +289,7 @@ export class CareerRepository {
     insert(
       'career_matches',
       ['match_id', 'season', 'day', 'home', 'away', 'home_score', 'away_score', 'data'],
-      newMatches.map((m) => ({
+      archiveMatches.map((m) => ({
         match_id: m.id,
         season: next.year,
         day: m.day,

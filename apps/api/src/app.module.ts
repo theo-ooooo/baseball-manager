@@ -1,6 +1,7 @@
 import { ManagerConversationRepository } from './repositories/manager-conversation.repository';
 import { ManagerConversationService } from './services/manager-conversation.service';
 import { InboxReadService } from './services/inbox-read.service';
+import { LiveMatchCommandService } from './services/live-match-command.service';
 import { Module } from '@nestjs/common';
 import { HealthController } from './controllers/health.controller';
 import { CatalogController } from './controllers/catalog.controller';
@@ -27,6 +28,7 @@ import { CareerService } from './services/career.service';
     ManagerConversationRepository,
     ManagerConversationService,
     InboxReadService,
+    LiveMatchCommandService,
   ],
 })
 export class AppModule {}

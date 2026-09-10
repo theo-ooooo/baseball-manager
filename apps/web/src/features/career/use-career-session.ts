@@ -4,6 +4,7 @@ import { careerMemory } from './career-memory';
 import { toast } from 'sonner';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { isInboxCommand } from '@dugout/shared/inbox-commands';
+import { isLiveMatchCommand } from '@dugout/shared/live-match-commands';
 import { careerResponse, mergeCareerResponse, careerErrorMessage } from './career-response';
 import type { Act, CareerData } from './game-contracts';
 
@@ -60,7 +61,9 @@ export function useCareerSession(initial: CareerData) {
         : {
             ...action,
             responseMode:
-              isManagerConversationCommand(action.type) || isInboxCommand(action.type)
+              isManagerConversationCommand(action.type) ||
+              isInboxCommand(action.type) ||
+              isLiveMatchCommand(action.type)
                 ? 'patch'
                 : 'compact',
             revision: current.current.revision,

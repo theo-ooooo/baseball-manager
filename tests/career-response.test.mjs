@@ -11,6 +11,33 @@ const built = await build({
 const { mergeCareerResponse, careerResponse, careerErrorMessage } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
+test('a live-match patch preserves the career and rejects an out-of-order response', () => {
+  const current = {
+    revision: 11,
+    ledger: [{ balance: 50 }],
+    state: {
+      roster: [{ id: 'one' }],
+      news: [{ id: 'mail' }],
+      history: [{ id: 'match' }],
+      simulation: { year: 2026 },
+      managerCareer: { status: 'employed' },
+      budget: 50,
+      liveMatch: { cursor: 2, timelineVersion: 1 },
+    },
+  };
+  const response = {
+    baseRevision: 11,
+    revision: 12,
+    patch: { liveMatch: { cursor: 4, timelineVersion: 2 } },
+  };
+  const next = mergeCareerResponse(current, response);
+  assert.equal(next.state.liveMatch, response.patch.liveMatch);
+  for (const key of ['roster', 'news', 'history', 'simulation', 'managerCareer', 'budget'])
+    assert.equal(next.state[key], current.state[key]);
+  assert.equal(next.ledger, current.ledger);
+  assert.equal(current.state.liveMatch.cursor, 2);
+  assert.throws(() => mergeCareerResponse(next, response));
+});
 test('player conversation patch only replaces the matching player mood', () => {
   const state = {
     roster: [
