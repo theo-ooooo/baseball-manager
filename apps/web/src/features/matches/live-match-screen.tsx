@@ -15,6 +15,8 @@ import { MatchOverview } from './match-overview';
 import { MatchAudioSettings } from './match-audio-settings';
 import { AppVersion } from '../../components/app-version';
 import { MatchDecisionBar } from './match-decision-bar';
+import { CoachSubstitutionCard } from './coach-substitution-card';
+import { MatchSubstitutionNotice, MatchSubstitutionHistory } from './match-substitution-notice';
 import {
   Dialog,
   DialogContent,
@@ -149,6 +151,10 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
         <div className="match-broadcast-main">
           <MatchAtBat result={result} cursor={cursor} settled={settled} />
           <div className="match-field-view">
+            <MatchSubstitutionNotice
+              event={m.substitutions.current}
+              onDismiss={m.substitutions.dismiss}
+            />
             <StadiumScene
               replayKey={cursor}
               result={m.sceneResult}
@@ -170,6 +176,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               onContinue={() => m.play()}
               previousCommand={m.previousCommand}
               onRepeat={m.repeatCommand}
+              coach={<CoachSubstitutionCard coach={m.coachSubstitution} busy={busy} />}
             />
           </div>
           <Dialog
@@ -207,7 +214,12 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               </button>
             ))}
           </nav>
-          {m.report === 'overview' && <MatchOverview result={result} consumed={m.consumed} />}
+          {m.report === 'overview' && (
+            <>
+              <MatchOverview result={result} consumed={m.consumed} />
+              <MatchSubstitutionHistory events={m.substitutions.events} />
+            </>
+          )}
           {m.report === 'lineup' && <MobileMatchView g={g} cursor={m.consumed} />}
           {m.report === 'commentary' && (
             <div

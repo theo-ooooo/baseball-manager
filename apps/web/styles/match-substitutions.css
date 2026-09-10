@@ -1,0 +1,175 @@
+.match-substitution-notice {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 6;
+  width: min(460px, calc(100% - 24px));
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 8px 12px 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px #0005;
+}
+.match-substitution-notice > svg {
+  color: var(--brand);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.match-substitution-notice > div {
+  flex: 1;
+  min-width: 0;
+}
+.match-substitution-notice small {
+  color: var(--text-2);
+  font-size: 11px;
+}
+.match-substitution-notice strong {
+  display: block;
+  font-size: 15px;
+  margin: 5px 0;
+}
+.match-substitution-notice strong > span {
+  color: var(--brand);
+  margin-inline: 4px;
+}
+.match-substitution-notice em {
+  font-size: 10px;
+  font-style: normal;
+  color: var(--brand);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.match-substitution-notice p {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+.match-substitution-notice > button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.match-substitution-notice > button:hover {
+  background: var(--surface-3);
+}
+.match-substitution-history {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+.match-substitution-history summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-2);
+  min-height: 30px;
+}
+.match-substitution-history summary b {
+  color: var(--brand);
+  margin-left: 5px;
+}
+.match-substitution-history ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.match-substitution-history li {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.match-substitution-history small {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.match-substitution-history strong {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.match-substitution-history p {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .match-substitution-notice {
+    top: 8px;
+    left: 8px;
+    width: calc(100% - 16px);
+    padding: 10px 4px 10px 10px;
+    gap: 7px;
+  }
+  .match-substitution-notice strong {
+    font-size: 13px;
+  }
+  .match-substitution-notice > svg {
+    width: 15px;
+  }
+}
+
+.match-field-view .match-decision:has(.coach-substitution-card) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  max-height: min(76dvh, calc(100% - 24px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.coach-substitution-card {
+  padding: 12px;
+  margin-block: 10px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+.match-decision .coach-substitution-card small {
+  color: var(--brand);
+  font-size: 11px;
+}
+.match-decision .coach-substitution-card .coach-judgment {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-2);
+}
+.match-decision .coach-substitution-card strong {
+  margin: 5px 0;
+  font-size: 15px;
+}
+.match-decision .coach-substitution-card p {
+  margin: 5px 0;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.match-decision .coach-substitution-card .needs-warmup {
+  color: #ffe09e;
+}
+.coach-substitution-card > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.coach-substitution-card button {
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.coach-substitution-card .coach-substitution-apply {
+  color: var(--brand-fg);
+  background: var(--brand);
+  border-color: var(--brand);
+  font-weight: 650;
+}

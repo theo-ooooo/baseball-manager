@@ -1,0 +1,121 @@
+.coach-affiliation-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.coach-affiliation-tabs button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-weight: 650;
+}
+.coach-affiliation-tabs button[aria-pressed='true'] {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.coach-affiliation-tabs b {
+  font-size: 11px;
+  opacity: 0.75;
+}
+.coach-center .coach-employer.own {
+  color: var(--brand);
+}
+.coach-center .coach-employer.free {
+  color: var(--text-2);
+}
+.coach-center .coach-source {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.coach-center .coach-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--text-2);
+}
+.coach-center .staff-summary {
+  gap: 12px;
+}
+.coach-center .staff-summary > div {
+  min-width: 0;
+}
+.coach-center .staff-summary small {
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .coach-affiliation-tabs {
+    gap: 5px;
+  }
+  .coach-affiliation-tabs button {
+    font-size: 13px;
+    gap: 6px;
+  }
+  .coach-center .staff-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .coach-center .coach-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .coach-center .coach-filters > input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+  .coach-center .management-table {
+    min-width: 0;
+    width: 100%;
+    display: block;
+  }
+  .coach-center .management-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .coach-center .management-table tbody {
+    display: block;
+  }
+  .coach-center .management-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 14px;
+    border-top: 1px solid var(--line);
+    gap: 8px 16px;
+  }
+  .coach-center .management-table tbody td {
+    display: block;
+    border: 0;
+    padding: 0;
+    min-width: 0;
+    white-space: normal;
+  }
+  .coach-center .management-table td:first-child,
+  .coach-center .management-table td:nth-child(2),
+  .coach-center .management-table td:last-child {
+    grid-column: 1 / -1;
+  }
+  .coach-center .management-table td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--text-3);
+  }
+  .coach-center .management-table td .button {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px;
+  }
+}

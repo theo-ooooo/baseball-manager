@@ -14,6 +14,8 @@ import { matchDecision } from '@dugout/shared/match-decision';
 import { useDecisionPrompt } from './use-decision-prompt';
 import { useMatchPauseSettings, type MatchPauseSettings } from './use-match-pause-settings';
 import { useMatchResume } from './use-match-resume';
+import { useMatchSubstitutions } from './use-match-substitutions';
+import { useCoachSubstitution } from './use-coach-substitution';
 
 export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const live = g.liveMatch!,
@@ -39,6 +41,13 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     playback.cursor ? 'watch' : 'preview',
   );
   const [report, setReport] = useState<'overview' | 'commentary' | 'lineup'>('overview');
+  const substitutions = useMatchSubstitutions(
+    live,
+    g.club,
+    playback.cursor,
+    playback.animating,
+    panel === 'watch',
+  );
   const [commandOpen, setCommandOpen] = useState(false);
   const [planDirty, setPlanDirty] = useState(false);
   const [commentary, setCommentary] = useState<MatchCue[]>([]);
@@ -61,6 +70,13 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
   const decision = useMemo(() => matchDecision(live, g.club, consumed), [live, g.club, consumed]);
   const previousCommand = previousMatchCommand(live, g.club, consumed);
+  const coachSubstitution = useCoachSubstitution(
+    g,
+    consumed,
+    busy,
+    !playback.playing && playback.settled && panel === 'watch',
+    act,
+  );
   const decisionVisible = useDecisionPrompt(
     playback.cursor,
     !playback.playing,
@@ -123,6 +139,8 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   };
   return {
     ...playback,
+    substitutions,
+    coachSubstitution,
     autoPause: {
       ...autoPause,
       toggle: (kind: keyof MatchPauseSettings, checked: boolean) => {

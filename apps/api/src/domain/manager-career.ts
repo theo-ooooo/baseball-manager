@@ -1,4 +1,5 @@
 import { rememberRegistration } from './registration-log';
+import { rememberCoaches } from './coach-employment';
 import { prepareManagerTerms, tickManagerTerms } from './manager-contracts';
 import { managerConversationAction } from './manager-conversation';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
@@ -419,6 +420,7 @@ export function createManagerCareer(world: WorldCatalog) {
     });
   }
   function join(g: GameState, offer: ManagerOffer) {
+    rememberCoaches(g);
     const previous = g.club;
     const date = gameDate(g);
     if (previous !== offer.club) {
@@ -439,7 +441,10 @@ export function createManagerCareer(world: WorldCatalog) {
         expenses: 0,
         staff: realStaff.length
           ? coachRoles.map((role, i) => ({ ...realStaff[i % realStaff.length], role }))
-          : view.coachPool().filter((c) => c.id.endsWith('-0')),
+          : view
+              .coachPool()
+              .filter((c) => c.id.endsWith('-0'))
+              .map((c) => ({ ...c, id: `${c.id}-${offer.club}` })),
         tactic: 'balanced',
         training: 'balanced',
         reputation: view.getLeague(view.getClub(offer.club).league).level,
@@ -447,6 +452,15 @@ export function createManagerCareer(world: WorldCatalog) {
       for (const [key, value] of Object.entries(baseline))
         if (key !== 'year') Object.assign(g, { [key]: value });
       g.club = offer.club;
+      g.staff = g.staff.filter((c) => {
+        const assigned = g.coachAssignments?.[c.id];
+        return (
+          !assigned ||
+          (assigned.club === offer.club &&
+            (assigned.coach.contractUntil === undefined || assigned.coach.contractUntil > g.year))
+        );
+      });
+      rememberCoaches(g);
       g.roster = roster;
       if (g.simulation)
         for (const p of roster)

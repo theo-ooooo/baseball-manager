@@ -2,42 +2,24 @@
 import { isAvailable } from '@dugout/shared/long-term';
 import { useState } from 'react';
 import type { Defense, GameState, TeamInstructions } from '@dugout/shared/types';
-import { defaults, firstTeam, autoDefense } from '@dugout/shared/management';
+import { firstTeam, autoDefense } from '@dugout/shared/management';
 import { lineupAuto } from '@dugout/shared/game-view';
 import { starterScore } from '@dugout/shared/pitching';
 import { matchEnergy } from '@dugout/shared/match-energy';
 import { nextMatchHalf } from '@dugout/shared/match-commands';
 import { matchDecision } from '@dugout/shared/match-decision';
+import { matchPlanAt, type MatchPlan } from './match-plan-state';
+export type { MatchPlan } from './match-plan-state';
 
 export type PlanSlot = number | 'P';
-export type MatchPlan = {
-  lineup: string[];
-  pitcher: string;
-  defense: Defense;
-  instructions: TeamInstructions;
-};
 const equal = (a: MatchPlan, b: MatchPlan) => JSON.stringify(a) === JSON.stringify(b);
 
 // Draft interactions never simulate or save a game. The server validates the submitted plan.
 export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
   const live = g.liveMatch!,
     timeline = live.timeline!;
-  const side = live.home === g.club ? 1 : 0,
-    team = timeline.replayTeams![side];
-  const changes = (live.changes || []).filter((c) => c.cursor <= cursor);
-  const current = changes.at(-1);
-  const pitched = timeline.log
-    .slice(0, cursor)
-    .filter((e) => e.half !== side && e.play)
-    .map((e) => e.play!.pitcher);
-  const activePitcher =
-    current?.cursor === cursor ? current.pitcher : pitched.at(-1) || team.defense.P;
-  const initial: MatchPlan = {
-    lineup: current?.lineup || team.lineup,
-    pitcher: activePitcher,
-    defense: { ...(current?.defense || team.defense), P: activePitcher },
-    instructions: current?.instructions || g.instructions || defaults(g.tactic),
-  };
+  const side = live.home === g.club ? 1 : 0;
+  const { plan: initial, usedBatters, usedPitchers } = matchPlanAt(g, cursor);
   const [history, setHistory] = useState<MatchPlan[]>([initial]);
   const decision = matchDecision(live, g.club, cursor);
   const [target, setTarget] = useState<PlanSlot | null>(
@@ -48,11 +30,6 @@ export function useMatchPlan(g: GameState, cursor: number, busy: boolean) {
   const plan = history.at(-1)!;
   const players = firstTeam(g).filter(isAvailable),
     byId = new Map(players.map((p) => [p.id, p]));
-  const usedBatters = new Set([
-    ...team.lineup,
-    ...changes.filter((c) => c.cursor < cursor).flatMap((c) => c.lineup),
-  ]);
-  const usedPitchers = new Set([team.defense.P, ...pitched]);
   const canPitch = cursor === 0 || nextMatchHalf(live, cursor) !== side;
   function commit(next: MatchPlan) {
     if (!equal(plan, next)) setHistory((past) => [...past.slice(-29), next]);
