@@ -1,6 +1,7 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import hostingConfig from "../../.openai/hosting.json";
 import { sites } from "../../infra/sites/sites-vite-plugin";
 
@@ -36,7 +37,21 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+function buildRevision() {
+  if (/^[a-f0-9]{40}$/i.test(process.env.GITHUB_SHA || ''))
+    return process.env.GITHUB_SHA!.slice(0, 7);
+  try {
+    return execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], {
+      cwd: fileURLToPath(new URL('../../', import.meta.url)),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return 'local';
+  }
+}
+
+export default defineConfig(async ({ command }) => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";
@@ -48,6 +63,9 @@ export default defineConfig(async () => {
 
   return {
     root: fileURLToPath(new URL('.', import.meta.url)),
+    define: {
+      __DUGOUT_BUILD__: JSON.stringify(buildRevision() + (command === 'serve' ? '-dev' : '')),
+    },
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     server: {
       host: "0.0.0.0",

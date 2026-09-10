@@ -17,6 +17,7 @@ import { useWorld } from './world-context';
 import { type GameState } from '@dugout/shared/game-view';
 import { Badge } from '../../components/game-ui';
 import { nav } from './game-navigation';
+import { AppVersion } from '@/components/app-version';
 
 export function AppSidebar({
   g,
@@ -160,6 +161,7 @@ export function AppSidebar({
             <small>내 프로필 · 평판 {g.managerCareer?.reputation ?? g.reputation}</small>
           </span>
         </button>
+        <AppVersion />
       </SidebarFooter>
     </Sidebar>
   );

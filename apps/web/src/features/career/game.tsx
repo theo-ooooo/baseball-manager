@@ -50,6 +50,7 @@ import { LiveMatchScreen } from '../matches/live-match-screen';
 import { TacticalBoard } from '../squad/management-panels';
 import { CoachPanel } from '../squad/coach-panel';
 import { Badge } from '../../components/game-ui';
+import { AppVersion } from '@/components/app-version';
 import { nav } from './game-navigation';
 import type { Act, CareerData } from './game-contracts';
 import { NewCareer } from './career-setup';
@@ -68,6 +69,7 @@ import { MatchdayBriefing } from '../matches/matchday-briefing';
 import { ActionProgress } from './action-progress';
 import { isSpaceShortcut } from './space-shortcut';
 import { conversationKey } from '@dugout/shared/match-media';
+import { usePreseasonDelegation } from './use-preseason-delegation';
 import { preseasonSkipBlockers } from '@dugout/shared/preseason';
 import { MatchConversationPanel } from '../matches/match-conversation-panel';
 
@@ -112,8 +114,6 @@ export function GameScreen({
     [newConfirm, setNewConfirm] = useState(false),
     [replay, setReplay] = useState<Result | null>(null),
     [help, setHelp] = useState(false),
-    [skipOpen, setSkipOpen] = useState(false),
-    [skipFuture, setSkipFuture] = useState(false),
     [saveFailed, setSaveFailed] = useState(false);
   const awayFromClub = !!g && (isUnemployed(g) || !!g.managerCareer?.vacationUntil);
   const view =
@@ -214,6 +214,16 @@ export function GameScreen({
     setReportEpoch((n) => n + 1);
     router.push('/?view=inbox' + (id ? '&report=' + encodeURIComponent(id) : ''));
   }
+  const { skipOpen, setSkipOpen, skipFuture, setSkipFuture, delegatePreseason } =
+    usePreseasonDelegation({
+      game: g,
+      busy,
+      progressing,
+      act,
+      closeProgress: calendarProgress.close,
+      openReport,
+      openMatchday: () => setView('matchday'),
+    });
   async function openReplay(result: Result) {
     if (result.log.length) {
       setReplay(result);
@@ -293,34 +303,6 @@ export function GameScreen({
       const next = await act({ type: 'nextSeason' });
       if (next) openReport(next.news[0]?.id);
     } else await simulate();
-  }
-  /** Hand the remaining preseason to the coaches; the server stops on opening day or at a new offer. */
-  async function delegatePreseason() {
-    if (!g || g.liveMatch || busy || progressing || g.phase !== 'preseason') return;
-    if (document.querySelector('[data-unsaved-plan="true"]')) {
-      toast.error('변경한 타순·전술을 적용하거나 되돌린 뒤 진행해 주세요.');
-      return;
-    }
-    setSkipOpen(false);
-    calendarProgress.close();
-    const next = await act({ type: 'skipPreseason', futureSeasons: skipFuture });
-    if (!next) return;
-    const arrived = next.progress?.newsIds || [];
-    // Interrupted: land on the contact that needs the manager, not on the delegation summary.
-    const report =
-      (next.progress?.stop === 'report'
-        ? next.news.find((n) => arrived.includes(n.id) && n.managerOfferId)?.id
-        : undefined) || arrived[0];
-    if (next.progress?.stop === 'season') {
-      toast.success(
-        `${next.progress.to - next.progress.from}일을 코치진에게 맡기고 개막일에 도착했습니다.`,
-      );
-      if (report) openReport(report);
-      else setView('matchday');
-    } else {
-      toast.info('감독의 답변이 필요한 연락이 도착해 개막 전에 멈췄습니다.');
-      openReport(report);
-    }
   }
   const matchAct: Act = async (action) => {
     const next = await act(action);
@@ -842,8 +824,11 @@ export function GameScreen({
             ))}
         </div>
         <footer className="game-footer" inert={progressing || undefined}>
-          <span>
-            DUGOUT <b>2026</b> · {leagues.length} 리그 · {clubs.length} 구단
+          <span className="game-footer-info">
+            <AppVersion />
+            <span>
+              2026 · {leagues.length} 리그 · {clubs.length} 구단
+            </span>
           </span>
           <button onClick={() => setHelp(true)}>
             게임 규칙 · 데이터 안내 <ArrowUpRight size={13} />
