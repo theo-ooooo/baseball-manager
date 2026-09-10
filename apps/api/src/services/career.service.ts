@@ -1,6 +1,6 @@
 import { createManagerCareer } from '../domain/manager-career';
 import { prepareKnowledge } from '../domain/scouting';
-import { presentCareer } from './presentation';
+import { attachPortraits, presentCareer } from './presentation';
 import {
   BadRequestException,
   ConflictException,
@@ -22,15 +22,17 @@ export class CareerService {
   ) {}
   async read(db: D1Database, user: string) {
     const current = await this.careers.read(db, user);
-    if (current.state && !current.state.liveMatch) {
-      const world = await this.catalog.getWorld(db);
+    if (!current.state) return current;
+    const world = await this.catalog.getWorld(db);
+    if (!current.state.liveMatch) {
       // Repository parsing already owns this request's state; do not clone the entire save again.
       createManagerCareer(world).prepare(current.state);
       prepareSquad(current.state, world);
       prepareKnowledge(current.state, world);
       prepareDynamics(current.state);
     }
-    return current;
+    // Include old saves with an active match without preparing or changing that match.
+    return attachPortraits(current, world);
   }
   async match(db: D1Database, user: string, id: string) {
     const result = await this.careers.match(db, user, id);
@@ -57,12 +59,12 @@ export class CareerService {
       }
       return current;
     };
-    if (seen) return refreshed();
+    if (seen) return attachPortraits(refreshed(), world);
     const expected = Number(action.revision);
     if (!Number.isInteger(expected) || expected !== current.revision)
       throw new ConflictException({
         error: '다른 화면에서 변경됐습니다. 최신 커리어를 불러왔습니다.',
-        ...presentCareer(refreshed()),
+        ...presentCareer(attachPortraits(refreshed(), world)),
       });
     const engine = createGameEngine(world);
     let next;
@@ -121,6 +123,6 @@ export class CareerService {
         error: '다른 요청이 먼저 저장됐습니다. 최신 커리어를 불러왔습니다.',
         ...presentCareer(await this.read(db, user)),
       });
-    return saved;
+    return attachPortraits(saved, world);
   }
 }

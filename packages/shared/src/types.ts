@@ -60,6 +60,8 @@ export type Player = {
   source?: string;
   ageEstimated?: boolean;
   rating?: RatingEvidence;
+  /** Verified official photo identity from D1 catalog metadata; follows the player id across clubs. */
+  portrait?: PlayerPortrait;
   mood?: PlayerMood;
   development?: PlayerDevelopment;
   trainingPlan?: TrainingPlan;
@@ -403,6 +405,16 @@ export type PerformanceRecord = {
   gs?: number;
   sv?: number;
   hld?: number;
+};
+export type PlayerPortrait = {
+  league: 'kbo' | 'mlb';
+  /** Official league player identifier that names the photo. */
+  officialId: string;
+  /** Official image URL for that identifier. */
+  url: string;
+  /** Official page listing the identifier, name, club and number used for the match. */
+  source: string;
+  asOf: string;
 };
 export type RatingEvidence = {
   version: string;

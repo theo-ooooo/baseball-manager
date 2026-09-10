@@ -1,4 +1,5 @@
 import managers from './club-managers-2026-09-09.json';
+import portraits from './kbo-portraits-2026-09-10.json';
 import logos from './club-logos.json';
 import type { ClubLogo } from '@dugout/shared/types';
 import schedule from './schedule-2026.json';
@@ -52,6 +53,11 @@ export function buildSeedWorld(): WorldCatalog {
     players.push(p);
   }
   rateRealPlayers(players, performance.records as PerformanceRecord[]);
+  // Official photo identities are keyed by catalog player id; runtime reads the same map from D1.
+  for (const p of players) {
+    const portrait = (portraits.players as Record<string, Player['portrait']>)[p.id];
+    if (portrait) p.portrait = portrait;
+  }
   const coaches: Coach[] = coachRoles.flatMap((role, i) =>
     Array.from({ length: 4 }, (_, n) => {
       const r = rng(hash(`coach:2026:${i}:${n}`));
@@ -82,7 +88,7 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-09-v8',
+    version: 'world-2026-09-10-v9',
     year: 2026,
     clubs: clubs.map((club) => ({
       ...club,

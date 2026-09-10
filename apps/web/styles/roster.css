@@ -1,3 +1,4 @@
+@import './player-portrait.css';
 .roster-overview {
   display: flex;
   align-items: center;

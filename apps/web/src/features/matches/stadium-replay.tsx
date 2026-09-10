@@ -1,4 +1,5 @@
 'use client';
+import { Stadium3D } from './stadium-3d';
 import { ClubBadge } from '../../components/club-badge';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useReducedMotion } from '../../hooks/use-reduced-motion';
@@ -37,6 +38,7 @@ export function StadiumScene({
   speed,
   reduced,
   onEnd,
+  replayKey = 0,
 }: {
   result: Result;
   index: number;
@@ -44,9 +46,16 @@ export function StadiumScene({
   speed: number;
   reduced: boolean;
   onEnd: () => void;
+  replayKey?: string | number;
 }) {
   const { getClub } = useWorld();
-  const [progress, setProgress] = useState(0);
+  const animationKey = `${result.id}:${index}:${replayKey}`;
+  const [frameState, setFrameState] = useState({ key: animationKey, progress: 0 });
+  const [display, setDisplay] = useState<'3d' | '2d'>('3d');
+  const [camera, setCamera] = useState<'overview' | 'broadcast'>('broadcast');
+  const [unavailable, setUnavailable] = useState(false);
+  const show3D = display === '3d' && !unavailable;
+  const progress = frameState.key === animationKey ? frameState.progress : 0;
   const elapsed = useRef(0),
     ended = useRef(false),
     callback = useRef(onEnd);
@@ -55,6 +64,10 @@ export function StadiumScene({
   }, [onEnd]);
   const scene = useMemo(() => replayScene(result, index), [result, index]);
   useEffect(() => {
+    elapsed.current = 0;
+    ended.current = false;
+  }, [animationKey]);
+  useEffect(() => {
     if (!playing || ended.current) return;
     let frame = 0,
       last = 0;
@@ -62,7 +75,7 @@ export function StadiumScene({
       if (last) elapsed.current += Math.min(100, time - last) * speed;
       last = time;
       const p = Math.min(1, elapsed.current / (reduced ? 100 : 4200));
-      setProgress(p);
+      setFrameState({ key: animationKey, progress: p });
       if (p < 1) frame = requestAnimationFrame(tick);
       else {
         ended.current = true;
@@ -71,7 +84,7 @@ export function StadiumScene({
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [playing, speed, reduced]);
+  }, [playing, speed, reduced, animationKey]);
   const t = reduced ? 1 : progress,
     ball = ballPoint(scene, t),
     batting = getClub(scene.event?.half === 1 ? result.home : result.away),
@@ -99,58 +112,95 @@ export function StadiumScene({
       className="stadium-stage"
       style={{ '--attack': batting.color, '--defend': defending.color } as CSSProperties}
     >
-      <svg
-        className="stadium-background field-2d"
-        viewBox="0 0 1536 1024"
-        aria-label="2D 탑뷰 야구장"
-      >
-        <defs>
-          <pattern id="grass" width="120" height="120" patternUnits="userSpaceOnUse">
-            <rect width="120" height="120" fill="#356c40" />
-            <rect width="60" height="120" fill="#3c7848" />
-          </pattern>
-        </defs>
-        <rect width="1536" height="1024" fill="#223b32" />
-        <path d="M 160 350 Q 768 -165 1376 350 L 818 960 L 718 960 Z" fill="#a48b65" />
-        <path
-          d="M 186 350 Q 768 -120 1350 350 L 768 921 Z"
-          fill="url(#grass)"
-          stroke="#dfc88d"
-          strokeWidth="8"
+      {show3D ? (
+        <Stadium3D
+          scene={scene}
+          progress={t}
+          attackColor={batting.color}
+          defendColor={defending.color}
+          camera={camera}
+          onUnavailable={() => setUnavailable(true)}
         />
-        <path d="M 768 867 L 525 633 L 768 437 L 1011 633 Z" fill="#b79269" />
-        <path d="M 768 807 L 585 633 L 768 489 L 951 633 Z" fill="#3c7848" />
-        <circle cx="768" cy="643" r="40" fill="#b79269" />
-        <circle cx="768" cy="867" r="53" fill="#b79269" />
-        <path
-          d="M 768 867 L 186 350 M 768 867 L 1350 350"
-          stroke="#f0e7d0"
-          strokeWidth="5"
-          fill="none"
-        />
-        <path
-          d="M 649 890 Q 768 775 887 890"
-          stroke="#f0e7d0"
-          strokeWidth="4"
-          strokeDasharray="10 12"
-          fill="none"
-        />
-        {bases.slice(0, 4).map((b, i) => (
-          <rect
-            key={i}
-            x={b.x - 11}
-            y={b.y - 11}
-            width="22"
-            height="22"
-            fill="#fff6df"
-            transform={`rotate(45 ${b.x} ${b.y})`}
+      ) : (
+        <svg
+          className="stadium-background field-2d"
+          viewBox="0 0 1536 1024"
+          aria-label="2D 탑뷰 야구장"
+        >
+          <defs>
+            <pattern id="grass" width="120" height="120" patternUnits="userSpaceOnUse">
+              <rect width="120" height="120" fill="#356c40" />
+              <rect width="60" height="120" fill="#3c7848" />
+            </pattern>
+          </defs>
+          <rect width="1536" height="1024" fill="#223b32" />
+          <path d="M 160 350 Q 768 -165 1376 350 L 818 960 L 718 960 Z" fill="#a48b65" />
+          <path
+            d="M 186 350 Q 768 -120 1350 350 L 768 921 Z"
+            fill="url(#grass)"
+            stroke="#dfc88d"
+            strokeWidth="8"
           />
-        ))}
-        <rect x="755" y="638" width="26" height="8" fill="#fff6df" />
-        <text x="768" y="135" textAnchor="middle" fill="#d9e8d4" fontSize="24" letterSpacing="8">
-          DUGOUT PARK
-        </text>
-      </svg>
+          <path d="M 768 867 L 525 633 L 768 437 L 1011 633 Z" fill="#b79269" />
+          <path d="M 768 807 L 585 633 L 768 489 L 951 633 Z" fill="#3c7848" />
+          <circle cx="768" cy="643" r="40" fill="#b79269" />
+          <circle cx="768" cy="867" r="53" fill="#b79269" />
+          <path
+            d="M 768 867 L 186 350 M 768 867 L 1350 350"
+            stroke="#f0e7d0"
+            strokeWidth="5"
+            fill="none"
+          />
+          <path
+            d="M 649 890 Q 768 775 887 890"
+            stroke="#f0e7d0"
+            strokeWidth="4"
+            strokeDasharray="10 12"
+            fill="none"
+          />
+          {bases.slice(0, 4).map((b, i) => (
+            <rect
+              key={i}
+              x={b.x - 11}
+              y={b.y - 11}
+              width="22"
+              height="22"
+              fill="#fff6df"
+              transform={`rotate(45 ${b.x} ${b.y})`}
+            />
+          ))}
+          <rect x="755" y="638" width="26" height="8" fill="#fff6df" />
+          <text x="768" y="135" textAnchor="middle" fill="#d9e8d4" fontSize="24" letterSpacing="8">
+            DUGOUT PARK
+          </text>
+        </svg>
+      )}
+      <div className="stadium-view-options" role="group" aria-label="경기 화면 설정">
+        <button
+          type="button"
+          aria-pressed={show3D}
+          disabled={unavailable}
+          onClick={() => setDisplay('3d')}
+        >
+          3D
+        </button>
+        <button type="button" aria-pressed={!show3D} onClick={() => setDisplay('2d')}>
+          2D
+        </button>
+        {show3D && (
+          <button
+            type="button"
+            onClick={() => setCamera(camera === 'broadcast' ? 'overview' : 'broadcast')}
+          >
+            {camera === 'broadcast' ? '전체 구장' : '중계 시점'}
+          </button>
+        )}
+      </div>
+      {unavailable && (
+        <span className="stadium-graphics-fallback" role="status">
+          이 기기에서는 2D 화면으로 중계합니다.
+        </span>
+      )}
       <div className="stadium-scorebug">
         <div>
           <span style={{ borderColor: getClub(result.away).color }}>
@@ -180,93 +230,101 @@ export function StadiumScene({
           </span>
         </div>
       </div>
-      <svg
-        className="stadium-motion"
-        viewBox="0 0 1536 1024"
-        role="img"
-        aria-label={`${scene.event?.inning || 1}회 ${scene.event?.half ? '말' : '초'} 플레이 진행`}
-      >
-        {scene.play?.before.bases.map(
-          (id, i) =>
-            id && (
-              <circle
-                key={i}
-                cx={bases[i + 1].x}
-                cy={bases[i + 1].y}
-                r="24"
-                className="occupied-base"
-              />
-            ),
-        )}
-        {defenders.map(({ pos, player, point }) => (
-          <g key={pos} transform={`translate(${point.x} ${point.y})`} className="stadium-defender">
-            <title>
-              {pos} {player?.name || ''}
-            </title>
-            <ellipse cy="16" rx="19" ry="8" className="player-shadow" />
-            <circle r="18" />
-            <text y="6" className="player-number">
-              {player?.number ?? pos}
-            </text>
-            <text y="40" className="player-label">
-              {player?.name || pos}
-            </text>
-          </g>
-        ))}
-        {!scene.play && (
-          <g transform="translate(728 860)" className="stadium-runner">
-            <circle r="17" />
-            <text y="-28" className="player-label">
-              {scene.batter}
-            </text>
-          </g>
-        )}
-        {scene.runners.map((r) => {
-          const point = runnerPoint(r.from, r.to, runnerProgress);
-          const opacity = r.out && runnerProgress > 0.9 ? 0.25 : 1;
-          return (
+      {!show3D && (
+        <svg
+          className="stadium-motion"
+          viewBox="0 0 1536 1024"
+          role="img"
+          aria-label={`${scene.event?.inning || 1}회 ${scene.event?.half ? '말' : '초'} 플레이 진행`}
+        >
+          {scene.play?.before.bases.map(
+            (id, i) =>
+              id && (
+                <circle
+                  key={i}
+                  cx={bases[i + 1].x}
+                  cy={bases[i + 1].y}
+                  r="24"
+                  className="occupied-base"
+                />
+              ),
+          )}
+          {defenders.map(({ pos, player, point }) => (
             <g
-              key={r.id}
-              transform={`translate(${point.x + (r.from === 0 && runnerProgress === 0 ? -40 : 0)} ${point.y})`}
-              className="stadium-runner"
-              opacity={opacity}
+              key={pos}
+              transform={`translate(${point.x} ${point.y})`}
+              className="stadium-defender"
             >
               <title>
-                {r.name}
-                {r.out ? ' 아웃' : r.to === 4 ? ' 득점' : ''}
+                {pos} {player?.name || ''}
               </title>
-              <ellipse cy="15" rx="18" ry="7" className="player-shadow" />
-              <circle r="17" />
+              <ellipse cy="16" rx="19" ry="8" className="player-shadow" />
+              <circle r="18" />
               <text y="6" className="player-number">
-                {scene.batting?.players.find((p) => p.id === r.id)?.number || '·'}
+                {player?.number ?? pos}
               </text>
-              <text y="-27" className="player-label">
-                {r.name}
+              <text y="40" className="player-label">
+                {player?.name || pos}
               </text>
             </g>
-          );
-        })}
-        {!['walk', 'strikeout', 'tiebreak'].includes(scene.kind) && t > 0.2 && (
-          <path
-            d={`M ${bases[0].x} ${bases[0].y} L ${scene.target.x} ${scene.target.y}`}
-            className="ball-trail"
-          />
-        )}
-        {t < 0.94 && (
-          <g>
-            <ellipse cx={ball.x} cy={ball.y + 13} rx="9" ry="5" className="ball-shadow" />
-            <circle
-              cx={ball.x}
-              cy={
-                ball.y -
-                (scene.fly && t > 0.2 && t < 0.65 ? Math.sin(((t - 0.2) / 0.45) * Math.PI) * 38 : 0)
-              }
-              r="7"
-              className="stadium-ball"
+          ))}
+          {!scene.play && (
+            <g transform="translate(728 860)" className="stadium-runner">
+              <circle r="17" />
+              <text y="-28" className="player-label">
+                {scene.batter}
+              </text>
+            </g>
+          )}
+          {scene.runners.map((r) => {
+            const point = runnerPoint(r.from, r.to, runnerProgress);
+            const opacity = r.out && runnerProgress > 0.9 ? 0.25 : 1;
+            return (
+              <g
+                key={r.id}
+                transform={`translate(${point.x + (r.from === 0 && runnerProgress === 0 ? -40 : 0)} ${point.y})`}
+                className="stadium-runner"
+                opacity={opacity}
+              >
+                <title>
+                  {r.name}
+                  {r.out ? ' 아웃' : r.to === 4 ? ' 득점' : ''}
+                </title>
+                <ellipse cy="15" rx="18" ry="7" className="player-shadow" />
+                <circle r="17" />
+                <text y="6" className="player-number">
+                  {scene.batting?.players.find((p) => p.id === r.id)?.number || '·'}
+                </text>
+                <text y="-27" className="player-label">
+                  {r.name}
+                </text>
+              </g>
+            );
+          })}
+          {!['walk', 'strikeout', 'tiebreak'].includes(scene.kind) && t > 0.2 && (
+            <path
+              d={`M ${bases[0].x} ${bases[0].y} L ${scene.target.x} ${scene.target.y}`}
+              className="ball-trail"
             />
-          </g>
-        )}
-      </svg>
+          )}
+          {t < 0.94 && (
+            <g>
+              <ellipse cx={ball.x} cy={ball.y + 13} rx="9" ry="5" className="ball-shadow" />
+              <circle
+                cx={ball.x}
+                cy={
+                  ball.y -
+                  (scene.fly && t > 0.2 && t < 0.65
+                    ? Math.sin(((t - 0.2) / 0.45) * Math.PI) * 38
+                    : 0)
+                }
+                r="7"
+                className="stadium-ball"
+              />
+            </g>
+          )}
+        </svg>
+      )}
       <div className={`stadium-event ${after ? 'settled' : ''}`}>
         <span>
           {after ? '타석 결과' : t < 0.2 ? '투구' : t < 0.65 ? '플레이 진행' : '주자 이동'}
@@ -331,7 +389,7 @@ function ReplayViewer({ result, close }: { result: Result; close: () => void }) 
       <div className="stadium-replay-layout">
         <div className="stadium-main">
           <StadiumScene
-            key={`${index}:${run}`}
+            replayKey={run}
             result={result}
             index={index}
             playing={playing}
