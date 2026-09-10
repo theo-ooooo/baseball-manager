@@ -1,5 +1,4 @@
 'use client';
-import { Stadium3D } from './stadium-3d';
 import { Stadium2DField } from './stadium-2d-field';
 import { ClubBadge } from '../../components/club-badge';
 import type { CSSProperties } from 'react';
@@ -29,20 +28,7 @@ import { useStadiumReplay, type StadiumSceneProps } from './use-stadium-replay';
 export function StadiumScene(props: StadiumSceneProps) {
   const { result, index } = props;
   const { getClub } = useWorld();
-  const {
-    scene,
-    t,
-    currentCue,
-    show3D,
-    setDisplay,
-    camera,
-    setCamera,
-    unavailable,
-    setUnavailable,
-    zoom2d,
-    setZoomOverride,
-    fieldView,
-  } = useStadiumReplay(props);
+  const { scene, t, currentCue, zoom2d, setZoomOverride, fieldView } = useStadiumReplay(props);
   const ball = ballPoint(scene, t),
     batting = getClub(scene.event?.half === 1 ? result.home : result.away),
     defending = getClub(scene.event?.half === 1 ? result.away : result.home);
@@ -54,7 +40,7 @@ export function StadiumScene(props: StadiumSceneProps) {
     return `${point.x},${point.y - height}`;
   }).join(' ');
   const runnerProgress = Math.max(0, Math.min(1, (t - 0.28) / 0.6));
-  const after = t > 0.88;
+  const after = t >= 1;
   const outs = scene.play ? (after ? scene.play.after.outs : scene.play.before.outs) : null;
   const defenders = Object.entries(fieldPoints).map(([pos, point]) => {
     const id = scene.defending?.defense[pos as keyof typeof scene.defending.defense];
@@ -73,52 +59,15 @@ export function StadiumScene(props: StadiumSceneProps) {
     : (after ? scene.event?.score : result.log[index - 1]?.score) || [0, 0];
   return (
     <div
-      className={`stadium-stage ${show3D ? 'is-3d' : 'is-2d'}`}
+      className="stadium-stage is-2d"
       style={{ '--attack': batting.color, '--defend': defending.color } as CSSProperties}
     >
-      {show3D ? (
-        <Stadium3D
-          scene={scene}
-          progress={t}
-          attackColor={batting.color}
-          defendColor={defending.color}
-          camera={camera}
-          onUnavailable={() => setUnavailable(true)}
-        />
-      ) : (
-        <Stadium2DField viewBox={fieldView} />
-      )}
+      <Stadium2DField viewBox={fieldView} />
       <div className="stadium-view-options" role="group" aria-label="경기 화면 설정">
-        <button
-          type="button"
-          aria-pressed={show3D}
-          disabled={unavailable}
-          onClick={() => setDisplay('3d')}
-        >
-          3D
+        <button type="button" onClick={() => setZoomOverride(!zoom2d)}>
+          {zoom2d ? '전체 구장' : '선수 중심'}
         </button>
-        <button type="button" aria-pressed={!show3D} onClick={() => setDisplay('2d')}>
-          2D
-        </button>
-        {show3D && (
-          <button
-            type="button"
-            onClick={() => setCamera(camera === 'broadcast' ? 'overview' : 'broadcast')}
-          >
-            {camera === 'broadcast' ? '전체 구장' : '중계 시점'}
-          </button>
-        )}
-        {!show3D && (
-          <button type="button" onClick={() => setZoomOverride(!zoom2d)}>
-            {zoom2d ? '전체 구장' : '선수 중심'}
-          </button>
-        )}
       </div>
-      {unavailable && (
-        <span className="stadium-graphics-fallback" role="status">
-          이 기기에서는 2D 화면으로 중계합니다.
-        </span>
-      )}
       <div className="stadium-scorebug">
         <div>
           <span style={{ borderColor: getClub(result.away).color }}>
@@ -148,7 +97,7 @@ export function StadiumScene(props: StadiumSceneProps) {
           </span>
         </div>
       </div>
-      {!show3D && (
+      <>
         <svg
           className="stadium-motion"
           viewBox={fieldView}
@@ -264,7 +213,7 @@ export function StadiumScene(props: StadiumSceneProps) {
             </g>
           )}
         </svg>
-      )}
+      </>
       <div className={`stadium-event ${after ? 'settled' : ''}`}>
         <span>
           {after ? '타석 결과' : t < 0.2 ? '투구' : t < 0.65 ? '플레이 진행' : '주자 이동'}

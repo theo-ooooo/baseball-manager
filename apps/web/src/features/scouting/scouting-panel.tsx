@@ -1,10 +1,10 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useScoutCenter } from './use-scout-center';
 import Link from 'next/link';
 import { Binoculars } from 'lucide-react';
 import type { GameState, Player } from '@dugout/shared/types';
 import { daysBetween, gameDate } from '@dugout/shared/calendar';
-import { scoutingCost, scoutingDurations } from '@dugout/shared/scouting';
+import { scoutingDurations } from '@dugout/shared/scouting';
 import { money } from '@dugout/shared/game-view';
 import { useWorld } from '../career/world-context';
 import type { Act } from '../career/game-contracts';
@@ -23,38 +23,42 @@ export function ScoutingPanel({
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
 }) {
-  const { leagues, marketPlayers, getClub } = useWorld();
-  const [tab, setTab] = useState(g.scouting?.reports.length ? 'reports' : 'missions'),
-    [league, setLeague] = useState(getClub(g.club).league),
-    [pos, setPos] = useState('all'),
-    [maxAge, setMaxAge] = useState(25),
-    [days, setDays] = useState(14),
-    [selected, setSelected] = useState<string[]>([]);
-  const market = useMemo(() => new Map(marketPlayers(g).map((p) => [p.id, p])), [g, marketPlayers]);
-  const s = g.scouting,
-    active = s?.assignments.filter((t) => t.status === 'active') || [],
-    scout = g.staff.find((c) => c.role === '스카우트');
-  const reports = s?.reports || [],
-    cost = scoutingCost(days, true);
-  const toggle = (id: string) =>
-    setSelected((ids) =>
-      ids.includes(id) ? ids.filter((x) => x !== id) : ids.length < 3 ? [...ids, id] : ids,
-    );
+  const { leagues, getClub } = useWorld();
+  const {
+    tab,
+    setTab,
+    league,
+    setLeague,
+    pos,
+    setPos,
+    maxAge,
+    setMaxAge,
+    days,
+    setDays,
+    selected,
+    market,
+    active,
+    scout,
+    reports,
+    cost,
+    toggle,
+  } = useScoutCenter(g);
+  const s = g.scouting;
   return (
     <div className="scouting-center">
       <header className="market-notice">
         <Binoculars size={26} />
         <div>
-          <strong>스카우팅 센터</strong>
-          <p>관찰 의뢰 → 날짜 진행 → 보고 검토 → 비교 · 영입 협상</p>
+          <strong>스카우트 센터</strong>
+          <p>관찰 의뢰 → 보고 검토 → 비교 · 트레이드 / FA 계약</p>
         </div>
         <div>
           <small>파견 중</small>
           <strong>{active.length} / 3</strong>
         </div>
       </header>
-      <section className="panel panel-content">
-        <h2>리그 친숙도</h2>
+      <details className="panel panel-content scout-knowledge">
+        <summary>리그 친숙도 · 관찰 범위 확인</summary>
         <p>
           근무 경험이 있는 리그는 능력치를 확인할 수 있습니다. 낯선 리그 선수는 ?로 표시하며 파견
           보고가 도착하면 관찰 범위를 보여줍니다.
@@ -66,8 +70,8 @@ export function ScoutingPanel({
             </span>
           ))}
         </div>
-      </section>
-      <div className="preset-buttons" role="group" aria-label="스카우팅 화면">
+      </details>
+      <div className="preset-buttons" role="group" aria-label="스카우트 화면">
         {[
           ['missions', '관찰 임무'],
           ['reports', `보고 · 비교 ${reports.length}`],
@@ -250,13 +254,22 @@ export function ScoutingPanel({
                         <button className="text-button" onClick={() => onPlayer(p)}>
                           선수 상세
                         </button>
-                        <button
-                          className="button primary compact"
-                          disabled={busy}
-                          onClick={() => onNegotiate(p)}
-                        >
-                          계약 제안
-                        </button>
+                        {p.club === 'fa' ? (
+                          <button
+                            className="button primary compact"
+                            disabled={busy}
+                            onClick={() => onNegotiate(p)}
+                          >
+                            FA 계약 제안
+                          </button>
+                        ) : (
+                          <Link
+                            className="button primary compact"
+                            href={`/?view=trade&target=${encodeURIComponent(p.id)}`}
+                          >
+                            트레이드 검토
+                          </Link>
+                        )}
                       </>
                     ) : (
                       <small>소속 변경 · 현재 영입 대상에서 제외</small>

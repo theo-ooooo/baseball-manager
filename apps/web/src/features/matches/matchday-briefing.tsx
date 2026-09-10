@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { ArrowRight, ClipboardList, Users } from 'lucide-react';
 import type { GameState, Player } from '@dugout/shared/types';
 import { dateLabel } from '@dugout/shared/calendar';
@@ -26,6 +27,9 @@ export function MatchdayBriefing({
   if (!pair)
     return (
       <section className="panel panel-content matchday-rest">
+        <Link className="matchday-back" href="/?view=home">
+          ← 구단으로 돌아가기
+        </Link>
         <h2>오늘은 훈련과 구단 업무를 보는 날입니다</h2>
         <p>수신함을 확인하고 진행하면 다음 보고나 경기일에 멈춥니다.</p>
         <button className="button primary" disabled={busy} onClick={onContinue}>
@@ -47,6 +51,9 @@ export function MatchdayBriefing({
   ];
   return (
     <div className="matchday-briefing">
+      <Link className="matchday-back" href="/?view=home">
+        ← 구단으로 돌아가기
+      </Link>
       <section className="matchday-overview">
         <div className="matchday-caption">
           <span>MATCHDAY · 경기 전 브리핑</span>

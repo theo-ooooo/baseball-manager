@@ -1,6 +1,9 @@
 import type { LiveMatch } from './types';
 
 export type MatchCommandKind =
+  | 'contactFocus'
+  | 'swingAway'
+  | 'workCount'
   | 'stealSecond'
   | 'stealThird'
   | 'bunt'
@@ -11,6 +14,9 @@ export type MatchCommandKind =
   | 'intentionalWalk';
 export type MatchCommand = { cursor: number; kind: MatchCommandKind };
 export const matchCommandLabels: Record<MatchCommandKind, string> = {
+  contactFocus: '컨택 집중',
+  swingAway: '장타 노림',
+  workCount: '공 오래 보기',
   stealSecond: '2루 도루',
   stealThird: '3루 도루',
   bunt: '희생번트',
@@ -41,6 +47,17 @@ export function matchCommandOptions(live: LiveMatch, club: string, cursor: numbe
           ? '공수 교대 후 주자 상황을 확인하세요.'
           : '';
   return (Object.keys(matchCommandLabels) as MatchCommandKind[]).map((kind) => {
+    if (['contactFocus', 'swingAway', 'workCount'].includes(kind))
+      return {
+        kind,
+        label: matchCommandLabels[kind],
+        reason:
+          cursor >= (live.timeline?.log.length || 0)
+            ? '경기가 종료되었습니다.'
+            : nextMatchHalf(live, cursor) !== ownHalf
+              ? '우리 팀 공격 중에 지시할 수 있습니다.'
+              : '',
+      };
     if (isPitchingCommand(kind))
       return {
         kind,
@@ -71,4 +88,15 @@ export function matchCommandOptions(live: LiveMatch, club: string, cursor: numbe
               : '');
     return { kind, label: matchCommandLabels[kind], reason };
   });
+}
+
+/** Reuse a consumed instruction only; validate it against the current, visible situation. */
+export function previousMatchCommand(live: LiveMatch, club: string, cursor: number) {
+  const defending = nextMatchHalf(live, cursor) !== (live.home === club ? 1 : 0);
+  const last = live.commands?.findLast(
+    (c) => c.cursor < cursor && isPitchingCommand(c.kind) === defending,
+  );
+  return last
+    ? matchCommandOptions(live, club, cursor).find((o) => o.kind === last.kind)
+    : undefined;
 }

@@ -20,6 +20,7 @@ buildSync({
 const {
   engine: e,
   matchCommandOptions,
+  previousMatchCommand,
   replayScene,
   stealChance,
   buntResult,
@@ -46,7 +47,15 @@ const command = (g, kind, cursor = available(g, kind)) => {
 };
 
 test('Every direct instruction retains the watched prefix, immutable career and deterministic saved future', () => {
-  for (const kind of ['stealSecond', 'stealThird', 'bunt', 'hitAndRun']) {
+  for (const kind of [
+    'stealSecond',
+    'stealThird',
+    'bunt',
+    'hitAndRun',
+    'contactFocus',
+    'swingAway',
+    'workCount',
+  ]) {
     const g = start(),
       before = structuredClone(g),
       cursor = available(g, kind),
@@ -230,4 +239,34 @@ test('Regular-season completion applies running statistics once to the career', 
   });
   for (const p of next.roster) assert.deepEqual(p.stats, effects.find((x) => x.id === p.id).stats);
   assert.throws(() => e.applyAction(next, { type: 'completeMatch' }), /진행 중/);
+});
+
+test('A previous sign can be repeated only after consumption and is checked against new runners and outs', () => {
+  let g = start();
+  const cursor = available(g, 'attackBatter');
+  g = command(g, 'attackBatter', cursor);
+  assert.equal(previousMatchCommand(g.liveMatch, g.club, cursor), undefined);
+  const later = g.liveMatch.timeline.log.findIndex(
+    (_, i) =>
+      i > cursor &&
+      matchCommandOptions(g.liveMatch, g.club, i).some(
+        (o) => o.kind === 'attackBatter' && !o.reason,
+      ),
+  );
+  const previous = previousMatchCommand(g.liveMatch, g.club, later);
+  assert.equal(previous.kind, 'attackBatter');
+  assert.equal(previous.reason, '');
+  const prefix = structuredClone(g.liveMatch.timeline.log.slice(0, later));
+  g = command(g, previous.kind, later);
+  assert.deepEqual(g.liveMatch.timeline.log.slice(0, later), prefix);
+  assert.equal(g.liveMatch.timeline.log[later].play.command, 'attackBatter');
+  const attacking = start();
+  const buntCursor = available(attacking, 'bunt');
+  attacking.liveMatch.commands = [{ cursor: buntCursor, kind: 'bunt' }];
+  const invalid = attacking.liveMatch.timeline.log.findIndex(
+    (_, i) =>
+      i > buntCursor && previousMatchCommand(attacking.liveMatch, attacking.club, i)?.reason,
+  );
+  assert.ok(invalid > buntCursor);
+  assert.ok(previousMatchCommand(attacking.liveMatch, attacking.club, invalid).reason);
 });

@@ -25,11 +25,11 @@ function terms(salary: number, years: number) {
   )
     throw new Error('유효한 연봉과 1~5년 계약을 입력해 주세요.');
 }
-function record(g: GameState, d: Offer, message: string) {
+function record(g: GameState, d: Offer, message: string, side: 'club' | 'player' = 'player') {
   d.message = message;
   d.history = [
     ...(d.history || []),
-    { day: g.day, year: g.year, salary: d.salary, years: d.years, message },
+    { day: g.day, year: g.year, salary: d.salary, years: d.years, message, side },
   ].slice(-12);
 }
 function notify(g: GameState, d: Offer, subject: string, senderName?: string) {
@@ -52,7 +52,7 @@ function notify(g: GameState, d: Offer, subject: string, senderName?: string) {
         {
           label: '서명 시 지출',
           value: money(
-            coach ? d.salary * 0.5 + d.compensation : d.fee + d.agentFee + d.salary * 0.15,
+            coach ? d.salary * 0.1 + d.compensation : d.fee + d.agentFee + d.salary * 0.05,
           ),
         },
       ],
@@ -97,6 +97,10 @@ export function createRecruitment(world: WorldCatalog) {
     if (type === 'buy' && transfersBlocked(g))
       throw new Error('첫 시즌 외부 영입 금지 조건입니다. 재계약·매각·코치 선임은 가능합니다.');
     const p = (type === 'renew' ? g.roster : view.marketPlayers(g)).find((p) => p.id === id);
+    if (p && type === 'buy' && p.club !== 'fa')
+      throw new Error(
+        '타 구단 소속 선수와 직접 계약할 수 없습니다. 트레이드를 제안하거나 FA가 된 뒤 협상하세요.',
+      );
     if (!p) throw new Error('해당 선수를 찾을 수 없습니다.');
     const previous = g.deals.find((d) => d.player.id === id);
     if (previous?.status === 'pending')
@@ -138,6 +142,7 @@ export function createRecruitment(world: WorldCatalog) {
       stage === 'club'
         ? '소속 구단에 이적료를 제안했습니다. 구단이 동의하면 개인 계약 조건을 검토합니다.'
         : '에이전트에게 계약 조건을 보냈습니다. 1~2일 안에 답변이 도착합니다.',
+      'club',
     );
     g.deals = [d, ...g.deals.filter((old) => old.player.id !== id)].slice(0, 30);
     return g;
@@ -146,7 +151,11 @@ export function createRecruitment(world: WorldCatalog) {
     const p = (d.type === 'renew' ? g.roster : view.marketPlayers(g)).find(
       (p) => p.id === d.player.id,
     );
-    if (!p || p.club !== d.player.club || (d.type === 'buy' && transfersBlocked(g))) {
+    if (
+      !p ||
+      p.club !== d.player.club ||
+      (d.type === 'buy' && (p.club !== 'fa' || transfersBlocked(g)))
+    ) {
       d.status = 'rejected';
       record(g, d, '선수 소속 또는 영입 조건이 바뀌어 협상을 진행할 수 없습니다.');
     } else if (d.stage === 'club') {
@@ -181,7 +190,7 @@ export function createRecruitment(world: WorldCatalog) {
           : d.salary >= demand * 0.65
             ? 'counter'
             : 'rejected';
-      if (d.fee + d.agentFee + d.salary * 0.15 > g.budget) {
+      if (d.fee + d.agentFee + d.salary * 0.05 > g.budget) {
         d.status = 'rejected';
         record(g, d, '이적료·계약금·수수료를 감당할 예산이 부족합니다.');
       } else if (d.status === 'counter') {
@@ -216,6 +225,13 @@ export function createRecruitment(world: WorldCatalog) {
   function signDeal(g: GameState, id: string) {
     const d = g.deals.find((d) => d.id === id);
     requireReply(g, d);
+    if (
+      d &&
+      'player' in d &&
+      d.type === 'buy' &&
+      view.marketPlayers(g).find((p) => p.id === d.player.id)?.club !== 'fa'
+    )
+      throw new Error('타 구단 계약 선수는 트레이드로 영입해야 합니다.');
     if (d!.status !== 'accepted' || d!.stage === 'club')
       throw new Error('개인 조건에 합의한 뒤 최종 계약할 수 있습니다.');
     const deal = d!;
@@ -224,6 +240,10 @@ export function createRecruitment(world: WorldCatalog) {
       const available = view.marketPlayers(g).find((p) => p.id === deal.player.id);
       if (!available || available.club !== deal.player.club)
         throw new Error('선수 소속이 변경됐습니다. 다시 협상하세요.');
+      if (available.club !== 'fa')
+        throw new Error(
+          '타 구단 계약 선수는 트레이드로 영입해야 합니다. 기존 직접 계약 협상은 체결할 수 없습니다.',
+        );
       const seller = market.assess(g, available);
       if (seller.status === 'refused') throw new Error(seller.reason);
       if (deal.fee < seller.fee)
@@ -236,7 +256,7 @@ export function createRecruitment(world: WorldCatalog) {
         ? g.roster.find((p) => p.id === deal.player.id)
         : view.marketPlayers(g).find((p) => p.id === deal.player.id);
     if (!current) throw new Error('재계약 선수를 찾을 수 없습니다.');
-    const cash = deal.fee + deal.agentFee + deal.salary * 0.15;
+    const cash = deal.fee + deal.agentFee + deal.salary * 0.05;
     if (g.budget < cash) throw new Error('영입 예산이 부족합니다.');
     g.budget -= cash;
     g.expenses += cash;
@@ -308,7 +328,7 @@ export function createRecruitment(world: WorldCatalog) {
   }
   function resolveCoach(g: GameState, d: CoachDeal) {
     const demand = d.coach.salary * (1 + Math.max(0, d.coach.skill - g.reputation - 8) * 0.015);
-    const cost = d.salary * 0.5 + d.compensation;
+    const cost = d.salary * 0.1 + d.compensation;
     if (cost > g.budget || d.salary < demand * 0.65 || g.staff.some((c) => c.id === d.coach.id)) {
       d.status = 'rejected';
       record(
@@ -388,12 +408,18 @@ export function createRecruitment(world: WorldCatalog) {
       return g;
     }
     requireReply(g, d);
+    if (
+      'player' in d &&
+      d.type === 'buy' &&
+      view.marketPlayers(g).find((p) => p.id === d.player.id)?.club !== 'fa'
+    )
+      throw new Error('타 구단 계약 선수는 트레이드로 영입해야 합니다.');
     if (a.type === 'signCoach' && 'coach' in d) {
       if (d.status !== 'accepted') throw new Error('역제안을 수락한 뒤 최종 계약할 수 있습니다.');
       if (g.staff.some((c) => c.id === d.coach.id)) throw new Error('이미 선임된 코치입니다.');
       if (g.staff.find((c) => c.role === d.role)?.id !== d.replacesId)
         throw new Error('담당 코치가 바뀌었습니다. 교체 조건을 다시 제안해 주세요.');
-      const cost = d.salary * 0.5 + d.compensation;
+      const cost = d.salary * 0.1 + d.compensation;
       if (g.budget < cost) throw new Error('코치 계약 예산이 부족합니다.');
       g.budget -= cost;
       g.expenses += cost;

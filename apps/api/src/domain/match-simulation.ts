@@ -352,12 +352,28 @@ export function createMatchSimulator(world: WorldCatalog) {
               (p.contact * cond - strength) * 0.0028 +
               bonus +
               pitching.contact +
-              (hitAndRun ? 0.02 : 0),
+              (hitAndRun
+                ? 0.02
+                : command?.kind === 'contactFocus'
+                  ? 0.025
+                  : command?.kind === 'swingAway'
+                    ? -0.025
+                    : command?.kind === 'workCount'
+                      ? -0.008
+                      : 0),
             0.1,
             0.43,
           );
-          const aggressive = ownBat ? instructions.power / 100 : 0;
-          const patient = ownBat ? instructions.patience / 100 : 0;
+          const aggressive =
+            command?.kind === 'contactFocus'
+              ? 0
+              : command?.kind === 'swingAway'
+                ? 1
+                : ownBat
+                  ? instructions.power / 100
+                  : 0;
+          const patient =
+            command?.kind === 'workCount' ? 1 : ownBat ? instructions.patience / 100 : 0;
           const smallball = ownBat ? instructions.steal / 100 : 0;
           const roll = command?.kind === 'intentionalWalk' ? 1 : random();
           if (command?.kind === 'bunt') {
@@ -400,7 +416,15 @@ export function createMatchSimulator(world: WorldCatalog) {
             command?.kind === 'intentionalWalk' ||
             roll <
               clamp(
-                0.073 + (70 - control) * 0.0009 + patient * 0.032 + pitching.walk,
+                0.073 +
+                  (70 - control) * 0.0009 +
+                  patient * 0.032 +
+                  pitching.walk +
+                  (command?.kind === 'workCount'
+                    ? 0.02
+                    : command?.kind === 'contactFocus'
+                      ? -0.015
+                      : 0),
                 energyEnabled ? 0.025 : 0.035,
                 energyEnabled ? 0.2 : 0.14,
               )
@@ -479,7 +503,20 @@ export function createMatchSimulator(world: WorldCatalog) {
             outs++;
             isOut = true;
             pitchingStats(1 - side).outs++;
-            if (random() < 0.36 + aggressive * 0.09 - (hitAndRun ? 0.09 : 0) + pitching.strikeout) {
+            if (
+              random() <
+              0.36 +
+                aggressive * 0.09 -
+                (hitAndRun ? 0.09 : 0) +
+                pitching.strikeout +
+                (command?.kind === 'contactFocus'
+                  ? -0.08
+                  : command?.kind === 'swingAway'
+                    ? 0.08
+                    : command?.kind === 'workCount'
+                      ? 0.03
+                      : 0)
+            ) {
               stats.k++;
               pitchingStats(1 - side).k++;
               event = '삼진';
@@ -521,6 +558,9 @@ export function createMatchSimulator(world: WorldCatalog) {
           }
           if (command && isPitchingCommand(command.kind) && command.kind !== 'intentionalWalk')
             event += ` · ${command.kind === 'attackBatter' ? '정면 승부' : command.kind === 'pitchAround' ? '유인구 승부' : '낮게 승부'}`;
+          if (command?.kind === 'contactFocus') event += ' · 컨택 집중';
+          if (command?.kind === 'swingAway') event += ' · 장타 노림';
+          if (command?.kind === 'workCount') event += ' · 공 오래 보기';
           if (
             !command &&
             smallball &&

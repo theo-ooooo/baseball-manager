@@ -8,7 +8,7 @@ const built = await build({
   platform: 'node',
   format: 'esm',
 });
-const { mergeCareerResponse, careerResponse } = await import(
+const { mergeCareerResponse, careerResponse, careerErrorMessage } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
 test('conversation response only merges server-owned fields at the matching revision', () => {
@@ -52,7 +52,24 @@ test('Cloudflare HTML failure is reported as a recoverable service error', async
         headers: { 'content-type': 'text/html' },
       }),
     ),
-    /서버 처리가 중단/,
+    /잠시 후 다시 시도/,
   );
   assert.deepEqual(await careerResponse(Response.json({ revision: 2 })), { revision: 2 });
+});
+
+test('Temporary limits and network failures have a retry message while daily quota explains reset time', async () => {
+  await assert.rejects(
+    careerResponse(Response.json({ error: 'internal limits' }, { status: 429 })),
+    /잠시 후 다시 시도/,
+  );
+  await assert.rejects(
+    careerResponse(new Response('<html>Error 1027</html>', { status: 503 })),
+    /한국 시간 오전 9시/,
+  );
+  await assert.rejects(
+    careerResponse(new Response('incomplete', { headers: { 'content-type': 'application/json' } })),
+    /잠시 후 다시 시도/,
+  );
+  assert.match(careerErrorMessage(new TypeError('Failed to fetch')), /잠시 후 다시 시도/);
+  assert.equal(careerErrorMessage(new Error('예산 부족')), '예산 부족');
 });

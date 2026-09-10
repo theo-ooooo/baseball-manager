@@ -113,6 +113,13 @@
       "when": 1789001564577,
       "tag": "0015_kbo_player_portraits",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1789012957284,
+      "tag": "0016_lotte_son_seongbin",
+      "breakpoints": true
     }
   ]
 }

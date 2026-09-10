@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { useWorld } from '../career/world-context';
-import { type GameState, type Player, overall, money, askPrice } from '@dugout/shared/game-view';
+import { type GameState, type Player, overall, money } from '@dugout/shared/game-view';
 import { potentialText } from '@dugout/shared/ratings';
 import { Mood } from '../clubs/club-panels';
 import { Rating, PlayerName, positions } from '../../components/game-ui';
@@ -51,7 +51,7 @@ export function PlayerTable({
           {kind === 'market' ? (
             <>
               <TableHead>소속 구단</TableHead>
-              <TableHead>예상 이적료</TableHead>
+              <TableHead>영입 방법</TableHead>
               <TableHead className="player-secondary-column">연봉</TableHead>
             </>
           ) : (
@@ -118,7 +118,7 @@ export function PlayerTable({
                       {p.club === 'fa' ? 'FA · 자유계약' : getClub(p.club)?.name || '이적 선수'}
                     </span>
                   </TableCell>
-                  <TableCell>{money(askPrice(p))}</TableCell>
+                  <TableCell>{p.club === 'fa' ? 'FA 계약' : '트레이드'}</TableCell>
                   <TableCell>{money(p.salary)}</TableCell>
                 </>
               ) : (

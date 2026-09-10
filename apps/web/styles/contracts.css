@@ -676,3 +676,71 @@
   border-radius: 4px;
   opacity: 1;
 }
+.player-release-button {
+  margin: 18px 0;
+  color: var(--danger-text);
+  border-color: #dbadb2;
+}
+.player-release-dialog {
+  width: min(520px, calc(100vw - 24px));
+}
+.release-summary {
+  display: grid;
+  gap: 12px;
+}
+.release-summary > div {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.release-summary dd {
+  text-align: right;
+  font-weight: 700;
+}
+.release-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.release-actions button {
+  min-height: 44px;
+}
+.contract-previous-offer {
+  padding: 16px;
+  margin: 16px 0;
+  background: #eef4fd;
+  border: 1px solid #cbdcf2;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.contract-previous-offer small,
+.contract-previous-offer strong {
+  display: block;
+}
+.contract-previous-offer strong {
+  margin: 5px 0;
+}
+@media (max-width: 767px) {
+  .contract-agent {
+    display: none;
+  }
+  .contract-room-body {
+    display: block;
+  }
+  .contract-discussion {
+    padding: 14px;
+  }
+  .contract-room-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--surface-1);
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+    z-index: 2;
+  }
+  .contract-room-actions button {
+    min-height: 46px;
+  }
+}

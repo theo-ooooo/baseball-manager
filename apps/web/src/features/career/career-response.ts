@@ -23,14 +23,28 @@ export function mergeCareerResponse(
     },
   };
 }
+export const temporaryServiceMessage =
+  '일시적으로 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+export function careerErrorMessage(error: unknown) {
+  return error instanceof TypeError || !(error instanceof Error)
+    ? temporaryServiceMessage
+    : error.message;
+}
 export async function careerResponse(response: Response) {
-  if (!response.headers.get('content-type')?.includes('application/json')) {
-    // Cloudflare resource failures are HTML. Do not surface a JSON parser error to the manager.
-    throw new Error(
-      response.status >= 500
-        ? '서버 처리가 중단됐습니다. 잠시 후 다시 시도해 주세요. 저장한 진행 상황을 다시 확인합니다.'
-        : '서버 응답을 읽지 못했습니다. 페이지를 새로고침해 주세요.',
-    );
+  if (response.status >= 500 || response.status === 429) {
+    const text = await response.text();
+    if (/\b1027\b|daily request limit/i.test(text))
+      throw new Error(
+        '오늘의 서비스 이용량 한도에 도달했습니다. 한국 시간 오전 9시 이후 다시 시도해 주세요.',
+      );
+    throw new Error(temporaryServiceMessage);
   }
-  return response.json();
+  if (!response.headers.get('content-type')?.includes('application/json')) {
+    throw new Error(temporaryServiceMessage);
+  }
+  try {
+    return await response.json();
+  } catch {
+    throw new Error(temporaryServiceMessage);
+  }
 }

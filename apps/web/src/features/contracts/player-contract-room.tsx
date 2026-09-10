@@ -67,6 +67,31 @@ export function PlayerContractRoom({
       : ['구단 이적 협의', '개인 조건 협상', '최종 서명'];
   const current =
     deal?.status === 'accepted' && !expired ? 2 : deal && deal.stage !== 'club' ? 1 : 0;
+  if (!own && player.club !== 'fa')
+    return (
+      <section className="contract-room panel-content">
+        <h2>
+          {player.name} · {getClub(player.club)?.name} 소속
+        </h2>
+        <p>
+          연봉 {money(player.salary)} · 계약 {player.years}년 남음
+        </p>
+        <p>
+          타 구단 소속 선수에게는 직접 연봉 협상을 제안할 수 없습니다. 계약 조건을 승계하는 구단 간
+          트레이드로 영입하거나, 자유계약 신분이 된 뒤 협상하세요.
+        </p>
+        {getClub(player.club)?.league === getClub(g.club)?.league ? (
+          <Link
+            className="button primary"
+            href={`/?view=trade&target=${encodeURIComponent(player.id)}`}
+          >
+            트레이드 제안 준비 →
+          </Link>
+        ) : (
+          <p className="muted">현재 트레이드는 같은 리그 구단 간에 지원합니다.</p>
+        )}
+      </section>
+    );
   return (
     <section className="contract-room">
       <header className="contract-room-header">
@@ -145,6 +170,29 @@ export function PlayerContractRoom({
               </small>
             )}
           </div>
+          {deal?.history?.length ? (
+            <div className="contract-previous-offer" aria-label="이전 제안 비교">
+              <div>
+                <small>내가 마지막으로 제안한 조건</small>
+                <strong>
+                  {money(
+                    (deal.history.findLast((h) => h.side === 'club') || deal.history[0]).salary,
+                  )}
+                </strong>
+                <span>
+                  {(deal.history.findLast((h) => h.side === 'club') || deal.history[0]).years}년
+                  계약
+                </span>
+              </div>
+              <div>
+                <small>{deal.status === 'pending' ? '상대 답변 대기' : '상대의 현재 조건'}</small>
+                <strong>{deal.status === 'pending' ? '검토 중' : money(deal.salary)}</strong>
+                <span>
+                  {deal.status === 'pending' ? '아직 확정되지 않았습니다.' : `${deal.years}년 계약`}
+                </span>
+              </div>
+            </div>
+          ) : null}
           {blocked && <p className="rule-notice">첫 시즌 외부 영입 금지 조건입니다.</p>}
           {editing ? (
             <PlayerOfferForm
@@ -173,7 +221,7 @@ export function PlayerContractRoom({
                 </div>
                 <div>
                   <dt>계약금 · 수수료 포함 지출</dt>
-                  <dd>{money(deal.fee + deal.agentFee + deal.salary * 0.15)}</dd>
+                  <dd>{money(deal.fee + deal.agentFee + deal.salary * 0.05)}</dd>
                 </div>
               </dl>
               <div className="contract-room-actions">
@@ -250,7 +298,7 @@ export function PlayerContractRoom({
             salary: signing.salary,
             years: signing.years,
             costs: [
-              { label: '계약금 · 연봉의 15%', amount: signing.salary * 0.15 },
+              { label: '계약금 · 연봉의 5%', amount: signing.salary * 0.05 },
               { label: '에이전트 수수료', amount: signing.agentFee },
               { label: '이적료', amount: signing.fee },
             ],
@@ -262,7 +310,7 @@ export function PlayerContractRoom({
             !!(await act({ type: 'reviseContractSalary', kind: 'player', id: signing.id, salary }))
           }
           estimateCosts={(salary) => [
-            { label: '계약금 · 연봉의 15%', amount: salary * 0.15 },
+            { label: '계약금 · 연봉의 5%', amount: salary * 0.05 },
             { label: '에이전트 수수료', amount: Math.round(salary * agent.fee) },
             { label: '이적료', amount: signing.fee },
           ]}

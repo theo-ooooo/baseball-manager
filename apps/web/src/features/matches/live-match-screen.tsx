@@ -14,6 +14,14 @@ import { MatchPreview } from './match-preview';
 import { MatchOverview } from './match-overview';
 import { MatchAudioSettings } from './match-audio-settings';
 import { AppVersion } from '../../components/app-version';
+import { MatchDecisionBar } from './match-decision-bar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 export function LiveMatchScreen({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
   const live = g.liveMatch!;
   // Old partial matches are prepared by an explicit action, never by rendering or GET.
@@ -140,20 +148,45 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
       <div className="match-broadcast" hidden={panel !== 'watch'}>
         <div className="match-broadcast-main">
           <MatchAtBat result={result} cursor={cursor} settled={settled} />
-          <StadiumScene
-            replayKey={cursor}
-            result={m.sceneResult}
-            index={Math.max(0, cursor - 1)}
-            playing={m.animating && panel === 'watch'}
-            speed={Number(m.speed)}
-            reduced={m.reduced}
-            complete={settled}
-            onEnd={m.finishPlay}
-            onCue={m.onCue}
-          />
-          {m.commandOpen && !finished && (
-            <MatchCommandPanel g={g} cursor={m.consumed} busy={busy} act={act} />
-          )}
+          <div className="match-field-view">
+            <StadiumScene
+              replayKey={cursor}
+              result={m.sceneResult}
+              index={Math.max(0, cursor - 1)}
+              playing={m.animating && panel === 'watch'}
+              speed={Number(m.speed)}
+              reduced={m.reduced}
+              complete={settled}
+              onEnd={m.finishPlay}
+              onCue={m.onCue}
+            />
+            <MatchDecisionBar
+              decision={m.decision}
+              paused={m.decisionVisible && !m.commandOpen}
+              busy={busy}
+              onPlan={() => m.showPanel('plan')}
+              onCommand={m.toggleCommand}
+              onContinue={() => m.play()}
+              previousCommand={m.previousCommand}
+              onRepeat={m.repeatCommand}
+            />
+          </div>
+          <Dialog
+            open={m.commandOpen && !finished}
+            onOpenChange={() => {
+              if (!busy) m.toggleCommand();
+            }}
+          >
+            <DialogContent className="match-command-dialog">
+              <DialogHeader>
+                <DialogTitle>{m.decision.attacking ? '타자 작전' : '마운드 사인'}</DialogTitle>
+                <DialogDescription>
+                  {m.decision.situation} · 다음 타자 {m.decision.batter}
+                </DialogDescription>
+              </DialogHeader>
+              <MatchCommandPanel g={g} cursor={m.consumed} busy={busy} act={act} />
+            </DialogContent>
+          </Dialog>
         </div>
         <aside className={`match-center-report ${m.report === 'lineup' ? 'is-lineup' : ''}`}>
           <nav aria-label="중계 정보">
@@ -215,48 +248,19 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               </button>
             </div>
           )}
-          <button
-            className="match-start"
-            disabled={busy || finished || m.planDirty}
-            onClick={() => (playing ? m.pause() : m.play())}
-          >
-            {playing ? <Pause size={17} /> : <Play size={17} />}
-            {playing
-              ? '일시정지'
-              : cursor === 0
-                ? '플레이볼'
-                : !settled
-                  ? '이 장면 계속'
-                  : '경기 계속'}
-          </button>
-          <button
-            disabled={busy || playing || finished || m.planDirty}
-            onClick={() => m.play(false)}
-          >
-            {settled ? '다음 플레이' : '이 장면만 재생'}
-          </button>
-          <select
-            aria-label="경기 속도"
-            value={m.speed}
-            onChange={(e) => m.setSpeed(e.target.value)}
-          >
-            {['1', '2', '4', '8'].map((n) => (
-              <option key={n} value={n}>
-                {n}×
-              </option>
+          {!finished &&
+            (m.decisionVisible && settled ? (
+              <span className="match-playback-status">감독 결정 대기</span>
+            ) : (
+              <button
+                className="match-start"
+                disabled={busy || m.planDirty}
+                onClick={() => (playing ? m.pause() : m.play())}
+              >
+                {playing ? <Pause size={17} /> : <Play size={17} />}
+                {playing ? '일시정지' : cursor === 0 ? '플레이볼' : '이 장면 계속'}
+              </button>
             ))}
-          </select>
-          <button disabled={busy || finished || m.planDirty} onClick={() => m.showPanel('plan')}>
-            <Settings2 size={15} /> 선수·전술
-          </button>
-          <button
-            disabled={busy || finished || m.planDirty}
-            aria-expanded={m.commandOpen}
-            aria-controls="match-command-panel"
-            onClick={m.toggleCommand}
-          >
-            작전 지시
-          </button>
           {finished ? (
             <button className="match-start match-complete" disabled={busy} onClick={m.complete}>
               경기 후 보고 →
@@ -264,6 +268,41 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           ) : (
             <span className="match-shortcut">Space 재생·일시정지</span>
           )}
+          <details className="match-view-settings">
+            <summary>
+              <Settings2 size={15} /> 중계 설정 · {m.speed}×
+            </summary>
+            <div className="match-view-settings-content">
+              <label className="match-speed-label">
+                재생 속도
+                <select
+                  aria-label="경기 속도"
+                  value={m.speed}
+                  onChange={(e) => m.setSpeed(e.target.value)}
+                >
+                  {['1', '2', '4', '8'].map((n) => (
+                    <option key={n} value={n}>
+                      {n}×
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <fieldset className="match-auto-pause">
+                <legend>자동 일시정지</legend>
+                {(['opportunity', 'threat'] as const).map((kind) => (
+                  <label key={kind}>
+                    <input
+                      type="checkbox"
+                      checked={m.autoPause.settings[kind]}
+                      onChange={(e) => m.autoPause.toggle(kind, e.target.checked)}
+                    />
+                    {kind === 'opportunity' ? '득점 기회' : '실점 위기'}
+                  </label>
+                ))}
+                <small>체크 해제 시 계속 진행</small>
+              </fieldset>
+            </div>
+          </details>
           <AppVersion />
         </footer>
       )}

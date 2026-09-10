@@ -1,19 +1,26 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useTradeDraft } from './use-trade-draft';
 import type { GameState, Player } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { ratingText } from '@dugout/shared/ratings';
 import { useWorld } from '../career/world-context';
 import type { Act } from '../career/game-contracts';
 import { Choice } from '../../components/game-ui';
-export function TradePanel({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
-  const { clubs, getClub, rosterFor } = useWorld(),
-    others = clubs.filter((c) => c.id !== g.club && c.league === getClub(g.club).league);
-  const [club, setClub] = useState(others[0]?.id || ''),
-    [outgoing, setOutgoing] = useState<string[]>([]),
-    [incoming, setIncoming] = useState<string[]>([]),
-    [cash, setCash] = useState('0');
+export function TradePanel({
+  g,
+  act,
+  busy,
+  targetId,
+}: {
+  g: GameState;
+  act: Act;
+  busy: boolean;
+  targetId?: string;
+}) {
+  const { getClub, rosterFor } = useWorld();
+  const { others, club, setClub, outgoing, setOutgoing, incoming, setIncoming, cash, setCash } =
+    useTradeDraft(g, targetId);
   const list = (players: Player[], selected: string[], set: (ids: string[]) => void) => (
     <div className="trade-player-list">
       {players.map((p) => (

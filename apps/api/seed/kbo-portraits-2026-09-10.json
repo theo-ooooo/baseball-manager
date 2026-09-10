@@ -2604,6 +2604,13 @@
    "url": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/person/middle/2026/54303.jpg",
    "source": "https://www.koreabaseball.com/Record/Player/HitterDetail/Basic.aspx?playerId=54303",
    "asOf": "2026-09-10"
+  },
+  "real-2149789910": {
+   "league": "kbo",
+   "officialId": "51528",
+   "url": "https://6ptotvmi5753.edge.naverncp.com/KBO_IMAGE/person/middle/2026/51528.jpg",
+   "source": "https://www.koreabaseball.com/Record/Player/HitterDetail/Total.aspx?playerId=51528",
+   "asOf": "2026-09-10"
   }
  },
  "evidence": {
@@ -6587,6 +6594,17 @@
    "officialPos": "외야수",
    "officialTeam": "키움",
    "birth": "2004-11-20",
+   "basis": "club+name+number"
+  },
+  "real-2149789910": {
+   "name": "손성빈",
+   "club": "kbo-lotte",
+   "catalogNumber": 28,
+   "catalogPos": "C",
+   "officialNumber": 28,
+   "officialPos": "포수",
+   "officialTeam": "롯데",
+   "birth": "2002-01-14",
    "basis": "club+name+number"
   }
  }

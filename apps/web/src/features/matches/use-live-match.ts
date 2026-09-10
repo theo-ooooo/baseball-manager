@@ -8,15 +8,32 @@ import { useMatchAudio } from './use-match-audio';
 import type { MatchCue } from './match-commentary';
 import { useIsMobile } from '../../hooks/use-mobile';
 import { useReducedMotion } from '../../hooks/use-reduced-motion';
+import { previousMatchCommand } from '@dugout/shared/match-commands';
+import { sendMatchCommand } from './use-match-command';
+import { matchDecision } from '@dugout/shared/match-decision';
+import { useDecisionPrompt } from './use-decision-prompt';
+import { useMatchPauseSettings } from './use-match-pause-settings';
+import { useMatchResume } from './use-match-resume';
 
 export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const live = g.liveMatch!,
     result = live.timeline!;
+  const resume = useMatchResume(live);
+  const autoPause = useMatchPauseSettings();
+  const shouldPause = useCallback(
+    (cursor: number) => {
+      const kind = matchDecision(live, g.club, cursor).kind;
+      return !!kind && autoPause.settings[kind];
+    },
+    [live, g.club, autoPause.settings],
+  );
   const playback = useMatchPlayback(
     `dugout:playback:${live.playbackId}:${live.timelineVersion}`,
     live.cursor,
     result.log.length,
     busy,
+    shouldPause,
+    resume,
   );
   const [panel, setPanel] = useState<'preview' | 'watch' | 'plan'>(() =>
     playback.cursor ? 'watch' : 'preview',
@@ -25,11 +42,14 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [planDirty, setPlanDirty] = useState(false);
   const [commentary, setCommentary] = useState<MatchCue[]>([]);
-  const [soundPaused, setSoundPaused] = useState(true);
+  const [soundPaused, setSoundPaused] = useState(!resume);
   const dialogRef = useRef<HTMLElement>(null);
   const mobile = useIsMobile(),
     reduced = useReducedMotion();
-  const audio = useMatchAudio(!soundPaused && panel === 'watch' && !busy, Number(playback.speed));
+  const audio = useMatchAudio(
+    !soundPaused && playback.playing && panel === 'watch' && !busy,
+    Number(playback.speed),
+  );
   useEffect(() => {
     dialogRef.current?.focus({ preventScroll: true });
   }, []);
@@ -46,6 +66,14 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     return () => document.removeEventListener('visibilitychange', hide);
   }, [pause]);
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
+  const decision = useMemo(() => matchDecision(live, g.club, consumed), [live, g.club, consumed]);
+  const previousCommand = previousMatchCommand(live, g.club, consumed);
+  const decisionVisible = useDecisionPrompt(
+    playback.cursor,
+    !playback.playing,
+    playback.settled,
+    !!decision.kind,
+  );
   const sceneResult = useMemo(
     () => (playback.cursor === 0 ? { ...result, log: [], homeScore: 0, awayScore: 0 } : result),
     [result, playback.cursor],
@@ -102,6 +130,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   };
   return {
     ...playback,
+    autoPause,
     live,
     result,
     dialogRef,
@@ -129,6 +158,19 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     commentary,
     onCue,
     consumed,
+    decision,
+    decisionVisible,
+    previousCommand,
+    repeatCommand: () => {
+      if (
+        !busy &&
+        !playback.playing &&
+        playback.settled &&
+        previousCommand &&
+        !previousCommand.reason
+      )
+        void sendMatchCommand(g, consumed, previousCommand.kind, act);
+    },
     sceneResult,
     play,
     pause,

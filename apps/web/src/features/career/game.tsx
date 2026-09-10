@@ -53,6 +53,8 @@ import { CoachPanel } from '../squad/coach-panel';
 import { Badge } from '../../components/game-ui';
 import { AppVersion } from '@/components/app-version';
 import { nav } from './game-navigation';
+import { MobileNavigation } from './mobile-navigation';
+import { PlayerSearch } from '../players/player-search';
 import type { Act, CareerData } from './game-contracts';
 import { NewCareer } from './career-setup';
 import { Dashboard } from './dashboard';
@@ -82,6 +84,7 @@ export function GameScreen({
   initialReportId,
   initialOfferId,
   initialClubId,
+  initialTradeTarget,
 }: {
   initial: CareerData;
   refreshCatalog: () => Promise<void>;
@@ -90,6 +93,7 @@ export function GameScreen({
   initialReportId?: string;
   initialOfferId?: string;
   initialClubId?: string;
+  initialTradeTarget?: string;
 }) {
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
@@ -322,15 +326,15 @@ export function GameScreen({
   return (
     <SidebarProvider style={{ '--sidebar-width': '224px' } as CSSProperties}>
       <ActionProgress action={pendingAction} phase={requestPhase} />
-      {!['player', 'match'].includes(view) && (
+      {!['player', 'match', 'matchday'].includes(view) && (
         <div style={{ display: 'contents' }} inert={progressing || undefined}>
           <AppSidebar g={g} view={view} onView={setView} onNew={() => setNewConfirm(true)} />
         </div>
       )}
       <main
-        className={`workspace ${view === 'match' ? 'match-workspace' : view === 'player' ? 'player-workspace' : ''}`}
+        className={`workspace ${view === 'match' ? 'match-workspace' : view === 'matchday' ? 'matchday-workspace' : view === 'player' ? 'player-workspace' : ''}`}
       >
-        {view !== 'match' && (
+        {!['match', 'matchday'].includes(view) && (
           <header className="topbar" inert={progressing || undefined}>
             <div className="breadcrumb">
               {view === 'player' ? (
@@ -473,7 +477,8 @@ export function GameScreen({
             </div>
           </header>
         )}
-        {view !== 'match' && !g.liveMatch && step && (
+        {!['match', 'matchday'].includes(view) && <PlayerSearch g={g} onPlayer={setPlayer} />}
+        {!['match', 'matchday'].includes(view) && !g.liveMatch && step && (
           <div className="manager-next-step">
             <span>
               <b>다음 할 일</b>
@@ -549,7 +554,7 @@ export function GameScreen({
               <button onClick={() => setView('match')}>경기장으로 →</button>
             </div>
           )}
-          {view !== 'home' && view !== 'match' && (
+          {!['home', 'match', 'matchday'].includes(view) && (
             <div className="page-title">
               <h1>
                 {view === 'player'
@@ -622,6 +627,7 @@ export function GameScreen({
               <Link href="/?view=manager">내 프로필</Link>
               <Link href="/?view=manager-contract">계약 · 휴가</Link>
               <Link href="/?view=manager-history">경력</Link>
+              {!isUnemployed(g) && <Link href="/?view=media">인터뷰 · 팀 대화</Link>}
             </nav>
           )}
           {view === 'home' && isUnemployed(g) && (
@@ -722,6 +728,45 @@ export function GameScreen({
               offerId={initialOfferId}
             />
           )}
+          {['squad', 'reserves', 'tactics', 'medical', 'dynamics'].includes(view) && (
+            <nav className="section-tabs" aria-label="선수단 관리">
+              {[
+                ['squad', '선수 명단'],
+                ['reserves', '1군 · 2군'],
+                ['tactics', '전술 · 타순'],
+                ['medical', '의무'],
+                ['dynamics', '분위기'],
+              ].map(([id, label]) => (
+                <Link
+                  key={id}
+                  href={`/?view=${id}`}
+                  aria-current={view === id ? 'page' : undefined}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          )}
+          {['vision', 'finance'].includes(view) && (
+            <nav className="section-tabs" aria-label="구단 운영">
+              <Link href="/?view=vision" aria-current={view === 'vision' ? 'page' : undefined}>
+                구단 비전
+              </Link>
+              <Link href="/?view=finance" aria-current={view === 'finance' ? 'page' : undefined}>
+                재정
+              </Link>
+            </nav>
+          )}
+          {['world', 'records'].includes(view) && (
+            <nav className="section-tabs" aria-label="리그 정보">
+              <Link href="/?view=world" aria-current={view === 'world' ? 'page' : undefined}>
+                리그 · 선수 순위
+              </Link>
+              <Link href="/?view=records" aria-current={view === 'records' ? 'page' : undefined}>
+                통산 기록 · 은퇴 선수
+              </Link>
+            </nav>
+          )}
           {view === 'reserves' && <CoachRecommendations g={g} act={act} busy={busy} />}
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
@@ -729,10 +774,16 @@ export function GameScreen({
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
           {view === 'world' && <World g={g} onPlayer={setPlayer} />}
-          {['market', 'trade', 'draft'].includes(view) && (
+          {['market', 'trade', 'draft', 'scouting', 'agents'].includes(view) && (
             <nav className="section-tabs" aria-label="영입">
+              <Link href="/?view=scouting" aria-current={view === 'scouting' ? 'page' : undefined}>
+                스카우트
+              </Link>
               <Link href="/?view=market" aria-current={view === 'market' ? 'page' : undefined}>
                 선수 시장
+              </Link>
+              <Link href="/?view=agents" aria-current={view === 'agents' ? 'page' : undefined}>
+                계약 협상
               </Link>
               <Link href="/?view=trade" aria-current={view === 'trade' ? 'page' : undefined}>
                 트레이드
@@ -743,7 +794,15 @@ export function GameScreen({
             </nav>
           )}
           {view === 'medical' && <MedicalPanel g={g} act={act} busy={busy} />}
-          {view === 'trade' && <TradePanel g={g} act={act} busy={busy} />}
+          {view === 'trade' && (
+            <TradePanel
+              key={initialTradeTarget || 'trade'}
+              g={g}
+              act={act}
+              busy={busy}
+              targetId={initialTradeTarget}
+            />
+          )}
           {view === 'draft' && <DraftPanel g={g} act={act} busy={busy} />}
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
           {view === 'scouting' && (
@@ -785,6 +844,18 @@ export function GameScreen({
           </button>
         </footer>
       </main>
+      {!['match', 'matchday', 'player'].includes(view) && (
+        <MobileNavigation
+          view={view}
+          unemployed={g.managerCareer?.status === 'unemployed'}
+          unread={g.news.filter((item) => !item.read).length}
+          disabled={busy || progressing}
+          onContinue={continueFlow}
+          continueLabel={g.liveMatch ? '경기장으로' : step?.label || '계속 진행'}
+          date={dateLabel(g)}
+          onView={setView}
+        />
+      )}
       <StadiumReplay result={replay} close={() => setReplay(null)} />
       {contractPlayer && (
         <PlayerContractDialog
@@ -923,12 +994,14 @@ export default function Game({
   initialReportId,
   initialOfferId,
   initialClubId,
+  initialTradeTarget,
 }: {
   initialPlayerId?: string;
   initialView?: string;
   initialReportId?: string;
   initialOfferId?: string;
   initialClubId?: string;
+  initialTradeTarget?: string;
 } = {}) {
   const { data, error, reconnect, refreshCatalog } = useGameResources();
   if (!data)
@@ -966,6 +1039,7 @@ export default function Game({
         initialReportId={initialReportId}
         initialOfferId={initialOfferId}
         initialClubId={initialClubId}
+        initialTradeTarget={initialTradeTarget}
         refreshCatalog={refreshCatalog}
       />
     </WorldProvider>

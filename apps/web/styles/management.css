@@ -3114,3 +3114,31 @@ input,
     font-size: 12px;
   }
 }
+.coach-evidence {
+  padding: 14px;
+  margin: 12px 0;
+  background: #f0f5fb;
+  border-radius: 8px;
+}
+.coach-evidence > strong {
+  color: #235aa0;
+  font-size: 13px;
+}
+.coach-evidence dl {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.coach-evidence dl > div {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+.coach-evidence dd {
+  text-align: right;
+}
+.coach-evidence p {
+  font-size: 12px;
+  line-height: 1.8;
+}

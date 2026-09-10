@@ -55,10 +55,27 @@ export function MatchPitchingPlan({
       </div>
       {!!g.liveMatch?.bullpenVersion && (
         <div className="panel-content">
-          <p>
-            두 명까지 몸 풀기 · 2타석 후 준비 완료 · 8타석 초과 시 피로. 준비 1회마다 경기 후 체력
-            2를 소모합니다.
-          </p>
+          <div className="bullpen-guide">
+            <strong>몸 풀기는 등판 준비입니다. 자동으로 교체되지는 않습니다.</strong>
+            <ol>
+              <li>
+                <b>몸 풀기</b>를 누르고 중계로 돌아가 경기를 진행하세요. 양 팀 합계 2타석이 끝나면
+                준비가 완료됩니다.
+              </li>
+              <li>
+                <b>투입 준비 완료</b>인 투수를 선택하고, 우리 팀 수비 타석 직전에{' '}
+                <b>교체·전술 적용</b>을 누르면 등판합니다.
+              </li>
+              <li>
+                당장 쓰지 않으면 <b>대기로 전환</b>하세요. 준비는 초기화되며 다시 몸을 풀어야
+                합니다.
+              </li>
+            </ol>
+            <small>
+              동시에 2명까지 · 8타석을 넘겨 계속 몸을 풀면 피로 · 몸 풀기 1회당 경기 후 체력 −2.
+              준비 부족·장시간 준비 상태의 긴급 투입에는 추가 피로가 적용됩니다.
+            </small>
+          </div>
           {draft.players
             .filter((p) => p.pos === 'P' && p.id !== draft.initial.pitcher)
             .map((p) => {
@@ -66,7 +83,14 @@ export function MatchPitchingPlan({
               return (
                 <div className="manager-form" key={p.id}>
                   <span>
-                    {p.name} · {bullpenLabels[state.status]} ({state.batters}타석)
+                    {p.name} · {bullpenLabels[state.status]}
+                    {state.status === 'warming'
+                      ? ` · ${2 - state.batters}타석 더 진행하면 준비 완료`
+                      : state.status === 'ready'
+                        ? ' · 교체를 선택할 수 있습니다'
+                        : state.status === 'tired'
+                          ? ' · 대기 전환을 권합니다'
+                          : ' · 등판하려면 먼저 몸을 풀어 주세요'}
                   </span>
                   <button
                     type="button"

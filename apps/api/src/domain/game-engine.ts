@@ -60,6 +60,7 @@ import {
   preseasonFixtures,
 } from '@dugout/shared/management';
 import { prepareSquad, managementAction, canRemove, developSquad } from './squad-management';
+import { releasePlayer } from './player-release';
 export function createGameEngine(world: WorldCatalog) {
   const {
     clubs,
@@ -934,6 +935,8 @@ export function createGameEngine(world: WorldCatalog) {
         return s;
       case 'sell':
         return sellPlayer(s, String(a.id), String(a.offerId || ''));
+      case 'releasePlayer':
+        return releasePlayer(s, a);
       case 'nextSeason':
         return nextSeason(s);
       case 'skipPreseason':

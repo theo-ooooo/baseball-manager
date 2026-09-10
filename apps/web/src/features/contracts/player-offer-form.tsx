@@ -1,10 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { usePlayerOffer } from './use-player-offer';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Deal } from '@dugout/shared/types';
-import { askPrice, fromManwon, money, toManwon } from '@dugout/shared/game-view';
-import { useWorld } from '../career/world-context';
+import { money } from '@dugout/shared/game-view';
 import type { PlayerContractProps as Props } from './contract-types';
 
 export function PlayerOfferForm({
@@ -17,29 +16,20 @@ export function PlayerOfferForm({
   blocked,
   onSent,
 }: Props & { deal?: Deal; own: boolean; blocked: boolean; onSent: () => void }) {
-  const { agentFor } = useWorld();
-  const [salary, setSalary] = useState(String(toManwon(deal?.salary ?? player.salary * 1.1))),
-    [years, setYears] = useState(deal?.years ?? 3),
-    [fee, setFee] = useState(String(toManwon(deal?.fee ?? askPrice(player))));
-  const amount = fromManwon(Number(salary)),
-    agentFee = Math.round(amount * agentFor(player).fee);
-  const retained =
-    deal?.stage === 'player' &&
-    deal.seller &&
-    deal.status !== 'withdrawn' &&
-    deal.status !== 'expired' &&
-    deal.status !== 'rejected' &&
-    (deal.year === undefined || deal.year === g.year) &&
-    g.day <= (deal.expires ?? deal.day + 14);
-  const transfer = own || player.club === 'fa' ? 0 : retained ? deal!.fee : fromManwon(Number(fee));
-  const cost = transfer + agentFee + amount * 0.15;
-  const valid =
-    Number.isFinite(amount) &&
-    amount > 0 &&
-    amount <= 1e8 &&
-    Number.isFinite(transfer) &&
-    transfer >= 0 &&
-    transfer <= 1e10;
+  const {
+    salary,
+    setSalary,
+    years,
+    setYears,
+    fee,
+    setFee,
+    amount,
+    agentFee,
+    retained,
+    transfer,
+    cost,
+    valid,
+  } = usePlayerOffer(player, g, deal, own);
   return (
     <form
       className="contract-offer-form"
@@ -134,10 +124,11 @@ export function PlayerOfferForm({
           )}
         </div>
       )}
-      <div className="contract-estimate">
+      <details className="contract-estimate">
+        <summary>부대 비용 · 서명 시 예상 지출 {money(valid ? cost : 0)}</summary>
         <div>
-          <span>계약금 · 연봉의 15%</span>
-          <strong>{money(valid ? amount * 0.15 : 0)}</strong>
+          <span>계약금 · 연봉의 5%</span>
+          <strong>{money(valid ? amount * 0.05 : 0)}</strong>
         </div>
         <div>
           <span>에이전트 수수료</span>
@@ -147,7 +138,7 @@ export function PlayerOfferForm({
           <span>서명 시 예상 지출</span>
           <strong>{money(valid ? cost : 0)}</strong>
         </div>
-      </div>
+      </details>
       {valid && cost > g.budget && (
         <p className="rule-notice">
           가용 예산을 {money(cost - g.budget)} 초과합니다. 조건을 낮춰 주세요.

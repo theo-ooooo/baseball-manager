@@ -88,7 +88,7 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-10-v9',
+    version: 'world-2026-09-10-v10',
     year: 2026,
     clubs: clubs.map((club) => ({
       ...club,

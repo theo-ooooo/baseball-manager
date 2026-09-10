@@ -34,9 +34,9 @@ export function matchCommentary(scene: ReturnType<typeof replayScene>, key: stri
       cue('runner', 0, `${scene.batter || '주자'}, 다음 베이스를 노립니다.`),
       cue('throw', 0.15, '포수가 공을 뿌립니다!', 'pitch'),
       cue('catch', 0.8, '베이스에서 승부!', 'glove'),
-      cue('result', 0.9, scene.event.text, scored ? 'cheer' : undefined, true),
+      cue('result', 1, scene.event.text, scored ? 'cheer' : undefined, true),
     ];
-  if (scene.kind === 'tiebreak') return [cue('result', 0.9, scene.event.text, undefined, true)];
+  if (scene.kind === 'tiebreak') return [cue('result', 1, scene.event.text, undefined, true)];
   const cues = [
     cue('ready', 0, `${situation}${scene.batter || '타자'}, 타석에 들어섭니다.`),
     cue('pitch', 0.06, `${scene.pitcher || '투수'}, 던졌습니다.`, 'pitch'),
@@ -60,7 +60,7 @@ export function matchCommentary(scene: ReturnType<typeof replayScene>, key: stri
       cues.push(cue('field', 0.65, '수비수가 타구를 처리합니다.', 'glove'));
   }
   const score = scored ? ` 스코어 ${scene.event.score[0]} 대 ${scene.event.score[1]}.` : '';
-  cues.push(cue('result', 0.9, `${scene.event.text}${score}`, scored ? 'cheer' : undefined, true));
+  cues.push(cue('result', 1, `${scene.event.text}${score}`, scored ? 'cheer' : undefined, true));
   return cues;
 }
 

@@ -1,5 +1,5 @@
 'use client';
-import { financePlan } from '@dugout/shared/club-finance';
+import { financePlan, financeAssessment } from '@dugout/shared/club-finance';
 import { useWorld } from '../career/world-context';
 import { ArrowUpRight, Banknote, Trophy, Users, Wallet } from 'lucide-react';
 import {
@@ -19,6 +19,7 @@ import { Metric, Empty } from '../../components/game-ui';
 export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] }) {
   const { getClub } = useWorld();
   const plan = financePlan(g, getClub(g.club).league);
+  const board = financeAssessment(g, getClub(g.club).league);
   const wages = g.roster.reduce((s, p) => s + p.salary, 0),
     coaches = g.staff.reduce((s, c) => s + c.salary, 0);
   return (
@@ -49,6 +50,41 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
           icon={<Users size={18} />}
         />
       </div>
+      <section className="panel finance-board">
+        <div className="panel-header">
+          <h2>이사회 재정 평가</h2>
+          <strong>{board.status}</strong>
+        </div>
+        <div className="panel-content">
+          <p>
+            {board.penalty
+              ? `${board.reasons.join(' · ')}. 다음 이사회 평가에 신뢰도 −${board.penalty}점이 반영됩니다.`
+              : '현재 급여와 추가 지출이 승인 범위 안에 있습니다.'}
+          </p>
+          <dl>
+            <div>
+              <dt>총 연봉 / 승인 급여 예산</dt>
+              <dd>
+                {money(board.payroll)} / {money(board.wageBudget)}
+              </dd>
+            </div>
+            <div>
+              <dt>추가 지출 / 권장 한도</dt>
+              <dd>
+                {money(board.extraSpending)} / {money(board.spendingBudget)}
+              </dd>
+            </div>
+            <div>
+              <dt>남은 급여·지원금 정산 후 잔액</dt>
+              <dd>{money(board.projectedCash)}</dd>
+            </div>
+          </dl>
+          <small>
+            잔액 예상에는 앞으로의 경기 수입·상금·새 계약은 포함하지 않습니다. 급여 예산은 시즌 중
+            영입해도 자동으로 늘지 않습니다. 초과 지출을 줄이면 신뢰도 감점도 완화됩니다.
+          </small>
+        </div>
+      </section>
       <section className="panel ledger-panel">
         <div className="panel-header">
           <h2>거래 내역</h2>
@@ -76,6 +112,7 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
                     continue: '날짜 진행 · 경기 수입 · 급여',
                     continueDay: '날짜 진행 · 경기 수입 · 급여',
                     sign: '선수 계약',
+                    releasePlayer: '선수 방출 · 보장 급여 정산',
                     sell: '선수 매각',
                     coach: '코치 계약',
                     signCoach: '코치 계약 · 교체 보상금',

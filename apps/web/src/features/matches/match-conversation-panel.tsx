@@ -1,14 +1,13 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import {
+  useMatchConversation,
+  useConversationForm,
+  useConversationFocus,
+} from './use-match-conversation';
 import { Check, Mic, Users, ArrowRight } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
-import {
-  preMatchConversation,
-  type MatchConversation,
-  type ConversationRecord,
-} from '@dugout/shared/match-media';
+import { type MatchConversation, type ConversationRecord } from '@dugout/shared/match-media';
 import type { Act } from '../career/game-contracts';
-import { useWorld } from '../career/world-context';
 import { ClubBadge } from '../../components/club-badge';
 
 export function MatchConversationPanel({
@@ -22,17 +21,8 @@ export function MatchConversationPanel({
   busy: boolean;
   onContinue: () => void;
 }) {
-  const { nextFixture, getClub } = useWorld();
-  const pair = nextFixture(g);
-  const pre = pair
-    ? preMatchConversation(g, pair, getClub(pair.find((id) => id !== g.club)!).name)
-    : null;
-  const context = g.media?.pending || pre;
-  const [selected, setSelected] = useState<string | null>(null);
-  const journal = g.media?.journal || [];
-  const prior = selected ? journal.find((r) => r.key === selected) : undefined;
-  const completed =
-    prior || journal.find((r) => r.key === context?.key) || (!context ? journal[0] : undefined);
+  const { context, selected, setSelected, journal, prior, completed, getClub } =
+    useMatchConversation(g);
   return (
     <div className="match-media-page">
       <section
@@ -42,7 +32,7 @@ export function MatchConversationPanel({
           <ClubBadge club={getClub(g.club)} size="small" />
           <div>
             <span>MEDIA ROOM · CLUBHOUSE</span>
-            <h2>감독의 한마디</h2>
+            <h2>{context?.stage === 'post' ? '경기 후 기자회견' : '경기 전 기자회견'}</h2>
           </div>
           <small>{context?.date || completed?.date || '구단 일정'}</small>
         </header>
@@ -75,8 +65,8 @@ export function MatchConversationPanel({
         )}
       </section>
       {!!journal.length && (
-        <section className="media-journal">
-          <h3>지난 발언과 선수 반응</h3>
+        <details className="media-journal">
+          <summary>지난 발언과 선수 반응 · {journal.length}건</summary>
           <p>최근 20회의 경기 전·후 대화 기록</p>
           {journal.map((r) => (
             <button
@@ -91,7 +81,7 @@ export function MatchConversationPanel({
               <span>{r.delegated ? '코치 위임' : '감독 참석'}</span>
             </button>
           ))}
-        </section>
+        </details>
       )}
     </div>
   );
@@ -107,33 +97,15 @@ function ConversationForm({
   act: Act;
   busy: boolean;
 }) {
-  const [at, setAt] = useState(0),
-    [answers, setAnswers] = useState<Record<string, string>>({});
-  const questionHeading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    questionHeading.current?.focus({ preventScroll: true });
-    questionHeading.current?.scrollIntoView({ block: 'center' });
-  }, [at]);
-  const question = context.questions[at],
-    last = at === context.questions.length - 1;
+  const f = useConversationForm(context, act, busy);
+  const { at, setAt, answers, selected, last, question, questionHeading } = f;
   const coach = g.staff.find((c) => c.role === '수석') || g.staff[0];
-  const selected = answers[question.id];
   return (
     <form
       className={`media-conversation ${question.room === 'team' ? 'is-team-talk' : ''}`}
       onSubmit={async (e) => {
         e.preventDefault();
-        if (busy || !selected) return;
-        if (!last) {
-          setAt(at + 1);
-          return;
-        }
-        await act({
-          type: 'matchConversation',
-          stage: context.stage,
-          key: context.key,
-          answers: context.questions.map((q) => ({ id: q.id, choice: answers[q.id] })),
-        });
+        await f.submit();
       }}
     >
       <div className="media-brief">
@@ -152,31 +124,56 @@ function ConversationForm({
           </li>
         ))}
       </ol>
-      <section className="media-question" aria-live="polite">
-        <small>{question.speaker}</small>
-        <h3 ref={questionHeading} tabIndex={-1}>
-          {question.text}
-        </h3>
-      </section>
-      <fieldset className="media-answers" disabled={busy}>
-        <legend>어떻게 답하시겠습니까?</legend>
-        {question.choices.map((choice) => (
-          <label key={choice.id} className={selected === choice.id ? 'is-selected' : ''}>
-            <input
-              type="radio"
-              name={question.id}
-              value={choice.id}
-              checked={selected === choice.id}
-              onChange={() => setAnswers({ ...answers, [question.id]: choice.id })}
-            />
-            <span>
-              <small>{choice.tone}</small>
-              <strong>{choice.text}</strong>
-            </span>
-            {selected === choice.id && <Check size={19} />}
-          </label>
-        ))}
-      </fieldset>
+      <div className="media-dialogue-grid">
+        <section className="media-question" aria-live="polite">
+          <div className="media-speaker">
+            <span>{question.room === 'press' ? <Mic size={22} /> : <Users size={22} />}</span>
+            <div>
+              <small>
+                {question.room === 'press' ? '기자의 질문' : '선수단을 향한 메시지'} · {at + 1}/
+                {context.questions.length}
+              </small>
+              <strong>{question.speaker}</strong>
+            </div>
+          </div>
+          <h3 ref={questionHeading} tabIndex={-1}>
+            {question.text}
+          </h3>
+          <p className="media-question-hint">
+            {question.room === 'press'
+              ? '어떤 태도로 답변할지 선택하세요.'
+              : '경기 상황과 선수들의 사기를 생각하며 말해 주세요.'}
+          </p>
+        </section>
+        <fieldset className="media-answers" disabled={busy}>
+          <legend>어떻게 답하시겠습니까?</legend>
+          {question.choices.map((choice, index) => (
+            <label key={choice.id} className={selected === choice.id ? 'is-selected' : ''}>
+              <input
+                type="radio"
+                name={question.id}
+                value={choice.id}
+                checked={selected === choice.id}
+                onChange={() => f.choose(choice.id)}
+              />
+              <b className="media-answer-number" aria-hidden="true">
+                {index + 1}
+              </b>
+              <span>
+                <small>{choice.tone}</small>
+                <strong>{choice.text}</strong>
+              </span>
+              {selected === choice.id && <Check size={19} />}
+            </label>
+          ))}
+        </fieldset>
+      </div>
+      {selected && (
+        <div className="media-answer-preview">
+          <small>선택한 답변 · 아직 전달 전</small>
+          <p>“{question.choices.find((c) => c.id === selected)?.text}”</p>
+        </div>
+      )}
       <p className="media-coach-note">
         {question.room === 'team'
           ? '같은 말도 선수의 컨디션·현재 사기와 경험에 따라 다르게 받아들입니다.'
@@ -192,7 +189,7 @@ function ConversationForm({
           이전 질문
         </button>
         <button type="submit" className="button primary" disabled={busy || !selected}>
-          {busy ? '메시지 전달 중…' : last ? '답변·팀 대화 전달' : '다음 질문'}
+          {busy ? '메시지 전달 중…' : last ? '답변 확정 · 선수단에 전달' : '이 답변으로 다음 질문'}
           <ArrowRight size={16} />
         </button>
       </footer>
@@ -205,14 +202,9 @@ function ConversationForm({
           type="button"
           className="text-button"
           disabled={busy || !coach}
-          onClick={() =>
-            void act({
-              type: 'matchConversation',
-              stage: context.stage,
-              key: context.key,
-              delegated: true,
-            })
-          }
+          onClick={() => {
+            if (!busy && coach) void f.delegate();
+          }}
         >
           코치에게 맡기기
         </button>
@@ -233,11 +225,7 @@ function ConversationResult({
 }) {
   const positive = record.reactions.filter((r) => r.after > r.before).length,
     negative = record.reactions.filter((r) => r.after < r.before).length;
-  const resultHeading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    resultHeading.current?.focus({ preventScroll: true });
-    resultHeading.current?.scrollIntoView({ block: 'center' });
-  }, [record.key]);
+  const resultHeading = useConversationFocus(record.key);
   return (
     <div className="media-result">
       <div className="media-complete">

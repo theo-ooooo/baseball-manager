@@ -79,6 +79,24 @@ export function coachReports(g: GameState) {
         ? `2군에서 ${statsText(p, true)}를 기록했습니다. 1군에서 기회를 줄 것을 추천합니다.`
         : `${p.stats.g}경기 · ${statsText(p)}. 여러 경기에서 부진이 이어져 2군에서 기술과 경기 감각을 재정비할 것을 추천합니다. 단순 등판 피로는 이 권고의 근거가 아닙니다.`;
     const id = `coach-${today}-${p.id}-${target}`;
+    const evidence = {
+      category: target === 'first' ? ('promotion' as const) : ('performance' as const),
+      stats: `${target === 'first' ? '2군' : '1군 시즌 누적'} · ${target === 'first' ? '' : `${p.stats.g}경기 · `}${statsText(p, target === 'first')}`,
+      threshold:
+        target === 'first'
+          ? p.pos === 'P'
+            ? '4이닝 이상 · ERA 3.50 이하'
+            : '12타수 이상 · 타율 .300 이상'
+          : p.pos === 'P'
+            ? '3경기·18이닝 이상 · ERA 6.50 이상'
+            : '8경기·40타수 이상 · 타율 .200 미만',
+      condition: Math.round(p.condition),
+      replacementReason: replacement
+        ? target === 'first'
+          ? `${replacement.name}: ${statsText(replacement)} · 컨디션 ${Math.round(replacement.condition)}%. 같은 포지션에서 전력 평가와 등록 자리를 비교해 조정하는 선수입니다. 성적 부진이나 피로만을 근거로 내리는 권고는 아닙니다.`
+          : `${replacement.name}: 2군 ${statsText(replacement, true)} · 컨디션 ${Math.round(replacement.condition)}%. 같은 포지션을 보충할 등록 가능한 선수입니다.`
+        : undefined,
+    };
     g.coachRecommendations.unshift({
       id,
       playerId: p.id,
@@ -87,6 +105,7 @@ export function coachReports(g: GameState) {
       date: today,
       status: 'pending',
       reason,
+      evidence,
     });
     postNews(
       g,
@@ -102,10 +121,20 @@ export function coachReports(g: GameState) {
         },
         report: {
           facts: [
+            {
+              label: '판단 근거',
+              value: target === 'first' ? '2군 성적 · 등록 경쟁' : '1군 성적 부진',
+            },
+            { label: '성적', value: evidence.stats },
+            { label: '권고 기준', value: evidence.threshold },
+            { label: '컨디션', value: `${evidence.condition}% · 피로는 별도 휴식 관리` },
             { label: '등록 제안', value: target === 'first' ? '2군 → 1군' : '1군 → 2군' },
             { label: '맞교체 선수', value: replacement?.name || '등록 인원 내 이동' },
           ],
           players: [{ id: p.id, name: p.name, detail: reason }],
+          sections: evidence.replacementReason
+            ? [{ title: '맞교체 선수 선정 이유', body: evidence.replacementReason }]
+            : [],
         },
       },
     );

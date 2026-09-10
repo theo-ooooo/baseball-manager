@@ -20,6 +20,8 @@ const {
   coachReports,
   settleClubDay,
   prepareFinances,
+  financeAssessment,
+  annualPayroll,
   presentState,
   gameDate,
 } = createRequire(import.meta.url)(out);
@@ -296,4 +298,52 @@ test('Advancing the season explicitly expires old applications instead of leavin
   const id = g.managerCareer.offers[0].id;
   g = e.applyAction(g, { type: 'nextSeason' });
   assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'expired');
+});
+
+test('Overspending lowers board confidence without compounding and improves when spending is corrected', () => {
+  const g = game();
+  const careers = createManagerCareer(world);
+  const healthy = financeAssessment(g, 'kbo');
+  assert.equal(healthy.penalty, 0);
+  const payroll = annualPayroll(g);
+  const support = g.finances.annualSupport;
+  assert.ok(support >= payroll * 0.95);
+  const salary = g.roster[0].salary;
+  g.roster[0].salary += payroll;
+  careers.tick(g);
+  const job = g.managerJobs[g.club];
+  const penalty = financeAssessment(g, 'kbo').penalty;
+  assert.ok(penalty > 0);
+  const confidence = job.confidence;
+  const newsCount = g.news.length;
+  careers.tick(g);
+  assert.equal(job.confidence, confidence);
+  assert.equal(g.news.length, newsCount);
+  assert.equal(g.finances.annualSupport, support);
+  g.roster[0].salary = salary;
+  careers.tick(g);
+  assert.ok(job.confidence > confidence);
+  assert.equal(financeAssessment(g, 'kbo').penalty, 0);
+  g.expenses += 3500;
+  careers.tick(g);
+  assert.ok(financeAssessment(g, 'kbo').penalty > 0);
+  assert.match(job.reason, /추가 지출 과다/);
+});
+test('Legacy finance balancing preserves paid amounts and upgrades future support once', () => {
+  const g = game();
+  delete g.finances.balanceVersion;
+  delete g.finances.wageBudget;
+  settleClubDay(g, 'kbo');
+  const before = {
+    budget: g.budget,
+    paid: g.finances.paidWages,
+    received: g.finances.receivedSupport,
+    support: g.finances.annualSupport,
+  };
+  prepareFinances(g, 'kbo');
+  prepareFinances(g, 'kbo');
+  assert.equal(g.budget, before.budget);
+  assert.equal(g.finances.paidWages, before.paid);
+  assert.equal(g.finances.receivedSupport, before.received);
+  assert.equal(g.finances.annualSupport, before.support);
 });
