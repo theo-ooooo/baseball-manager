@@ -4,13 +4,15 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const root = fileURLToPath(new URL('../', import.meta.url));
 mkdirSync(path.join(root, 'apps/api/.build'), { recursive: true });
-// Nest's optional websocket/microservice loaders must fail only if invoked.
+// The Worker uses Nest's application context, not an Express/Node HTTP transport.
+// Optional transport/validation loaders must fail only if explicitly invoked.
 const optional = {
   name: 'nest-optional-integrations',
   setup(b) {
     b.onResolve(
       {
-        filter: /^(@nestjs\/(websockets|microservices)(\/|$)|class-validator$|class-transformer$)/,
+        filter:
+          /^(@nestjs\/(websockets|microservices|platform-express)(\/|$)|class-validator$|class-transformer$)/,
       },
       (a) => ({ path: a.path, namespace: 'optional' }),
     );
