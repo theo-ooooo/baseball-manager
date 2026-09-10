@@ -40,7 +40,9 @@ export function MobileNavigation({
         const active =
           view === id ||
           (id === 'squad' &&
-            ['reserves', 'training', 'tactics', 'medical', 'dynamics'].includes(view));
+            ['reserves', 'registrations', 'training', 'tactics', 'medical', 'dynamics'].includes(
+              view,
+            ));
         return (
           <button
             key={id}

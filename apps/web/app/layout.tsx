@@ -25,6 +25,7 @@ import '../styles/match-center.css';
 import '../styles/training-center.css';
 import '../styles/clubhouse-theme.css';
 import '../styles/workspace-layout.css';
+import '../styles/registrations.css';
 import '../styles/overlays.css';
 import { DialogViewport } from '../src/features/career/dialog-viewport';
 

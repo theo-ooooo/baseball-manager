@@ -5,7 +5,9 @@ import { ArrowDown, ArrowUp, ArrowLeftRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import type { GameState, Player } from '@dugout/shared/types';
 import { firstTeam, reserveTeam, dayLabel } from '@dugout/shared/management';
-import { FIRST_TEAM_LIMIT } from '@dugout/shared/roster-rules';
+import { recallStatus, recallWaitingDays } from '@dugout/shared/registrations';
+import Link from 'next/link';
+import { firstTeamLimit } from '@dugout/shared/roster-rules';
 import { overall, blankStats } from '@dugout/shared/game-view';
 import { PlayerGrowth } from '../players/growth-indicator';
 import { PlayerName, Rating, SearchBox, positions } from '../../components/game-ui';
@@ -21,6 +23,7 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState('all');
   const [mobileSquad, setMobileSquad] = useState('reserve');
+  const limit = firstTeamLimit(g.club);
   const moves = useRosterMoves({ g, act, busy });
   const active = firstTeam(g),
     reserve = reserveTeam(g);
@@ -35,7 +38,7 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
           <span>1군 등록</span>
           <strong>
             {active.length}
-            <small> / {FIRST_TEAM_LIMIT}</small>
+            <small> / {limit}</small>
           </strong>
         </div>
         <div>
@@ -46,11 +49,21 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
           </strong>
         </div>
         <p>
-          {active.length >= FIRST_TEAM_LIMIT
+          {active.length >= limit
             ? '1군이 가득 찼어도 바로 교체할 수 있습니다.'
-            : `1군에 ${FIRST_TEAM_LIMIT - active.length}명 더 등록할 수 있습니다.`}
+            : `1군에 ${limit - active.length}명 더 등록할 수 있습니다.`}
         </p>
       </div>
+      <Link className="registration-history-link" href="/?view=registrations">
+        어제·오늘 리그 등록 · 말소 공시 보기 →
+      </Link>
+      {g.phase === 'regular' && recallWaitingDays({ club: g.club, pos: 'IF' }) > 0 && (
+        <p className="registration-rule-note">
+          정규시즌 1군 말소 후 {recallWaitingDays({ club: g.club, pos: 'IF' })}일 동안 재등록할 수
+          없습니다.{g.club.startsWith('mlb-') ? ' 투수는 15일입니다.' : ''} 2군 경기는 계속 출전할
+          수 있습니다.
+        </p>
+      )}
       <Tabs defaultValue="roster">
         <TabsList variant="line" aria-label="1군 2군 관리 화면">
           <TabsTrigger value="roster">등록 관리</TabsTrigger>
@@ -110,6 +123,11 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
                       <div className="roster-identity">
                         <PlayerName p={p} onClick={onPlayer} />
                         <DevelopmentBadge player={p} />
+                        {recallStatus(g, p)?.remaining ? (
+                          <small className="recall-note">
+                            {recallStatus(g, p)!.eligible} 재등록 가능
+                          </small>
+                        ) : null}
                         <small>
                           {assignmentLabel(g, p) ||
                             (g.lineup.includes(p.id)
@@ -129,7 +147,7 @@ export function ReservePanel({ g, act, busy, onPlayer }: Props) {
                       <div className="roster-actions">
                         <button
                           className="roster-move"
-                          disabled={busy}
+                          disabled={busy || (!group.first && !!recallStatus(g, p)?.remaining)}
                           aria-label={`${p.name} ${group.first ? '2군 이동' : '1군 등록'}`}
                           onClick={() => void moves.move(p)}
                         >

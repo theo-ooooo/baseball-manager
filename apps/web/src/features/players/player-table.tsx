@@ -1,4 +1,5 @@
 'use client';
+import { recallStatus } from '@dugout/shared/registrations';
 import { ArrowUpRight, ArrowDown, ArrowUp } from 'lucide-react';
 import {
   Table,
@@ -80,6 +81,11 @@ export function PlayerTable({
             <TableRow key={p.id}>
               <TableCell className="player-identity-cell">
                 <PlayerName p={p} onClick={onPlayer} />
+                {p.squad === 'reserve' && recallStatus(g, p)?.remaining ? (
+                  <small className="recall-note">
+                    {recallStatus(g, p)!.eligible.slice(5).replace('-', '/')} 재등록
+                  </small>
+                ) : null}
                 {kind !== 'market' && <DevelopmentBadge player={p} />}
                 {role && (
                   <small className="ui-role-inline">
@@ -161,7 +167,7 @@ export function PlayerTable({
                 {onMove ? (
                   <button
                     className="roster-move"
-                    disabled={busy}
+                    disabled={busy || (p.squad === 'reserve' && !!recallStatus(g, p)?.remaining)}
                     aria-label={`${p.name} ${p.squad === 'reserve' ? '1군 등록' : '2군 이동'}`}
                     onClick={() => onMove(p)}
                   >

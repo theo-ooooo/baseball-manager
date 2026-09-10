@@ -156,7 +156,7 @@ export function coachReportAction(g: GameState, a: Record<string, unknown>) {
     const p = g.roster.find((p) => p.id === report.playerId);
     if (!p || (p.squad || 'first') === report.target)
       throw new Error('선수 등록 상태가 보고 이후 변경됐습니다.');
-    changeSquad(g, { id: p.id, value: report.target, replaceId: report.replacementId });
+    changeSquad(g, { id: p.id, value: report.target, replaceId: report.replacementId }, 'coach');
   }
   report.status = a.accept ? 'accepted' : 'dismissed';
   return g;

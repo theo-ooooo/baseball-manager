@@ -1,7 +1,9 @@
 import type { GameState, Player } from './types';
+import { recallError } from './registrations';
 import { firstTeam } from './management';
 
 export const FIRST_TEAM_LIMIT = 28;
+export const firstTeamLimit = (club: string) => (club.startsWith('kbo-') ? 29 : FIRST_TEAM_LIMIT);
 export type SquadLevel = 'first' | 'reserve';
 const minimum: Record<Player['pos'], number> = { P: 7, C: 1, IF: 4, OF: 3, DH: 0 };
 const labels: Record<Player['pos'], string> = {
@@ -34,10 +36,12 @@ export function squadMoveError(
     return '반대 선수단에 있는 교체 선수를 선택해 주세요.';
   const incoming = target === 'first' ? player : replacement;
   const outgoing = target === 'reserve' ? player : replacement;
+  const recall = incoming && recallError(g, incoming);
+  if (recall) return recall;
   const active = firstTeam(g).filter((p) => p.id !== outgoing?.id);
   if (incoming) active.push(incoming);
-  if (active.length > FIRST_TEAM_LIMIT)
-    return '1군 정원은 28명입니다. 내려갈 선수를 선택해 함께 교체해 주세요.';
+  if (active.length > firstTeamLimit(g.club))
+    return `1군 정원은 ${firstTeamLimit(g.club)}명입니다. 내려갈 선수를 선택해 함께 교체해 주세요.`;
   if (outgoing) {
     if (active.length < 22)
       return '1군은 최소 22명이 필요합니다. 함께 올라올 선수를 선택해 주세요.';

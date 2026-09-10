@@ -1,3 +1,4 @@
+import { rememberRegistration } from './registration-log';
 import { prepareManagerTerms, tickManagerTerms } from './manager-contracts';
 import { managerConversationAction } from './manager-conversation';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
@@ -393,6 +394,7 @@ export function createManagerCareer(world: WorldCatalog) {
     }
   }
   function snapshot(g: GameState): ClubCareer {
+    rememberRegistration(g);
     return structuredClone({
       year: g.year,
       rounds: g.rounds,

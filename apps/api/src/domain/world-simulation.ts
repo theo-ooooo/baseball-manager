@@ -142,7 +142,7 @@ export function createWorldSimulation(world: WorldCatalog) {
       [res.away, res.home, res.awayScore, res.homeScore],
     ] as const) {
       if (club === g.club) continue;
-      const players = roster(g, club),
+      const players = roster(g, club).filter((p) => p.squad !== 'reserve'),
         batters = lineupAuto(players)
           .map((id) => players.find((p) => p.id === id)!)
           .filter(Boolean);

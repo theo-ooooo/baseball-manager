@@ -51,6 +51,7 @@ import { LiveMatchScreen } from '../matches/live-match-screen';
 import { TacticalBoard } from '../squad/management-panels';
 import { CoachPanel } from '../squad/coach-panel';
 import { WorkspaceNavigation } from './workspace-navigation';
+import { RegistrationBoard } from '../squad/registration-board';
 import { TrainingCenterPanel } from '../squad/training-center-panel';
 import { Badge } from '../../components/game-ui';
 import { AppVersion } from '@/components/app-version';
@@ -146,6 +147,7 @@ export function GameScreen({
       'job-offers',
       'staff',
       'records',
+      'registrations',
     ].includes(requestedView)
       ? g && isUnemployed(g)
         ? 'jobs'
@@ -675,6 +677,7 @@ export function GameScreen({
           {view === 'dynamics' && <DynamicsPanel g={g} onPlayer={setPlayer} />}
           {view === 'squad' && <Squad g={g} onPlayer={setPlayer} act={act} busy={busy} />}
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
+          {view === 'registrations' && <RegistrationBoard g={g} onPlayer={setPlayer} />}
           {view === 'training' && <TrainingCenterPanel key={g.club} g={g} act={act} busy={busy} />}
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}

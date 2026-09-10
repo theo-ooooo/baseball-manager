@@ -1,3 +1,4 @@
+import { createAiRegistrations } from './ai-registrations';
 import { bullpenAction } from './bullpen';
 import type { WorldCatalog, GameState } from '@dugout/shared/types';
 import { createGameView } from '@dugout/shared/game-view';
@@ -13,6 +14,7 @@ export function createLiveMatchActions(
   advance: Advance,
 ) {
   const { nextFixture, rosterFor } = createGameView(world);
+  const registrations = createAiRegistrations(world);
   function liveAction(g: GameState, a: Record<string, unknown>) {
     if (a.type === 'bullpen') return bullpenAction(g, a);
     if (a.type === 'matchCommand' || a.type === 'cancelMatchCommand')
@@ -24,6 +26,8 @@ export function createLiveMatchActions(
       const pair = nextFixture(g);
       if (!pair) throw new Error('오늘 경기가 없습니다. 계속 진행으로 다음 일정으로 이동하세요.');
       const [home, away] = pair;
+      registrations.prepare(g, home, g.phase === 'regular');
+      registrations.prepare(g, away, g.phase === 'regular');
       finishPendingConversation(g);
       g.liveMatch = {
         home,

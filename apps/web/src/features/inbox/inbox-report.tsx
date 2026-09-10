@@ -1,3 +1,4 @@
+import { LineupRecommendationActions } from './lineup-recommendation-actions';
 import { MedicalDecision } from '../squad/medical-decision';
 import { CoachRecommendations } from '../squad/coach-recommendations';
 import { managerOfferActionLabel } from '../career/manager-offer-status';
@@ -130,7 +131,12 @@ export function InboxReport({
         {players.length > 0 && (
           <section className="inbox-report-section">
             <h3>
-              {review ? '계약 검토 대상' : '점검할 선수'} <span>{players.length}명</span>
+              {review
+                ? '계약 검토 대상'
+                : news.lineupRecommendation
+                  ? '추천 타순 · 수비 위치'
+                  : '점검할 선수'}{' '}
+              <span>{players.length}명</span>
             </h3>
             <div className="inbox-player-list">
               {players.map((row) => {
@@ -209,6 +215,7 @@ export function InboxReport({
             </div>
           </section>
         )}
+        {news.lineupRecommendation && <LineupRecommendationActions {...{ g, news, act, busy }} />}
         {news.actionView === 'medical' && player && (
           <MedicalDecision g={g} player={player} act={act} busy={busy} />
         )}
@@ -249,6 +256,7 @@ export function InboxReport({
                   </button>
                 )}
           {news.actionView &&
+            !news.lineupRecommendation &&
             news.actionView !== 'medical' &&
             !(news.actionView === 'agents' && subject) && (
               <Link className="button secondary" href={`/?view=${news.actionView}`}>

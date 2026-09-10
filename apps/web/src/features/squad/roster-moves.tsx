@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import type { GameState, Player } from '@dugout/shared/types';
 import { firstTeam } from '@dugout/shared/management';
-import { FIRST_TEAM_LIMIT, squadMoveError } from '@dugout/shared/roster-rules';
+import { firstTeamLimit, squadMoveError } from '@dugout/shared/roster-rules';
+import { recallError, recallStatus, recallWaitingDays } from '@dugout/shared/registrations';
 import { overall } from '@dugout/shared/game-view';
 import { Rating, SearchBox, positions } from '../../components/game-ui';
 import type { Act } from '../career/game-contracts';
@@ -25,6 +26,11 @@ export function useRosterMoves({ g, act, busy }: Props) {
   async function move(p: Player) {
     if (busy) return;
     const target = p.squad === 'reserve' ? 'first' : 'reserve';
+    const recall = target === 'first' && recallError(g, p);
+    if (recall) {
+      toast.error(recall);
+      return;
+    }
     if (squadMoveError(g, p.id, target)) {
       setSelected(p.id);
       return;
@@ -49,16 +55,29 @@ export function useRosterMoves({ g, act, busy }: Props) {
 
 export function RosterMoveControl({ player, ...props }: Props & { player: Player }) {
   const moves = useRosterMoves(props);
+  const recall = recallStatus(props.g, player);
   return (
     <>
       <button
         className="button secondary compact"
-        disabled={props.busy}
+        disabled={props.busy || (player.squad === 'reserve' && !!recall?.remaining)}
         onClick={() => void moves.move(player)}
       >
         {player.squad === 'reserve' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
         {player.squad === 'reserve' ? '1군 등록' : '2군 이동'}
       </button>
+      {recall?.remaining ? (
+        <small className="recall-note">
+          {recall.eligible} 재등록 가능 · {recall.remaining}일 남음
+        </small>
+      ) : null}
+      {player.squad !== 'reserve' &&
+        props.g.phase === 'regular' &&
+        recallWaitingDays(player) > 0 && (
+          <small className="recall-note">
+            말소하면 {recallWaitingDays(player)}일 후 1군 재등록 가능
+          </small>
+        )}
       {moves.dialog}
     </>
   );
@@ -117,7 +136,7 @@ function RosterExchange({
             {promoting ? '내려갈 선수를 선택하세요' : '함께 올라올 선수를 선택하세요'}
           </DialogTitle>
           <DialogDescription>
-            {promoting && firstTeam(g).length >= FIRST_TEAM_LIMIT
+            {promoting && firstTeam(g).length >= firstTeamLimit(g.club)
               ? '1군 정원이 가득 찼습니다. '
               : ''}
             {player.name} 선수와 한 번에 교체합니다.
@@ -173,7 +192,13 @@ function RosterExchange({
           })}
           {!candidates.length && <p className="muted">검색 결과가 없습니다.</p>}
         </div>
-        <p className="exchange-note">기존 타순과 보직은 가능한 범위에서 유지합니다.</p>
+        <p className="exchange-note">
+          기존 타순과 보직은 가능한 범위에서 유지합니다.{' '}
+          {g.phase === 'regular' &&
+          recallWaitingDays(promoting ? replacement || player : player) > 0
+            ? `말소 선수는 ${recallWaitingDays(promoting ? replacement || player : player)}일 후 재등록할 수 있습니다.`
+            : ''}
+        </p>
         {error && (
           <p role="alert" className="exchange-error">
             {error}

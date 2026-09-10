@@ -17,16 +17,19 @@ export function createCalendarProgression(
     else {
       advance(g, 1);
       progress.to = g.day;
-      progress.newsIds = g.news.filter((n) => !before.has(n.id)).map((n) => n.id);
+      const reports = g.news.filter((n) => !before.has(n.id));
+      progress.newsIds = reports.map((n) => n.id);
       progress.stop = g.news.some((n) => n.choiceKind && !n.choice)
         ? 'decision'
         : phase !== g.phase
           ? 'season'
-          : progress.newsIds.length
-            ? 'report'
-            : nextFixture(g)
-              ? 'fixture'
-              : null;
+          : nextFixture(g) && reports.every((n) => !!n.lineupRecommendation)
+            ? 'fixture'
+            : progress.newsIds.length
+              ? 'report'
+              : nextFixture(g)
+                ? 'fixture'
+                : null;
     }
     g.progress = progress;
     return g;
