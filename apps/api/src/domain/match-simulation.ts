@@ -7,6 +7,7 @@ import type {
   Result,
   ReplayPlay,
   ReplayTeam,
+  AutomaticPitchingChange,
 } from '@dugout/shared/types';
 import { autoPitching } from '@dugout/shared/pitching';
 import {
@@ -62,6 +63,7 @@ export function createMatchSimulator(world: WorldCatalog) {
       return ids.map((id) => r.find((p) => p.id === id)!).filter(Boolean);
     });
     const energyEnabled = !g.liveMatch || g.liveMatch.energyVersion === 1;
+    const modernRelief = !g.liveMatch || g.liveMatch.pitchingVersion === 3;
     const pitchers = rosters.map((r, i) => {
       const id = i ? home : away;
       const rotation = autoPitching(r).rotation;
@@ -108,6 +110,14 @@ export function createMatchSimulator(world: WorldCatalog) {
     );
     const used = rosters.map(() => new Map<string, Stats>());
     const entered = [1, 1];
+    const pendingPitchingChanges: (AutomaticPitchingChange | undefined)[] = [];
+    const recordPitchingChange = (play: ReplayPlay, defending: number) => {
+      const change = pendingPitchingChanges[defending];
+      if (change) {
+        play.pitchingChange = change;
+        pendingPitchingChanges[defending] = undefined;
+      }
+    };
     const entries = rosters.map(() => new Map<string, { lead: number; kept: boolean }>());
     const pitcherOfRecord = [pitchers[0].id, pitchers[1].id];
     const pitchingStats = (side: number) => {
@@ -151,6 +161,7 @@ export function createMatchSimulator(world: WorldCatalog) {
         g.defense = { ...change.defense };
         g.instructions = { ...change.instructions };
         if (pitchers[side].id !== change.pitcher) {
+          pendingPitchingChanges[side] = undefined;
           pitchers[side] = g.roster.find((p) => p.id === change.pitcher)!;
           if (change.coldEntry && g.liveMatch?.bullpenVersion) energy.spend(pitchers[side], 12);
           entered[side] = inning;
@@ -206,12 +217,26 @@ export function createMatchSimulator(world: WorldCatalog) {
               ) * 2,
             ),
           );
+        const tired = energyEnabled && currentStats.outs > 0 && energy.get(current) < 40;
+        const protectCloser = modernRelief && Math.abs(lead) >= 4 && current.id === plan.closer;
+        const longRelief =
+          modernRelief &&
+          Math.abs(lead) >= 4 &&
+          !isStarter &&
+          current.id !== plan.closer &&
+          !(plan.setup || []).includes(current.id);
+        const reliefLimit =
+          !isStarter &&
+          (longRelief
+            ? inn - entered[defending] >= 3 || currentStats.outs >= 9
+            : inn - entered[defending] >= 1 || currentStats.outs >= 6);
         if (
           !(manualPitcherCursor === log.length && (defending ? home : away) === g.club) &&
           ((isStarter && (currentStats.outs >= target || (currentStats.er >= 5 && inn >= 3))) ||
-            (!isStarter && (inn - entered[defending] >= 1 || currentStats.outs >= 6)) ||
+            reliefLimit ||
+            protectCloser ||
             (closing && current.id !== plan.closer) ||
-            (energyEnabled && currentStats.outs > 0 && energy.get(current) < 40))
+            tired)
         ) {
           const available = selectReliever({
             plan,
@@ -219,9 +244,37 @@ export function createMatchSimulator(world: WorldCatalog) {
             used: new Set(used[defending].keys()),
             inning: inn,
             lead,
-            legacy: !!g.liveMatch && g.liveMatch.pitchingVersion !== 2,
+            legacy: !!g.liveMatch && !g.liveMatch.pitchingVersion,
+            version: modernRelief ? 3 : 2,
           });
           if (available) {
+            if (modernRelief && involved)
+              pendingPitchingChanges[defending] = {
+                from: current.id,
+                reason: protectCloser
+                  ? 'protect-closer'
+                  : tired
+                    ? 'fatigue'
+                    : closing && available.id === plan.closer
+                      ? 'save'
+                      : isStarter && currentStats.er >= 5 && inn >= 3
+                        ? 'runs'
+                        : isStarter
+                          ? 'starter-limit'
+                          : 'relief-limit',
+                outs: currentStats.outs,
+                runs: currentStats.er,
+                ...(energyEnabled ? { energy: Math.round(energy.get(current)) } : {}),
+                lead,
+                role:
+                  available.id === plan.closer
+                    ? 'closer'
+                    : (plan.setup || []).includes(available.id)
+                      ? 'setup'
+                      : (plan.chase || []).includes(available.id)
+                        ? 'chase'
+                        : 'relief',
+              };
             pitchers[defending] = available;
             entered[defending] = inn;
             pitchingStats(defending);
@@ -300,6 +353,7 @@ export function createMatchSimulator(world: WorldCatalog) {
               defense: { ...replayTeams[1 - side].defense, P: pitcher.id },
               steal: { runner: runner.id, safe, to: (from + 2) as 2 | 3 },
             };
+            recordPitchingChange(play, 1 - side);
             bases[from] = null;
             if (safe) {
               bases[from + 1] = runner;
@@ -335,6 +389,7 @@ export function createMatchSimulator(world: WorldCatalog) {
             before: { outs, bases: bases.map((p) => p?.id || null), score: [...score] },
             after: { outs: 0, bases: [], score: [] },
           };
+          recordPitchingChange(play, 1 - side);
           if (changeIndex)
             play.defense = { ...(ownPitch ? g.defense! : replayTeams[1 - side].defense) };
           if (command) play.command = command.kind;

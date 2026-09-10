@@ -12,6 +12,8 @@ import { transfersBlocked } from '@dugout/shared/management';
 import { postNews } from './club-dynamics';
 import { createTransferMarket } from './transfer-market';
 import { prepareDevelopment } from './player-development';
+import { coachDirectory } from '@dugout/shared/coach-directory';
+import { rememberCoaches, releaseCoach } from './coach-employment';
 
 type Offer = Deal | CoachDeal;
 function terms(salary: number, years: number) {
@@ -288,7 +290,9 @@ export function createRecruitment(world: WorldCatalog) {
     return g;
   }
   function coachOffer(g: GameState, a: Record<string, unknown>) {
-    const candidate = view.coachPool(g.year).find((c) => c.id === a.id);
+    const candidate = coachDirectory(g, view.coachPool(g.year)).find(
+      (c) => c.coach.id === a.id,
+    )?.coach;
     if (!candidate) throw new Error('코치를 찾을 수 없습니다.');
     const role = String(a.role || candidate.role),
       salary = Number(a.salary),
@@ -423,10 +427,14 @@ export function createRecruitment(world: WorldCatalog) {
       if (g.budget < cost) throw new Error('코치 계약 예산이 부족합니다.');
       g.budget -= cost;
       g.expenses += cost;
+      rememberCoaches(g);
+      const outgoing = g.staff.find((c) => c.role === d.role);
+      if (outgoing) releaseCoach(g, outgoing);
       g.staff = [
         ...g.staff.filter((c) => c.role !== d.role),
         { ...d.coach, role: d.role, salary: d.salary, contractUntil: g.year + d.years },
       ];
+      rememberCoaches(g);
       g.coachDeals = g.coachDeals!.filter((old) => old.id !== d.id);
       postNews(
         g,

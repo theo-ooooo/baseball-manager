@@ -47,6 +47,7 @@ import {
   preseasonSkipBlockers,
 } from '@dugout/shared/preseason';
 import type { Coach, GameState, Pos, Result, WorldCatalog } from '@dugout/shared/types';
+import { rememberCoaches, releaseCoach } from './coach-employment';
 import {
   blankStats,
   rng,
@@ -144,7 +145,9 @@ export function createGameEngine(world: WorldCatalog) {
       tactic: 'balanced',
       training: 'balanced',
       trainingCenter: defaultTrainingCenter(),
-      staff: coachPool().filter((c) => c.id.endsWith('-0')),
+      staff: coachPool()
+        .filter((c) => c.id.endsWith('-0'))
+        .map((c) => ({ ...c, id: `${c.id}-${club}` })),
       standings: Object.fromEntries(
         leagues.map((l) => [
           l.id,
@@ -684,6 +687,7 @@ export function createGameEngine(world: WorldCatalog) {
     const expiredStaff = g.staff.filter(
       (c) => c.contractUntil !== undefined && c.contractUntil <= g.year,
     );
+    for (const coach of expiredStaff) releaseCoach(g, coach);
     g.staff = g.staff.filter((c) => !expiredStaff.includes(c));
     if (expiredStaff.length)
       news(
@@ -887,10 +891,13 @@ export function createGameEngine(world: WorldCatalog) {
       const previous = s.staff.find((c) => c.role === role);
       const compensation = previous ? previous.salary * 0.5 : 0;
       if (s.budget < compensation) throw new Error('기존 코치 계약 정산 예산이 부족합니다.');
+      rememberCoaches(s);
+      if (previous) releaseCoach(s, previous);
       s.staff = [
         ...s.staff.filter((c) => c.role !== role),
         { ...coach, role, contractUntil: s.year + 2 },
       ];
+      rememberCoaches(s);
       s.budget -= compensation;
       s.expenses += compensation;
       news(

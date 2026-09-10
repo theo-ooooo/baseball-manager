@@ -2,6 +2,7 @@
 import type { previousMatchCommand } from '@dugout/shared/match-commands';
 import type { matchDecision } from '@dugout/shared/match-decision';
 import type { MatchPauseReason } from './use-match-playback';
+import type { ReactNode } from 'react';
 
 export function MatchDecisionBar({
   decision,
@@ -13,6 +14,7 @@ export function MatchDecisionBar({
   onContinue,
   previousCommand,
   onRepeat,
+  coach,
 }: {
   decision: ReturnType<typeof matchDecision>;
   paused: boolean;
@@ -23,6 +25,7 @@ export function MatchDecisionBar({
   onContinue: () => void;
   previousCommand?: ReturnType<typeof previousMatchCommand>;
   onRepeat: () => void;
+  coach?: ReactNode;
 }) {
   if (!paused || decision.finished) return null;
   return (
@@ -51,6 +54,7 @@ export function MatchDecisionBar({
           {decision.pitcher || '마운드 확인'}
         </p>
       </div>
+      {coach}
       {decision.kind && previousCommand && (
         <div className="match-repeat-command">
           <span>

@@ -1,57 +1,67 @@
 'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import type { Coach, GameState } from '@dugout/shared/types';
+import type { GameState } from '@dugout/shared/types';
 import { coachRoles, money } from '@dugout/shared/game-view';
-import { useWorld } from '../career/world-context';
+import { useCoachDirectory } from './use-coach-directory';
+import { coachJudgment } from '@dugout/shared/coach-assessment';
 import type { Act } from '../career/game-contracts';
 import { CoachNegotiations, CoachOfferDialog } from './coach-negotiations';
 export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
-  const { coachPool, getClub } = useWorld();
-  const [role, setRole] = useState('타격'),
-    [query, setQuery] = useState(''),
-    [kind, setKind] = useState('real'),
-    [page, setPage] = useState(0),
-    [offering, setOffering] = useState<Coach | null>(null);
-  const candidates = coachPool(g.year).filter(
-    (c) =>
-      (c.real || c.role === role) &&
-      (kind === 'all' || (kind === 'real' ? c.real : !c.real)) &&
-      `${c.name} ${getClub(c.sourceClub || '')?.name || ''}`.includes(query),
-  );
-  const pages = Math.max(1, Math.ceil(candidates.length / 12)),
-    current = Math.min(page, pages - 1);
+  const directory = useCoachDirectory(g);
+  const { group, role, query, kind, offering, rows, pages, current, setOffering } = directory;
   return (
-    <>
-      <section className="panel">
-        <div className="panel-header">
-          <h2>코칭 스태프</h2>
-          <span>게임 내 담당 보직</span>
-        </div>
-        <div className="staff-summary">
-          {coachRoles.map((role) => {
-            const c = g.staff.find((c) => c.role === role);
-            return (
-              <div key={role}>
-                <small>{role} 코치</small>
-                <strong>{c?.name || '공석'}</strong>
-                <span>
-                  {c?.real ? '실명' : '가상'} · 능력 {c?.skill || 35}
-                </span>
-                <small>
-                  연봉 {money(c?.salary || 0)}
-                  {c?.contractUntil ? ` · ${c.contractUntil - g.year}시즌 계약` : ''}
-                </small>
-                {c?.real && (
-                  <a href={c.source} target="_blank" rel="noreferrer">
-                    등록 소속: {getClub(c.sourceClub || '')?.name} ↗
-                  </a>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+    <div className="coach-center">
+      <nav className="coach-affiliation-tabs" aria-label="코치 소속 구분">
+        {[
+          ['own', '우리 팀'],
+          ['other', '타 구단'],
+          ['free', '무소속'],
+        ].map(([key, label]) => (
+          <button key={key} aria-pressed={group === key} onClick={() => directory.setGroup(key)}>
+            {label}
+            <b>{directory.counts[key]}</b>
+          </button>
+        ))}
+      </nav>
+      {group === 'own' && (
+        <section className="panel">
+          <div className="panel-header">
+            <h2>{directory.clubName(g.club)} · 담당 코치진</h2>
+            <span>현재 우리 팀에서 지도하는 코치</span>
+          </div>
+          <div className="staff-summary">
+            {coachRoles.map((role) => {
+              const c = g.staff.find((c) => c.role === role);
+              return (
+                <div key={role}>
+                  <small>{role} 코치</small>
+                  <strong>{c?.name || '공석'}</strong>
+                  <span>
+                    {c
+                      ? `능력 ${c.skill} · ${coachJudgment(c).label}`
+                      : '담당 코치를 선임해 주세요'}
+                  </span>
+                  <small>
+                    연봉 {money(c?.salary || 0)}
+                    {c?.contractUntil ? ` · ${c.contractUntil - g.year}시즌 계약` : ''}
+                  </small>
+                  <small>
+                    {role === '투수'
+                      ? '투수 교체 판단 · 구위 평가'
+                      : role === '타격'
+                        ? '대타 판단 · 타격 평가'
+                        : '담당 분야 훈련 지도'}
+                  </small>
+                </div>
+              );
+            })}
+          </div>
+          <p className="panel-content tiny">
+            코치 능력이 높을수록 교체 후보 평가 오차가 줄고 피로를 일찍 파악합니다. 추천은 코치의
+            판단이며 경기 결과를 보장하지 않습니다.
+          </p>
+        </section>
+      )}
       <CoachNegotiations g={g} act={act} busy={busy} onOffer={setOffering} />
       {offering && (
         <CoachOfferDialog
@@ -66,8 +76,20 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
       )}
       <section className="panel training-block">
         <div className="panel-header">
-          <h2>코치 후보</h2>
-          <span>조건 제안 후 답변을 기다립니다</span>
+          <h2>
+            {group === 'own'
+              ? '우리 팀 소속 코치'
+              : group === 'other'
+                ? '타 구단 코치'
+                : '무소속 코치'}
+          </h2>
+          <span>
+            {group === 'own'
+              ? '현재 담당 보직과 계약'
+              : group === 'other'
+                ? '현재 소속 확인 후 영입 조건 제안'
+                : '새 구단을 찾는 코치'}
+          </span>
         </div>
         <div className="coach-filters">
           <label>
@@ -75,8 +97,7 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
             <select
               value={role}
               onChange={(e) => {
-                setRole(e.target.value);
-                setPage(0);
+                directory.setRole(e.target.value);
               }}
             >
               {coachRoles.map((r) => (
@@ -89,8 +110,7 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
             <select
               value={kind}
               onChange={(e) => {
-                setKind(e.target.value);
-                setPage(0);
+                directory.setKind(e.target.value);
               }}
             >
               <option value="real">실명 코치</option>
@@ -100,11 +120,10 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
           </label>
           <input
             aria-label="코치 이름 또는 소속 검색"
-            placeholder="이름 또는 등록 소속 검색"
+            placeholder="코치 이름 · 현재 구단 검색"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(0);
+              directory.setQuery(e.target.value);
             }}
           />
         </div>
@@ -113,14 +132,14 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
             <thead>
               <tr>
                 <th>코치</th>
-                <th>공식 등록 소속</th>
+                <th>현재 소속 · 계약</th>
                 <th>능력</th>
                 <th>연봉</th>
                 <th>선임</th>
               </tr>
             </thead>
             <tbody>
-              {candidates.slice(current * 12, current * 12 + 12).map((c) => (
+              {rows.map(({ coach: c, club, assigned }) => (
                 <tr key={c.id}>
                   <td>
                     <strong>{c.name}</strong>
@@ -129,37 +148,57 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
                     </small>
                   </td>
                   <td>
-                    {c.source ? (
-                      <a href={c.source} target="_blank" rel="noreferrer">
-                        {getClub(c.sourceClub || '')?.name} ↗
+                    <strong className={`coach-employer ${group}`}>
+                      {directory.clubName(club)}
+                    </strong>
+                    <small>
+                      {assigned ? `${c.role} 담당` : club === 'fa' ? '계약 없음' : '구단 소속'}
+                    </small>
+                    {c.contractUntil && club !== 'fa' && (
+                      <small>{c.contractUntil}시즌 전까지 계약</small>
+                    )}
+                    {c.source && (
+                      <a className="coach-source" href={c.source} target="_blank" rel="noreferrer">
+                        원본 등록 자료 ↗
                       </a>
-                    ) : (
-                      '가상 후보'
                     )}
                   </td>
-                  <td>{c.skill}</td>
-                  <td>{money(c.salary)}</td>
+                  <td data-label="능력">{c.skill}</td>
+                  <td data-label="연봉">{money(c.salary)}</td>
                   <td>
                     <button
                       className="button secondary compact"
-                      disabled={busy || g.staff.some((s) => s.id === c.id)}
+                      disabled={busy || assigned}
                       onClick={() => setOffering(c)}
                     >
-                      {g.staff.some((s) => s.id === c.id) ? '선임됨' : `${role} 계약 제안`}
+                      {assigned
+                        ? '우리 팀 담당 코치'
+                        : group === 'other'
+                          ? '영입 조건 제안'
+                          : group === 'own'
+                            ? '담당 보직 제안'
+                            : `${role} 계약 제안`}
                     </button>
                   </td>
                 </tr>
               ))}
+              {!rows.length && (
+                <tr>
+                  <td colSpan={5} className="coach-empty">
+                    조건에 맞는 코치가 없습니다.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
         <div className="pagination">
-          <span>{candidates.length}명</span>
+          <span>{directory.count}명</span>
           <div>
             <button
               aria-label="이전 코치 목록"
               disabled={current === 0}
-              onClick={() => setPage(current - 1)}
+              onClick={() => directory.setPage(current - 1)}
             >
               ←
             </button>
@@ -169,7 +208,7 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
             <button
               aria-label="다음 코치 목록"
               disabled={current + 1 >= pages}
-              onClick={() => setPage(current + 1)}
+              onClick={() => directory.setPage(current + 1)}
             >
               →
             </button>
@@ -192,6 +231,6 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
           선수단의 훈련 탭에서 주간 일정, 개인 강도, 코치 담당과 컨디션별 휴식을 함께 관리합니다.
         </p>
       </section>
-    </>
+    </div>
   );
 }
