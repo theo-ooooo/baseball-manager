@@ -1,6 +1,4 @@
 import assert from 'node:assert/strict';
-export const proposalText =
-  '선수단의 강점을 점검하고 코치진과 협력하여 합의한 시즌 목표를 달성하겠습니다.';
 export function finishInterview(engine, game, id) {
   let g = game;
   let offer = g.managerCareer.offers.find((o) => o.id === id);
@@ -15,7 +13,7 @@ export function finishInterview(engine, game, id) {
   ];
   for (const [question, answer] of answers.slice(offer.interview?.length || 0))
     g = engine.applyAction(g, { type: 'managerInterview', id, question, answer });
-  g = engine.applyAction(g, { type: 'submitManagerProposal', id, proposal: proposalText });
+  assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'pending');
   for (let i = 0; i < 2; i++) g = engine.applyAction(g, { type: 'managerContinue' });
   assert.equal(g.managerCareer.offers.find((o) => o.id === id).status, 'offered');
   return g;

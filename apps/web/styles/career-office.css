@@ -1454,53 +1454,6 @@
 .interview-submit {
   margin-top: 20px;
 }
-.manager-proposal-paper {
-  padding: 28px;
-  margin-top: 24px;
-  background: #fffefa;
-  border: 1px solid #e8e1ce;
-}
-.manager-proposal-paper > small {
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: #918777;
-}
-.manager-proposal-paper > h3 {
-  font-size: 22px;
-  margin: 16px 0;
-}
-.manager-proposal-paper > label {
-  display: block;
-  font-size: 13px;
-  font-weight: 650;
-  margin: 24px 0 12px;
-}
-.manager-proposal-paper textarea {
-  width: 100%;
-  resize: vertical;
-  min-height: 200px;
-  padding: 16px;
-  border: 1px solid #ddd6c5;
-  border-radius: 4px;
-  background: transparent;
-  font-size: 14px;
-  line-height: 1.9;
-}
-.proposal-paper-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-top: 18px;
-}
-.proposal-paper-footer > span {
-  font-size: 11px;
-  color: var(--text-3);
-}
-.submitted-proposal {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
 @media (max-width: 950px) {
   .interview-session-layout {
     grid-template-columns: 1fr;
@@ -1519,15 +1472,6 @@
   }
   .interview-session-header h2 {
     font-size: 20px;
-  }
-}
-@media (max-width: 640px) {
-  .manager-proposal-paper {
-    padding: 18px;
-  }
-  .proposal-paper-footer {
-    flex-direction: column;
-    align-items: stretch;
   }
 }
 
@@ -1815,5 +1759,87 @@
   .match-page.is-watching .stadium-stage.is-2d {
     height: 440px;
     min-height: 440px;
+  }
+}
+
+/* Shrink the grid items as well as their tracks so the agenda cannot stretch mobile pages. */
+.manager-interview-session,
+.interview-session-layout,
+.interview-session-layout > *,
+.interview-session-header > div,
+.manager-contact-card,
+.manager-contact-card > header > div,
+.contact-terms > div {
+  min-width: 0;
+}
+.manager-interview-session {
+  overflow-wrap: anywhere;
+}
+.interview-answers button,
+.manager-interview-session .button {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.interview-agenda ol {
+  max-width: 100%;
+}
+@media (max-width: 640px) {
+  .interview-session-header {
+    gap: 12px;
+  }
+  .interview-session-header > .button {
+    flex-basis: 100%;
+  }
+  .interview-agenda {
+    padding: 14px;
+  }
+  .interview-agenda ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 12px;
+    overflow: visible;
+  }
+  .interview-agenda li {
+    gap: 8px;
+    padding: 10px 0;
+  }
+  .manager-contact-card {
+    padding: 16px;
+  }
+  .manager-contact-card > header {
+    flex-wrap: wrap;
+  }
+  .contact-terms {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .contact-terms > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 12px;
+  }
+  .contact-terms dd {
+    margin: 0;
+  }
+  .interview-answers button {
+    padding: 14px;
+    line-height: 1.6;
+  }
+  .interview-submit {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 767px) {
+  body:has(.manager-interview-session) .mobile-progress {
+    display: none;
+  }
+  .manager-interview-session button,
+  .manager-interview-session textarea,
+  .manager-interview-session input {
+    scroll-margin-block: 76px 90px;
   }
 }
