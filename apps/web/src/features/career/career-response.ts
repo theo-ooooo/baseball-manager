@@ -1,10 +1,11 @@
 import type { CareerData } from './game-contracts';
 import type { ManagerPatchResponse } from '@dugout/shared/manager-commands';
+import type { InboxReadPatchResponse } from '@dugout/shared/inbox-commands';
 
 /** The server owns mutations; merging a revision-bound view patch is presentation only. */
 export function mergeCareerResponse(
   current: CareerData,
-  response: CareerData | ManagerPatchResponse,
+  response: CareerData | ManagerPatchResponse | InboxReadPatchResponse,
 ): CareerData {
   if (!('patch' in response)) return response;
   if (
@@ -18,7 +19,10 @@ export function mergeCareerResponse(
     revision: response.revision,
     state: {
       ...current.state,
-      managerCareer: response.patch.managerCareer,
+      managerCareer:
+        'managerCareer' in response.patch
+          ? response.patch.managerCareer
+          : current.state.managerCareer,
       news: response.patch.news,
     },
   };

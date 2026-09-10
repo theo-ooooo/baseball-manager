@@ -57,6 +57,32 @@ test('Cloudflare HTML failure is reported as a recoverable service error', async
   assert.deepEqual(await careerResponse(Response.json({ revision: 2 })), { revision: 2 });
 });
 
+test('an inbox-only patch preserves the manager, players and ledger at the matching revision', () => {
+  const current = {
+    state: {
+      managerCareer: { status: 'employed' },
+      roster: [{ id: 'one' }],
+      news: [{ id: 'mail' }],
+      budget: 40,
+    },
+    revision: 3,
+    ledger: [{ balance: 40 }],
+  };
+  const response = {
+    baseRevision: 3,
+    revision: 4,
+    patch: { news: [{ id: 'mail', read: true }], roster: [] },
+  };
+  const next = mergeCareerResponse(current, response);
+  assert.equal(next.state.managerCareer, current.state.managerCareer);
+  assert.equal(next.state.roster, current.state.roster);
+  assert.equal(next.ledger, current.ledger);
+  assert.equal(next.state.budget, 40);
+  assert.equal(next.state.news[0].read, true);
+  assert.equal(current.state.news[0].read, undefined);
+  assert.throws(() => mergeCareerResponse(next, response));
+});
+
 test('Temporary limits and network failures have a retry message while daily quota explains reset time', async () => {
   await assert.rejects(
     careerResponse(Response.json({ error: 'internal limits' }, { status: 429 })),

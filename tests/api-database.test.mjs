@@ -1444,3 +1444,90 @@ test('D1 bounded manager conversations preserve the rest of a career and safely 
     .first();
   assert.equal(count.n, revision + 1);
 });
+
+test('D1 inbox reads only update messages, isolate owners and preserve saves across retries and races', async () => {
+  const user = 'bounded-inbox-qa';
+  const started = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '수신함 검증', mode: 'short', preseason: false },
+    user,
+  );
+  const raw = async () =>
+    JSON.parse(
+      (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+    );
+  const original = await raw();
+  original.news = [
+    { id: 'one', title: '읽을 메일', body: '첫 번째', kind: 'club', read: false },
+    {
+      id: 'two',
+      title: '보류할 메일',
+      body: '두 번째',
+      kind: 'club',
+      read: false,
+      choiceKind: 'promise',
+    },
+  ];
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(original), user)
+    .run();
+  const { news: originalNews, ...baseline } = original;
+  const projections = async () =>
+    Promise.all(
+      [
+        'career_players',
+        'contracts',
+        'career_staff',
+        'career_standings',
+        'negotiations',
+        'finance_entries',
+        'career_matches',
+      ].map(
+        async (table) =>
+          (await db.prepare(`SELECT * FROM ${table} WHERE user_id=?`).bind(user).all()).results,
+      ),
+    );
+  const before = await projections();
+  const command = {
+    type: 'readNews',
+    id: 'one',
+    revision: started.revision,
+    requestId: crypto.randomUUID(),
+    responseMode: 'patch',
+  };
+  const result = await call('/api/career', command, user);
+  assert.equal(result.status, 201);
+  assert.deepEqual(Object.keys(result.body.patch), ['news']);
+  assert.equal(result.body.state, undefined);
+  assert.equal(result.body.baseRevision, started.revision);
+  assert.equal(result.body.revision, started.revision + 1);
+  assert.deepEqual(result.body.patch.news, [{ ...originalNews[0], read: true }, originalNews[1]]);
+  assert.deepEqual((await call('/api/career', command, user)).body, result.body);
+  assert.equal((await call('/api/career', command, 'not-the-inbox-owner')).status, 409);
+  const stale = await call('/api/career', { ...command, requestId: crypto.randomUUID() }, user);
+  assert.equal(stale.status, 409);
+  assert.equal(stale.body.reload, true);
+  const all = { type: 'readAllNews', revision: result.body.revision, responseMode: 'patch' };
+  const race = await Promise.all([
+    call('/api/career', { ...all, requestId: crypto.randomUUID() }, user),
+    call('/api/career', { ...all, requestId: crypto.randomUUID() }, user),
+  ]);
+  assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+  assert.equal((await call('/api/career', command, user)).status, 409);
+  const { news, ...after } = await raw();
+  assert.deepEqual(after, baseline);
+  assert.deepEqual(
+    news,
+    originalNews.map((n) => ({ ...n, read: true })),
+  );
+  assert.deepEqual(await projections(), before);
+  assert.equal(
+    (
+      await db
+        .prepare('SELECT COUNT(*) AS n FROM career_actions WHERE user_id=?')
+        .bind(user)
+        .first()
+    ).n,
+    started.revision + 2,
+  );
+});
