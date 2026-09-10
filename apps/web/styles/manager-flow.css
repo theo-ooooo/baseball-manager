@@ -364,3 +364,11 @@
     white-space: nowrap;
   }
 }
+
+.matchday-upcoming {
+  padding: 18px;
+  margin-block: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}

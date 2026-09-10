@@ -7,6 +7,8 @@ import { ratingText } from '@dugout/shared/ratings';
 import { Badge } from '../../components/game-ui';
 import { useWorld } from '../career/world-context';
 import { MatchClubStanding } from './match-club-standing';
+import { useUpcomingFixture } from './use-upcoming-fixture';
+import { isClubSeasonRest } from '@dugout/shared/season-status';
 
 export function MatchdayBriefing({
   g,
@@ -25,14 +27,36 @@ export function MatchdayBriefing({
 }) {
   const { nextFixture, getClub, standings } = useWorld();
   const pair = nextFixture(g);
+  const upcoming = useUpcomingFixture(g);
+  const seasonRest = isClubSeasonRest(g);
   if (!pair)
     return (
       <section className="panel panel-content matchday-rest">
         <Link className="matchday-back" href="/?view=home">
           ← 구단으로 돌아가기
         </Link>
-        <h2>오늘은 훈련과 구단 업무를 보는 날입니다</h2>
-        <p>수신함을 확인하고 진행하면 다음 보고나 경기일에 멈춥니다.</p>
+        <h2>
+          {seasonRest
+            ? '우리 팀의 시즌 일정이 끝났습니다'
+            : '오늘은 훈련과 구단 업무를 보는 날입니다'}
+        </h2>
+        <p>
+          {seasonRest
+            ? '선수단은 휴식합니다. 계약 등 남은 구단 업무는 수신함에서 확인하세요.'
+            : '수신함을 확인하고 진행하면 다음 보고나 경기일에 멈춥니다.'}
+        </p>
+        {upcoming && (
+          <div className="matchday-upcoming">
+            <strong>다음 경기 · {dateLabel(g, upcoming.day)}</strong>
+            <p>
+              {getClub(upcoming.pair.find((id) => id !== g.club)!).name} 상대 ·{' '}
+              {upcoming.pair[0] === g.club ? '홈' : '원정'}
+            </p>
+            <Link className="text-button" href="/?view=schedule">
+              전체 일정 보기 →
+            </Link>
+          </div>
+        )}
         <button className="button primary" disabled={busy} onClick={onContinue}>
           {label} <ArrowRight size={16} />
         </button>

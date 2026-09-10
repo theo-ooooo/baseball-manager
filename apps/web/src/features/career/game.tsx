@@ -605,6 +605,7 @@ export function GameScreen({
               busy={busy}
               onPlayer={setPlayer}
               replay={openReplay}
+              onReport={openReport}
             />
           )}
           {view === 'inbox' && (

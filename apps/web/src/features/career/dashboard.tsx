@@ -10,9 +10,12 @@ import {
 } from 'lucide-react';
 import { useWorld } from './world-context';
 import { type GameState, type Player, type Result, money } from '@dugout/shared/game-view';
-import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
+import { dateLabel, gameDate } from '@dugout/shared/calendar';
 import { Badge } from '../../components/game-ui';
-import { clubSeasonStatus } from '@dugout/shared/season-status';
+import { clubSeasonStatus, isClubSeasonRest } from '@dugout/shared/season-status';
+import { needsContractReview } from '@dugout/shared/contract-status';
+import { tradeNeedsConfirmation } from '@dugout/shared/trade-status';
+import { useUpcomingFixture } from '../matches/use-upcoming-fixture';
 const tactics: Record<string, string> = {
   balanced: '균형 잡힌 야구',
   power: '장타 중심',
@@ -36,6 +39,7 @@ export function Dashboard({
   busy,
   onPlayer,
   replay,
+  onReport,
 }: {
   g: GameState;
   setView: (v: string) => void;
@@ -44,8 +48,9 @@ export function Dashboard({
   busy: boolean;
   onPlayer: (p: Player) => void;
   replay: (r: Result) => void;
+  onReport: (id: string) => void;
 }) {
-  const { getClub, getLeague, standings, nextFixture, fixtures } = useWorld();
+  const { getClub, getLeague, standings, nextFixture } = useWorld();
   const season = clubSeasonStatus(g);
   const club = getClub(g.club),
     league = getLeague(club.league),
@@ -60,28 +65,25 @@ export function Dashboard({
   const starter = g.roster.find((p) => p.id === g.starter);
   const tired = g.roster.filter((p) => p.condition < TIRED);
   const unread = g.news.filter((n) => !n.read).length,
-    interviews = g.news.filter((n) => n.choiceKind && !n.choice).length,
-    expiring = g.roster.filter((p) => p.years === 1).length;
+    interviews = isClubSeasonRest(g)
+      ? 0
+      : g.news.filter((n) => n.choiceKind && !n.choice && !n.employmentClosed).length,
+    expiring = g.roster.filter((p) => needsContractReview(g, p)).length;
+  const readyTrades = g.trades?.filter((offer) => tradeNeedsConfirmation(g, offer)).length || 0;
+  const activeDeals = g.deals.filter(
+    (d) =>
+      ['pending', 'counter', 'accepted'].includes(d.status) &&
+      (d.year === undefined || d.year === g.year) &&
+      g.day <= (d.expires ?? d.day + 14),
+  ).length;
+  const scoutReports = g.news.filter(
+    (n) => !n.read && n.actionView === 'scouting' && !!n.report?.players?.length,
+  );
   const condition = Math.round(
     g.roster.reduce((s, p) => s + p.condition, 0) / Math.max(1, g.roster.length),
   );
 
-  // Look ahead only through the existing calendar and fixture helpers; no new schedule rules.
-  const upcoming = (() => {
-    if (g.phase === 'regular') {
-      const done = new Set(g.history.map((r) => r.fixtureId));
-      const f = fixtures(g, league.id).find(
-        (f) => (f.home === g.club || f.away === g.club) && f.date > today && !done.has(f.id),
-      );
-      return f ? { day: g.day + daysBetween(today, f.date), pair: [f.home, f.away] } : null;
-    }
-    if (g.phase === 'preseason')
-      for (let day = g.day + 1; day < 0; day++) {
-        const pair = nextFixture({ ...g, day });
-        if (pair) return { day, pair };
-      }
-    return null;
-  })();
+  const upcoming = useUpcomingFixture(g);
 
   const series = g.series.find((s) => s.a === g.club || s.b === g.club),
     seriesTarget = g.phase === 'semifinal' ? 2 : 3,
@@ -113,6 +115,7 @@ export function Dashboard({
             };
 
   const checklist = [
+    { label: '최종 확정할 트레이드', count: readyTrades, unit: '건', view: 'trade', urgent: true },
     { label: '답변을 기다리는 면담', count: interviews, unit: '건', view: 'inbox', urgent: true },
     { label: '안 읽은 소식', count: unread, unit: '건', view: 'inbox' },
     {
@@ -121,8 +124,15 @@ export function Dashboard({
       unit: '명',
       view: 'squad',
     },
-    { label: '계약 잔여 1년', count: expiring, unit: '명', view: 'agents' },
-    { label: '진행 중인 협상', count: g.deals.length, unit: '건', view: 'agents' },
+    { label: '재계약 검토할 선수', count: expiring, unit: '명', view: 'agents' },
+    { label: '진행 중인 선수 협상', count: activeDeals, unit: '건', view: 'agents' },
+    {
+      label: '새 스카우트 메일',
+      count: scoutReports.length,
+      unit: '건',
+      view: 'inbox',
+      reportId: scoutReports[0]?.id,
+    },
   ];
   const tasks = checklist.filter((item) => item.count > 0);
   const nextPair = fixture || upcoming?.pair;
@@ -319,7 +329,9 @@ export function Dashboard({
               <ul className="dashboard-task-list">
                 {tasks.map((item) => (
                   <li key={item.label}>
-                    <button onClick={() => setView(item.view)}>
+                    <button
+                      onClick={() => (item.reportId ? onReport(item.reportId) : setView(item.view))}
+                    >
                       <span className={item.urgent ? 'task-dot urgent' : 'task-dot'} />
                       <span>{item.label}</span>
                       <b>
