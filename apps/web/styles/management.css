@@ -406,6 +406,8 @@ input,
   text-overflow: ellipsis;
 }
 .breadcrumb > div > span {
+  white-space: nowrap;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 6px;
