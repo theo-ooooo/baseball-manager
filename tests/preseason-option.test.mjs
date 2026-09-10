@@ -153,8 +153,8 @@ test('Skipping an existing preseason runs every remaining day for the coaches an
   assert.ok(next.expenses > original.expenses);
   assert.equal(next.roster.find((p) => p.id === injured.id).injury, undefined);
   assert.ok(next.news.some((n) => n.playerId === injured.id && n.title.includes('복귀')));
-  // The coaches answered the player conversation instead of expiring it.
-  assert.equal(next.news.find((n) => n.id === 'pending-chat').choice, 'explain');
+  // Unsupported preseason playing-time demands are resolved without creating promises.
+  assert.equal(next.news.find((n) => n.id === 'pending-chat').choice, 'resolved');
   assert.equal(next.news.filter((n) => n.choiceKind && !n.choice).length, 0);
   // Nothing about the career was reset.
   assert.equal(next.year, original.year);

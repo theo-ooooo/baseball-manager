@@ -47,8 +47,12 @@ test('Continue handles required decisions and unread reports before the fixture 
 test('Match preparation rejects unresolved decisions and completion identifies the exact stored match report', () => {
   let g = e.newGame('kbo-lotte', 'Matchday', 'short', 321);
   g = reachFixture(e, g);
-  const pending = structuredClone(g);
+  const pending = e.newGame('kbo-lotte', 'Pending', 'short', 321, { preseason: false });
+  const underused = pending.roster.find((p) => p.squad !== 'reserve' && p.pos !== 'P');
+  underused.mood.recent = Array(12).fill(false);
+  underused.mood.role = 'core';
   pending.news.push({
+    playerId: underused.id,
     id: 'choice',
     day: g.day,
     title: '면담',

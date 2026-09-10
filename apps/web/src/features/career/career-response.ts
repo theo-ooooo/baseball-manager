@@ -14,6 +14,7 @@ export function mergeCareerResponse(
     response.revision !== current.revision + 1
   )
     throw new Error('화면의 저장 버전이 달라졌습니다. 최신 커리어를 다시 불러와 주세요.');
+  const playerMood = 'playerMood' in response.patch ? response.patch.playerMood : undefined;
   return {
     ...current,
     revision: response.revision,
@@ -24,6 +25,11 @@ export function mergeCareerResponse(
           ? response.patch.managerCareer
           : current.state.managerCareer,
       news: response.patch.news,
+      roster: playerMood
+        ? current.state.roster.map((p) =>
+            p.id === playerMood.id ? { ...p, mood: playerMood.mood } : p,
+          )
+        : current.state.roster,
     },
   };
 }

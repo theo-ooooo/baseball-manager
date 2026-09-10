@@ -1531,3 +1531,94 @@ test('D1 inbox reads only update messages, isolate owners and preserve saves acr
     started.revision + 2,
   );
 });
+
+test('D1 player conversation patches the target mood and news atomically without changing the world', async () => {
+  const user = 'bounded-player-conversation';
+  const started = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '면담 검증', mode: 'short', preseason: false },
+    user,
+  );
+  const raw = async () =>
+    JSON.parse(
+      (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+    );
+  const initial = await raw(),
+    player = initial.roster.find((p) => p.pos !== 'P');
+  player.mood.recent = Array(12).fill(false);
+  initial.news = [
+    {
+      id: 'playing-time',
+      day: initial.day,
+      title: '출전 요청',
+      body: '기회를 주세요',
+      kind: 'morale',
+      choiceKind: 'playingTime',
+      playerId: player.id,
+    },
+  ];
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(initial), user)
+    .run();
+  const command = {
+    type: 'respondNews',
+    id: 'playing-time',
+    choice: 'promise',
+    responseMode: 'patch',
+    revision: started.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const result = await call('/api/career', command, user);
+  assert.equal(result.status, 201, JSON.stringify(result));
+  assert.equal(result.body.patch.playerMood.id, player.id);
+  assert.deepEqual(result.body.patch.playerMood.mood.promise, {
+    due: initial.day + 14,
+    games: 4,
+    startGames: player.stats.g,
+  });
+  assert.equal(result.body.patch.playerMood.mood.value, Math.min(100, player.mood.value + 6));
+  assert.deepEqual((await call('/api/career', command, user)).body, result.body);
+  assert.equal((await call('/api/career', command, 'someone-else')).status, 409);
+  assert.equal(
+    (await call('/api/career', { ...command, requestId: crypto.randomUUID() }, user)).status,
+    409,
+  );
+  const after = await raw(),
+    updated = after.roster.find((p) => p.id === player.id);
+  assert.deepEqual(updated.mood, result.body.patch.playerMood.mood);
+  const projection = JSON.parse(
+    (
+      await db
+        .prepare('SELECT data FROM career_players WHERE user_id=? AND player_id=?')
+        .bind(user, player.id)
+        .first()
+    ).data,
+  );
+  assert.deepEqual(projection.mood, updated.mood);
+  updated.mood = player.mood;
+  after.news = initial.news;
+  assert.deepEqual(after, initial);
+  // Concurrent different answers must have one winner and one revision conflict.
+  const pending = await raw();
+  pending.news.unshift({ ...initial.news[0], id: 'second-conversation' });
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(pending), user)
+    .run();
+  const race = await Promise.all(
+    ['promise', 'explain'].map((choice) =>
+      call(
+        '/api/career',
+        {
+          ...command,
+          id: 'second-conversation',
+          choice,
+          revision: result.body.revision,
+          requestId: crypto.randomUUID(),
+        },
+        user,
+      ),
+    ),
+  );
+  assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+});
