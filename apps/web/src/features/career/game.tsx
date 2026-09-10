@@ -1,4 +1,5 @@
 'use client';
+import { useGameResources } from './use-game-resources';
 import { useCareerSession } from './use-career-session';
 import { UnemployedHome } from './unemployed-home';
 import { managerOfferActionLabel } from './manager-offer-status';
@@ -39,7 +40,6 @@ import {
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { WorldProvider, useWorld } from './world-context';
-import type { WorldCatalog } from '@dugout/shared/types';
 import { type Player, type Result } from '@dugout/shared/game-view';
 import { DynamicsPanel } from '../clubs/club-panels';
 import { InboxPanel } from '../inbox/inbox-panel';
@@ -930,25 +930,7 @@ export default function Game({
   initialOfferId?: string;
   initialClubId?: string;
 } = {}) {
-  const [data, setData] = useState<{ world: WorldCatalog; career: CareerData } | null>(null),
-    [error, setError] = useState(''),
-    [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    const abort = new AbortController();
-    Promise.all(
-      ['/api/catalog', '/api/career'].map(async (url) => {
-        const response = await fetch(url, { cache: 'no-store', signal: abort.signal });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || '데이터를 불러오지 못했습니다.');
-        return body;
-      }),
-    )
-      .then(([world, career]) => setData({ world, career }))
-      .catch((e) => {
-        if (!abort.signal.aborted) setError(e.message || '연결하지 못했습니다.');
-      });
-    return () => abort.abort();
-  }, [attempt]);
+  const { data, error, reconnect, refreshCatalog } = useGameResources();
   if (!data)
     return (
       <main className="catalog-loading">
@@ -962,13 +944,7 @@ export default function Game({
           <>
             <h1>커리어를 불러오지 못했습니다</h1>
             <p>{error}</p>
-            <button
-              className="button primary"
-              onClick={() => {
-                setError('');
-                setAttempt((n) => n + 1);
-              }}
-            >
+            <button className="button primary" onClick={reconnect}>
               다시 연결
             </button>
           </>
@@ -990,13 +966,7 @@ export default function Game({
         initialReportId={initialReportId}
         initialOfferId={initialOfferId}
         initialClubId={initialClubId}
-        refreshCatalog={async () => {
-          const response = await fetch('/api/catalog', { cache: 'no-store' });
-          if (!response.ok)
-            throw new Error('선수 DB를 새로 불러오지 못했습니다. 새로고침해 주세요.');
-          const world = await response.json();
-          setData((current) => (current ? { ...current, world } : current));
-        }}
+        refreshCatalog={refreshCatalog}
       />
     </WorldProvider>
   );
