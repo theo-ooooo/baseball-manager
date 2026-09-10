@@ -11,6 +11,27 @@ const built = await build({
 const { mergeCareerResponse, careerResponse, careerErrorMessage } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
+test('player conversation patch only replaces the matching player mood', () => {
+  const state = {
+    roster: [
+      { id: 'one', salary: 30, mood: { value: 60 } },
+      { id: 'two', mood: { value: 40 } },
+    ],
+    news: [],
+    budget: 10,
+  };
+  const current = { state, revision: 1, ledger: [] },
+    mood = { value: 66 };
+  const next = mergeCareerResponse(current, {
+    baseRevision: 1,
+    revision: 2,
+    patch: { news: [{ id: 'done' }], playerMood: { id: 'one', mood } },
+  });
+  assert.deepEqual(next.state.roster[0], { ...state.roster[0], mood });
+  assert.equal(next.state.roster[1], state.roster[1]);
+  assert.equal(next.state.budget, state.budget);
+  assert.equal(state.roster[0].mood.value, 60);
+});
 test('conversation response only merges server-owned fields at the matching revision', () => {
   const before = {
     state: {

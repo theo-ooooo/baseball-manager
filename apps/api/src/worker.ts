@@ -91,6 +91,12 @@ async function dispatch(request: Request): Promise<Response> {
       console.info(
         'career-action',
         typeof action === 'string' && /^[a-zA-Z]{1,50}$/.test(action) ? action : 'invalid',
+        body &&
+          typeof body === 'object' &&
+          'responseMode' in body &&
+          ['patch', 'compact'].includes(String(body.responseMode))
+          ? body.responseMode
+          : 'legacy',
       );
     }
   }

@@ -260,28 +260,32 @@ export function dynamicsAction(g: GameState, a: Record<string, unknown>): GameSt
     if (n) n.read = true;
     return g;
   }
-  if (a.type === 'respondNews') {
-    const n = g.news.find((n) => n.id === a.id),
-      choice = String(a.choice);
-    if (!n?.choiceKind || n.choice || !['promise', 'explain'].includes(choice))
-      throw new Error('답변할 면담과 선택지를 확인해 주세요.');
-    const p = g.roster.find((p) => p.id === n.playerId);
-    if (!p) throw new Error('현재 소속 선수가 아닙니다.');
-    const m = p.mood!;
-    if (choice === 'promise') {
-      const games = p.pos === 'P' ? 1 : 4;
-      m.promise = { due: g.day + 14, games, startGames: p.stats.g };
-      m.value = limit(m.value + 6);
-      m.reason = `2주 내 ${games}경기 출전 약속을 믿고 기다림`;
-    } else {
-      m.value = limit(m.value + 2);
-      m.reason = '감독의 선수단 운용 방침을 들음';
-    }
-    n.choice = choice;
-    n.read = true;
-    n.response = m.reason;
-    postNews(g, `${p.name} 면담 완료`, m.reason, 'morale', { playerId: p.id });
-    return g;
-  }
+  if (a.type === 'respondNews') return respondPlayerNews(g, a);
   return null;
+}
+
+export function respondPlayerNews<
+  T extends Pick<GameState, 'news' | 'roster' | 'year' | 'day' | 'calendar'>,
+>(g: T, a: Record<string, unknown>): T {
+  const n = g.news.find((n) => n.id === a.id),
+    choice = String(a.choice);
+  if (!n?.choiceKind || n.choice || !['promise', 'explain'].includes(choice))
+    throw new Error('답변할 면담과 선택지를 확인해 주세요.');
+  const p = g.roster.find((p) => p.id === n.playerId);
+  if (!p) throw new Error('현재 소속 선수가 아닙니다.');
+  const m = p.mood!;
+  if (choice === 'promise') {
+    const games = p.pos === 'P' ? 1 : 4;
+    m.promise = { due: g.day + 14, games, startGames: p.stats.g };
+    m.value = limit(m.value + 6);
+    m.reason = `2주 내 ${games}경기 출전 약속을 믿고 기다림`;
+  } else {
+    m.value = limit(m.value + 2);
+    m.reason = '감독의 선수단 운용 방침을 들음';
+  }
+  n.choice = choice;
+  n.read = true;
+  n.response = m.reason;
+  postNews(g, `${p.name} 면담 완료`, m.reason, 'morale', { playerId: p.id });
+  return g;
 }
