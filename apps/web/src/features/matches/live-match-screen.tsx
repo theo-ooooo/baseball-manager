@@ -216,30 +216,26 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
 
       <div className={`stadium-replay-layout ${editor && !finished ? 'is-planning' : ''}`}>
         <div className="stadium-main">
-          {!editor &&
-            (mobile ? (
-              <MobileMatchView
-                g={g}
-                cursor={cursor}
+          {!editor && (
+            <>
+              <MatchAtBat result={result} cursor={cursor} />
+              <StadiumScene
+                replayKey={`${cursor}:${settled}`}
+                result={sceneResult}
+                index={Math.max(0, cursor - 1)}
                 playing={!settled && cursor > 0}
                 speed={Number(speed)}
-                reduced={reduced}
+                reduced={reduced || settled}
                 onEnd={finishPlay}
               />
-            ) : (
-              <>
-                <MatchAtBat result={result} cursor={cursor} />
-                <StadiumScene
-                  key={`${cursor}:${settled}`}
-                  result={sceneResult}
-                  index={Math.max(0, cursor - 1)}
-                  playing={!settled && cursor > 0}
-                  speed={Number(speed)}
-                  reduced={reduced || settled}
-                  onEnd={finishPlay}
-                />
-              </>
-            ))}
+              {mobile && (
+                <details className="mobile-preview-teams">
+                  <summary>타순 · 선수 상태</summary>
+                  <MobileMatchView g={g} cursor={cursor} />
+                </details>
+              )}
+            </>
+          )}
           {!editor && !finished && commandOpen && (
             <MatchCommandPanel g={g} cursor={cursor} busy={busy} act={act} />
           )}
