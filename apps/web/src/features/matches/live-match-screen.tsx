@@ -185,27 +185,20 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
       <div className="match-broadcast" hidden={panel !== 'watch'}>
         <div className="match-broadcast-main">
           <MatchAtBat result={result} cursor={cursor} settled={settled} />
-          <MatchCommandResultNotice
-            event={m.commandResults.current}
-            onDismiss={m.commandResults.dismiss}
-          />
-          {live.cards?.version === 2 && (
-            <MatchEffectNotice
-              event={m.effects.event}
-              draft={live.cards}
-              onDismiss={m.effects.dismiss}
-            />
-          )}
-          {live.cards?.version === 2 && live.cards.selected && (
-            <MatchCardHand
-              g={g}
-              cursor={m.consumed}
-              busy={busy}
-              paused={!playing && settled && !finished}
-              act={act}
-            />
-          )}
           <div className="match-field-view">
+            <div className="match-field-notices">
+              <MatchCommandResultNotice
+                event={m.commandResults.current}
+                onDismiss={m.commandResults.dismiss}
+              />
+              {live.cards?.version === 2 && (
+                <MatchEffectNotice
+                  event={m.effects.event}
+                  draft={live.cards}
+                  onDismiss={m.effects.dismiss}
+                />
+              )}
+            </div>
             <MatchSubstitutionNotice
               event={m.substitutions.current}
               onDismiss={m.substitutions.dismiss}
@@ -223,7 +216,13 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
             />
             <MatchDecisionBar
               decision={m.decision}
-              paused={m.decisionVisible && !m.commandOpen}
+              paused={
+                panel === 'watch' &&
+                m.decisionVisible &&
+                !m.commandOpen &&
+                !m.commandResults.current &&
+                !m.effects.event
+              }
               pauseReason={m.pauseReason}
               busy={busy}
               onPlan={() => m.showPanel('plan')}
@@ -231,6 +230,17 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               onContinue={() => m.play()}
               previousCommand={m.previousCommand}
               onRepeat={m.repeatCommand}
+              cards={
+                live.cards?.version === 2 && live.cards.selected ? (
+                  <MatchCardHand
+                    g={g}
+                    cursor={m.consumed}
+                    busy={busy}
+                    paused={!playing && settled && !finished}
+                    act={act}
+                  />
+                ) : undefined
+              }
               coach={
                 <>
                   <CoachCommandCard

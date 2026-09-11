@@ -1,3 +1,19 @@
+.match-field-notices {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 12;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+.match-field-notices > section {
+  pointer-events: auto;
+  border: 1px solid #627a83;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px #0006;
+}
 .match-command-result {
   position: relative;
   display: flex;
@@ -71,6 +87,11 @@
   }
 }
 @media (max-width: 600px) {
+  .match-field-notices {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
   .match-command-result {
     padding: 12px 42px 12px 12px;
     gap: 10px;
