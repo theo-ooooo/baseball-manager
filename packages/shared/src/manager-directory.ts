@@ -11,6 +11,8 @@ export type ManagerRecord = {
   source?: string;
   confidence?: number;
   role?: string;
+  /** Set while the person holds no job, so idle time survives saves with undated departures. */
+  idleSince?: string;
   coach?: Coach;
   personality?: import('./personality').ManagerPersonality;
   career: {

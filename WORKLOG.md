@@ -1,5 +1,22 @@
 # Work log
 
+## 2026-09-11 — 무직 감독 재취업과 코치 전향
+
+플레이어가 밀어낸 전임 감독과 경질된 컴퓨터 감독이 영구 무직으로 남는 문제를 고쳤다.
+
+원인은 두 가지였다. `availableManager` 가 무직 인물을 평판 순으로만 정렬해 1위 한 명만 반환했으므로, 하위 리그 공석에도 최고 평판자가 배정되고 나머지는 계속 밀려났다. 그리고 감독직을 얻지 못한 인물이 코치로 전환되는 경로가 없어 무직 인물이 누적됐다.
+
+- `availableManager` 는 리그 수준과의 평판 격차, 같은 리그 여부, 무직 기간을 합산해 정렬한다. 공석은 최고 평판자 대신 그 리그에 맞는 인물을 선임한다.
+- `convertIdleManagersToCoaches` 를 추가해 150일 넘게 감독직을 얻지 못한 인물을 컴퓨터 구단 코치로 전환한다. `reconcileManagerPeople` 이 이미 `coachAssignments` 를 읽어 보직을 표시하므로 배정 기록만 남긴다. 계약은 2년이며 만료되면 다시 감독 후보로 돌아온다.
+- 전환은 7일 간격으로만 수행하고, 무직 인물을 구단 수의 5%(최소 4명) 이상 남긴다. 감독 풀이 비어 새 가상 감독이 생성되는 것을 막는다.
+- 배정 구단은 기존 코치 수가 적은 쪽을 먼저 고르고 플레이어 구단은 제외한다. 코치 합류는 월드 이벤트로 기록한다.
+- 무직 기간 기준으로 `ManagerRecord.idleSince` 를 추가했다. 게임 시작 시 밀려난 카탈로그 감독은 퇴임 날짜가 없어 경력 기록만으로는 무직 기간을 계산할 수 없었다.
+
+검증: `tests/manager-people.test.mjs` 10건 통과(신규 5건 포함). 연관 스위트 47건 통과(manager-flow, personality-career, career-systems, game-invariants, career-memory, coaching-specialties, recruitment). `npm run lint` 통과. `npm run typecheck` 는 수정 전후 모두 48건으로 동일하며, 남은 오류는 전부 Cloudflare 런타임 선언(`D1Database`, `Env`, `ExecutionContext`)과 미생성 빌드 산출물 때문으로 이번 변경과 무관하다. `npm run format:check` 는 이 작업 환경의 `core.autocrlf=true` 로 인해 수정 전 461개 파일, 수정 후 459개 파일이 보고되어 이번 변경과 무관하다.
+
+한계: 브라우저 검증과 배포 영속성 검증은 수행하지 않았다. 코치로 전환된 인물의 지도 능력이 컴퓨터 구단 성적에 반영되는 경로는 아직 없다.
+
+
 ## 2026-09-07 — Initial implementation session
 
 Implemented React/TypeScript management screens, 13 leagues and 137 clubs, 1,812 real-name player records plus generated players, season simulation, tactics, negotiations and transfers, coaching and training, finances, and versioned D1 career persistence.

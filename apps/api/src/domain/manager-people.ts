@@ -128,6 +128,7 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
       person.club = job.club;
       person.role = '감독';
       person.confidence = job.confidence;
+      delete person.idleSince;
       let current = person.career.find((entry) => entry.active);
       if (!current) {
         current = { club: job.club, from: job.appointed, active: true, wins: 0, losses: 0 };
@@ -151,12 +152,14 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
       person.club = coaching.club;
       person.role = role;
       delete person.confidence;
+      delete person.idleSince;
       if (!person.career.some((entry) => entry.active))
         person.career.unshift({ club: coaching.club, from: today, active: true, role });
     } else {
       delete person.role;
       delete person.club;
       delete person.confidence;
+      person.idleSince ??= today;
       // Catalog identity survives a replaced or missing legacy job; unknown historical dates stay unknown.
       if (!person.career.length && person.originClub)
         person.career.push({
@@ -168,28 +171,100 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
     }
   }
 }
+/**
+ * Days the person has held no job. Reads `idleSince` rather than career dates because catalog
+ * incumbents displaced at game start carry an undated departure entry.
+ */
+export function idleDays(g: GameState, person: ManagerRecord) {
+  return person.idleSince ? Math.max(0, daysBetween(person.idleSince, gameDate(g))) : 0;
+}
+
+export function idleManagers(g: GameState) {
+  return Object.values(g.managerPeople || {}).filter(
+    (person) =>
+      !person.club &&
+      !Object.values(g.managerJobs || {}).some((job) => !job.vacant && job.managerId === person.id),
+  );
+}
+
+/**
+ * Managers who go unhired for a long stretch take a coaching job instead of waiting forever.
+ * `reconcileManagerPeople` already reads `coachAssignments`, so recording one here is enough to
+ * show the person as a coach. A reserve of idle managers stays untouched so real people, not
+ * freshly generated names, keep filling vacancies.
+ */
+export function convertIdleManagersToCoaches(g: GameState, world: WorldCatalog) {
+  const idle = idleManagers(g);
+  const reserve = Math.max(4, Math.round(world.clubs.length * 0.05));
+  if (idle.length <= reserve) return [];
+  const assignments = (g.coachAssignments ??= {});
+  const perClub = new Map<string, number>();
+  for (const assignment of Object.values(assignments))
+    if (assignment.club !== 'fa')
+      perClub.set(assignment.club, (perClub.get(assignment.club) || 0) + 1);
+  const today = gameDate(g);
+  const converted: { person: ManagerRecord; club: string }[] = [];
+  const candidates = idle
+    .filter(
+      (person) =>
+        !!person.coach &&
+        idleDays(g, person) >= 150 &&
+        !assignments[person.id] &&
+        !g.coachDeals?.some((deal) => deal.coach.id === person.id) &&
+        !g.staff.some((coach) => coach.managerPersonId === person.id),
+    )
+    .sort((a, b) => idleDays(g, b) - idleDays(g, a) || a.id.localeCompare(b.id))
+    .slice(0, Math.max(0, idle.length - reserve));
+  for (const person of candidates) {
+    const league = world.clubs.find((c) => c.id === person.originClub)?.league;
+    const club = world.clubs
+      .filter((c) => c.id !== g.club)
+      .sort(
+        (a, b) =>
+          (perClub.get(a.id) || 0) - (perClub.get(b.id) || 0) ||
+          Number(b.league === league) - Number(a.league === league) ||
+          hash(`${person.id}:${a.id}`) - hash(`${person.id}:${b.id}`),
+      )[0];
+    if (!club) break;
+    assignments[person.id] = {
+      club: club.id,
+      coach: { ...person.coach!, contractUntil: g.year + 2 },
+    };
+    perClub.set(club.id, (perClub.get(club.id) || 0) + 1);
+    person.career.unshift({
+      club: club.id,
+      from: today,
+      active: true,
+      role: `${person.coach!.role} 코치`,
+    });
+    person.career = person.career.slice(0, 20);
+    converted.push({ person, club: club.id });
+  }
+  return converted;
+}
+
 export function availableManager(
   g: GameState,
   world: WorldCatalog,
   clubId: string,
 ): ManagerRecord | undefined {
   const club = world.clubs.find((c) => c.id === clubId)!;
-  return Object.values(g.managerPeople || {})
+  const level = world.leagues.find((l) => l.id === club.league)!.level;
+  return idleManagers(g)
     .filter(
       (person) =>
-        !person.club &&
-        !Object.values(g.managerJobs || {}).some(
-          (job) => !job.vacant && job.managerId === person.id,
-        ) &&
         !person.career.some(
           (entry) => entry.club === clubId && !!entry.to && daysBetween(entry.to, gameDate(g)) < 30,
         ),
     )
-    .sort((a, b) => {
-      const sameLeague = (person: ManagerRecord) =>
-        world.clubs.find((c) => c.id === person.originClub)?.league === club.league ? 20 : 0;
-      return (
-        b.reputation + sameLeague(b) - (a.reputation + sameLeague(a)) || a.id.localeCompare(b.id)
-      );
-    })[0];
+    .sort((a, b) => score(b) - score(a) || a.id.localeCompare(b.id))[0];
+  // A club hires the manager whose standing fits its league, not whoever is simply the most
+  // renowned. Ranking by reputation alone sent one person to every vacancy and left everyone
+  // else idle forever, so distance from the league level and idle time both count.
+  function score(person: ManagerRecord) {
+    const sameLeague =
+      world.clubs.find((c) => c.id === person.originClub)?.league === club.league ? 12 : 0;
+    const fit = 30 - Math.abs(person.reputation - reputation(level));
+    return fit + sameLeague + Math.min(20, Math.floor(idleDays(g, person) / 14) * 4);
+  }
 }

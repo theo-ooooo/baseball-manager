@@ -1,4 +1,8 @@
-import { reconcileManagerPeople, availableManager } from './manager-people';
+import {
+  reconcileManagerPeople,
+  availableManager,
+  convertIdleManagersToCoaches,
+} from './manager-people';
 import { clubExpectation, clubStrengthRanks } from '@dugout/shared/club-expectations';
 import { approachValuation, clubNegotiationBudget, updateBoardTrust } from './manager-valuation';
 import { isClubDutyReport } from '@dugout/shared/employment-reports';
@@ -522,6 +526,13 @@ export function createManagerCareer(world: WorldCatalog) {
     }
     archiveTick(g);
     review(g);
+    if (g.day > 0 && g.day % 7 === 0)
+      for (const { person, club } of convertIdleManagersToCoaches(g, world))
+        worldEvent(g, {
+          kind: 'appointment',
+          club,
+          text: `${view.getClub(club).name} · ${person.name} ${person.coach!.role} 코치 합류`,
+        });
     reconcileManagerPeople(g, world);
   }
   function archiveTick(g: GameState) {
