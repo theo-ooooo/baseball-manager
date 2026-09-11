@@ -15,6 +15,7 @@ import { MatchCardHand } from './match-card-hand';
 import { MatchEffectNotice } from './match-effect-notice';
 import { MatchDelegation } from './match-delegation';
 import { MatchPreview } from './match-preview';
+import { PreviewSubstitutionCard } from './preview-substitution-card';
 import { MatchOverview } from './match-overview';
 import { MatchAudioSettings } from './match-audio-settings';
 import { AppVersion } from '../../components/app-version';
@@ -140,6 +141,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           onPlan={() => m.showPanel('plan')}
           onPlay={() => m.play()}
           onCards={() => m.setCardsOpen(true)}
+          substitution={<PreviewSubstitutionCard coach={m.previewSubstitution} busy={busy} />}
         />
       )}
       <Dialog
