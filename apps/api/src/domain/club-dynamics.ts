@@ -1,3 +1,4 @@
+import { playerPersonality } from '@dugout/shared/personality';
 import { isClubDutyReport } from '@dugout/shared/employment-reports';
 import { needsContractReview } from '@dugout/shared/contract-status';
 import { isClubSeasonRest } from '@dugout/shared/season-status';
@@ -38,7 +39,8 @@ export function postNews(
 }
 export function prepareDynamics(g: GameState) {
   const ranked = [...g.roster].sort((a, b) => overall(b) - overall(a));
-  for (const p of g.roster)
+  for (const p of g.roster) {
+    p.personality ??= playerPersonality(p);
     p.mood ??= {
       value: 65,
       role:
@@ -54,6 +56,7 @@ export function prepareDynamics(g: GameState) {
       reason: '새 감독 체제에 적응 중',
       recent: [],
     };
+  }
   reconcilePlayingTimeNews(g);
 }
 export function matchMorale(g: GameState, res: Result) {
@@ -75,17 +78,23 @@ export function matchMorale(g: GameState, res: Result) {
       appeared = played.has(p.id);
     m.recent = [...m.recent, appeared].slice(-12);
     if (appeared) m.lastPlayedDay = g.day;
-    const shortage = playingTimeAssessment(g, p)?.shortage === true;
+    const shortage = !appeared && playingTimeAssessment(g, p)?.shortage === true;
     m.value = limit(
       m.value + (draw ? 0 : win ? 1.3 : -1.3) + (shortage ? -2.4 : appeared ? 0.8 : 0),
     );
     m.reason = shortage
-      ? '기대한 출전 기회보다 적음'
-      : win
-        ? '팀 승리로 자신감 상승'
-        : draw
-          ? '다음 경기를 준비 중'
-          : '패배로 자신감 하락';
+      ? '최근 출전 기회가 기대보다 적어 아쉬움'
+      : appeared
+        ? win
+          ? '출전 기회와 팀 승리로 자신감 상승'
+          : draw
+            ? '출전 기회를 얻어 경기 감각 회복'
+            : '경기에 출전했지만 팀 패배로 아쉬움'
+        : win
+          ? '팀 승리로 자신감 상승'
+          : draw
+            ? '다음 경기를 준비 중'
+            : '팀 패배로 자신감 하락';
   }
 }
 export function dailyReports(
@@ -118,6 +127,7 @@ export function dailyReports(
     const usage = resting ? null : playingTimeAssessment(g, p);
     if (
       usage?.shortage &&
+      m.lastPlayedDay !== g.day &&
       m.value < 45 &&
       !m.promise &&
       g.day - (m.lastConcernDay ?? -1000) >= 28 &&

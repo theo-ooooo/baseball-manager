@@ -15,12 +15,12 @@ export class CareerRepository {
       .all<{ data: string }>();
     return rows.results.map((r) => JSON.parse(r.data) as PlayerCareerRecord);
   }
-  async retiredPlayers(db: D1Database, user: string, offset = 0) {
+  async retiredPlayers(db: D1Database, user: string, offset = 0, query = '') {
     const rows = await db
       .prepare(
-        "SELECT data FROM career_player_records WHERE user_id=? AND kind='retirement' ORDER BY season DESC,id DESC LIMIT 150 OFFSET ?",
+        "SELECT data FROM career_player_records WHERE user_id=? AND kind='retirement' AND (? = '' OR instr(replace(json_extract(data,'$.name'),' ',''),?) > 0) ORDER BY season DESC,id DESC LIMIT 150 OFFSET ?",
       )
-      .bind(user, offset)
+      .bind(user, query.replaceAll(' ', ''), query.replaceAll(' ', ''), offset)
       .all<{ data: string }>();
     return rows.results.map((r) => JSON.parse(r.data) as PlayerCareerRecord);
   }

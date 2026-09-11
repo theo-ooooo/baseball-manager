@@ -877,6 +877,23 @@ test(
       'test-owner-b',
     );
     assert.equal(other.status, 404);
+    const renewal = saved.state.managerCareer?.offers.find(
+      (o) => o.source === 'renewal' && o.status === 'offered',
+    );
+    if (renewal) {
+      saved = await action({
+        type: 'acceptManagerTerms',
+        id: renewal.id,
+        termsVersion: renewal.contractTerms.version,
+      });
+      const terms = saved.state.managerCareer.offers.find((o) => o.id === renewal.id).contractTerms;
+      saved = await action({
+        type: 'signManager',
+        id: renewal.id,
+        termsVersion: terms.version,
+        signature: saved.state.manager,
+      });
+    }
     saved = await action({ type: 'nextSeason' });
     assert.equal(saved.state.year, 2027);
     assert.equal(saved.state.history.length, 0);
@@ -1299,6 +1316,7 @@ test('Player career archives leave the hot save, isolate users and supply truste
   const raw = JSON.parse(
     (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
   );
+  raw.managerCareer.contract.throughYear = raw.year + 2;
   const retired = raw.roster.find((p) => p.pos === 'P');
   retired.age = 45;
   retired.stats.outs = 90;

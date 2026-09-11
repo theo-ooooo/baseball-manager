@@ -1,3 +1,4 @@
+import { reconcileManagerPeople, availableManager } from './manager-people';
 import { clubExpectation, clubStrengthRanks } from '@dugout/shared/club-expectations';
 import { approachValuation, clubNegotiationBudget, updateBoardTrust } from './manager-valuation';
 import { isClubDutyReport } from '@dugout/shared/employment-reports';
@@ -19,7 +20,7 @@ import {
   hash,
   rng,
   lineupAuto,
-  coachRoles,
+  initialCoachRoles,
 } from '@dugout/shared/game-view';
 import { autoDefense, firstTeam } from '@dugout/shared/management';
 import { autoPitching } from '@dugout/shared/pitching';
@@ -172,6 +173,7 @@ export function createManagerCareer(world: WorldCatalog) {
       job.managerName = g.manager;
       job.vacant = false;
     }
+    reconcileManagerPeople(g, world);
   }
   function report(g: GameState, title: string, body: string, offer?: ManagerOffer) {
     postNews(g, title, body, 'manager', {
@@ -274,20 +276,37 @@ export function createManagerCareer(world: WorldCatalog) {
         .join(' ');
       leave(g, 'sacked', detail, c.throughYear <= g.year ? 'nonrenewal' : 'dismissal');
     } else {
-      c.salary = Math.round(c.salary * 1.15 * 100) / 100;
-      c.throughYear = Math.max(c.throughYear, g.year + 1);
       m.reputation = Math.min(99, m.reputation + 4);
-      report(
-        g,
-        '목표 달성 · 연봉 인상과 재계약',
-        `정규시즌 ${rank}위로 ${c.targetRank}위 이내 목표를 달성했습니다. 연봉을 15% 인상해 ${money(c.salary)}, ${c.throughYear}시즌까지 계약을 연장합니다.`,
-      );
+      const offer: ManagerOffer = {
+        id: `renewal-${g.club}-${g.year}`,
+        club: g.club,
+        targetRank: c.targetRank,
+        salary: Math.round(c.salary * 1.15 * 100) / 100,
+        signingBonus: 0,
+        source: 'renewal',
+        expectation: g.managerJobs![g.club].expectation,
+        applied: gameDate(g),
+        due: gameDate(g),
+        expires: `${g.year + 1}-03-27`,
+        status: 'offered',
+        message: `정규시즌 ${rank}위로 목표를 달성했습니다. 연봉 15% 인상 조건으로 재계약을 제안합니다. 현재 계약은 바뀌지 않으며, 조건 합의와 감독님의 서명이 있어야 연장됩니다.`,
+      };
+      prepareManagerTerms(offer);
+      m.offers = [offer, ...m.offers.filter((o) => o.id !== offer.id)];
+      report(g, '목표 달성 · 감독 재계약 제안', offer.message, offer);
     }
   }
   function tick(g: GameState) {
     prepare(g);
     const m = g.managerCareer!,
       today = gameDate(g);
+    if (m.status === 'employed' && m.contract && m.contract.throughYear < g.year)
+      leave(
+        g,
+        'resigned',
+        '계약 기간이 끝났으며 감독이 새 계약에 서명하지 않아 퇴임했습니다.',
+        'nonrenewal',
+      );
     const finance = !isUnemployed(g) ? reviewFinances(g, view.getClub(g.club).league) : undefined;
     for (const job of Object.values(g.managerJobs!)) {
       if (job.vacant) {
@@ -300,6 +319,7 @@ export function createManagerCareer(world: WorldCatalog) {
         );
         if (!pending && daysBetween(job.vacantSince, today) >= 7) {
           const row = g.standings[view.getClub(job.club).league].find((s) => s.club === job.club)!;
+          const candidate = availableManager(g, world, job.club);
           Object.assign(job, {
             vacant: false,
             confidence: 60,
@@ -308,7 +328,8 @@ export function createManagerCareer(world: WorldCatalog) {
             startWins: row.w,
             startLosses: row.l,
             startDraws: row.d,
-            managerName: `${generatedManager(job.club, today)} (가상)`,
+            managerName: candidate?.name || `${generatedManager(job.club, today)} (가상)`,
+            managerId: candidate?.id,
             reason: '공개 채용을 거쳐 새 감독 선임',
           });
           delete job.vacantSince;
@@ -492,6 +513,7 @@ export function createManagerCareer(world: WorldCatalog) {
     }
     archiveTick(g);
     review(g);
+    reconcileManagerPeople(g, world);
   }
   function archiveTick(g: GameState) {
     for (const [club, saved] of Object.entries(g.clubCareers || {})) {
@@ -567,10 +589,12 @@ export function createManagerCareer(world: WorldCatalog) {
         income: 0,
         expenses: 0,
         staff: realStaff.length
-          ? coachRoles.map((role, i) => ({ ...realStaff[i % realStaff.length], role }))
+          ? initialCoachRoles.flatMap((role, i) =>
+              realStaff[i] ? [{ ...realStaff[i], role }] : [],
+            )
           : view
               .coachPool()
-              .filter((c) => c.id.endsWith('-0'))
+              .filter((c) => c.id.endsWith('-0') && initialCoachRoles.includes(c.role))
               .map((c) => ({ ...c, id: `${c.id}-${offer.club}` })),
         tactic: 'balanced',
         training: 'balanced',
@@ -767,6 +791,31 @@ export function createManagerCareer(world: WorldCatalog) {
       }
       if (g.phase === 'semifinal' || g.phase === 'final')
         throw new Error('포스트시즌을 마친 뒤 취임할 수 있습니다.');
+      if (offer.source === 'renewal') {
+        if (isUnemployed(g) || offer.club !== g.club || !m.contract)
+          throw new Error('현재 소속 구단의 재계약 제안이 아닙니다.');
+        const bonus = offer.signingBonus || 0;
+        if (g.budget < bonus) throw new Error('계약금 지급 예산이 부족합니다.');
+        m.contract = {
+          ...m.contract,
+          salary: offer.salary,
+          signingBonus: bonus,
+          targetRank: offer.targetRank,
+          signed: gameDate(g),
+          throughYear: Math.max(m.contract.throughYear, g.year + (offer.contractTerms?.years || 1)),
+        };
+        g.budget -= bonus;
+        g.expenses += bonus;
+        m.earnings += bonus;
+        for (const n of g.news) if (n.managerOfferId === offer.id) n.contractResolution = 'signed';
+        m.offers = m.offers.filter((o) => o.id !== offer.id);
+        report(
+          g,
+          '감독 재계약 완료',
+          `감독님의 서명으로 ${m.contract.throughYear}시즌까지 계약했습니다. 연봉 ${money(offer.salary)} · 계약금 ${money(bonus)}.`,
+        );
+        return g;
+      }
       if (!managerJobOpen(g.managerJobs![offer.club]))
         throw new Error('현 감독의 신임도가 회복되어 채용이 종료됐습니다.');
       if (!isUnemployed(g)) leave(g, 'resigned');
@@ -780,16 +829,22 @@ export function createManagerCareer(world: WorldCatalog) {
         throw new Error(`구단주는 1~${max}위 이내 목표를 협의합니다.`);
       if (a.type === 'managerTarget') {
         if (isUnemployed(g) || !m.contract) throw new Error('현재 소속 구단이 없습니다.');
-        if (g.day >= 0 && m.contract.signed !== gameDate(g))
-          throw new Error('시즌 목표는 개막 전 또는 취임 당일에만 변경할 수 있습니다.');
+        if (g.day >= 0 && target > m.contract.targetRank) {
+          report(
+            g,
+            '이사회 답변 · 시즌 목표 유지',
+            '감독님의 의견은 확인했습니다. 시즌 중에는 합의한 순위 목표를 유지하려 합니다. 현재 전력과 성적을 개선할 지원이 필요하다면 추가 지원을 요청해 주십시오.',
+          );
+          return g;
+        }
         if (m.contract.negotiatedYear === g.year && target > m.contract.targetRank)
           throw new Error('추가 지원을 받은 시즌의 순위 약속은 낮출 수 없습니다.');
         m.contract.targetRank = target;
-        m.contract.salary = salary(club, target);
+        if (g.day < 0) m.contract.salary = salary(club, target);
         report(
           g,
           '구단주와 시즌 목표 합의',
-          `정규시즌 ${target}위 이내 · 연봉 ${money(m.contract.salary)}. 목표 달성 시 15% 인상과 계약 연장, 미달 시 해고됩니다.`,
+          `정규시즌 ${target}위 이내 · 연봉 ${money(m.contract.salary)}. 목표 달성 시 재계약 제안을 받으며 감독의 서명 후 연장됩니다. 목표 미달은 계약 평가에 반영됩니다.`,
         );
       } else {
         if (!isUnemployed(g) && club === g.club)
@@ -858,6 +913,7 @@ export function createManagerCareer(world: WorldCatalog) {
         );
       }
     }
+    reconcileManagerPeople(g, world);
     return g;
   }
   return { prepare, action, tick, review };

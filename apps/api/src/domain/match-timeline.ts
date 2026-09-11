@@ -56,6 +56,8 @@ function inputFor(g: GameState): MatchInput {
     instructions,
     tacticFamiliarity,
     calendar,
+    ...(g.augmentations ? { augmentations: g.augmentations } : {}),
+    ...(g.tacticCards ? { tacticCards: g.tacticCards } : {}),
     defense: defenseFor(g),
   });
 }

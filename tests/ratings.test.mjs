@@ -23,9 +23,10 @@ test('Real-player evidence resolves the right identity and actual counting stats
   assert.notEqual(kim.power, jeon.power);
   for (const p of world.players.filter((p) => p.real)) {
     assert.ok(p.rating);
-    if (p.rating.status === 'missing') {
-      assert.equal(e.overall(p), 50);
-      assert.equal(p.potential, 50);
+    if (p.rating.status === 'estimated') {
+      assert.ok(e.overall(p) >= 40 && e.overall(p) <= 75);
+      assert.ok(p.potential >= e.overall(p));
+      assert.match(p.rating.method, /고정 난수/);
     } else assert.ok(p.rating.record && p.rating.record.season === 2025);
   }
 });
@@ -48,7 +49,7 @@ test('Career rating upgrade is idempotent and preserves contracts, development, 
   assert.deepEqual(e.applyAction(g, { type: 'syncCatalog' }), g);
 });
 
-test('v1-to-v2 upgrade retains growth and transferred ownership across roster, offers and sold players', () => {
+test('Old-to-v3 upgrade retains growth and transferred ownership across roster, offers and sold players', () => {
   let g = e.newGame('kbo-lotte', 'Existing career', 'short', 9);
   const playerId = g.roster.find((p) => p.original === '전민재').id;
   g = e.negotiate(g, playerId, 431, 5, 'renew');
@@ -74,7 +75,7 @@ test('v1-to-v2 upgrade retains growth and transferred ownership across roster, o
     upgraded.transferred.find((p) => p.id === sold.id),
     upgraded.deals[0].player,
   ]) {
-    assert.equal(p.rating.version, 'performance-2025-v2');
+    assert.equal(p.rating.version, 'performance-2025-v3');
     assert.equal(p.contact, world.players.find((base) => base.id === p.id).contact + 1.5);
   }
   const current = upgraded.roster.find((p) => p.id === playerId);
@@ -92,9 +93,12 @@ test('Observed attributes remain distinct from missing measurements and lineup r
   const yoo = world.players.find((p) => p.original === '유강남');
   const attributes = detailedAttributes(yoo);
   assert.ok(attributes.find((a) => a.label === '출루').value > 65);
-  assert.equal(attributes.find((a) => a.label === '수비').value, null);
-  assert.equal(attributes.find((a) => a.label === '송구').value, null);
-  assert.equal(attributes.find((a) => a.label === '도루 판단').value, null);
+  for (const label of ['수비', '송구', '도루 판단']) {
+    const value = attributes.find((a) => a.label === label);
+    assert.ok(Number.isFinite(value.value));
+    assert.match(value.basis, /게임 생성/);
+  }
+  assert.deepEqual(detailedAttributes(structuredClone(yoo)), attributes);
   const generated = world.players.find((p) => !p.real && p.pos === 'C');
   assert.ok(detailedAttributes(generated).every((a) => Number.isFinite(a.value)));
   const positions = ['C', 'IF', 'IF', 'IF', 'IF', 'OF', 'OF', 'OF', 'DH'];

@@ -47,7 +47,7 @@ export function coachReports(g: GameState) {
     postNews(
       g,
       `${tired.name} · 등판·출전 후 회복 권고`,
-      `${tired.name}의 컨디션은 ${Math.round(tired.condition)}%입니다. 1군 소속을 유지하며 다음 등판이나 선발 출전을 쉬어 주세요. 피로가 회복되면 다시 정상 기용할 수 있습니다.`,
+      `${tired.name} 선수가 조금 지쳐 보입니다. 컨디션이 ${Math.round(tired.condition)}%까지 내려왔어요.\n당장 2군으로 보내기보다는 1군에 두고 다음 등판이나 선발 출전을 한 번 쉬게 해주면 좋겠습니다. 몸 상태를 회복하면 다시 기회를 주시죠.`,
       'recovery',
       {
         playerId: tired.id,
@@ -77,8 +77,8 @@ export function coachReports(g: GameState) {
     if (!coach) continue;
     const reason =
       target === 'first'
-        ? `2군에서 ${statsText(p, true)}를 기록했습니다. 1군에서 기회를 줄 것을 추천합니다.`
-        : `${p.stats.g}경기 · ${statsText(p)}. 여러 경기에서 부진이 이어져 2군에서 기술과 경기 감각을 재정비할 것을 추천합니다. 단순 등판 피로는 이 권고의 근거가 아닙니다.`;
+        ? `감독님, ${p.name} 선수에게 1군 기회를 줘보면 어떨까요?\n2군에서 ${statsText(p, true)}를 기록했고, 지금 몸 상태도 괜찮습니다. 아직 표본이 많지는 않으니 짧게 기회를 주면서 지켜보면 좋겠습니다.`
+        : `감독님, ${p.name} 선수는 잠시 2군에서 다시 준비할 시간을 주면 좋겠습니다.\n${p.stats.g}경기에서 ${statsText(p)}로, 성적 부진이 여러 경기 이어졌습니다. 피로 때문에 내리자는 뜻은 아닙니다. 기술과 경기 감각을 가다듬고 다시 경쟁하게 하시죠.`;
     const id = `coach-${today}-${p.id}-${target}`;
     const evidence = {
       category: target === 'first' ? ('promotion' as const) : ('performance' as const),
@@ -127,14 +127,19 @@ export function coachReports(g: GameState) {
               value: target === 'first' ? '2군 성적 · 등록 경쟁' : '1군 성적 부진',
             },
             { label: '성적', value: evidence.stats },
-            { label: '권고 기준', value: evidence.threshold },
-            { label: '컨디션', value: `${evidence.condition}% · 피로는 별도 휴식 관리` },
+
+            { label: '몸 상태', value: `${evidence.condition}%` },
             { label: '등록 제안', value: target === 'first' ? '2군 → 1군' : '1군 → 2군' },
             { label: '맞교체 선수', value: replacement?.name || '등록 인원 내 이동' },
           ],
           players: [{ id: p.id, name: p.name, detail: reason }],
           sections: evidence.replacementReason
-            ? [{ title: '맞교체 선수 선정 이유', body: evidence.replacementReason }]
+            ? [
+                {
+                  title: '등록 자리는 이렇게 마련하면 좋겠습니다',
+                  body: evidence.replacementReason,
+                },
+              ]
             : [],
         },
       },
@@ -150,7 +155,7 @@ export function coachReportAction(g: GameState, a: Record<string, unknown>) {
   if (!report || report.status !== 'pending') throw new Error('처리할 코치 보고가 없습니다.');
   if (typeof a.accept !== 'boolean') throw new Error('보고 수락 여부를 선택해 주세요.');
   if (a.accept) {
-    if (report.target === 'reserve' && report.reason.includes('컨디션'))
+    if (report.target === 'reserve' && !report.evidence && report.reason.includes('컨디션'))
       throw new Error(
         '피로도만을 근거로 한 이전 보고는 보류해 주세요. 1군 휴식으로 관리할 수 있습니다.',
       );

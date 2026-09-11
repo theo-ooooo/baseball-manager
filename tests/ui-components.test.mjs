@@ -75,7 +75,7 @@ test('Dedicated player profile omits hidden potential and shows observed and unm
   const hidden = render(presentState(raw));
   assert.match(hidden, /유강남/);
   assert.match(hidden, /삼진 회피/);
-  assert.match(hidden, /미평가/);
+  assert.doesNotMatch(hidden, /미평가/);
   assert.doesNotMatch(hidden, /잠재력/);
   assert.doesNotMatch(hidden, /role="dialog"/);
   raw.rules.revealPotential = true;
@@ -124,8 +124,8 @@ test('Growth arrows show observed fractional changes without exposing unknown at
   const html = render(PlayerAttributes, { player: p, owned: true });
   assert.match(html, /컨택 상승 0.24 · 2026-03-01 관찰 대비/);
   assert.match(html, /파워 하락 0.15/);
-  assert.doesNotMatch(html, /수비 상승|잠재력/);
-  assert.match(html, /미평가/);
+  assert.match(html, /수비 상승 5.00/);
+  assert.doesNotMatch(html, /잠재력|미평가/);
   assert.doesNotMatch(render(PlayerAttributes, { player: p, owned: false }), /growth-delta/);
   assert.deepEqual(p, before);
   for (const delta of [null, 0, 0.004, -0.004, NaN])
@@ -153,11 +153,12 @@ test('Training and history withhold unmeasured ability goals and retain observed
   const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
   const history = render(DevelopmentPanel, { player: p, game: g });
   assert.match(history, /<td>구위<\/td>/);
-  assert.doesNotMatch(history, /<td>수비<\/td>|\+5.00/);
+  assert.match(history, /<td>수비<\/td>/);
+  assert.match(history, /\+5.00/);
   p.trainingPlan = { focus: 'field', intensity: 'normal', restDays: [1], started: '2026-02-28' };
   const form = render(TrainingPlanForm, { player: p, g, busy: false, act: async () => null });
-  assert.match(form, /게임 훈련 · 수치 미평가/);
-  assert.match(form, /aria-label="개인 육성 목표 수치"[^>]*disabled/);
+  assert.doesNotMatch(form, /게임 훈련 · 수치 미평가/);
+  assert.doesNotMatch(form, /aria-label="개인 육성 목표 수치"[^>]*disabled/);
   p.trainingPlan = { ...p.trainingPlan, focus: 'stuff', baseline: 56, target: 57 };
   const observed = render(TrainingPlanForm, { player: p, g, busy: false, act: async () => null });
   assert.match(observed, /개인 육성 목표 진척/);

@@ -247,7 +247,7 @@ test('Skipping is refused during a live match, outside the preseason, on vacatio
       year: g.year,
     },
   ];
-  assert.throws(() => e.applyAction(sale, { type: 'skipPreseason' }), /선수 매각 제안 1건/);
+  assert.throws(() => e.applyAction(sale, { type: 'skipPreseason' }), /현금 트레이드 제안 1건/);
   const draft = structuredClone(g);
   draft.draft = {
     year: g.year,
@@ -306,6 +306,7 @@ test('Dropping future preseasons is honoured by the next season while the defaul
   let safe = 0;
   while (g.phase !== 'finished' && safe++ < 14) g = e.advance(g, 7);
   assert.equal(g.phase, 'finished');
+  g = e.acceptRenewal(g);
   g = e.nextSeason(g);
   assert.equal(g.year, world.year + 1);
   assert.equal(g.day, 0);

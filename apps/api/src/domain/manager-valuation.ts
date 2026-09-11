@@ -141,7 +141,15 @@ export function updateBoardTrust(
     Math.min(
       100,
       Math.round(
-        job.baseConfidence + wins * 1.5 - losses * 1.5 + position + board.credit - financePenalty,
+        job.baseConfidence +
+          wins * 1.5 -
+          losses * 1.5 +
+          position +
+          board.credit +
+          (job.transfers?.year === year && job.transfers.appointed === job.appointed
+            ? job.transfers.credit
+            : 0) -
+          financePenalty,
       ),
     ),
   );

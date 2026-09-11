@@ -107,6 +107,7 @@ export class CatalogRepository {
       version: meta.version,
       year: Number(meta.year),
       rosterNote: meta.roster_note,
+      draftRules: JSON.parse(meta.draft_rules || '{}'),
       leagues: leagueRows.results as unknown as League[],
       clubs: (clubRows.results as unknown as (Omit<Club, 'logo'> & { logo: string | null })[]).map(
         (club) => ({

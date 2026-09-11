@@ -1,3 +1,6 @@
+import { tradeWindow } from '@dugout/shared/trade-window';
+import { playerClubStanding } from '@dugout/shared/trade-policy';
+import { playerPersonality } from '@dugout/shared/personality';
 import type { GameState, Player, WorldCatalog, SellerDecision } from '@dugout/shared/types';
 import {
   createGameView,
@@ -12,18 +15,7 @@ import { postNews } from './club-dynamics';
 export function createTransferMarket(world: WorldCatalog) {
   const view = createGameView(world);
   function closed(g: GameState, club: string) {
-    if (g.phase === 'preseason' || g.phase === 'finished') return false;
-    if (g.phase !== 'regular') return true;
-    if (g.mode === 'short') return g.day >= Math.floor(g.rounds * 0.8);
-    const lid = view.getClub(club)?.league,
-      date = gameDate(g),
-      deadline =
-        lid === 'mlb' && g.year === 2026
-          ? '08-03'
-          : ['kbo', 'npb', 'mlb'].includes(lid)
-            ? '07-31'
-            : null;
-    return deadline ? date > `${g.year}-${deadline}` : g.day >= Math.floor(g.rounds * 0.8);
+    return tradeWindow(g, view.getClub(club).league).closed;
   }
   function assess(g: GameState, p: Player): SellerDecision {
     if (p.club === 'fa')
@@ -59,7 +51,7 @@ export function createTransferMarket(world: WorldCatalog) {
       status: SellerDecision['status'] = 'accepted';
     if (closed(g, g.club) || closed(g, p.club)) {
       status = 'refused';
-      reason = '구단 간 이적 마감 이후입니다.';
+      reason = '트레이드 마감 이후입니다.';
     } else if (
       (core && (g.phase === 'regular' || p.years >= 3)) ||
       (starter && thin) ||
@@ -71,6 +63,11 @@ export function createTransferMarket(world: WorldCatalog) {
         : thin
           ? '같은 포지션의 대체 전력이 부족해 구단이 거절했습니다.'
           : '순위 경쟁 중인 주전이라 이번 시즌에는 보내지 않겠다고 합니다.';
+    }
+    const standing = playerClubStanding(p, roster);
+    if (['franchise', 'core', 'prospect'].includes(standing.tier)) {
+      status = 'refused';
+      reason = `${p.name} 선수는 ${standing.label}입니다. 현금 트레이드로 내보내지 않겠습니다. 선수 교환 조건으로 검토해 주세요.`;
     }
     const multiplier = core ? 2.7 : starter ? (g.phase === 'regular' ? 2.2 : 1.7) : 1;
     const fee = Math.round(askPrice(p) * multiplier);
@@ -98,14 +95,21 @@ export function createTransferMarket(world: WorldCatalog) {
       g.transferListed[id] = g.day;
       postNews(
         g,
-        `${p.name} · 이적 명단 등록`,
-        '관심 구단에 영입 의사를 문의했습니다. 제안이 도착해야 매각할 수 있습니다.',
+        `${p.name} · 트레이드 대상 지정`,
+        '관심 구단에 영입 의사를 문의했습니다. 현금 트레이드 제안이 도착하면 구단과 조건을 확인한 뒤 확정할 수 있습니다.',
         'transfer',
         { playerId: id },
       );
       if (p.mood) {
-        p.mood.value = Math.max(0, p.mood.value - 5);
-        p.mood.reason = '이적 명단 등록으로 미래가 불확실함';
+        const t = playerPersonality(p),
+          loyal = t.loyalty >= 80 && t.homeClub === g.club;
+        p.mood.value = Math.max(
+          0,
+          p.mood.value - (loyal ? 12 + Math.round(t.stubbornness / 20) : 5),
+        );
+        p.mood.reason = loyal
+          ? '이 구단에 오래 남고 싶었는데 트레이드 대상으로 지정되어 실망함'
+          : '트레이드 대상 지정으로 미래가 불확실함';
       }
     } else {
       delete g.transferListed[id];
@@ -128,7 +132,13 @@ export function createTransferMarket(world: WorldCatalog) {
       )
         continue;
       const candidates = world.clubs
-        .filter((c) => c.id !== g.club && !closed(g, c.id))
+        .filter(
+          (c) =>
+            c.id !== g.club &&
+            c.league === view.getClub(g.club).league &&
+            !closed(g, c.id) &&
+            view.rosterFor(g, c.id).length < 85,
+        )
         .map((c) => {
           const peers = view.rosterFor(g, c.id).filter((v) => v.pos === p.pos),
             level = peers.reduce((s, v) => s + overall(v), 0) / Math.max(1, peers.length),
@@ -139,7 +149,8 @@ export function createTransferMarket(world: WorldCatalog) {
           (x) =>
             x.improvement >= -2 &&
             p.salary < teamBudget(x.c.league) * 0.15 &&
-            askPrice(p) * 0.7 < teamBudget(x.c.league) * 0.3,
+            askPrice(p) * 0.7 < teamBudget(x.c.league) * 0.3 &&
+            askPrice(p) * 0.9 <= (g.simulation?.clubs[x.c.id]?.balance ?? teamBudget(x.c.league)),
         )
         .sort((a, b) => b.improvement - a.improvement || hash(a.c.id + p.id) - hash(b.c.id + p.id));
       const buyer = candidates[0]?.c;
@@ -166,8 +177,8 @@ export function createTransferMarket(world: WorldCatalog) {
       g.saleOffers.push(offer);
       postNews(
         g,
-        `${buyer.name}, ${p.name} 영입 제안`,
-        `${money(fee)} · ${dateLabelSimple(g, offer.expires)}까지 유효. 선수 상세에서 구단과 조건을 확인하고 결정하세요.`,
+        `${buyer.name}, ${p.name} 현금 트레이드 제안`,
+        `${money(fee)} · ${dateLabelSimple(g, offer.expires)}까지 유효. 선수 상세의 계약 · 트레이드에서 확정하세요. 기존 연봉과 잔여 계약은 상대 구단이 승계합니다.`,
         'transfer',
         { playerId: p.id },
       );

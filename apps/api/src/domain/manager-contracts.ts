@@ -92,6 +92,7 @@ export function tickManagerTerms(g: GameState, o: ManagerOffer) {
   t.history.push({
     date: gameDate(g),
     speaker: 'board',
+    kind: 'reply',
     text: satisfied
       ? '제안하신 조건을 수락합니다. 합의한 조건은 확정되었으며 최종 서명만 남았습니다.'
       : finalRound
@@ -120,7 +121,12 @@ export function managerContractAction<T extends ManagerConversationState>(
     o.status !== 'offered' ||
     o.expires < gameDate(g) ||
     !g.managerJobs?.[o.club] ||
-    !managerJobOpen(g.managerJobs[o.club])
+    (!(
+      o.source === 'renewal' &&
+      o.club === g.managerCareer?.contract?.club &&
+      g.managerCareer?.status === 'employed'
+    ) &&
+      !managerJobOpen(g.managerJobs[o.club]))
   )
     throw new Error('유효한 계약 협상이 없습니다.');
   const t = prepareManagerTerms(o);
@@ -137,6 +143,7 @@ export function managerContractAction<T extends ManagerConversationState>(
     t.history.push({
       date: gameDate(g),
       speaker: 'manager',
+      kind: 'acceptance',
       text: '구단이 제시한 조건에 동의합니다.',
       salary: t.salary,
       signingBonus: t.signingBonus || 0,
@@ -181,6 +188,7 @@ export function managerContractAction<T extends ManagerConversationState>(
   t.history.push({
     date: gameDate(g),
     speaker: 'manager',
+    kind: 'proposal',
     text: '계약 조건을 수정해 제안했습니다.',
     ...t.proposed,
   });

@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 const built = await build({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './apps/api/src/domain/manager-contracts';export * from './apps/api/src/domain/manager-valuation';export * from './apps/api/src/domain/manager-career';export * from './packages/shared/src/calendar';",
+      "export * from './tests/fixtures/engine';export * from './apps/api/src/domain/manager-contracts';export * from './apps/api/src/domain/manager-valuation';export * from './apps/api/src/domain/manager-career';export * from './packages/shared/src/calendar';export * from './packages/shared/src/manager-career';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -24,6 +24,7 @@ const {
   updateBoardTrust,
   createManagerCareer,
   gameDate,
+  lastManagerProposal,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
@@ -247,4 +248,19 @@ test('Negotiated money retains whole manwon input instead of rounding to fourtee
   propose(g, o, { salary: 110, signingBonus: 10000 / 1400, years: 2 });
   assert.equal(o.contractTerms.status, 'agreed');
   assert.equal(Math.round(o.contractTerms.signingBonus * 1400), 10000);
+});
+
+test('The last manager proposal survives a counteroffer and acceptance without being replaced by board terms', () => {
+  const { g, o } = fixture();
+  propose(g, o, { salary: 200, signingBonus: 50, years: 3 });
+  assert.equal(o.contractTerms.status, 'counter');
+  assert.equal(lastManagerProposal(o).salary, 200);
+  assert.equal(lastManagerProposal(o).signingBonus, 50);
+  assert.notEqual(o.contractTerms.salary, lastManagerProposal(o).salary);
+  managerContractAction(g, {
+    type: 'acceptManagerTerms',
+    id: o.id,
+    termsVersion: o.contractTerms.version,
+  });
+  assert.equal(lastManagerProposal(o).salary, 200);
 });

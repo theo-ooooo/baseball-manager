@@ -1,3 +1,7 @@
+import { initialCards } from '@dugout/shared/tactic-cards';
+import { tacticCardAction, consumeTacticCard } from './tactic-cards';
+import { augmentationAction, afterAugmentedMatch } from './augmentations';
+import { recordBoardTransaction } from './board-transactions';
 import { prepareSeasonRest } from './season-rest';
 import { scoutingGuide } from '@dugout/shared/scouting-guide';
 import { createInternational } from './international';
@@ -60,6 +64,7 @@ import {
   teamBudget,
   lineupAuto,
   coachRoles,
+  initialCoachRoles,
   coachSkill,
   createGameView,
 } from '@dugout/shared/game-view';
@@ -151,7 +156,7 @@ export function createGameEngine(world: WorldCatalog) {
       training: 'balanced',
       trainingCenter: defaultTrainingCenter(),
       staff: coachPool()
-        .filter((c) => c.id.endsWith('-0'))
+        .filter((c) => c.id.endsWith('-0') && initialCoachRoles.includes(c.role))
         .map((c) => ({ ...c, id: `${c.id}-${club}` })),
       standings: Object.fromEntries(
         leagues.map((l) => [
@@ -182,6 +187,7 @@ export function createGameEngine(world: WorldCatalog) {
       expenses: 0,
       worldRevenue: {},
     };
+    g.tacticCards = initialCards(g.seed);
     prepareCalendar(g, world, true);
     prepareSquad(g, world);
     prepareKnowledge(g, world);
@@ -193,7 +199,9 @@ export function createGameEngine(world: WorldCatalog) {
     prepareDynamics(g);
     const realStaff = coachPool().filter((c) => c.real && c.sourceClub === club);
     if (realStaff.length)
-      g.staff = coachRoles.map((role, i) => ({ ...realStaff[i % realStaff.length], role }));
+      g.staff = initialCoachRoles.flatMap((role, i) =>
+        realStaff[i] ? [{ ...realStaff[i], role }] : [],
+      );
     if (options.unemployed)
       g.managerCareer = {
         status: 'unemployed',
@@ -460,6 +468,7 @@ export function createGameEngine(world: WorldCatalog) {
       transfers.offerTick(g);
       recruitment.tick(g);
       trades.tick(g);
+      rookieDraft.tick(g);
       scouting.tick(g);
       developmentReports(g);
       coachReports(g);
@@ -505,6 +514,8 @@ export function createGameEngine(world: WorldCatalog) {
   function afterMatch(g: GameState, res: Result) {
     nextStarter(g, true);
     matchMorale(g, res);
+    afterAugmentedMatch(g, res);
+    consumeTacticCard(g, res);
     g.history.unshift(res);
     g.history = g.history.slice(0, 180);
     const home = res.home === g.club;
@@ -555,23 +566,37 @@ export function createGameEngine(world: WorldCatalog) {
     if (g.roster.length <= 20) throw new Error('선수단은 최소 20명이 필요합니다.');
     const same = g.roster.filter((v) => v.pos === p.pos).length;
     const min = { P: 5, C: 1, IF: 4, OF: 3, DH: 0 }[p.pos];
-    if (same <= min) throw new Error(`${p.pos} 포지션 선수가 부족해 매각할 수 없습니다.`);
+    if (same <= min) throw new Error(`${p.pos} 포지션 선수가 부족해 트레이드할 수 없습니다.`);
     const offer = g.saleOffers?.find(
       (o) => o.id === offerId && o.playerId === id && o.year === g.year && o.expires >= g.day,
     );
-    if (!offer) throw new Error('유효한 구단 영입 제안이 필요합니다. 먼저 이적 명단에 등록하세요.');
+    if (!offer)
+      throw new Error('유효한 구단 영입 제안이 필요합니다. 먼저 트레이드 대상으로 지정하세요.');
     if (transfers.closed(g, g.club) || transfers.closed(g, offer.club))
-      throw new Error('구단 간 이적 마감 이후입니다.');
-    const fee = offer.fee;
-    if (g.simulation) archivePlayer(g, p, 'transfer', [], offer.club);
+      throw new Error('트레이드 마감 이후입니다.');
+    const dest = getClub(offer.club),
+      fee = offer.fee;
+    if (!dest || dest.id === g.club || dest.league !== getClub(g.club).league)
+      throw new Error('현금 트레이드는 같은 리그의 다른 구단과 진행할 수 있습니다.');
+    if (!Number.isFinite(fee) || fee < 0) throw new Error('현금 트레이드 금액을 확인해 주세요.');
+    if (rosterFor(g, dest.id).length >= 85)
+      throw new Error('상대 구단의 선수단 정원이 가득 찼습니다.');
+    const buyerBalance = g.simulation?.clubs[dest.id]?.balance ?? teamBudget(dest.league);
+    if (buyerBalance < fee) throw new Error('상대 구단의 현금 지급 예산이 부족합니다.');
+    recordBoardTransaction(g, offer.id, [], [p], rosterFor(g, offer.club));
+    archivePlayer(g, p, 'transfer', [], offer.club);
     g.budget += fee;
     g.income += fee;
-    const dest = getClub(offer.club);
+    const moved = { ...p, club: dest.id };
+    saveWorldPlayer(g, moved, !world.players.some((v) => v.id === p.id));
+    g.simulation!.revision++;
+    const buyer = (g.simulation!.clubs[dest.id] ??= { balance: buyerBalance, strategy: 'contend' });
+    buyer.balance -= fee;
     g.saleOffers = (g.saleOffers || []).filter((o) => o.playerId !== id);
     if (g.transferListed) delete g.transferListed[id];
     g.ownership[p.id] = dest.id;
     g.transferred = (g.transferred || []).filter((v) => v.id !== p.id);
-    g.transferred.push({ ...p, club: dest.id });
+    g.transferred.push(moved);
     g.roster = g.roster.filter((v) => v.id !== id);
     g.lineup = lineupAuto(firstTeam(g));
     g.defense = autoDefense(g);
@@ -580,21 +605,40 @@ export function createGameEngine(world: WorldCatalog) {
     g.deals = g.deals.filter((d) => d.player.id !== id);
     news(
       g,
-      `${p.name} 이적 완료`,
-      `${getClub(dest.id).name}으로 이적 · 수입 ${money(fee)}`,
+      `${p.name} 현금 트레이드 완료`,
+      `${dest.name}으로 이동 · 현금 수령 ${money(fee)}. 연봉 ${money(p.salary)} · 잔여 ${p.years}년 계약을 새 구단이 승계했습니다. 우리 구단과의 재계약 협상은 종료됐습니다.`,
       'transfer',
+      { playerId: p.id },
     );
     return g;
   }
   function nextSeason(g: GameState) {
     if (g.phase !== 'finished') throw new Error('현재 시즌을 먼저 마쳐 주세요.');
+    if (
+      g.managerCareer?.contract &&
+      g.managerCareer.contract.throughYear <= g.year &&
+      g.managerCareer.offers.some(
+        (o) => o.source === 'renewal' && o.club === g.club && o.status === 'offered',
+      )
+    )
+      throw new Error(
+        '감독 재계약 제안에 수락하거나 거절한 뒤 새 시즌을 시작해 주세요. 수신함의 재계약 제안을 확인하세요.',
+      );
     if (g.draft?.status === 'open') rookieDraft.progress(g, true);
     worldSimulation.finishSeason(g);
     for (const offer of g.managerCareer?.offers || [])
-      if (['invited', 'pending', 'interview', 'offered'].includes(offer.status)) {
+      if (
+        offer.source !== 'renewal' &&
+        ['invited', 'pending', 'interview', 'offered'].includes(offer.status)
+      ) {
         offer.status = 'expired';
         offer.message = '새 시즌으로 넘어가 이전 채용 절차가 종료됐습니다.';
       }
+    g.seasonStandings ??= {};
+    for (const l of leagues)
+      g.seasonStandings[`${g.year}:${l.id}`] = standings(g, l.id).map((s) => s.club);
+    for (const key of Object.keys(g.seasonStandings))
+      if (Number(key.split(':')[0]) < g.year - 2) delete g.seasonStandings[key];
     g.year++;
     for (const center of [
       g.trainingCenter,
@@ -718,10 +762,12 @@ export function createGameEngine(world: WorldCatalog) {
     news(
       g,
       `${g.year} 시즌 시작`,
-      `${departed.length}명 계약 만료. 베테랑 은퇴와 노쇠화가 반영됐습니다. 신인 선발에서 새 유망주를 지명하세요.`,
+      `${departed.length}명 계약 만료. 베테랑 은퇴와 노쇠화가 반영됐습니다. 스카우트 → 신인 드래프트에서 후보를 확인하고 지명하세요.`,
       'league',
+      { actionView: 'draft' },
     );
     international.tick(g);
+    managerCareer.tick(g);
     return g;
   }
   /**
@@ -971,7 +1017,8 @@ export function createGameEngine(world: WorldCatalog) {
     if (trained) return trained;
     const teamTraining = trainingCenterAction(s, a);
     if (teamTraining) return teamTraining;
-    const managed = managementAction(s, a);
+    const managed =
+      tacticCardAction(s, a, world) || augmentationAction(s, a) || managementAction(s, a);
     if (managed) return managed;
     switch (a.type) {
       case 'continue':

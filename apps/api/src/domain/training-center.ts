@@ -15,6 +15,7 @@ import {
   type TrainingDiscipline,
 } from '@dugout/shared/training-center';
 import { postNews } from './club-dynamics';
+import { specialistTraining, specialistSkill } from './coaching-specialties';
 
 export function trainingCenterAction(g: GameState, a: Record<string, unknown>): GameState | null {
   if (
@@ -135,8 +136,9 @@ export function prepareDailyTraining(g: GameState, days: TrainingDays) {
             : key === 'speed'
               ? 'fitness'
               : 'batting';
-      result.factors[key] *= coaches[discipline] * facility;
+      result.factors[key] *= coaches[discipline] * facility * specialistTraining(g, p, key);
     }
+    result.tactical *= 1 + specialistSkill(g, '주루·작전') * 0.0015;
     results.set(p.id, result);
   }
   return results;

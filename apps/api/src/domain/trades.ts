@@ -1,6 +1,8 @@
+import { recordBoardTransaction } from './board-transactions';
+import { assessTradeReturn, playerClubStanding } from '@dugout/shared/trade-policy';
 import type { GameState, Player, WorldCatalog } from '@dugout/shared/types';
 import type { TradeOffer } from '@dugout/shared/long-term';
-import { createGameView, askPrice, money, teamBudget } from '@dugout/shared/game-view';
+import { createGameView, overall, money, teamBudget } from '@dugout/shared/game-view';
 import { transfersBlocked, selectFirstTeam } from '@dugout/shared/management';
 import { gameDate, addDays } from '@dugout/shared/calendar';
 import { createTransferMarket } from './transfer-market';
@@ -66,11 +68,58 @@ export function createTrades(world: WorldCatalog) {
     return { own: own as Player[], other: other as Player[] };
   }
   function notice(g: GameState, o: TradeOffer) {
-    postNews(g, `${view.getClub(o.club).name} · 트레이드`, o.message, 'transfer', {
-      actionView: 'trade',
-      tradeId: o.id,
-      id: `trade:${o.id}:${o.status}:${gameDate(g)}`,
-    });
+    postNews(
+      g,
+      o.status === 'completed'
+        ? `${view.getClub(g.club).name}·${view.getClub(o.club).name}, 트레이드 성사`
+        : `${view.getClub(o.club).name} · 트레이드`,
+      o.message,
+      'transfer',
+      {
+        actionView: 'trade',
+        tradeId: o.id,
+        id: `trade:${o.id}:${o.status}:${gameDate(g)}`,
+      },
+    );
+  }
+  function playerCounter(g: GameState, o: TradeOffer, other: Player[]) {
+    const theirRoster = view.rosterFor(g, o.club);
+    if (other.some((p) => playerClubStanding(p, theirRoster).tier === 'franchise')) return null;
+    const reserved = new Set(
+      (g.trades || [])
+        .filter((t) => t.id !== o.id && ['pending', 'accepted', 'counter'].includes(t.status))
+        .flatMap((t) => [...t.outgoing, ...t.incoming, ...(t.counterOutgoing || [])]),
+    );
+    const available = g.roster
+      .filter((p) => !reserved.has(p.id) && playerClubStanding(p, g.roster).tier !== 'franchise')
+      .sort((a, b) => overall(a) - overall(b) || a.id.localeCompare(b.id));
+    const comparable = available
+      .filter((p) => overall(p) >= Math.max(...other.map(overall)) - 5)
+      .slice(0, 12);
+    const young = available
+      .filter((p) => p.age <= 24)
+      .sort((a, b) => b.potential - a.potential || overall(b) - overall(a))
+      .slice(0, 8);
+    const sets = comparable.map((p) => [p]);
+    for (let i = 0; i < young.length; i++)
+      for (let j = i + 1; j < young.length; j++) sets.push([young[i], young[j]]);
+    for (const players of sets) {
+      const result = assessTradeReturn(theirRoster, players, other, 0);
+      if (result.status === 'rejected') continue;
+      const cash = result.status === 'counter' ? result.cash : 0;
+      try {
+        validate(g, { ...o, outgoing: players.map((p) => p.id), cash });
+      } catch {
+        continue;
+      }
+      return {
+        outgoing: players.map((p) => p.id),
+        incoming: o.incoming,
+        cash,
+        message: `${other.map((p) => p.name).join(', ')} 선수를 보내는 대신 ${players.map((p) => p.name).join('·')} 선수를 원합니다. ${cash ? `추가 현금 ${cash > 0 ? '지급' : '수령'} ${money(Math.abs(cash))}을 포함한 조건입니다.` : '현금 없이 선수를 교환하는 조건입니다.'} 선수 구성을 확인한 뒤 수락해 주세요.`,
+      };
+    }
+    return null;
   }
   function tick(g: GameState) {
     for (const o of g.trades || []) {
@@ -84,20 +133,22 @@ export function createTrades(world: WorldCatalog) {
       if (o.status !== 'pending' || gameDate(g) < o.due) continue;
       try {
         const { own, other } = validate(g, o);
-        const incoming = other.reduce((s, p) => s + askPrice(p), 0) * 1.1,
-          provided = own.reduce((s, p) => s + askPrice(p), 0);
-        const cash = Math.ceil(incoming - provided);
-        if (provided + o.cash >= incoming) {
-          o.status = 'accepted';
-          o.message =
-            '전력과 재정 조건에 동의했습니다. 최종 확정하면 선수와 현금이 함께 이동합니다.';
-        } else if (provided + Math.max(0, o.cash) < incoming * 0.3) {
-          o.status = 'rejected';
-          o.message = '상대 구단이 전력 가치 차이가 커 제안을 거절했습니다.';
-        } else {
+        const assessment = assessTradeReturn(view.rosterFor(g, o.club), own, other, o.cash);
+        const counter = assessment.status === 'rejected' ? playerCounter(g, o, other) : null;
+        if (counter) {
           o.status = 'counter';
-          o.counterCash = cash;
-          o.message = `선수 구성은 유지하고 현금 ${cash >= 0 ? '지급' : '수령'} ${money(Math.abs(cash))} 조건을 제시했습니다.`;
+          o.counterOutgoing = counter.outgoing;
+          o.counterIncoming = counter.incoming;
+          o.counterCash = counter.cash;
+          o.message = counter.message;
+          notice(g, o);
+          continue;
+        }
+        o.status = assessment.status;
+        o.message = assessment.reason;
+        if (assessment.status === 'counter') {
+          o.counterCash = assessment.cash;
+          o.message += ` 현금 ${assessment.cash >= 0 ? '지급' : '수령'} ${money(Math.abs(assessment.cash))} 조건입니다.`;
         }
       } catch (e) {
         o.status = 'rejected';
@@ -133,7 +184,12 @@ export function createTrades(world: WorldCatalog) {
         g.trades.some(
           (t) =>
             ['pending', 'accepted', 'counter'].includes(t.status) &&
-            [...t.outgoing, ...t.incoming].some((id) => ids.includes(id)),
+            [
+              ...t.outgoing,
+              ...t.incoming,
+              ...(t.counterOutgoing || []),
+              ...(t.counterIncoming || []),
+            ].some((id) => ids.includes(id)),
         )
       )
         throw new Error('다른 트레이드에 포함된 선수입니다. 먼저 기존 제안을 철회해 주세요.');
@@ -153,7 +209,20 @@ export function createTrades(world: WorldCatalog) {
     if (!['accepted', 'counter'].includes(offer.status) || gameDate(g) > offer.expires)
       throw new Error('유효한 구단 답변이 필요합니다.');
     const cash = offer.status === 'counter' ? offer.counterCash! : offer.cash,
-      { own, other } = validate(g, { ...offer, cash });
+      { own, other } = validate(g, {
+        ...offer,
+        outgoing: offer.counterOutgoing || offer.outgoing,
+        incoming: offer.counterIncoming || offer.incoming,
+        cash,
+      });
+    const assessment = assessTradeReturn(view.rosterFor(g, offer.club), own, other, cash);
+    if (assessment.status !== 'accepted')
+      throw new Error(
+        assessment.status === 'rejected'
+          ? assessment.reason
+          : '선수 가치가 달라졌습니다. 새 조건으로 제안해 주세요.',
+      );
+    recordBoardTransaction(g, offer.id, other, own, view.rosterFor(g, offer.club));
     const outgoing = new Set(own.map((p) => p.id)),
       incoming = new Set(other.map((p) => p.id));
     for (const p of own) {
@@ -189,9 +258,13 @@ export function createTrades(world: WorldCatalog) {
     }
     g.saleOffers = (g.saleOffers || []).filter((o) => !outgoing.has(o.playerId));
     g.deals = g.deals.filter((d) => !outgoing.has(d.player.id) && !incoming.has(d.player.id));
+    offer.outgoing = own.map((p) => p.id);
+    offer.incoming = other.map((p) => p.id);
+    delete offer.counterOutgoing;
+    delete offer.counterIncoming;
     offer.status = 'completed';
     offer.cash = cash;
-    offer.message = `${own.map((p) => p.name).join(', ')} ↔ ${other.map((p) => p.name).join(', ')} · 현금 ${cash >= 0 ? '지급' : '수령'} ${money(Math.abs(cash))}. 기존 계약과 시즌 기록을 승계했습니다.`;
+    offer.message = `${view.getClub(g.club).name}과 ${view.getClub(offer.club).name}이 트레이드를 완료했습니다.\n${view.getClub(offer.club).name} 합류: ${own.map((p) => p.name).join(', ')}\n${view.getClub(g.club).name} 합류: ${other.map((p) => p.name).join(', ')}\n${cash === 0 ? '현금 없이 선수를 교환했습니다.' : `${view.getClub(cash > 0 ? g.club : offer.club).name}이 ${money(Math.abs(cash))}을 추가 지급했습니다.`} 기존 계약과 시즌 기록은 새 구단으로 이어집니다.`;
     worldEvent(g, { kind: 'transfer', club: g.club, otherClub: offer.club, text: offer.message });
     notice(g, offer);
     return g;

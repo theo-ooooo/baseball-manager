@@ -1,3 +1,5 @@
+import { cardEffectPlayer } from '@dugout/shared/tactic-cards';
+import { matchAugmentation, augmentationModifiers } from '@dugout/shared/augmentations';
 import { isAvailable } from '@dugout/shared/long-term';
 import type {
   WorldCatalog,
@@ -31,6 +33,7 @@ import { pitchingDecisions } from './pitching-decisions';
 import { selectReliever } from './relief-selection';
 import { buntResult, stealChance } from './match-command-probabilities';
 import { isPitchingCommand } from '@dugout/shared/match-commands';
+import { delegatedMatchCommand } from './delegated-match-command';
 import { createMatchEnergy, fatigueFactor } from './match-energy';
 import { pitchingModifiers } from './pitching-tactics';
 
@@ -76,6 +79,9 @@ function createSimulator({
             (p) => p.squad !== 'reserve' && isAvailable(p),
           ),
     ];
+    if (involved && g.tacticCards?.armed)
+      for (let side = 0; side < 2; side++)
+        rosters[side] = rosters[side].map((p) => cardEffectPlayer(g, p));
     const lineups = rosters.map((r, i) => {
       const club = i ? home : away;
       const ids = club === g.club ? g.lineup : lineupAuto(r);
@@ -326,7 +332,19 @@ function createSimulator({
           if (applyChanges(inn, ownBat ? bases : undefined))
             ({ pitcher, pStrength, defense } = context());
           const command =
-            commands[commandIndex]?.cursor === log.length ? commands[commandIndex++] : undefined;
+            commands[commandIndex]?.cursor === log.length
+              ? commands[commandIndex++]
+              : g.liveMatch?.delegation &&
+                  log.length >= g.liveMatch.delegation.cursor &&
+                  (ownBat || ownPitch)
+                ? delegatedMatchCommand(
+                    ownBat,
+                    lineups[side][order[side] % 9],
+                    pitchers[1 - side],
+                    bases,
+                    outs,
+                  )
+                : undefined;
           if (command && (isPitchingCommand(command.kind) ? !ownPitch : !ownBat))
             throw new Error('작전 시점의 공격·수비 팀이 일치하지 않습니다.');
           const pitcherFactor = fatigueFactor(pitcher.condition, energy.get(pitcher));
@@ -413,6 +431,7 @@ function createSimulator({
             play.defense = { ...(ownPitch ? g.defense! : replayTeams[1 - side].defense) };
           if (command) play.command = command.kind;
           if (approach !== 'balanced') play.pitching = approach;
+          const augment = augmentationModifiers(ownBat ? matchAugmentation(g) : undefined);
           const hitAndRun = command?.kind === 'hitAndRun';
           const stats = ownBat ? p.stats : blankStats();
           let runs = 0;
@@ -427,6 +446,7 @@ function createSimulator({
             0.24 +
               ((p.mood?.value ?? 65) - 65) * 0.0005 +
               cohesion +
+              augment.contact +
               (p.contact * cond - strength) * 0.0028 +
               bonus +
               pitching.contact +
@@ -497,6 +517,7 @@ function createSimulator({
                 0.073 +
                   (70 - control) * 0.0009 +
                   patient * 0.032 +
+                  augment.walk +
                   pitching.walk +
                   (command?.kind === 'workCount'
                     ? 0.02
@@ -518,7 +539,7 @@ function createSimulator({
             }
             bases[0] = p;
             event = command?.kind === 'intentionalWalk' ? '고의4구 · 감독 지시' : '볼넷';
-          } else if (roll < 0.08 + contact + -aggressive * 0.018 + pitching.walk) {
+          } else if (roll < 0.08 + contact + -aggressive * 0.018 + pitching.walk + augment.walk) {
             stats.ab++;
             stats.h++;
             hits[side]++;
@@ -527,7 +548,8 @@ function createSimulator({
               (0.1 +
                 (p.power * batterFactor - strength) * 0.003 +
                 aggressive * 0.08 +
-                pitching.homeRun) *
+                pitching.homeRun +
+                augment.homeRun) *
                 (hitAndRun ? 0.65 : 1),
               0.03,
               0.33,
@@ -587,6 +609,7 @@ function createSimulator({
                 aggressive * 0.09 -
                 (hitAndRun ? 0.09 : 0) +
                 pitching.strikeout +
+                augment.strikeout +
                 (command?.kind === 'contactFocus'
                   ? -0.08
                   : command?.kind === 'swingAway'
@@ -752,6 +775,8 @@ function createSimulator({
       }
     }
     return {
+      ...(involved && matchAugmentation(g) ? { augmentation: matchAugmentation(g) } : {}),
+      ...(g.liveMatch?.delegation ? { delegatedBy: g.liveMatch.delegation.name } : {}),
       id: `${g.year}-${g.day}-${home}-${away}`,
       day: g.day,
       date: gameDate(g),

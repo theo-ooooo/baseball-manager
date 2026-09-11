@@ -162,7 +162,7 @@ test('Training rejects foreign players, invalid targets, hidden ratings, invalid
   ])
     assert.throws(() => e.applyAction(g, plan(p, invalid)));
   const hidden = g.roster.find((x) => x.real && x.pos !== 'P');
-  hidden.rating = { ...hidden.rating, status: 'missing' };
+  hidden.observation = { status: 'unknown' };
   assert.throws(() => e.applyAction(g, plan(hidden, { target: 99 })), /평가/);
   const mentor = g.roster.find((m) => m.pos !== 'P' && m.id !== p.id && m.age >= 26);
   const pupils = g.roster.filter((x) => x.id !== mentor.id && x.pos !== 'P').slice(0, 4);

@@ -2,7 +2,7 @@ import type { GameState, WorldCatalog } from '@dugout/shared/types';
 import type { BoardObjective } from '@dugout/shared/manager-career';
 import { boardObjectiveLabels, boardProgress } from '@dugout/shared/manager-career';
 import { createGameView, teamBudget, money } from '@dugout/shared/game-view';
-import { gameDate } from '@dugout/shared/calendar';
+import { gameDate, daysBetween } from '@dugout/shared/calendar';
 import { postNews } from './club-dynamics';
 export function resetBoardBaseline(g: GameState) {
   const o = g.managerCareer?.contract?.objective;
@@ -30,9 +30,8 @@ export function boardAction(g: GameState, a: Record<string, unknown>, world: Wor
   const c = g.managerCareer?.contract;
   if (!c || g.managerCareer?.status !== 'employed')
     throw new Error('취임 후 구단주와 협상할 수 있습니다.');
-  if (g.liveMatch || g.managerCareer.vacationUntil || (g.day >= 0 && c.signed !== gameDate(g)))
-    throw new Error('개막 전 또는 취임 당일에 협상해 주세요.');
-  if (c.negotiatedYear === g.year) throw new Error('이번 시즌 추가 지원을 이미 합의했습니다.');
+  if (g.liveMatch || g.managerCareer.vacationUntil)
+    throw new Error('경기 또는 휴가를 마친 뒤 이사회에 요청해 주세요.');
   const kind = a.objective as BoardObjective['kind'],
     benefit = a.benefit;
   if (
@@ -45,6 +44,30 @@ export function boardAction(g: GameState, a: Record<string, unknown>, world: Wor
   const rank = Number(a.targetRank);
   if (!Number.isInteger(rank) || rank < 1 || rank > max || rank > c.targetRank)
     throw new Error(`현재 순위 목표를 유지하거나 높여 상위 ${max}위 이내를 약속해 주세요.`);
+  const ledger =
+    c.supportLedger?.year === g.year
+      ? c.supportLedger
+      : { year: g.year, approved: c.negotiatedYear === g.year ? 1 : 0, lastApproved: c.signed };
+  const incomplete =
+    c.objective?.year === g.year && boardProgress(g, c.objective) < c.objective.target;
+  const reason =
+    ledger.approved >= 2
+      ? '이번 시즌에 집행할 수 있는 추가 지원 예산을 모두 사용했습니다.'
+      : ledger.approved && incomplete
+        ? '먼저 지난 지원 때 약속한 운영 목표의 진척을 보여주십시오. 목표를 달성하면 추가 지원을 다시 검토하겠습니다.'
+        : ledger.approved && daysBetween(ledger.lastApproved, gameDate(g)) < 14
+          ? '최근 지원한 자금과 시설이 어떻게 활용되는지 조금 더 지켜보겠습니다.'
+          : undefined;
+  if (reason) {
+    postNews(
+      g,
+      '이사회 답변 · 추가 지원 보류',
+      `감독님의 요청을 검토했습니다. ${reason}\n상황이 달라지면 언제든 다시 의견을 보내주십시오.`,
+      'manager',
+      { actionView: 'vision', sender: { name: '이사회', role: '지원 요청 답변' } },
+    );
+    return g;
+  }
   const funds = Math.round(teamBudget(league) * 0.1);
   if (benefit === 'training') {
     g.facilities ??= { training: 1, medical: 1 };
@@ -56,6 +79,7 @@ export function boardAction(g: GameState, a: Record<string, unknown>, world: Wor
   }
   c.targetRank = rank;
   c.negotiatedYear = g.year;
+  c.supportLedger = { year: g.year, approved: ledger.approved + 1, lastApproved: gameDate(g) };
   c.benefit = benefit as 'funds' | 'training';
   c.objective = {
     kind,

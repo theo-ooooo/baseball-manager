@@ -40,6 +40,7 @@ export function saveWorldPlayer(g: GameState, p: Player, generated = false) {
     years: p.years,
     condition: p.condition,
     stint: p.careerBaseline,
+    personality: p.personality,
     generated:
       prior?.generated ||
       (generated

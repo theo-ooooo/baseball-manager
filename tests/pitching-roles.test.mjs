@@ -239,12 +239,9 @@ test('Version 2 saved pitching still regenerates its deployed timeline exactly',
     outfile,
   });
   const { generateTimeline, createMatchSimulator, world } = require(outfile);
-  let g = e.newGame('kbo-lotte', 'V2 frozen', 'full', 407);
-  // This regression represents a pre-callup saved lineup; new careers now have national duties.
-  g.international.events = g.international.events.map((event) => ({ ...event, players: [] }));
-  g.day = -22;
-  g = e.applyAction(g, { type: 'startMatch' });
-  g.liveMatch.pitchingVersion = 2;
+  const g = JSON.parse(
+    readFileSync(new URL('./fixtures/legacy-pitching-v2-input.json', import.meta.url), 'utf8'),
+  ).state;
   generateTimeline(g, createMatchSimulator(world));
   // Captured from HEAD's deployed version-2 simulator, before this policy change.
   assert.equal(
@@ -256,7 +253,7 @@ test('Version 2 saved pitching still regenerates its deployed timeline exactly',
 test('Automatic changes carry accurate outgoing evidence and preserve the closer in lopsided games', () => {
   let observed = 0,
     blowouts = 0;
-  for (const seed of [51, 407, 931, 502, 802]) {
+  for (const seed of [51, 407, 931, 502, 802, 1101, 2003, 401, 55, 889, 901, 1002]) {
     let g = e.newGame('kbo-lotte', 'Notice evidence', 'full', seed);
     g.day = -22;
     g = e.applyAction(g, { type: 'startMatch' });

@@ -121,6 +121,7 @@ test('Match scoring, stats, world standings and next season remain consistent', 
     assert.ok(p.stats.hr <= p.stats.h);
     assert.ok(p.condition <= 100 && p.condition >= 0);
   }
+  g = e.acceptRenewal(g);
   g = e.nextSeason(g);
   assert.equal(g.year, 2027);
   assert.equal(g.day, -28);

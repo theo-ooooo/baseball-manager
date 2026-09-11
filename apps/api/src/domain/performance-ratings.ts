@@ -1,5 +1,5 @@
 import type { Player, PerformanceRecord, RatingEvidence } from '@dugout/shared/types';
-import { overall } from '@dugout/shared/game-view';
+import { overall, hash, rng } from '@dugout/shared/game-view';
 const clampRating = (n: number) => Math.max(20, Math.min(99, n));
 const bounded = (n: number) => Math.round(clampRating(n));
 export const ratingKeys = [
@@ -36,26 +36,35 @@ export function rateRealPlayers(players: Player[], records: PerformanceRecord[])
     const sample = r ? (p.pos === 'P' ? (r.outs || 0) / 3 : r.pa || 0) : 0;
     const missing = !r || sample === 0;
     const evidence: RatingEvidence = {
-      version: 'performance-2025-v2',
-      status: missing ? 'missing' : sample < (p.pos === 'P' ? 30 : 100) ? 'provisional' : 'rated',
+      version: 'performance-2025-v3',
+      status: missing ? 'estimated' : sample < (p.pos === 'P' ? 30 : 100) ? 'provisional' : 'rated',
       season: 2025,
       source: r?.source,
       record: r,
-      method: '시즌 성적 · 표본 보정 v2 · 출루·주루 기록 확장',
+      method: missing
+        ? '자료 부족 · 선수별 고정 난수로 생성한 게임 능력'
+        : '시즌 성적 · 표본 보정 v2 · 미확인 능력은 게임 생성',
       estimatedAttributes:
         p.pos === 'P' ? ['수비', '주력'] : ['수비', ...(r?.sb === undefined ? ['주력'] : [])],
       base: {},
     };
-    // Unobserved tools use a neutral simulation baseline, hidden from scouting displays.
+    // Fictional, reproducible game estimates. Never consume the career's simulation RNG.
+    const random = rng(hash(`ability-estimate-v1:${p.id}`));
+    const estimate = () => 40 + Math.floor(random() * 36);
     Object.assign(p, {
-      contact: 50,
-      power: 50,
-      speed: 50,
-      field: 50,
-      stuff: 50,
-      control: 50,
+      contact: estimate(),
+      power: estimate(),
+      speed: estimate(),
+      field: estimate(),
+      stuff: estimate(),
+      control: estimate(),
       potential: 50,
     });
+    if (missing)
+      evidence.estimatedAttributes =
+        p.pos === 'P'
+          ? ['구위', '제구', '수비', '주력', '잠재력']
+          : ['컨택', '파워', '수비', '주력', '잠재력'];
     if (!missing && r) {
       const peers = records.filter((v) => v.league === r.league && v.kind === r.kind);
       const sum = (key: keyof PerformanceRecord) =>
@@ -94,6 +103,7 @@ export function rateRealPlayers(players: Player[], records: PerformanceRecord[])
         ageBonus = p.ageEstimated ? 0 : Math.max(0, Math.min(8, (28 - p.age) * 0.9));
       p.potential = bounded(current + ageBonus * (0.5 + 0.5 * reliability));
     }
+    if (missing) p.potential = bounded(overall(p) + Math.floor(random() * 16));
     evidence.base = Object.fromEntries(ratingKeys.map((k) => [k, p[k]]));
     p.rating = evidence;
   }

@@ -1,3 +1,4 @@
+import { recordBoardTransaction } from './board-transactions';
 import type { GameState } from '@dugout/shared/types';
 import { autoDefense, firstTeam } from '@dugout/shared/management';
 import { lineupAuto, money } from '@dugout/shared/game-view';
@@ -15,6 +16,7 @@ export function releasePlayer(g: GameState, a: Record<string, unknown>) {
   const compensation = releaseCompensation(g, p);
   if (a.compensation !== compensation)
     throw new Error('정산 금액이 바뀌었습니다. 방출 조건을 다시 확인해 주세요.');
+  recordBoardTransaction(g, `release-${g.year}-${g.day}-${p.id}`, [], [p], []);
   archivePlayer(g, p, 'transfer', [], 'fa');
   g.budget -= compensation;
   g.expenses += compensation;

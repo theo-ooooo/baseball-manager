@@ -13,6 +13,7 @@ import { isUnrated } from '@dugout/shared/ratings';
 import { postNews } from './club-dynamics';
 import { checkTrainingGoal, individualTrainingFactors } from './individual-training';
 import type { PlayerTrainingDay } from '@dugout/shared/training-center';
+import { specialistTraining } from './coaching-specialties';
 
 function curveFor(p: Player): Pick<PlayerDevelopment, 'pattern' | 'curve'> {
   const seed = hash(`${p.id}:development-v1`);
@@ -104,7 +105,9 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
               ? '체력'
               : '타격';
       const coaching =
-        (0.55 + coachSkill(g, role) / 120) * (1 + ((g.facilities?.training || 1) - 1) * 0.08);
+        (0.55 + coachSkill(g, role) / 120) *
+        (1 + ((g.facilities?.training || 1) - 1) * 0.08) *
+        specialistTraining(g, p, key);
       const focus =
         (g.training === 'power' && key === 'power') ||
         (g.training === 'pitching' && ['stuff', 'control'].includes(key)) ||

@@ -7,11 +7,15 @@ import { CareerRepository } from '../repositories/career.repository';
 export class PlayerRecordsController {
   constructor(@Inject(CareerRepository) private readonly careers: CareerRepository) {}
   @Get('retired')
-  async retired(@Req() request: ApiRequest, @Query('offset') offset = '0') {
+  async retired(
+    @Req() request: ApiRequest,
+    @Query('offset') offset = '0',
+    @Query('query') query = '',
+  ) {
     const page = Number(offset);
     if (!Number.isInteger(page) || page < 0 || page > 100000)
       throw new BadRequestException('기록 페이지가 올바르지 않습니다.');
-    return this.careers.retiredPlayers(env.DB, userId(request), page);
+    return this.careers.retiredPlayers(env.DB, userId(request), page, query.slice(0, 80));
   }
   @Get(':id')
   async records(@Req() request: ApiRequest, @Param('id') id: string) {

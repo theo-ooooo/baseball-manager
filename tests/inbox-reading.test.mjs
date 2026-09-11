@@ -16,6 +16,8 @@ const built = await build({
 const {
   engine: e,
   orderedInbox,
+  inboxReadingOrder,
+  firstUnreadReport,
   nextUnreadAfter,
   createInboxReadMemory,
   managerStep,
@@ -104,4 +106,37 @@ test('Vacation continues past ordinary reports and returns with accumulated unre
   assert.ok(g.progress.newsIds.includes(first));
   assert.ok(g.news.some((n) => n.title === '휴가에서 복귀했습니다'));
   assert.ok(g.news.filter((n) => !n.read).length > 1);
+});
+
+test('Inbox entry and continue select the oldest unread including same-day arrival order', () => {
+  const g = game();
+  g.news = [
+    { id: 'new', title: '새 보고', kind: 'club', date: '2026-03-30', read: false },
+    { id: 'old-read', title: '읽음', kind: 'club', date: '2026-03-27', read: true },
+    { id: 'old-new', title: '둘째', kind: 'club', date: '2026-03-28', read: false },
+    { id: 'old-first', title: '첫째', kind: 'club', date: '2026-03-28', read: false },
+  ];
+  assert.equal(firstUnreadReport(g).id, 'old-first');
+  assert.equal(managerStep(g, false, 'inbox').reportId, 'old-first');
+  g.news[3].read = true;
+  assert.equal(firstUnreadReport(g).id, 'old-new');
+  assert.equal(nextUnreadAfter(orderedInbox(g, g.news), 'old-first').id, 'old-new');
+  g.managerCareer.status = 'unemployed';
+  assert.equal(managerStep(g, false, 'inbox').reportId, 'old-new');
+});
+
+test('List stays newest first while reading uses original oldest arrival order under either list sort', () => {
+  const g = game();
+  g.news = [
+    { id: 'new', date: '2026-03-30' },
+    { id: 'later', date: '2026-03-28' },
+    { id: 'first', date: '2026-03-28' },
+  ];
+  const displayed = orderedInbox(g, g.news, 'newest');
+  assert.equal(displayed[0].id, 'new');
+  for (const order of ['newest', 'oldest'])
+    assert.deepEqual(
+      inboxReadingOrder(g, g.news, orderedInbox(g, g.news, order)).map((n) => n.id),
+      ['first', 'later', 'new'],
+    );
 });

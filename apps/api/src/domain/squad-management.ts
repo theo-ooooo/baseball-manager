@@ -1,6 +1,11 @@
 import { isAvailable } from '@dugout/shared/long-term';
 import type { PlayerTrainingDay } from '@dugout/shared/training-center';
-import { pitchingAssignment, preparePitching } from '@dugout/shared/pitching';
+import {
+  pitchingAssignment,
+  preparePitching,
+  recommendedPitching,
+  nextStarter,
+} from '@dugout/shared/pitching';
 import { prepareCalendar } from '@dugout/shared/calendar';
 import { isPitchingApproach } from '@dugout/shared/pitching-tactics';
 import type {
@@ -113,6 +118,15 @@ export function managementAction(g: GameState, a: Record<string, unknown>): Game
   switch (a.type) {
     case 'syncCatalog':
       return g;
+    case 'recommendPitching': {
+      if (g.liveMatch) throw new Error('경기 종료 후 투수 운용을 추천받아 주세요.');
+      const active = firstTeam(g).filter((p) => p.pos === 'P' && isAvailable(p));
+      if (active.length < 3) throw new Error('출전 가능한 1군 투수가 최소 3명 필요합니다.');
+      g.pitching = recommendedPitching(active);
+      g.starter = g.pitching.rotation[0];
+      nextStarter(g);
+      return g;
+    }
     case 'pitchingRole': {
       preparePitching(g);
       const p = activePlayer(g, a.id),

@@ -53,7 +53,7 @@ test('Forward catalog migration preserves existing career bytes, ownership, cont
     const rating = JSON.parse(
       db.prepare('SELECT rating_json FROM players WHERE id=?').get(p.id).rating_json,
     );
-    assert.equal(rating.version, 'performance-2025-v2');
+    assert.equal(rating.version, 'performance-2025-v3');
     assert.equal(rating.record.bb, 22);
     const yoo = JSON.parse(
       db.prepare("SELECT rating_json FROM players WHERE original='유강남'").get().rating_json,

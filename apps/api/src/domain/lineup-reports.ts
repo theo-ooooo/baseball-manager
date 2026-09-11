@@ -144,7 +144,7 @@ export function createLineupReports(world: WorldCatalog) {
         ],
         sections: [
           {
-            title: '출전 기회 분배',
+            title: '이번에는 이 선수에게 기회를 주고 싶습니다',
             body: rotationPlan.changes.length
               ? rotationPlan.changes
                   .map(
@@ -155,7 +155,7 @@ export function createLineupReports(world: WorldCatalog) {
               : '최근 출전량·포지션·컨디션을 함께 검토했습니다. 전력과 수비 배치를 유지하면서 비교 가능한 후보에게 다음 기회를 배분합니다.',
           },
           {
-            title: '상대 팀과 기용 방향',
+            title: '상대를 보니 이렇게 준비하면 좋겠습니다',
             body:
               recent.length >= 3
                 ? `상대 최근 ${recent.length}경기 평균 ${runs.toFixed(1)}득점. ${protectDefense ? '실점을 줄이기 위해 같은 포지션의 수비력을 추가로 고려했습니다.' : '우리 선수의 출루·장타 생산과 컨디션을 중심으로 편성했습니다.'}`
@@ -164,7 +164,7 @@ export function createLineupReports(world: WorldCatalog) {
           ...(resting.length
             ? [
                 {
-                  title: '기존 선발에서 제외한 이유',
+                  title: '오늘 쉬게 하려는 선수들',
                   body: resting.map((p) => `${p.name}: ${explanation(p)}`).join('\n'),
                 },
               ]
@@ -181,8 +181,7 @@ export function createLineupReports(world: WorldCatalog) {
       },
     };
     const title = `${view.getClub(opponent).name}전 · 추천 선발 명단과 타순`,
-      body =
-        '다음 경기에 사용할 선발 9명과 타순, 선발 투수를 제안드립니다. 적용하면 추천 명단에 맞춰 수비도 함께 배치합니다. 선수 등록이나 투수 보직은 바뀌지 않습니다.';
+      body = `감독님, ${view.getClub(opponent).name}전은 이 조합으로 시작해보면 어떨까요?\n선발은 ${starter.name} 선수를 추천합니다. 컨디션은 ${Math.round(starter.condition)}%입니다.${rotationPlan.changes.length ? ' 최근 기회가 적었던 선수도 함께 살펴 명단에 넣었습니다.' : ' 선수들의 몸 상태와 최근 출전량을 확인해 타순을 짰습니다.'}\n아래에 기용 이유를 정리했습니다. 마음에 드시면 추천안을 적용하시고, 바꾸고 싶은 자리는 전술 화면에서 조정해 주세요.`;
     if (existing && refresh)
       Object.assign(existing, { title, body, date: gameDate(g), day: g.day, read: false }, extra);
     else postNews(g, title, body, 'lineup', extra);

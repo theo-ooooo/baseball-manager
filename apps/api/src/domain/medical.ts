@@ -6,6 +6,7 @@ import { firstTeam, defenseFor } from '@dugout/shared/management';
 import { preparePitching } from '@dugout/shared/pitching';
 import { postNews } from './club-dynamics';
 import type { PlayerTrainingDay } from '@dugout/shared/training-center';
+import { specialistSkill } from './coaching-specialties';
 function report(g: GameState, p: Player, title: string, body: string) {
   postNews(g, `${p.name} · ${title}`, body, 'squad', {
     playerId: p.id,
@@ -108,7 +109,11 @@ export function medicalAction(g: GameState, a: Record<string, unknown>) {
   if (a.type === 'rehabPlayer') {
     if (injury.phase === 'rehab') throw new Error('이미 재활 중입니다.');
     injury.phase = 'rehab';
-    if (!injury.rehabilitated) injury.recurrenceRisk = Math.max(5, injury.recurrenceRisk - 10);
+    if (!injury.rehabilitated)
+      injury.recurrenceRisk = Math.max(
+        5,
+        injury.recurrenceRisk - 10 - Math.round(specialistSkill(g, '재활') / 20),
+      );
     injury.rehabilitated = true;
     report(
       g,

@@ -208,13 +208,15 @@ test('Trades exchange whole rosters and cash once, archive stints and reject inv
   assert.equal(g.pendingRecords.filter((r) => r.kind === 'transfer').length, 2);
   assert.throws(() => e.applyAction(g, { type: 'acceptTrade', id }));
 });
-test('Drafts finish all three rounds exactly once and add generated prospects with contracts', () => {
-  let g = e.applyAction(game(), { type: 'startDraft' });
+test('Drafts finish all configured rounds exactly once and add generated prospects with contracts', () => {
+  const initial = game();
+  initial.phase = 'finished';
+  let g = e.applyAction(initial, { type: 'startDraft' });
   const before = g.roster.length;
   g = e.applyAction(g, { type: 'draftDelegate' });
   assert.equal(g.draft.status, 'finished');
-  assert.equal(g.draft.picks.length, g.draft.order.length * 3);
-  assert.equal(g.roster.length, before + 3);
+  assert.equal(g.draft.picks.length, g.draft.order.length * 11);
+  assert.equal(g.roster.length, before + 11);
   assert.equal(
     new Set(g.draft.picks.filter((p) => p.playerId).map((p) => p.playerId)).size,
     g.draft.picks.filter((p) => p.playerId).length,
@@ -244,6 +246,7 @@ test('AI box scores never assign more hits than at bats and transfer archives st
   const g = game(),
     sim = createWorldSimulation(world),
     p = g.roster[0];
+  p.stats.ab = 30;
   p.stats.h = 10;
   archivePlayer(g, p, 'transfer', [], 'kbo-lotte');
   p.club = 'kbo-lotte';

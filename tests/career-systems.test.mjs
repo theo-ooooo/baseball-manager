@@ -75,7 +75,7 @@ test('Resignation, unemployment and re-employment continue the same world and re
   assert.equal(presentState(g).clubCareers, undefined);
 });
 
-test('Season target is binding: a failure sacks the manager and success raises salary only once', () => {
+test('Season target is binding: a failure sacks the manager and success proposes renewal only once', () => {
   const career = createManagerCareer(world);
   let g = e.applyAction(game(), { type: 'managerTarget', targetRank: 1 });
   const own = g.standings.kbo.find((s) => s.club === g.club);
@@ -84,7 +84,11 @@ test('Season target is binding: a failure sacks the manager and success raises s
   g.phase = 'finished';
   const salary = g.managerCareer.contract.salary;
   career.review(g);
-  assert.equal(g.managerCareer.contract.salary, Math.round(salary * 1.15 * 100) / 100);
+  assert.equal(g.managerCareer.contract.salary, salary);
+  assert.equal(
+    g.managerCareer.offers.find((o) => o.source === 'renewal').salary,
+    Math.round(salary * 1.15 * 100) / 100,
+  );
   const saved = JSON.stringify(g.managerCareer);
   career.review(g);
   assert.equal(JSON.stringify(g.managerCareer), saved);
@@ -176,7 +180,9 @@ test('Season support stays fixed after signings, wages include the manager and s
   assert.equal(g.finances.annualSupport, support);
   const before = g.budget;
   settleClubDay(g, 'kbo');
-  assert.equal(g.budget, before + g.finances.receivedSupport - g.finances.paidWages);
+  assert.ok(
+    Math.abs(g.budget - (before + g.finances.receivedSupport - g.finances.paidWages)) < 1e-9,
+  );
   assert.ok(g.finances.paidWages > 0 && g.finances.receivedSupport > 0);
   for (let i = 0; i < 600; i++) settleClubDay(g, 'kbo');
   assert.ok(Math.abs(g.finances.receivedSupport - support) < 1e-6);

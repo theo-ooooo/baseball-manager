@@ -1,3 +1,6 @@
+import { recordBoardTransaction } from './board-transactions';
+import { reconcileManagerPeople } from './manager-people';
+import { managerCoachingStance, playerPersonality } from '@dugout/shared/personality';
 import { archivePlayer } from './world-simulation';
 import type { CoachDeal, Deal, GameState, WorldCatalog } from '@dugout/shared/types';
 import {
@@ -97,7 +100,7 @@ export function createRecruitment(world: WorldCatalog) {
   ) {
     terms(salary, years);
     if (type === 'buy' && transfersBlocked(g))
-      throw new Error('첫 시즌 외부 영입 금지 조건입니다. 재계약·매각·코치 선임은 가능합니다.');
+      throw new Error('첫 시즌 외부 영입 금지 조건입니다. 재계약·트레이드·코치 선임은 가능합니다.');
     const p = (type === 'renew' ? g.roster : view.marketPlayers(g)).find((p) => p.id === id);
     if (p && type === 'buy' && p.club !== 'fa')
       throw new Error(
@@ -183,11 +186,31 @@ export function createRecruitment(world: WorldCatalog) {
         );
       }
     } else {
-      const gap = Math.max(0, overall(p) - g.reputation - 4);
-      const demand = Math.max(5, Math.round(p.salary * (1.04 + gap * 0.03)));
+      const ambition = playerPersonality(p).ambition;
+      const gap = Math.max(0, overall(p) - g.reputation - 4 + Math.max(0, ambition - 70) / 5);
+      const personality = playerPersonality(p);
+      const staying =
+        d.type === 'renew' && personality.homeClub === g.club && personality.loyalty >= 70;
+      const desiredYears =
+        staying && personality.loyalty >= 85 && personality.stubbornness >= 75 ? 3 : 2;
+      const temperament =
+        1 +
+        Math.max(0, personality.money - 60) / 400 +
+        Math.max(0, personality.stubbornness - 70) / 600 -
+        (staying ? personality.loyalty / 1200 : 0);
+      const demand = Math.max(5, Math.round(p.salary * (1.04 + gap * 0.03) * temperament));
+      const preference = staying
+        ? '이 구단에 오래 남고 싶습니다. 안정적인 계약 기간을 중요하게 생각합니다.'
+        : personality.money >= 70
+          ? '제 가치를 인정하는 연봉을 중요하게 생각합니다.'
+          : personality.ambition >= 70
+            ? '우승 경쟁을 할 수 있는 구단과 기회를 원합니다.'
+            : '역할과 계약 조건을 함께 고려하고 있습니다.';
       const willing = gap < 18 || d.salary >= demand * 1.3;
       d.status =
-        d.salary >= demand && (d.years >= 2 || d.salary >= demand * 1.1) && willing
+        d.salary >= demand &&
+        (d.years >= desiredYears || (desiredYears === 2 && d.salary >= demand * 1.1)) &&
+        willing
           ? 'accepted'
           : d.salary >= demand * 0.65
             ? 'counter'
@@ -197,20 +220,20 @@ export function createRecruitment(world: WorldCatalog) {
         record(g, d, '이적료·계약금·수수료를 감당할 예산이 부족합니다.');
       } else if (d.status === 'counter') {
         d.salary = Math.round(demand * (d.years === 1 ? 1.1 : 1) * (willing ? 1 : 1.3));
-        d.years = Math.max(2, d.years);
+        d.years = Math.max(desiredYears, d.years);
         d.agentFee = Math.round(d.salary * view.agentFor(p).fee);
         record(
           g,
           d,
-          `에이전트의 역제안: 연봉 ${money(d.salary)}, ${d.years}년 계약. 수락하거나 조건을 수정해 주세요.`,
+          `에이전트의 역제안: ${preference} 연봉 ${money(d.salary)}, ${d.years}년 계약. 수락하거나 조건을 수정해 주세요.`,
         );
       } else
         record(
           g,
           d,
           d.status === 'accepted'
-            ? '선수가 조건에 동의했습니다. 최종 계약을 체결해 주세요.'
-            : '선수의 기대 조건에 미치지 못해 제안을 거절했습니다.',
+            ? `${preference} 조건에 동의했습니다. 최종 계약을 체결해 주세요.`
+            : `${preference} 기대 조건에 미치지 못해 제안을 거절했습니다.`,
         );
     }
     if (d.status !== 'pending') {
@@ -250,7 +273,8 @@ export function createRecruitment(world: WorldCatalog) {
       if (seller.status === 'refused') throw new Error(seller.reason);
       if (deal.fee < seller.fee)
         throw new Error('구단의 요구 이적료가 변경됐습니다. 다시 협상하세요.');
-      if (g.roster.length >= 85) throw new Error('선수단 정원 85명입니다. 매각 후 영입해 주세요.');
+      if (g.roster.length >= 85)
+        throw new Error('선수단 정원 85명입니다. 트레이드 후 영입해 주세요.');
       if (g.roster.some((p) => p.id === deal.player.id)) throw new Error('이미 소속된 선수입니다.');
     }
     const current =
@@ -260,6 +284,8 @@ export function createRecruitment(world: WorldCatalog) {
     if (!current) throw new Error('재계약 선수를 찾을 수 없습니다.');
     const cash = deal.fee + deal.agentFee + deal.salary * 0.05;
     if (g.budget < cash) throw new Error('영입 예산이 부족합니다.');
+    if (deal.type === 'buy')
+      recordBoardTransaction(g, deal.id, [current], [], view.rosterFor(g, current.club));
     g.budget -= cash;
     g.expenses += cash;
     if (deal.type === 'buy' && g.simulation) archivePlayer(g, current, 'transfer', [], g.club);
@@ -298,11 +324,16 @@ export function createRecruitment(world: WorldCatalog) {
       (c) => c.coach.id === a.id,
     )?.coach;
     if (!candidate) throw new Error('코치를 찾을 수 없습니다.');
+    if (candidate.managerPersonId && g.managerPeople?.[candidate.managerPersonId]?.club)
+      throw new Error('현재 소속이 있는 감독·코치입니다. 무직이 된 뒤 보직을 제안해 주세요.');
     const role = String(a.role || candidate.role),
       salary = Number(a.salary),
       years = Number(a.years);
     terms(salary, years);
-    if (!coachRoles.includes(role) || (!candidate.real && role !== candidate.role))
+    if (
+      !coachRoles.includes(role) ||
+      (!candidate.real && !candidate.managerPersonId && role !== candidate.role)
+    )
       throw new Error('코치가 담당할 수 있는 보직을 선택해 주세요.');
     if (g.staff.some((c) => c.id === candidate.id)) throw new Error('이미 선임된 코치입니다.');
     const previous = g.coachDeals?.find((d) => d.coach.id === candidate.id);
@@ -335,7 +366,23 @@ export function createRecruitment(world: WorldCatalog) {
     return g;
   }
   function resolveCoach(g: GameState, d: CoachDeal) {
-    const demand = d.coach.salary * (1 + Math.max(0, d.coach.skill - g.reputation - 8) * 0.015);
+    const person = d.coach.managerPersonId ? g.managerPeople?.[d.coach.managerPersonId] : undefined;
+    const stance = person ? managerCoachingStance(person) : undefined;
+    if (person && (person.club || stance?.refuses)) {
+      d.status = 'rejected';
+      d.responseDay = undefined;
+      d.expires = g.day + 7;
+      record(
+        g,
+        d,
+        person.club ? '다른 구단에 취임해 코치 제안을 진행할 수 없습니다.' : stance!.reason,
+      );
+      notify(g, d, '코치 제안 거절');
+      return;
+    }
+    const demand =
+      stance?.demand ??
+      d.coach.salary * (1 + Math.max(0, d.coach.skill - g.reputation - 8) * 0.015);
     const cost = d.salary * 0.1 + d.compensation;
     if (cost > g.budget || d.salary < demand * 0.65 || g.staff.some((c) => c.id === d.coach.id)) {
       d.status = 'rejected';
@@ -344,7 +391,9 @@ export function createRecruitment(world: WorldCatalog) {
         d,
         cost > g.budget
           ? '계약금과 기존 코치 보상금을 감당할 예산이 부족합니다.'
-          : '현재 보직과 계약 조건으로는 합류하기 어렵다는 답변입니다.',
+          : stance
+            ? `${stance.reason} 제시한 연봉으로는 합류하기 어렵습니다.`
+            : '현재 보직과 계약 조건으로는 합류하기 어렵다는 답변입니다.',
       );
     } else if (d.salary < demand || d.years < 2) {
       d.status = 'counter';
@@ -353,11 +402,15 @@ export function createRecruitment(world: WorldCatalog) {
       record(
         g,
         d,
-        `${d.role} 코치로 연봉 ${money(d.salary)}, ${d.years}년 계약을 원합니다. 수락하거나 조건을 수정해 주세요.`,
+        `${stance ? stance.reason + ' ' : ''}${d.role} 코치로 연봉 ${money(d.salary)}, ${d.years}년 계약을 원합니다. 수락하거나 조건을 수정해 주세요.`,
       );
     } else {
       d.status = 'accepted';
-      record(g, d, '보직과 계약 조건에 동의했습니다. 최종 서명 후 코칭 스태프에 합류합니다.');
+      record(
+        g,
+        d,
+        `${stance ? stance.reason + ' ' : ''}보직과 계약 조건에 동의했습니다. 최종 서명 후 코칭 스태프에 합류합니다.`,
+      );
     }
     d.responseDay = undefined;
     d.expires = g.day + 7;
@@ -424,6 +477,11 @@ export function createRecruitment(world: WorldCatalog) {
     )
       throw new Error('타 구단 계약 선수는 트레이드로 영입해야 합니다.');
     if (a.type === 'signCoach' && 'coach' in d) {
+      const person = d.coach.managerPersonId
+        ? g.managerPeople?.[d.coach.managerPersonId]
+        : undefined;
+      if (person?.club)
+        throw new Error('상대가 다른 보직에 취임했습니다. 현재 소속을 다시 확인해 주세요.');
       if (d.status !== 'accepted') throw new Error('역제안을 수락한 뒤 최종 계약할 수 있습니다.');
       if (g.staff.some((c) => c.id === d.coach.id)) throw new Error('이미 선임된 코치입니다.');
       if (g.staff.find((c) => c.role === d.role)?.id !== d.replacesId)
@@ -440,6 +498,7 @@ export function createRecruitment(world: WorldCatalog) {
         { ...d.coach, role: d.role, salary: d.salary, contractUntil: g.year + d.years },
       ];
       rememberCoaches(g);
+      reconcileManagerPeople(g, world);
       for (const news of g.news) if (news.dealId === d.id) news.contractResolution = 'signed';
       g.coachDeals = g.coachDeals!.filter((old) => old.id !== d.id);
       postNews(
