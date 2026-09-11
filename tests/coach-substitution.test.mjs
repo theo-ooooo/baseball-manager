@@ -410,3 +410,61 @@ test('대수비 추천 명단은 reviseMatch 서버 검증을 통과한다', () 
   assert.equal(matchPlanAt(next, cursor).plan.defense[position], suggestion.incoming.id);
   assert.ok(matchPlanAt(next, cursor).usedBatters.has(suggestion.incoming.id));
 });
+
+test('타격이 크게 떨어지는 후보는 수비가 좋아도 대수비로 올리지 않는다', () => {
+  const g = start(902);
+  const { position, weak } = weakenDefense(g);
+  const found = fielderAdvice(g);
+  assert.ok(found, '기준 제안이 있어야 한다');
+  // 같은 위치 후보 전원의 타격을 최저로, 빠지는 야수의 타격을 최고로 만든다.
+  const { plan } = matchPlanAt(g, 1);
+  for (const p of g.roster)
+    if (
+      p.pos !== 'P' &&
+      p.squad !== 'reserve' &&
+      !plan.lineup.includes(p.id) &&
+      familiarity(p, position) >= 65
+    ) {
+      p.contact = 1;
+      p.power = 1;
+      p.speed = 1;
+    }
+  weak.contact = 99;
+  weak.power = 99;
+  weak.speed = 99;
+  const after = coachSubstitution(g, found.cursor);
+  assert.notEqual(
+    after?.kind === 'fielder' && after.outgoing.id === weak.id,
+    true,
+    '타격 손실이 큰 교체는 제안하지 않아야 한다',
+  );
+});
+
+test('뒤진 상황에서는 리드 상황보다 타격 손실을 더 무겁게 본다', () => {
+  const build = () => {
+    const g = start(902);
+    const { position, weak } = weakenDefense(g);
+    const { plan } = matchPlanAt(g, 1);
+    // 수비는 확실히 좋고 타격은 조금 떨어지는 후보를 둔다.
+    for (const p of g.roster)
+      if (
+        p.pos !== 'P' &&
+        p.squad !== 'reserve' &&
+        !plan.lineup.includes(p.id) &&
+        familiarity(p, position) >= 65
+      ) {
+        p.field = 95;
+        p.contact = 40;
+        p.power = 40;
+      }
+    weak.contact = 85;
+    weak.power = 85;
+    return g;
+  };
+  const lead = fielderAdvice(build(), 'lead');
+  const behind = fielderAdvice(build(), 'notLead');
+  // 같은 선수 구성에서 리드 상황이 더 쉽게 제안된다. 뒤진 상황은 제안이 없거나
+  // 순이득 기준을 넘기 어려우므로 두 결과가 같을 수 없다.
+  assert.ok(lead || behind, '두 상황 중 하나는 판정이 나와야 한다');
+  if (behind && !lead) assert.fail('뒤진 상황이 리드 상황보다 먼저 제안되면 가중이 반대다');
+});

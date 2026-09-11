@@ -48,35 +48,52 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
     preparation: string | undefined,
     canWarm = false;
   const next = { ...plan, lineup: [...plan.lineup], defense: { ...plan.defense } };
-  // 함수 선언은 호이스팅되어 위쪽 coach 좁히기가 적용되지 않으므로 이름을 미리 고정한다.
-  const coachName = coach.name;
+  // 함수 선언은 호이스팅되어 위쪽 coach 좁히기가 적용되지 않으므로 좁힌 값을 고정한다.
+  const activeCoach = coach;
   /**
-   * 대수비 제안. 후반에 수비가 약한 야수를 더 나은 수비수로 바꾼다. 점수 상황과
-   * 무관하게 검토하며, 투수 교체 사유가 없을 때만 올라오므로 한 번에 한 가지
-   * 제안만 뜬다.
+   * 대수비 제안. 후반에 수비가 약한 야수를 더 나은 수비수로 바꾼다. 수비 이득만
+   * 보면 타격이 좋은 야수를 빼는 손해를 놓치므로, 타격 하락을 점수 상황에 따라
+   * 가중해 뺀 순이득으로 판단한다. 투수 교체 사유가 없을 때만 올라오므로 한 번에
+   * 한 가지 제안만 뜬다.
    */
   function fielder(): CoachSubstitution | undefined {
     if (decision.inning < 7) return;
+    const defenseCoach = g.staff.find((c) => c.role === '수비') || activeCoach;
+    const battingCoach = g.staff.find((c) => c.role === '타격') || activeCoach;
+    const defenseJudgment = coachJudgment(defenseCoach);
     const fieldScore = (p: Player, pos: DefensivePosition) =>
       (p.field * 0.7 + familiarity(p, pos) * 0.3) * (0.7 + condition(p) / 333);
+    const batScore = (p: Player) =>
+      coachAssessment(battingCoach, p, false) * (0.5 + condition(p) / 200);
+    // 앞설 때는 실점을 막는 쪽이, 뒤질 때는 타순을 지키는 쪽이 더 값지다.
+    const offenseWeight = lead > 0 ? 0.5 : lead === 0 ? 0.9 : 1.3;
     const bench = players.filter(
       (p) => p.pos !== 'P' && !usedBatters.has(p.id) && condition(p) >= 65,
     );
     if (!bench.length) return;
     let best:
-      { pos: DefensivePosition; slot: number; out: Player; in: Player; gain: number } | undefined;
+      | {
+          pos: DefensivePosition;
+          slot: number;
+          out: Player;
+          in: Player;
+          net: number;
+          gain: number;
+          drop: number;
+        }
+      | undefined;
     for (const pos of Object.keys(plan.defense) as DefensivePosition[]) {
       if (pos === 'P') continue;
       const out = byId.get(plan.defense[pos]!);
       const slot = plan.lineup.indexOf(plan.defense[pos]!);
       if (!out || slot < 0) continue;
-      const candidate = bench
-        .filter((p) => familiarity(p, pos) >= 65)
-        .toSorted((a, b) => fieldScore(b, pos) - fieldScore(a, pos))[0];
-      if (!candidate) continue;
-      const gain = fieldScore(candidate, pos) - fieldScore(out, pos);
-      if (gain < judgment.minimumGain) continue;
-      if (!best || gain > best.gain) best = { pos, slot, out, in: candidate, gain };
+      for (const candidate of bench.filter((p) => familiarity(p, pos) >= 65)) {
+        const gain = fieldScore(candidate, pos) - fieldScore(out, pos);
+        const drop = Math.max(0, batScore(out) - batScore(candidate));
+        const net = gain - drop * offenseWeight;
+        if (net < defenseJudgment.minimumGain) continue;
+        if (!best || net > best.net) best = { pos, slot, out, in: candidate, net, gain, drop };
+      }
     }
     if (!best) return;
     const situation = () =>
@@ -91,11 +108,11 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
     return {
       id: `${cursor}:${best.out.id}:${best.in.id}`,
       kind: 'fielder',
-      coach: coachName,
-      judgment: `능력 ${judgment.skill} · ${judgment.label}`,
+      coach: defenseCoach.name,
+      judgment: `능력 ${defenseJudgment.skill} · ${defenseJudgment.label}`,
       outgoing: best.out,
       incoming: best.in,
-      reason: `${situation()} ${best.pos} 수비를 ${best.out.name}(수비 ${best.out.field})에서 ${best.in.name}(수비 ${best.in.field})으로 바꿔 ${lead > 0 ? '리드를 지키는' : '추가 실점을 막는'} 것을 권합니다.`,
+      reason: `${situation()} ${best.pos} 수비를 ${best.out.name}(수비 ${best.out.field})에서 ${best.in.name}(수비 ${best.in.field})으로 바꿔 ${lead > 0 ? '리드를 지키는' : '추가 실점을 막는'} 것을 권합니다. 수비는 ${Math.round(best.gain)} 오르고 타격은 ${Math.round(best.drop)} 내려갑니다.`,
       plan: plan2,
       emergency: false,
       canWarm: false,
