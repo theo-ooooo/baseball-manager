@@ -9,6 +9,7 @@ import {
 } from '@dugout/shared/match-media';
 import { prepareDynamics, postNews } from './club-dynamics';
 import { conversationReaction } from './match-media-reactions';
+import { coachMediaAnswers } from './coach-media';
 
 function recordConversation(
   g: GameState,
@@ -19,8 +20,11 @@ function recordConversation(
 ) {
   if (g.media?.journal.some((r) => r.key === context.key))
     throw new Error('이미 마친 인터뷰입니다.');
+  prepareDynamics(g);
   const answers = delegated
-    ? context.questions.map((q) => ({ id: q.id, choice: 'calm' as const }))
+    ? automatic
+      ? context.questions.map((q) => ({ id: q.id, choice: 'calm' as const }))
+      : coachMediaAnswers(g, context)
     : input;
   if (
     !Array.isArray(answers) ||
@@ -34,7 +38,6 @@ function recordConversation(
     if (!choice) throw new Error('질문에 맞는 답변을 선택해 주세요.');
     return { id: q.id, choice: choice.id, text: choice.text };
   });
-  prepareDynamics(g);
   const players = g.roster.filter((p) => context.playerIds.includes(p.id));
   const reactions = players.map((p) => {
     const reaction = conversationReaction(p, context, canonical, !!delegated);

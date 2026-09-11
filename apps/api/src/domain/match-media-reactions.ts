@@ -34,7 +34,7 @@ export function conversationReaction(
   const after = Math.max(0, Math.min(100, before + change));
   const reason =
     after > before
-      ? '감독의 메시지에 안정감과 의욕을 얻음'
+      ? `${delegated ? '코치' : '감독'}의 메시지에 안정감과 의욕을 얻음`
       : after < before
         ? '요구 수준에 부담을 느낌'
         : '차분하게 메시지를 받아들임';

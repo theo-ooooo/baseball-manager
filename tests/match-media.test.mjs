@@ -187,7 +187,9 @@ test('Delegation records canonical responses, prevents forged partial answers an
     answers: [{ id: 'forged', choice: 'support' }],
   });
   assert.ok(delegated.media.journal[0].delegated);
-  assert.ok(delegated.media.journal[0].answers.every((a) => a.choice === 'calm'));
+  assert.ok(delegated.media.journal[0].answers.some((a) => a.choice !== 'calm'));
+  assert.ok(delegated.media.journal[0].reactions.some((r) => r.after > r.before));
+  assert.ok(delegated.media.journal[0].reactions.every((r) => Math.abs(r.after - r.before) <= 1));
   assert.deepEqual(g, original);
   const post = played(g),
     pending = post.media.pending;
