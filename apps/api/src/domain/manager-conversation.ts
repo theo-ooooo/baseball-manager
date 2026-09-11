@@ -7,6 +7,7 @@ import { addDays, gameDate } from '@dugout/shared/calendar';
 import { teamBudget } from '@dugout/shared/game-view';
 import { postNews } from './club-dynamics';
 import { managerContractAction } from './manager-contracts';
+import { closeManagerContact } from './manager-contact';
 
 /** Shared by full-save actions and the bounded D1 conversation path. */
 export function managerConversationAction<T extends ManagerConversationState>(
@@ -69,6 +70,7 @@ export function managerConversationAction<T extends ManagerConversationState>(
     if (a.type === 'declineManager') {
       offer.status = 'rejected';
       offer.message = '감독이 채용 절차를 철회했습니다.';
+      closeManagerContact(g, offer);
       return g;
     }
     if (a.type === 'acceptManagerInvite') {

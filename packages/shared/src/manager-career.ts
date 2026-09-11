@@ -31,6 +31,7 @@ export type ManagerOffer = {
   applied: string;
   due: string;
   expires: string;
+  closedAt?: string;
   status: 'invited' | 'pending' | 'interview' | 'offered' | 'rejected' | 'expired';
   source?: 'application' | 'approach' | 'renewal';
   public?: boolean;
@@ -72,6 +73,10 @@ export type ManagerCareer = {
   unemployedSince?: string;
   vacationUntil?: string;
   lastApproach?: string;
+  approachHistory?: Record<
+    string,
+    { closedAt: string; minSalary?: number; minSigningBonus?: number }
+  >;
   offers: ManagerOffer[];
   history: {
     club: string;

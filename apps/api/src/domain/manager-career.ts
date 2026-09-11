@@ -6,6 +6,11 @@ import { rememberRegistration } from './registration-log';
 import { rememberCoaches } from './coach-employment';
 import { prepareManagerTerms, tickManagerTerms } from './manager-contracts';
 import { managerConversationAction } from './manager-conversation';
+import {
+  closeManagerContact,
+  managerContactAvailable,
+  managerContactTermsFit,
+} from './manager-contact';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { createPlayerGenerator } from './player-generator';
 import { boardAction, boardFailure } from './board-objectives';
@@ -419,6 +424,7 @@ export function createManagerCareer(world: WorldCatalog) {
           offer,
         );
       }
+      closeManagerContact(g, offer);
     }
     for (const offer of m.offers) {
       if (
@@ -450,7 +456,7 @@ export function createManagerCareer(world: WorldCatalog) {
           (seeking || j.club !== g.club) &&
           managerJobOpen(j) &&
           m.reputation >= view.getLeague(view.getClub(j.club).league).level - 18 &&
-          !m.offers.some((o) => o.club === j.club && daysBetween(o.applied, today) < 28),
+          managerContactAvailable(m, j.club, today),
       );
       const candidate = candidates
         .sort(
@@ -467,7 +473,10 @@ export function createManagerCareer(world: WorldCatalog) {
             base,
             teamBudget(view.getClub(job.club).league),
           );
-          return seeking || cap.salary >= (m.contract?.salary || 0) * 1.05;
+          return (
+            (seeking || cap.salary >= (m.contract?.salary || 0) * 1.05) &&
+            managerContactTermsFit(m, job.club, approachValuation(g, base, cap))
+          );
         });
       if (candidate) {
         const targetRank = candidate.expectation!.targetRank;
@@ -856,8 +865,10 @@ export function createManagerCareer(world: WorldCatalog) {
         );
         if (active.length >= 3 || active.some((o) => o.club === club))
           throw new Error('동시에 최대 세 구단에 한 번씩 지원할 수 있습니다.');
-        if (m.offers.some((o) => o.club === club && daysBetween(o.applied, gameDate(g)) < 14))
-          throw new Error('같은 구단에는 14일 뒤 다시 지원할 수 있습니다.');
+        for (const offer of m.offers) closeManagerContact(g, offer);
+        const closed = m.approachHistory?.[club]?.closedAt;
+        if (closed && daysBetween(closed, gameDate(g)) < 14)
+          throw new Error('협상 종료일부터 14일 뒤 같은 구단에 다시 지원할 수 있습니다.');
         const today = gameDate(g);
         const expectation = g.managerJobs![club].expectation!;
         const boardTarget = Math.min(target, expectation.targetRank);

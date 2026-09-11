@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 const built = await build({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './apps/api/src/domain/manager-contracts';export * from './apps/api/src/domain/manager-valuation';export * from './apps/api/src/domain/manager-career';export * from './packages/shared/src/calendar';export * from './packages/shared/src/manager-career';",
+      "export * from './tests/fixtures/engine';export * from './apps/api/src/domain/manager-contracts';export * from './apps/api/src/domain/manager-valuation';export * from './apps/api/src/domain/manager-career';export * from './apps/api/src/domain/manager-contact';export * from './packages/shared/src/calendar';export * from './packages/shared/src/manager-career';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -25,6 +25,9 @@ const {
   createManagerCareer,
   gameDate,
   lastManagerProposal,
+  managerContactAvailable,
+  managerContactTermsFit,
+  addDays,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
@@ -62,6 +65,49 @@ function propose(g, o, terms = {}) {
   o.contractTerms.due = gameDate(g);
   tickManagerTerms(g, o);
 }
+test('A long failed negotiation starts its contact cooldown on closure and remembers unmet terms after offer trimming', () => {
+  const { g, o } = fixture();
+  for (let i = 0; i < 3; i++) propose(g, o);
+  o.applied = addDays(gameDate(g), -40);
+  const closed = e.applyAction(g, { type: 'declineManager', id: o.id });
+  const today = gameDate(closed);
+  assert.equal(closed.managerCareer.offers[0].closedAt, today);
+  assert.deepEqual(closed.managerCareer.approachHistory[o.club], {
+    closedAt: today,
+    minSalary: 200,
+    minSigningBonus: 60,
+  });
+  const career = createManagerCareer(world);
+  closed.managerCareer.lastApproach = addDays(today, -8);
+  closed.managerJobs[o.club].vacantSince = today;
+  career.tick(closed);
+  assert.equal(closed.managerCareer.offers.filter((x) => x.club === o.club).length, 1);
+  closed.managerCareer.offers = [];
+  const saved = JSON.parse(JSON.stringify(closed)).managerCareer;
+  assert.equal(managerContactAvailable(saved, o.club, addDays(today, 27)), false);
+  assert.equal(managerContactAvailable(saved, o.club, addDays(today, 28)), true);
+  assert.equal(managerContactTermsFit(saved, o.club, { salary: 199, signingBonus: 60 }), false);
+  assert.equal(managerContactTermsFit(saved, o.club, { salary: 200, signingBonus: 59 }), false);
+  assert.equal(managerContactTermsFit(saved, o.club, { salary: 200, signingBonus: 60 }), true);
+  assert.equal(managerContactAvailable(saved, 'kbo-lotte', today), true);
+  assert.throws(
+    () => e.applyAction(closed, { type: 'applyManager', club: o.club, targetRank: 3 }),
+    /14일/,
+  );
+});
+test('Active negotiations remain exclusive after 28 days; old closed saves acquire one stable closure date', () => {
+  const { g, o } = fixture();
+  o.applied = addDays(gameDate(g), -40);
+  assert.equal(managerContactAvailable(g.managerCareer, o.club, gameDate(g)), false);
+  o.status = 'rejected';
+  const career = createManagerCareer(world);
+  career.tick(g);
+  const date = o.closedAt;
+  g.day++;
+  career.tick(g);
+  assert.equal(o.closedAt, date);
+  assert.equal(g.managerCareer.approachHistory[o.club].closedAt, date);
+});
 test('Reasonable requests can be accepted; an agreement cannot be reopened', () => {
   const { g, o } = fixture();
   propose(g, o, { salary: 110, signingBonus: 10, years: 2 });
