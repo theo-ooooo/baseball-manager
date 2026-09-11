@@ -1,7 +1,10 @@
 import type { LiveMatch } from './types';
 
 export const isLiveMatchCommand = (type: unknown) =>
-  type === 'matchCommand' || type === 'cancelMatchCommand';
+  type === 'matchCommand' ||
+  type === 'cancelMatchCommand' ||
+  type === 'chooseMatchCards' ||
+  type === 'useMatchCard';
 
 export type LiveMatchPatchResponse = {
   patch: { liveMatch: LiveMatch };

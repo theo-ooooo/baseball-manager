@@ -11,6 +11,8 @@ import { MatchCommandPanel } from './match-command-panel';
 import { matchCommandLabels } from '@dugout/shared/match-commands';
 import { useLiveMatch } from './use-live-match';
 import { MatchCardsPanel, MatchCardsSummary } from './match-cards-panel';
+import { MatchCardHand } from './match-card-hand';
+import { MatchEffectNotice } from './match-effect-notice';
 import { MatchDelegation } from './match-delegation';
 import { MatchPreview } from './match-preview';
 import { MatchOverview } from './match-overview';
@@ -30,8 +32,6 @@ import {
 } from '@/components/ui/dialog';
 export function LiveMatchScreen({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
   const live = g.liveMatch!;
-  if (live.cards && !live.cards.selected)
-    return <MatchCardsPanel key={live.cards.id} g={g} act={act} busy={busy} />;
   // Old partial matches are prepared by an explicit action, never by rendering or GET.
   if (!live.timeline)
     return (
@@ -106,7 +106,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           </button>
           <button
             aria-current={panel === 'watch' ? 'page' : undefined}
-            disabled={m.planDirty || busy}
+            disabled={m.planDirty || busy || m.cardsPending}
             onClick={() => m.showPanel('watch')}
           >
             경기 중계
@@ -130,15 +130,34 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           onStart={m.pause}
         />
       )}
-      {live.cards?.selected && <MatchCardsSummary draft={live.cards} />}
+      {live.cards?.selected && (panel === 'preview' || live.cards.version === 1) && (
+        <MatchCardsSummary draft={live.cards} />
+      )}
       {panel === 'preview' && (
         <MatchPreview
           g={g}
           busy={busy}
           onPlan={() => m.showPanel('plan')}
           onPlay={() => m.play()}
+          onCards={() => m.setCardsOpen(true)}
         />
       )}
+      <Dialog
+        open={m.cardsOpen && m.cardsPending}
+        onOpenChange={(open) => {
+          if (!busy) m.setCardsOpen(open);
+        }}
+      >
+        <DialogContent className="match-card-dialog" aria-modal="true">
+          <DialogHeader>
+            <DialogTitle>경기 카드 선택</DialogTitle>
+            <DialogDescription>
+              5장 중 3장을 고르세요. 기회·위기에 한 번씩 사용할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          {m.cardsPending && <MatchCardsPanel key={live.cards!.id} g={g} act={act} busy={busy} />}
+        </DialogContent>
+      </Dialog>
       {editor && (
         <div className="match-plan-page">
           <div className="match-plan-heading">
@@ -170,6 +189,22 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
             event={m.commandResults.current}
             onDismiss={m.commandResults.dismiss}
           />
+          {live.cards?.version === 2 && (
+            <MatchEffectNotice
+              event={m.effects.event}
+              draft={live.cards}
+              onDismiss={m.effects.dismiss}
+            />
+          )}
+          {live.cards?.version === 2 && live.cards.selected && (
+            <MatchCardHand
+              g={g}
+              cursor={m.consumed}
+              busy={busy}
+              paused={!playing && settled && !finished}
+              act={act}
+            />
+          )}
           <div className="match-field-view">
             <MatchSubstitutionNotice
               event={m.substitutions.current}

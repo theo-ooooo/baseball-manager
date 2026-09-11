@@ -1,5 +1,4 @@
 'use client';
-import { AugmentationsPanel } from './augmentations-panel';
 import { RetiredPlayerProfile } from '../players/retired-player-profile';
 import { useGameResources } from './use-game-resources';
 import { useCareerSession } from './use-career-session';
@@ -730,7 +729,6 @@ export function GameScreen({
               targetId={initialTradeTarget}
             />
           )}
-          {view === 'augmentations' && <AugmentationsPanel g={g} act={act} busy={busy} />}
           {view === 'draft' && <DraftPanel g={g} act={act} busy={busy} />}
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
           {view === 'scouting' && (

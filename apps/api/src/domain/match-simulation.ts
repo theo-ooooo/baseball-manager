@@ -41,6 +41,7 @@ import { isPitchingCommand } from '@dugout/shared/match-commands';
 import { delegatedMatchCommand } from './delegated-match-command';
 import { createMatchEnergy, fatigueFactor } from './match-energy';
 import { pitchingModifiers } from './pitching-tactics';
+import { createMatchCardRuntime } from './match-card-runtime';
 
 export function createMatchSimulator(world: WorldCatalog) {
   return createSimulator(createGameView(world));
@@ -73,6 +74,7 @@ function createSimulator({
   ): Generator<Result, Result> {
     const involved = home === g.club || away === g.club;
     const matchCards = involved ? g.liveMatch?.cards : undefined;
+    const activateCards = createMatchCardRuntime(matchCards);
     const rosters = [
       away === g.club
         ? firstTeam(g).filter(isAvailable)
@@ -85,12 +87,12 @@ function createSimulator({
             (p) => p.squad !== 'reserve' && isAvailable(p),
           ),
     ];
-    if (matchCards)
+    if (matchCards?.version === 1)
       for (let side = 0; side < 2; side++)
         rosters[side] = rosters[side].map((p) =>
           matchCardPlayer(matchCards, p, (side ? home : away) === g.club),
         );
-    else if (involved && g.tacticCards?.armed)
+    else if (!matchCards && involved && g.tacticCards?.armed)
       for (let side = 0; side < 2; side++)
         rosters[side] = rosters[side].map((p) => cardEffectPlayer(g, p));
     const lineups = rosters.map((r, i) => {
@@ -358,9 +360,22 @@ function createSimulator({
                 : undefined;
           if (command && (isPitchingCommand(command.kind) ? !ownPitch : !ownBat))
             throw new Error('작전 시점의 공격·수비 팀이 일치하지 않습니다.');
+          const activation = activateCards(
+            log.length,
+            ownBat,
+            !!(bases[1] || bases[2]),
+            !!command?.kind.startsWith('steal'),
+            !!g.liveMatch?.delegation && log.length >= g.liveMatch.delegation.cursor,
+          );
+          const cardPitcher = activation
+            ? matchCardPlayer(matchCards!, pitcher, !ownBat, activation.active)
+            : pitcher;
           const pitcherFactor = fatigueFactor(pitcher.condition, energy.get(pitcher));
-          const strength = pStrength * pitcherFactor;
-          const control = pitcher.control * pitcherFactor;
+          const strength =
+            (pStrength +
+              (overall(cardPitcher) - overall(pitcher)) * (0.75 + pitcher.condition / 400)) *
+            pitcherFactor;
+          const control = cardPitcher.control * pitcherFactor;
           const approach =
             command?.kind === 'attackBatter'
               ? 'attack'
@@ -430,8 +445,13 @@ function createSimulator({
             yield snapshot();
             continue;
           }
-          const p = lineups[side][order[side]++ % lineups[side].length];
+          const originalBatter = lineups[side][order[side]++ % lineups[side].length];
+          const p = activation
+            ? matchCardPlayer(matchCards!, originalBatter, ownBat, activation.active)
+            : originalBatter;
           const play: ReplayPlay = {
+            ...(activation?.cards ? { cards: activation.cards } : {}),
+            ...(activation?.augmentations ? { augmentations: activation.augmentations } : {}),
             batter: p.id,
             pitcher: pitcher.id,
             before: { outs, bases: bases.map((p) => p?.id || null), score: [...score] },
@@ -444,7 +464,9 @@ function createSimulator({
           if (approach !== 'balanced') play.pitching = approach;
           const augment = augmentationModifiers(
             matchCards
-              ? effectiveMatchAugmentation(matchCards, ownBat)
+              ? matchCards.version === 2
+                ? activation?.augmentation
+                : effectiveMatchAugmentation(matchCards, ownBat)
               : ownBat
                 ? matchAugmentation(g)
                 : undefined,

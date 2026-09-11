@@ -204,6 +204,68 @@ test('Match card choices persist once in D1 and survive the compact in-game comm
   assert.deepEqual(revised.body.patch.liveMatch.cards, choice.body.state.liveMatch.cards);
   assert.deepEqual(revised.body.patch.liveMatch.timeline.log.slice(0, 1), timeline.log.slice(0, 1));
   assert.deepEqual((await call('/api/career', command, user)).body, revised.body);
+  const prepared = revised.body.patch.liveMatch;
+  const held = prepared.cards.offered.filter((card) => prepared.cards.selected.includes(card.id));
+  const ownHalf = prepared.home === initial.state.club ? 1 : 0;
+  const target = prepared.timeline.log
+    .flatMap((_, cursor) => held.map((card) => ({ cursor, card })))
+    .find(({ cursor, card }) => {
+      const previous = prepared.timeline.log[cursor - 1],
+        after = previous?.play?.after;
+      if (
+        cursor < prepared.cursor ||
+        !after ||
+        after.outs >= 3 ||
+        !(after.bases[1] || after.bases[2])
+      )
+        return false;
+      if (
+        ['power', 'contact', 'pitcherPressure'].includes(card.kind) !==
+        (previous.half === ownHalf)
+      )
+        return false;
+      return (
+        card.kind !== 'nullify' ||
+        !prepared.timeline.log.slice(0, cursor).some((event) => event.play?.augmentations?.opponent)
+      );
+    });
+  assert.ok(target);
+  const use = {
+    type: 'useMatchCard',
+    draftId: prepared.cards.id,
+    cardId: target.card.id,
+    cursor: target.cursor,
+    timelineVersion: prepared.timelineVersion,
+    revision: revised.body.revision,
+    responseMode: 'patch',
+    requestId: crypto.randomUUID(),
+  };
+  const consumed = await call('/api/career', use, user);
+  assert.equal(consumed.status, 201, JSON.stringify(consumed.body));
+  assert.deepEqual(consumed.body.patch.liveMatch.cards.used, [
+    { cardId: target.card.id, cursor: target.cursor },
+  ]);
+  assert.deepEqual(
+    consumed.body.patch.liveMatch.timeline.log.slice(0, target.cursor),
+    prepared.timeline.log.slice(0, target.cursor),
+  );
+  assert.deepEqual((await call('/api/career', use, user)).body, consumed.body);
+  const afterUse = await call('/api/career', undefined, user);
+  assert.deepEqual(
+    afterUse.body.state.liveMatch.cards.used,
+    consumed.body.patch.liveMatch.cards.used,
+  );
+  const duplicate = await call(
+    '/api/career',
+    {
+      ...use,
+      revision: afterUse.body.revision,
+      timelineVersion: afterUse.body.state.liveMatch.timelineVersion,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(duplicate.status, 400);
 });
 
 test('Growing world progress moves to atomic snapshot parts and survives reload, retry, races and career reset', async () => {

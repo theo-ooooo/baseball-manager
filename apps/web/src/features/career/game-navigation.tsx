@@ -25,7 +25,6 @@ export const nav = [
     { id: 'vision', label: '구단 비전' },
     { id: 'medical', label: '의무 센터' },
     { id: 'trade', label: '트레이드' },
-    { id: 'augmentations', label: '증강 보관함' },
     { id: 'draft', label: '신인 드래프트' },
   ].map((n) => ({ ...n, icon: ClipboardList })),
   { id: 'records', label: '통산 기록 · 은퇴 선수', icon: ClipboardList },

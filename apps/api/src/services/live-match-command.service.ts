@@ -3,6 +3,7 @@ import type { GameState, LiveMatch } from '@dugout/shared/types';
 import type { LiveMatchPatchResponse } from '@dugout/shared/live-match-commands';
 import { matchCommandAction } from '../domain/match-command-actions';
 import { createPreparedMatchSimulator } from '../domain/match-simulation';
+import { chooseMatchCards, consumeMatchCard } from '../domain/match-cards';
 
 @Injectable()
 export class LiveMatchCommandService {
@@ -81,7 +82,10 @@ export class LiveMatchCommandService {
       liveMatch: live,
     } as GameState;
     try {
-      matchCommandAction(state, action, createPreparedMatchSimulator(row.league));
+      const simulate = createPreparedMatchSimulator(row.league);
+      if (action.type === 'chooseMatchCards') chooseMatchCards(state, action, simulate);
+      else if (action.type === 'useMatchCard') consumeMatchCard(state, action, simulate);
+      else matchCommandAction(state, action, simulate);
     } catch (error) {
       throw new BadRequestException(
         error instanceof Error ? error.message : '경기 작전을 확인해 주세요.',

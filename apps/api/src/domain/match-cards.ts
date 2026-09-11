@@ -4,6 +4,7 @@ import { hash, rng } from '@dugout/shared/game-view';
 import { matchCardCatalog, type MatchCard, type MatchCardDraft } from '@dugout/shared/match-cards';
 import { generateTimeline, validateCursor } from './match-timeline';
 import type { createMatchSimulator } from './match-simulation';
+import { matchCardUseReason } from '@dugout/shared/match-card-decisions';
 
 export function drawMatchCards(g: GameState): MatchCardDraft {
   const live = g.liveMatch!;
@@ -40,7 +41,8 @@ export function drawMatchCards(g: GameState): MatchCardDraft {
     opponent = hand('opponent').slice(0, 3);
   const kinds: AugmentationKind[] = ['zone', 'power', 'contact'];
   return {
-    version: 1,
+    version: 2,
+    used: [],
     id,
     club: g.club,
     offered,
@@ -70,5 +72,26 @@ export function chooseMatchCards(
     throw new Error('이번 경기에서 받은 5장 중 서로 다른 카드 3장을 선택해 주세요.');
   draft.selected = [...ids];
   generateTimeline(g, simulate);
+  return g;
+}
+
+export function consumeMatchCard(
+  g: GameState,
+  action: Record<string, unknown>,
+  simulate: ReturnType<typeof createMatchSimulator>,
+) {
+  const live = g.liveMatch;
+  if (!live?.timeline || !live.cards || action.draftId !== live.cards.id)
+    throw new Error('현재 경기의 카드를 다시 확인해 주세요.');
+  const cursor = validateCursor(live, action);
+  const cardId = String(action.cardId || '');
+  const reason = matchCardUseReason(live, g.club, cursor, cardId);
+  if (reason) throw new Error(reason);
+  const prefix = live.timeline.log.slice(0, cursor);
+  live.cards.used = [...(live.cards.used || []), { cardId, cursor }];
+  live.cursor = cursor;
+  generateTimeline(g, simulate);
+  if (JSON.stringify(prefix) !== JSON.stringify(live.timeline.log.slice(0, cursor)))
+    throw new Error('이미 진행된 타석은 변경할 수 없습니다.');
   return g;
 }

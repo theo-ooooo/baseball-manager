@@ -33,7 +33,11 @@ export function useMatchCompletion(
           },
         );
       },
-      live.timeline?.log.at(-1)?.play?.command ? 7000 : 0,
+      live.timeline?.log.at(-1)?.play?.command ||
+        live.timeline?.log.at(-1)?.play?.cards ||
+        live.timeline?.log.at(-1)?.play?.augmentations
+        ? 7000
+        : 0,
     );
     return () => clearTimeout(timer);
   }, [finished, busy, key, cursor, live.timelineVersion, live.timeline, act, router]);

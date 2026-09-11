@@ -16,7 +16,7 @@ export const matchCardCatalog = {
   nullify: {
     name: '증강 무효화',
     icon: '⊘',
-    description: '상대 무작위 증강을 이번 경기 동안 무효화',
+    description: '상대 무작위 증강 발동을 무효화',
   },
 } as const;
 export type MatchCard = {
@@ -25,7 +25,7 @@ export type MatchCard = {
   grade: keyof typeof matchCardGrades;
 };
 export type MatchCardDraft = {
-  version: 1;
+  version: 1 | 2;
   id: string;
   club: string;
   offered: MatchCard[];
@@ -33,11 +33,13 @@ export type MatchCardDraft = {
   opponent: MatchCard[];
   augmentation: AugmentationKind;
   opponentAugmentation: AugmentationKind;
+  used?: { cardId: string; cursor: number }[];
 };
+export type ActiveMatchCards = { own: MatchCard[]; opponent: MatchCard[] };
 export type MatchCardSummary = Pick<
   MatchCardDraft,
   'club' | 'augmentation' | 'opponentAugmentation' | 'opponent'
-> & { own: MatchCard[] };
+> & { own: MatchCard[]; version?: 1 | 2 };
 export function selectedMatchCards(draft: MatchCardDraft) {
   return draft.offered.filter((card) => draft.selected?.includes(card.id));
 }
@@ -57,11 +59,25 @@ export function matchCardSummary(draft: MatchCardDraft): MatchCardSummary {
     opponent: draft.opponent,
     augmentation: draft.augmentation,
     opponentAugmentation: draft.opponentAugmentation,
+    version: draft.version,
   };
 }
-export function effectiveMatchAugmentation(draft: MatchCardDraft, own: boolean) {
-  if (!draft.selected) return undefined;
-  const blocking = own ? draft.opponent : selectedMatchCards(draft);
+export function effectiveMatchAugmentation(
+  draft: MatchCardDraft,
+  own: boolean,
+  active?: ActiveMatchCards,
+) {
+  if (draft.version === 2 && !active) return undefined;
+  if (draft.version === 1 && !draft.selected) return undefined;
+  const blocking = active
+    ? own
+      ? active.opponent
+      : active.own
+    : draft.version === 2
+      ? []
+      : own
+        ? draft.opponent
+        : selectedMatchCards(draft);
   return blocking.some((card) => card.kind === 'nullify')
     ? undefined
     : own
@@ -69,11 +85,18 @@ export function effectiveMatchAugmentation(draft: MatchCardDraft, own: boolean) 
       : draft.opponentAugmentation;
 }
 /** Applied only to ephemeral match rosters, never to saved player attributes. */
-export function matchCardPlayer(draft: MatchCardDraft, player: Player, own: boolean): Player {
+export function matchCardPlayer(
+  draft: MatchCardDraft,
+  player: Player,
+  own: boolean,
+  active?: ActiveMatchCards,
+): Player {
   if (!draft.selected) return player;
-  const ours = selectedMatchCards(draft),
-    cards = own ? ours : draft.opponent,
-    opposing = own ? draft.opponent : ours;
+  if (draft.version === 2 && !active) return player;
+  const ours = active?.own || selectedMatchCards(draft),
+    theirs = active?.opponent || draft.opponent,
+    cards = own ? ours : theirs,
+    opposing = own ? theirs : ours;
   const strength = (hand: MatchCard[], kind: MatchCard['kind']) => {
     const card = hand.find((c) => c.kind === kind);
     return card ? matchCardGrades[card.grade].percent / 100 : 0;

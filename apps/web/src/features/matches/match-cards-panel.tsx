@@ -1,6 +1,6 @@
 'use client';
-import Link from 'next/link';
-import { Check, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, ArrowRight, Layers } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import type { GameState } from '@dugout/shared/types';
 import { augmentationCatalog } from '@dugout/shared/augmentations';
 import {
@@ -14,6 +14,8 @@ import {
 } from '@dugout/shared/match-cards';
 import type { Act } from '../career/game-contracts';
 import { useMatchCards } from './use-match-cards';
+import { useMatchDraw } from './use-match-draw';
+import { isAttackingCard } from '@dugout/shared/match-card-decisions';
 
 function CardDetails({ card }: { card: MatchCard }) {
   const spec = matchCardCatalog[card.kind];
@@ -23,39 +25,40 @@ function CardDetails({ card }: { card: MatchCard }) {
       <span aria-hidden="true">{spec.icon}</span>
       <strong>{spec.name}</strong>
       <p>{matchCardDescription(card)}</p>
-      <small>이번 경기 한정</small>
+      <small>{isAttackingCard(card) ? '득점 기회' : '실점 위기'} · 한 타석 · 1회용</small>
     </>
   );
 }
 export function MatchCardsPanel({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
   const h = useMatchCards(g, act, busy);
-  const ours = augmentationCatalog[h.draft.augmentation],
-    theirs = augmentationCatalog[h.draft.opponentAugmentation];
+  const draw = useMatchDraw(h.draft.id);
   return (
-    <section className="match-page match-card-draft" aria-label="경기 카드 선택">
-      <header>
-        <Link href="/?view=home">← 구단으로</Link>
-        <small>MATCH DAY · 경기 시작 전</small>
-        <h1>
-          오늘의 승부를 바꿀 <em>3장</em>
-        </h1>
-        <p>이번 경기에서만 사용할 카드 3장을 고르세요. 다음 경기에는 새로운 5장을 받습니다.</p>
-      </header>
-      <div className="match-card-augments">
-        <article>
-          <small>우리 팀 무작위 증강</small>
-          <strong>
-            <Sparkles size={19} />
-            {ours.name}
-          </strong>
-          <p>{ours.description}</p>
-        </article>
-        <article>
-          <small>상대 팀 무작위 증강</small>
-          <strong>{theirs.name}</strong>
-          <p>{theirs.description.replace('우리', '상대')}</p>
-        </article>
+    <section className={`match-card-draft ${draw.phase}`} aria-label="카드 받기와 선택">
+      <div className="match-draft-aug-summary">
+        <span>
+          우리 증강 <b>{augmentationCatalog[h.draft.augmentation].name}</b>
+        </span>
+        <span>
+          상대 증강 <b>{augmentationCatalog[h.draft.opponentAugmentation].name}</b>
+        </span>
+        <small>각 팀 첫 득점 기회에 1회 자동 발동</small>
       </div>
+      {draw.phase === 'ready' && (
+        <button className="match-card-pack" disabled={busy} onClick={draw.draw}>
+          <span className="card-pack-stack" aria-hidden="true">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <i key={i} style={{ '--card-index': i } as CSSProperties}>
+                <Layers size={32} />
+                <b>DUGOUT</b>
+              </i>
+            ))}
+          </span>
+          <strong>
+            카드 5장 받기 <ArrowRight size={19} />
+          </strong>
+          <small>눌러서 카드 공개</small>
+        </button>
+      )}
       <details className="match-opponent-cards">
         <summary>상대가 준비한 카드 3장</summary>
         <ul>
@@ -68,36 +71,50 @@ export function MatchCardsPanel({ g, act, busy }: { g: GameState; act: Act; busy
             </li>
           ))}
         </ul>
-        <p>상대의 증강 무효화 카드는 우리 무작위 증강을 막습니다. 카드 자체의 효과는 유지됩니다.</p>
+        <p>
+          상대도 기회·위기에 카드를 한 장씩 사용합니다. 무효화 카드는 상대 증강의 1회 발동을
+          막습니다.
+        </p>
       </details>
-      <div className="match-card-hand">
-        {h.draft.offered.map((card) => (
-          <button
-            key={card.id}
-            type="button"
-            className={`tactic-card ${card.grade}`}
-            aria-pressed={h.selected.includes(card.id)}
-            disabled={busy || (h.selected.length === 3 && !h.selected.includes(card.id))}
-            onClick={() => h.toggle(card.id)}
-          >
-            <CardDetails card={card} />
-            <i>{h.selected.includes(card.id) ? <Check size={20} aria-label="선택됨" /> : '선택'}</i>
-          </button>
-        ))}
-      </div>
-      <footer>
-        <div>
-          <strong aria-live="polite">{h.selected.length} / 3장 선택</strong>
-          <small>확정 후에는 변경할 수 없습니다.</small>
+      {draw.phase !== 'ready' && (
+        <div className="match-card-hand" aria-busy={draw.phase === 'drawing'}>
+          {h.draft.offered.map((card, index) => (
+            <button
+              key={card.id}
+              type="button"
+              className={`tactic-card ${card.grade}`}
+              style={{ '--card-index': index } as CSSProperties}
+              aria-pressed={h.selected.includes(card.id)}
+              disabled={
+                draw.phase !== 'revealed' ||
+                busy ||
+                (h.selected.length === 3 && !h.selected.includes(card.id))
+              }
+              onClick={() => h.toggle(card.id)}
+            >
+              <CardDetails card={card} />
+              <i>
+                {h.selected.includes(card.id) ? <Check size={20} aria-label="선택됨" /> : '선택'}
+              </i>
+            </button>
+          ))}
         </div>
-        <button
-          className="button primary"
-          disabled={busy || h.selected.length !== 3}
-          onClick={() => void h.confirm()}
-        >
-          카드 확정 · 경기 준비 <ArrowRight size={18} />
-        </button>
-      </footer>
+      )}
+      {draw.phase !== 'ready' && (
+        <footer>
+          <div>
+            <strong aria-live="polite">{h.selected.length} / 3장 선택</strong>
+            <small>보유 중에는 효과 없음 · 경기 중 직접 사용</small>
+          </div>
+          <button
+            className="button primary"
+            disabled={draw.phase !== 'revealed' || busy || h.selected.length !== 3}
+            onClick={() => void h.confirm()}
+          >
+            3장 보유 · 경기 준비 <ArrowRight size={18} />
+          </button>
+        </footer>
+      )}
     </section>
   );
 }
@@ -106,8 +123,13 @@ export function MatchCardsSummary({ draft }: { draft: MatchCardDraft }) {
   return (
     <details className="match-cards-summary">
       <summary>
-        이번 경기 카드 · {augmentationCatalog[draft.augmentation].name}
-        {!effectiveMatchAugmentation(draft, true) ? ' (상대 카드로 무효)' : ''}
+        이번 경기 카드 ·{' '}
+        {draft.version === 2
+          ? '보유 3장 · 한 장당 1회용'
+          : augmentationCatalog[draft.augmentation].name}
+        {draft.version === 1 && !effectiveMatchAugmentation(draft, true)
+          ? ' (상대 카드로 무효)'
+          : ''}
       </summary>
       <div>
         {[
@@ -119,7 +141,11 @@ export function MatchCardsSummary({ draft }: { draft: MatchCardDraft }) {
             <p>
               증강:{' '}
               {augmentationCatalog[side ? draft.opponentAugmentation : draft.augmentation].name} ·{' '}
-              {effectiveMatchAugmentation(draft, !side) ? '적용 중' : '무효화됨'}
+              {draft.version === 2
+                ? '첫 득점 기회에 1회 자동 발동'
+                : effectiveMatchAugmentation(draft, !side)
+                  ? '적용 중'
+                  : '무효화됨'}
             </p>
             <ul>
               {(cards as MatchCard[]).map((card) => (

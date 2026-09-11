@@ -6,17 +6,20 @@ import { matchReadout } from './match-readout';
 import { Stadium2DField } from './stadium-2d-field';
 import { Play, ClipboardList, ArrowRight } from 'lucide-react';
 import { MatchClubStanding } from './match-club-standing';
+import { MatchAugmentationReveal } from './match-augmentation-reveal';
 
 export function MatchPreview({
   g,
   busy,
   onPlan,
   onPlay,
+  onCards,
 }: {
   g: GameState;
   busy: boolean;
   onPlan: () => void;
   onPlay: () => void;
+  onCards: () => void;
 }) {
   const live = g.liveMatch!,
     result = live.timeline!;
@@ -24,6 +27,9 @@ export function MatchPreview({
   const view = matchReadout(result, 0, result.home === g.club ? 1 : 0, live.changes);
   return (
     <div className="match-preview">
+      {live.cards?.version === 2 && (
+        <MatchAugmentationReveal key={live.cards.id} draft={live.cards} />
+      )}
       <section className="match-preview-hero">
         <div className="match-preview-field" aria-hidden="true">
           <Stadium2DField viewBox="0 0 1536 1024" />
@@ -60,8 +66,12 @@ export function MatchPreview({
           <button onClick={onPlan} disabled={busy}>
             <ClipboardList size={17} /> 선수·전술 확인
           </button>
-          <button className="match-start" onClick={onPlay} disabled={busy}>
-            <Play size={17} /> 플레이볼
+          <button
+            className="match-start"
+            onClick={live.cards && !live.cards.selected ? onCards : onPlay}
+            disabled={busy}
+          >
+            <Play size={17} /> {live.cards && !live.cards.selected ? '카드 3장 선택' : '플레이볼'}
           </button>
         </div>
       </section>

@@ -23,7 +23,6 @@ const groups = [
       ['agents', '계약 협상'],
       ['trade', '트레이드'],
       ['draft', '신인 드래프트'],
-      ['augmentations', '증강 보관함'],
     ],
   },
   {

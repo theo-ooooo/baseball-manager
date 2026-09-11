@@ -412,6 +412,12 @@ export type AutomaticPitchingChange = {
   role: 'closer' | 'setup' | 'chase' | 'relief';
 };
 export type ReplayPlay = {
+  cards?: { own?: string; opponent?: string };
+  augmentations?: {
+    own?: import('./augmentations').AugmentationKind;
+    opponent?: import('./augmentations').AugmentationKind;
+    blocked?: true;
+  };
   batter: string;
   pitcher: string;
   /** Automatic change immediately before this play; manual substitutions use MatchChange. */

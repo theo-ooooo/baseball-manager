@@ -1,5 +1,5 @@
 import { createAiRegistrations } from './ai-registrations';
-import { chooseMatchCards, drawMatchCards } from './match-cards';
+import { chooseMatchCards, drawMatchCards, consumeMatchCard } from './match-cards';
 import { bullpenAction } from './bullpen';
 import type { WorldCatalog, GameState } from '@dugout/shared/types';
 import { createGameView } from '@dugout/shared/game-view';
@@ -20,6 +20,7 @@ export function createLiveMatchActions(
   const registrations = createAiRegistrations(world);
   function liveAction(g: GameState, a: Record<string, unknown>): GameState | null {
     if (a.type === 'chooseMatchCards') return chooseMatchCards(g, a, simulateMatch);
+    if (a.type === 'useMatchCard') return consumeMatchCard(g, a, simulateMatch);
     if (
       g.liveMatch?.cards &&
       !g.liveMatch.cards.selected &&

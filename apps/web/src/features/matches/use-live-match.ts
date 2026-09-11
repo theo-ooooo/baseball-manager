@@ -19,6 +19,7 @@ import { useMatchResume } from './use-match-resume';
 import { useMatchSubstitutions } from './use-match-substitutions';
 import { useCoachSubstitution } from './use-coach-substitution';
 import { useMatchCommandResults } from './use-match-command-results';
+import { useMatchEffects } from './use-match-effects';
 
 export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const live = g.liveMatch!,
@@ -53,6 +54,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     panel === 'watch',
   );
   const [commandOpen, setCommandOpen] = useState(false);
+  const [cardsOpen, setCardsOpen] = useState(false);
   const [commandPreset, setCommandPreset] = useState<MatchCommandKind>();
   const [planDirty, setPlanDirty] = useState(false);
   const [commentary, setCommentary] = useState<MatchCue[]>([]);
@@ -73,6 +75,13 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     setSoundPaused(true);
   }, [pausePlayback]);
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
+  const effects = useMatchEffects(result, consumed, panel === 'watch');
+  const cardsPending = !!live.cards && !live.cards.selected;
+  useEffect(() => {
+    if (!cardsPending) return;
+    const timer = setTimeout(() => setCardsOpen(true), 1900);
+    return () => clearTimeout(timer);
+  }, [cardsPending]);
   const commandResults = useMatchCommandResults(
     result,
     consumed,
@@ -104,13 +113,13 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     [result, playback.cursor],
   );
   const showPanel = (next: typeof panel) => {
-    if (planDirty || busy) return;
+    if (planDirty || busy || (cardsPending && next === 'watch')) return;
     pause();
     setCommandOpen(false);
     setPanel(next);
   };
   const play = (continuous = true) => {
-    if (busy || planDirty || playback.finished) return;
+    if (busy || planDirty || playback.finished || cardsPending) return;
     void audio.unlock();
     setSoundPaused(false);
     setPanel('watch');
@@ -157,6 +166,10 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     ...playback,
     substitutions,
     commandResults,
+    effects,
+    cardsPending,
+    cardsOpen,
+    setCardsOpen,
     coachSubstitution,
     autoPause: {
       ...autoPause,

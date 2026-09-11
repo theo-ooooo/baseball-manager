@@ -18,6 +18,12 @@ export function matchCommandAction(
     throw new Error('종료된 경기는 변경할 수 없습니다.');
   const commands = live.commands || [],
     past = commands.filter((c) => c.cursor < cursor);
+  if (
+    String(a.command).startsWith('steal') &&
+    live.cards?.version === 2 &&
+    live.cards.used?.some((use) => use.cursor === cursor)
+  )
+    throw new Error('카드를 사용한 타석은 타자·투수 사인으로 진행해 주세요.');
   if (a.type === 'cancelMatchCommand') {
     if (!commands.some((c) => c.cursor === cursor)) throw new Error('취소할 작전이 없습니다.');
     live.commands = past;
