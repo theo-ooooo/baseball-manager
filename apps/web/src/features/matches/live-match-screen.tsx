@@ -16,6 +16,7 @@ import { MatchAudioSettings } from './match-audio-settings';
 import { AppVersion } from '../../components/app-version';
 import { MatchDecisionBar } from './match-decision-bar';
 import { CoachSubstitutionCard } from './coach-substitution-card';
+import { CoachCommandCard } from './coach-command-card';
 import { MatchSubstitutionNotice, MatchSubstitutionHistory } from './match-substitution-notice';
 import {
   Dialog,
@@ -176,7 +177,16 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               onContinue={() => m.play()}
               previousCommand={m.previousCommand}
               onRepeat={m.repeatCommand}
-              coach={<CoachSubstitutionCard coach={m.coachSubstitution} busy={busy} />}
+              coach={
+                <>
+                  <CoachCommandCard
+                    advice={m.commandAdvice}
+                    busy={busy}
+                    onSelect={m.reviewRecommendedCommand}
+                  />
+                  <CoachSubstitutionCard coach={m.coachSubstitution} busy={busy} />
+                </>
+              }
             />
           </div>
           <Dialog
@@ -192,7 +202,13 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
                   {m.decision.situation} · 다음 타자 {m.decision.batter}
                 </DialogDescription>
               </DialogHeader>
-              <MatchCommandPanel g={g} cursor={m.consumed} busy={busy} act={act} />
+              <MatchCommandPanel
+                g={g}
+                cursor={m.consumed}
+                busy={busy}
+                act={act}
+                initialCommand={m.commandPreset}
+              />
             </DialogContent>
           </Dialog>
         </div>

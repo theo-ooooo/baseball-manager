@@ -1,3 +1,4 @@
+import { abilityText } from '@dugout/shared/ratings';
 import type { GameState } from '@dugout/shared/types';
 import { hash } from '@dugout/shared/game-view';
 import { coachJudgment } from '@dugout/shared/coach-assessment';
@@ -51,7 +52,7 @@ export function coachBattingCommand(g: GameState, cursor: number) {
         batter.power * 0.5 +
         (late && lead < -1 ? 18 : 0) -
         (runners && decision.outs < 2 ? 8 : 0),
-      reason: `${batter.name}의 장타력 ${Math.round(batter.power)}를 살리는 승부입니다.${late && lead < 0 ? ` ${-lead}점 뒤진 후반이라 큰 타구를 노립니다.` : ' 장타를 노리는 대신 삼진 위험을 감수합니다.'}`,
+      reason: `${batter.name}의 장타력 ${abilityText(batter.power)}를 살리는 승부입니다.${late && lead < 0 ? ` ${-lead}점 뒤진 후반이라 큰 타구를 노립니다.` : ' 장타를 노리는 대신 삼진 위험을 감수합니다.'}`,
     },
     workCount: {
       score:
@@ -71,7 +72,7 @@ export function coachBattingCommand(g: GameState, cursor: number) {
     },
     hitAndRun: {
       score: 12 + batter.contact * 0.55 + speed(0) * 0.2 - (decision.outs === 1 ? 4 : 0),
-      reason: `컨택 ${Math.round(batter.contact)}인 ${batter.name}에게 맞히는 타격을 주문하고 1루 주자를 출발시킵니다. 헛스윙 시 도루사 위험이 있습니다.`,
+      reason: `컨택 ${abilityText(batter.contact)}인 ${batter.name}에게 맞히는 타격을 주문하고 1루 주자를 출발시킵니다. 헛스윙 시 도루사 위험이 있습니다.`,
     },
     stealSecond: {
       score: speed(0) - 12 - (late && lead < -1 ? 25 : 0),

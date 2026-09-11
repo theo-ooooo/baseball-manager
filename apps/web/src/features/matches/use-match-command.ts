@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import { coachBattingCommand } from './coach-batting-command';
+import { coachMatchCommand } from './coach-match-command';
 import type { GameState } from '@dugout/shared/types';
 import {
   matchCommandOptions,
@@ -11,12 +11,18 @@ import {
 import type { Act } from '../career/game-contracts';
 import { requestMatchResume } from './use-match-resume';
 
-export function useMatchCommand(g: GameState, cursor: number, busy: boolean, act: Act) {
+export function useMatchCommand(
+  g: GameState,
+  cursor: number,
+  busy: boolean,
+  act: Act,
+  initialCommand?: MatchCommandKind,
+) {
   const live = g.liveMatch!;
   const queued = live.commands?.find((command) => command.cursor === cursor)?.kind;
-  const [selected, setSelected] = useState<MatchCommandKind | undefined>(queued);
+  const [selected, setSelected] = useState<MatchCommandKind | undefined>(initialCommand ?? queued);
   const submitting = useRef(false);
-  const recommendation = useMemo(() => coachBattingCommand(g, cursor), [g, cursor]);
+  const recommendation = useMemo(() => coachMatchCommand(g, cursor), [g, cursor]);
   const options = matchCommandOptions(live, g.club, cursor);
   const defending = nextMatchHalf(live, cursor) !== (live.home === g.club ? 1 : 0);
   const error = options.find((option) => option.kind === selected)?.reason;

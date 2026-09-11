@@ -173,3 +173,46 @@
   border-color: var(--brand);
   font-weight: 650;
 }
+.coach-command-advice {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.coach-command-advice strong,
+.coach-command-profile {
+  display: block;
+  margin-block: 6px;
+}
+.coach-command-advice p {
+  line-height: 1.6;
+}
+.command-recommended {
+  display: inline-block;
+  color: #c9efa6;
+  font-size: 11px;
+}
+.match-command-dialog .match-command-confirm {
+  position: sticky;
+  bottom: -12px;
+  z-index: 1;
+  padding: 12px;
+  background: #19262e;
+  border: 1px solid #46616d;
+  border-radius: 8px;
+}
+.match-command-dialog .match-command-confirm > span {
+  color: #dbe8ec;
+}
+@media (max-width: 400px) {
+  .match-command-panel > header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .match-command-dialog .match-command-confirm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .match-command-dialog .match-command-confirm > span {
+    font-size: 11px;
+  }
+}

@@ -8,7 +8,8 @@ import { useMatchAudio } from './use-match-audio';
 import type { MatchCue } from './match-commentary';
 import { useIsMobile } from '../../hooks/use-mobile';
 import { useReducedMotion } from '../../hooks/use-reduced-motion';
-import { previousMatchCommand } from '@dugout/shared/match-commands';
+import { previousMatchCommand, type MatchCommandKind } from '@dugout/shared/match-commands';
+import { coachMatchCommand } from './coach-match-command';
 import { sendMatchCommand } from './use-match-command';
 import { matchDecision } from '@dugout/shared/match-decision';
 import { useDecisionPrompt } from './use-decision-prompt';
@@ -49,6 +50,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     panel === 'watch',
   );
   const [commandOpen, setCommandOpen] = useState(false);
+  const [commandPreset, setCommandPreset] = useState<MatchCommandKind>();
   const [planDirty, setPlanDirty] = useState(false);
   const [commentary, setCommentary] = useState<MatchCue[]>([]);
   const [soundPaused, setSoundPaused] = useState(!resume);
@@ -69,6 +71,10 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   }, [pausePlayback]);
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
   const decision = useMemo(() => matchDecision(live, g.club, consumed), [live, g.club, consumed]);
+  const commandAdvice = useMemo(
+    () => (!playback.playing && playback.settled ? coachMatchCommand(g, consumed) : undefined),
+    [g, consumed, playback.playing, playback.settled],
+  );
   const previousCommand = previousMatchCommand(live, g.club, consumed);
   const coachSubstitution = useCoachSubstitution(
     g,
@@ -159,8 +165,17 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
       setReport(next);
     },
     commandOpen,
+    commandAdvice,
+    commandPreset,
+    reviewRecommendedCommand: () => {
+      if (busy || !commandAdvice) return;
+      pause();
+      setCommandPreset(commandAdvice.command);
+      setCommandOpen(true);
+    },
     toggleCommand: () => {
       pause();
+      setCommandPreset(undefined);
       setCommandOpen((previous) => !previous);
     },
     planDirty,
