@@ -1,5 +1,17 @@
 # Work log
 
+## 2026-09-11 — 경기 전 대타 추천 제거와 대수비 점수 조건 확장
+
+사용자 확인 결과 필요한 것은 경기 중 제안이었으므로 경기 전 프리뷰 추천을 되돌렸다. 대수비는 리드 중에만 제안했는데 동점·열세에서도 필요하다는 결정에 따라 점수 조건을 없앴다.
+
+- `preview-substitution.ts`, `use-preview-substitution.ts`, `preview-substitution-card.tsx`, `tests/preview-substitution.test.mjs` 를 제거하고 `use-live-match`·`live-match-screen`·`match-preview` 배선을 원래대로 돌렸다. 경기 전 제안은 기존 선발 명단 보고서(`lineup-reports`)가 담당한다.
+- `fielder()` 의 `lead <= 0` 게이트를 제거했다. 7회 이후면 점수 상황과 무관하게 검토하고, 문구를 리드·동점·열세로 나눠 리드일 때는 "리드를 지키는", 그 외에는 "추가 실점을 막는" 것으로 표기한다.
+
+검증: `tests/coach-substitution.test.mjs` 13건 통과. 대수비 관련으로 리드 상황, 동점·열세 상황, 6회 이전 미제안, `reviseMatch` 서버 검증 4건을 유지·추가했다. 전체 스위트 323건 중 322건 통과이며 유일한 실패는 이 환경의 `core.autocrlf=true` 로 인한 자산 해시 불일치다. `npm run typecheck` 0건, `npm run lint` 통과, 변경 파일 `prettier --check` 통과.
+
+한계: 브라우저 검증은 하지 않았다. 열세에서 대수비를 넣으면 공격력이 약해지는 손익은 아직 반영하지 않는다. 코치는 수비 개선 폭만 보고 제안한다.
+
+
 ## 2026-09-11 — 경기 중 타격 부진 대타와 대수비 추천
 
 경기 중 코치 제안에 두 가지가 빠져 있었다. 타격 부진 자체가 대타 사유가 아니었고, 대수비 제안이 아예 없었다.

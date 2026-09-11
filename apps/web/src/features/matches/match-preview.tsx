@@ -1,5 +1,4 @@
 'use client';
-import type { ReactNode } from 'react';
 import type { GameState } from '@dugout/shared/types';
 import { ClubBadge } from '../../components/club-badge';
 import { useWorld } from '../career/world-context';
@@ -15,14 +14,12 @@ export function MatchPreview({
   onPlan,
   onPlay,
   onCards,
-  substitution,
 }: {
   g: GameState;
   busy: boolean;
   onPlan: () => void;
   onPlay: () => void;
   onCards: () => void;
-  substitution?: ReactNode;
 }) {
   const live = g.liveMatch!,
     result = live.timeline!;
@@ -104,12 +101,9 @@ export function MatchPreview({
               ))}
             </ol>
             {team.club === g.club && (
-              <>
-                {substitution}
-                <button className="match-preview-edit" onClick={onPlan} disabled={busy}>
-                  선수 교체 · 수비 배치 <ArrowRight size={15} />
-                </button>
-              </>
+              <button className="match-preview-edit" onClick={onPlan} disabled={busy}>
+                선수 교체 · 수비 배치 <ArrowRight size={15} />
+              </button>
             )}
           </section>
         ))}

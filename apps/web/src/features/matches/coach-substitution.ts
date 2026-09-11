@@ -51,11 +51,12 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
   // 함수 선언은 호이스팅되어 위쪽 coach 좁히기가 적용되지 않으므로 이름을 미리 고정한다.
   const coachName = coach.name;
   /**
-   * 대수비 제안. 리드를 지켜야 하는 후반에 수비가 약한 야수를 더 나은 수비수로 바꾼다.
-   * 투수 교체 사유가 없을 때만 검토하므로 한 번에 한 가지 제안만 올라간다.
+   * 대수비 제안. 후반에 수비가 약한 야수를 더 나은 수비수로 바꾼다. 점수 상황과
+   * 무관하게 검토하며, 투수 교체 사유가 없을 때만 올라오므로 한 번에 한 가지
+   * 제안만 뜬다.
    */
   function fielder(): CoachSubstitution | undefined {
-    if (decision.inning < 7 || lead <= 0) return;
+    if (decision.inning < 7) return;
     const fieldScore = (p: Player, pos: DefensivePosition) =>
       (p.field * 0.7 + familiarity(p, pos) * 0.3) * (0.7 + condition(p) / 333);
     const bench = players.filter(
@@ -78,6 +79,12 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
       if (!best || gain > best.gain) best = { pos, slot, out, in: candidate, gain };
     }
     if (!best) return;
+    const situation = () =>
+      lead > 0
+        ? `${decision.inning}회 ${lead}점 리드입니다.`
+        : lead === 0
+          ? `${decision.inning}회 동점입니다.`
+          : `${decision.inning}회 ${-lead}점 뒤지고 있습니다.`;
     const plan2 = { ...plan, lineup: [...plan.lineup], defense: { ...plan.defense } };
     plan2.lineup[best.slot] = best.in.id;
     plan2.defense[best.pos] = best.in.id;
@@ -88,7 +95,7 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
       judgment: `능력 ${judgment.skill} · ${judgment.label}`,
       outgoing: best.out,
       incoming: best.in,
-      reason: `${decision.inning}회 ${lead}점 리드입니다. ${best.pos} 수비를 ${best.out.name}(수비 ${best.out.field})에서 ${best.in.name}(수비 ${best.in.field})으로 바꿔 리드를 지키는 것을 권합니다.`,
+      reason: `${situation()} ${best.pos} 수비를 ${best.out.name}(수비 ${best.out.field})에서 ${best.in.name}(수비 ${best.in.field})으로 바꿔 ${lead > 0 ? '리드를 지키는' : '추가 실점을 막는'} 것을 권합니다.`,
       plan: plan2,
       emergency: false,
       canWarm: false,

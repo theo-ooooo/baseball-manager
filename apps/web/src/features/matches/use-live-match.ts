@@ -18,7 +18,6 @@ import { useMatchPauseSettings, type MatchPauseSettings } from './use-match-paus
 import { useMatchResume } from './use-match-resume';
 import { useMatchSubstitutions } from './use-match-substitutions';
 import { useCoachSubstitution } from './use-coach-substitution';
-import { usePreviewSubstitution } from './use-preview-substitution';
 import { useMatchCommandResults } from './use-match-command-results';
 import { useMatchEffects } from './use-match-effects';
 
@@ -103,7 +102,6 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     !playback.playing && playback.settled && panel === 'watch',
     act,
   );
-  const previewSubstitution = usePreviewSubstitution(g, busy, panel === 'preview', act);
   const decisionVisible = useDecisionPrompt(
     playback.cursor,
     !playback.playing,
@@ -173,7 +171,6 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     cardsOpen,
     setCardsOpen,
     coachSubstitution,
-    previewSubstitution,
     autoPause: {
       ...autoPause,
       toggle: (kind: keyof MatchPauseSettings, checked: boolean) => {

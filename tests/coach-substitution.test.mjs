@@ -292,17 +292,19 @@ function weakenDefense(g) {
   return { position, weak };
 }
 
-/** 실제 로그에서 우리 팀이 앞선 7회 이후 수비 상황을 훑어 첫 대수비 제안을 찾는다. */
-function fielderAdvice(g) {
+/** 7회 이후 우리 수비 상황을 훑어 첫 대수비 제안을 찾는다. 점수 상황은 가리지 않는다. */
+function fielderAdvice(g, wantLead) {
   const live = g.liveMatch,
     own = live.home === g.club ? 1 : 0;
   for (let cursor = 1; cursor < live.timeline.log.length; cursor++) {
     const d = matchDecision(live, g.club, cursor);
     if (d.attacking || d.inning < 7) continue;
     const score = live.timeline.log.slice(0, cursor).at(-1)?.play?.after.score || [0, 0];
-    if (score[own] - score[1 - own] <= 0) continue;
+    const lead = score[own] - score[1 - own];
+    if (wantLead === 'lead' && lead <= 0) continue;
+    if (wantLead === 'notLead' && lead > 0) continue;
     const suggestion = coachSubstitution(g, cursor);
-    if (suggestion?.kind === 'fielder') return { cursor, suggestion };
+    if (suggestion?.kind === 'fielder') return { cursor, suggestion, lead };
   }
   return null;
 }
@@ -347,7 +349,7 @@ test('타격 부진 타자는 기회 상황이 아니어도 대타를 추천한�
 test('리드 중 후반에는 수비가 약한 야수에 대해 대수비를 추천한다', () => {
   const g = start(902);
   const { position, weak } = weakenDefense(g);
-  const found = fielderAdvice(g);
+  const found = fielderAdvice(g, 'lead');
   assert.ok(found, '7회 이후 리드 상황에서 대수비 제안을 찾아야 한다');
   const { suggestion } = found;
   assert.equal(suggestion.kind, 'fielder');
@@ -362,23 +364,30 @@ test('리드 중 후반에는 수비가 약한 야수에 대해 대수비를 추
   assert.equal(suggestion.canWarm, false);
 });
 
-test('앞서지 않는 상황에서는 대수비를 추천하지 않는다', () => {
+test('동점이나 뒤진 상황에서도 대수비를 추천한다', () => {
   const g = start(902);
   weakenDefense(g);
-  const live = g.liveMatch,
-    own = live.home === g.club ? 1 : 0;
+  const found = fielderAdvice(g, 'notLead');
+  assert.ok(found, '앞서지 않는 상황에서도 대수비 제안이 나와야 한다');
+  assert.ok(found.lead <= 0, `리드가 아닌 상황이어야 한다 (${found.lead})`);
+  assert.equal(found.suggestion.kind, 'fielder');
+  assert.match(found.suggestion.reason, /동점|뒤지고 있습니다/);
+  assert.match(found.suggestion.reason, /추가 실점을 막는/);
+});
+
+test('6회 이전에는 대수비를 추천하지 않는다', () => {
+  const g = start(902);
+  weakenDefense(g);
+  const live = g.liveMatch;
   let checked = 0;
   for (let cursor = 1; cursor < live.timeline.log.length; cursor++) {
     const d = matchDecision(live, g.club, cursor);
-    if (d.attacking) continue;
-    const score = live.timeline.log.slice(0, cursor).at(-1)?.play?.after.score || [0, 0];
-    const lead = score[own] - score[1 - own];
-    if (lead > 0 && d.inning >= 7) continue;
+    if (d.attacking || d.inning >= 7) continue;
     checked++;
     assert.notEqual(
       coachSubstitution(g, cursor)?.kind,
       'fielder',
-      `커서 ${cursor} (${d.inning}회 · ${lead}점차) 에서 대수비가 나왔다`,
+      `커서 ${cursor} (${d.inning}회) 에서 대수비가 나왔다`,
     );
   }
   assert.ok(checked > 0, '검사한 커서가 있어야 한다');
