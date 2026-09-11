@@ -1,3 +1,4 @@
+import { internationalDutyFor } from './international';
 import { battingProfile } from '@dugout/shared/player-attributes';
 import { createCalendarView } from '@dugout/shared/calendar';
 import { unpackStats } from './long-term';
@@ -128,6 +129,7 @@ type RosterIndex = {
   year: number;
   own: Player[];
   transfers: Player[];
+  international?: GameState['international'];
   groups: Map<string, Player[]>;
 };
 const worldRosterIndexes = new WeakMap<WorldCatalog, WeakMap<GameState, RosterIndex>>();
@@ -233,7 +235,8 @@ export function createGameView(world: WorldCatalog) {
       cached?.revision === sim.revision &&
       cached.year === g.year &&
       cached.own === g.roster &&
-      cached.transfers === g.transferred
+      cached.transfers === g.transferred &&
+      cached.international === g.international
     )
       return cached.groups;
     const registered = new Map(
@@ -273,6 +276,7 @@ export function createGameView(world: WorldCatalog) {
           abilities: report.abilities,
           date: report.date,
         };
+      next.internationalDuty = internationalDutyFor(g, next.id);
       return next;
     };
     for (const c of [...clubs.map((c) => c.id), 'fa'])
@@ -310,6 +314,9 @@ export function createGameView(world: WorldCatalog) {
     for (const p of g.roster) pool.set(p.id, p);
     const groups = new Map<string, Player[]>();
     for (const p of pool.values()) {
+      const duty = internationalDutyFor(g, p.id);
+      if (duty) p.internationalDuty = duty;
+      else delete p.internationalDuty;
       const list = groups.get(p.club) || [];
       list.push(p);
       groups.set(p.club, list);
@@ -319,6 +326,7 @@ export function createGameView(world: WorldCatalog) {
       year: g.year,
       own: g.roster,
       transfers: g.transferred,
+      international: g.international,
       groups,
     });
     return groups;

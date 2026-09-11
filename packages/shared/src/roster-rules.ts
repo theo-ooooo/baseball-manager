@@ -36,6 +36,7 @@ export function squadMoveError(
     return '반대 선수단에 있는 교체 선수를 선택해 주세요.';
   const incoming = target === 'first' ? player : replacement;
   const outgoing = target === 'reserve' ? player : replacement;
+  if (incoming?.internationalDuty) return '국가대표 차출에서 복귀한 뒤 1군에 등록할 수 있습니다.';
   const recall = incoming && recallError(g, incoming);
   if (recall) return recall;
   const active = firstTeam(g).filter((p) => p.id !== outgoing?.id);

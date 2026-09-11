@@ -61,7 +61,7 @@ export function medicalTick(g: GameState, trainingDays?: Map<string, PlayerTrain
       }
       continue;
     }
-    if (added || g.phase === 'finished') continue;
+    if (added || g.phase === 'finished' || p.internationalDuty) continue;
     const risk =
       ((p.condition < 65 ? 12 : 3) *
         (trainingDays?.get(p.id)?.risk ?? (g.training === 'rest' ? 0.5 : 1))) /

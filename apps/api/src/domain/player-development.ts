@@ -67,6 +67,7 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
   const date = gameDate(g),
     seasonDays = Math.max(60, g.rounds + (g.rules?.preseason ? 28 : 0));
   for (const p of g.roster) {
+    if (p.internationalDuty) continue;
     const d = p.development!,
       c = d.curve!;
     if (d.lastTrained === date) continue;

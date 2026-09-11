@@ -1,4 +1,5 @@
 'use client';
+import { InternationalCalendarPanel } from './international-calendar-panel';
 import { ClubBadge } from '../../components/club-badge';
 import { useState } from 'react';
 import type { GameState, Result } from '@dugout/shared/types';
@@ -28,6 +29,7 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
   };
   return (
     <>
+      <InternationalCalendarPanel g={g} />
       <section className="panel">
         <div className="panel-header">
           <h2>경기 일정</h2>

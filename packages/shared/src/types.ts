@@ -1,3 +1,4 @@
+import type { InternationalState, InternationalDuty } from './international';
 import type { LineupRecommendation } from './lineup-recommendation';
 import type { ManagerCareer, ClubCareer, ClubManagerJob } from './manager-career';
 import type { ScoutingState } from './scouting';
@@ -70,6 +71,7 @@ export type Player = {
   trainingPlan?: TrainingPlan;
   careerBaseline?: CareerBaseline;
   injury?: MedicalCase;
+  internationalDuty?: InternationalDuty;
   observation?: {
     status: 'unknown' | 'scouted';
     overall?: [number, number];
@@ -268,6 +270,7 @@ export type GameState = {
   }[];
   media?: MatchMediaState;
   simulation?: WorldSimulation;
+  international?: InternationalState;
   /** Transactional archive outbox. Not retained in the hot snapshot or public response. */
   pendingRecords?: PlayerCareerRecord[];
   trades?: TradeOffer[];
@@ -515,6 +518,7 @@ export type NewsItem = {
   dealId?: string;
   managerOfferId?: string;
   lineupRecommendation?: LineupRecommendation;
+  internationalEventId?: string;
   report?: {
     purpose?: 'contractReview' | 'squadReview';
     facts?: { label: string; value: string }[];

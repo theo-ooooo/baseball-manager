@@ -1,0 +1,154 @@
+.international-duty {
+  border: 1px solid #dbe2eb;
+  border-radius: 16px;
+  padding: 20px;
+  background: #fff;
+  color: #202d40;
+  margin-bottom: 20px;
+  min-width: 0;
+}
+.international-duty > header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.international-duty > header > span {
+  margin-left: auto;
+  white-space: nowrap;
+  color: #39547d;
+}
+.international-duty h3,
+.international-duty h4,
+.international-calendar h3 {
+  margin: 0;
+  font-weight: 700;
+}
+.international-duty p,
+.international-calendar p {
+  margin: 6px 0;
+  color: #56677e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.international-duty-list,
+.international-event-list {
+  display: grid;
+  gap: 12px;
+}
+.international-duty-list > article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr);
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e1e7ee;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.international-duty h4 {
+  margin-top: 8px;
+  font-size: 17px;
+}
+.international-duty h4 small {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #62748b;
+  font-weight: 400;
+}
+.international-status {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #e8eefc;
+  color: #31558b;
+}
+.international-replacement {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.international-replacement > small {
+  font-size: 11px;
+  color: #66758b;
+}
+.international-calendar {
+  padding: 20px;
+  margin-bottom: 20px;
+  min-width: 0;
+}
+.international-event-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+.international-event-list > article {
+  border: 1px solid #e1e7ee;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  min-width: 0;
+}
+.international-event-list h3 {
+  font-size: 17px;
+  margin-top: 8px;
+}
+.international-event-list dl {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  margin: 16px 0;
+}
+.international-event-list dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.international-event-list dt {
+  color: #64748b;
+}
+.international-event-list dd {
+  margin: 0;
+  font-weight: 600;
+}
+.international-event-list a {
+  font-size: 12px;
+  color: #31558b;
+}
+.international-calendar details {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #56677e;
+}
+.international-calendar summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-weight: 600;
+}
+.international-player-note {
+  padding: 12px 16px;
+  margin: 0 20px 16px;
+  border-radius: 10px;
+  background: #e8eefc;
+  color: #31558b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .international-duty,
+  .international-calendar {
+    padding: 14px;
+  }
+  .international-duty-list > article {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+  .international-replacement .button {
+    width: 100%;
+    min-height: 44px;
+  }
+  .international-duty h4 small {
+    display: block;
+    margin: 4px 0 0;
+  }
+}

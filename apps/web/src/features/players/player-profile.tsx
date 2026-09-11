@@ -167,6 +167,12 @@ export function PlayerProfile(props: Props) {
           {own && <PlayerGrowth player={player} />}
         </div>
       </header>
+      {player.internationalDuty && (
+        <p className="international-player-note">
+          {player.country} 대표팀 · {player.internationalDuty.name} 차출 중 ·{' '}
+          {player.internationalDuty.returnDate} 구단 복귀 예정
+        </p>
+      )}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="profile-tabs" variant="line">
           <TabsTrigger value="profile">프로필 · 세부 능력</TabsTrigger>

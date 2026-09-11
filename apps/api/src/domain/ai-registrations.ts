@@ -56,9 +56,10 @@ export function createAiRegistrations(world: WorldCatalog) {
     for (const p of players) p.squad = ids.has(p.id) ? 'first' : 'reserve';
     if (!review) return;
     const today = gameDate(g);
-    if (entry.reviewed && daysBetween(entry.reviewed, today) < 3) return;
+    const calledUp = players.some((p) => p.squad !== 'reserve' && p.internationalDuty);
+    if (!calledUp && entry.reviewed && daysBetween(entry.reviewed, today) < 3) return;
     // Spread reviews across match dates. Ordinary post-appearance fatigue is never a demotion reason.
-    if (!entry.reviewed && (g.day + hash(club)) % 3 !== 0) return;
+    if (!calledUp && !entry.reviewed && (g.day + hash(club)) % 3 !== 0) return;
     entry.reviewed = today;
     const reserve = players
       .filter(
@@ -68,9 +69,13 @@ export function createAiRegistrations(world: WorldCatalog) {
     const active = players.filter((p) => p.squad !== 'reserve');
     let outgoing: Player | undefined, incoming: Player | undefined;
     for (const p of active.sort(
-      (a, b) => Number(!!b.injury) - Number(!!a.injury) || overall(a) - overall(b),
+      (a, b) =>
+        Number(!!b.internationalDuty) - Number(!!a.internationalDuty) ||
+        Number(!!b.injury) - Number(!!a.injury) ||
+        overall(a) - overall(b),
     )) {
       if (
+        p.internationalDuty ||
         (p.injury && !isAvailable(p) && daysBetween(today, p.injury.returnDate) >= 7) ||
         poorForm(p)
       ) {
@@ -94,8 +99,9 @@ export function createAiRegistrations(world: WorldCatalog) {
         }
       }
     if (outgoing && incoming) {
-      const reason =
-        outgoing.injury && !isAvailable(outgoing)
+      const reason = outgoing.internationalDuty
+        ? `${outgoing.internationalDuty.name} 대표팀 차출 · ${outgoing.internationalDuty.returnDate} 복귀 예정`
+        : outgoing.injury && !isAvailable(outgoing)
           ? `${outgoing.injury.name} 치료 · ${outgoing.injury.returnDate} 복귀 예정`
           : poorForm(outgoing)
             ? `성적 부진 재정비 · ${performance(outgoing)}`

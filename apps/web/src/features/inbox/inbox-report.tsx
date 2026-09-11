@@ -1,3 +1,4 @@
+import { InternationalDutyPanel } from '../squad/international-duty-panel';
 import { LineupRecommendationActions } from './lineup-recommendation-actions';
 import { MedicalDecision } from '../squad/medical-decision';
 import { CoachRecommendations } from '../squad/coach-recommendations';
@@ -214,6 +215,9 @@ export function InboxReport({
               })}
             </div>
           </section>
+        )}
+        {news.internationalEventId && (
+          <InternationalDutyPanel {...{ g, act, busy }} eventId={news.internationalEventId} />
         )}
         {news.lineupRecommendation && <LineupRecommendationActions {...{ g, news, act, busy }} />}
         {news.actionView === 'medical' && player && (

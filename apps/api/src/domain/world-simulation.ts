@@ -1,5 +1,5 @@
 import type { GameState, Player, Result, WorldCatalog } from '@dugout/shared/types';
-import { packStats, statKeys, subtractStats } from '@dugout/shared/long-term';
+import { packStats, statKeys, subtractStats, isAvailable } from '@dugout/shared/long-term';
 import type { PlayerCareerRecord, WorldEvent } from '@dugout/shared/long-term';
 import {
   createGameView,
@@ -142,7 +142,7 @@ export function createWorldSimulation(world: WorldCatalog) {
       [res.away, res.home, res.awayScore, res.homeScore],
     ] as const) {
       if (club === g.club) continue;
-      const players = roster(g, club).filter((p) => p.squad !== 'reserve'),
+      const players = roster(g, club).filter((p) => p.squad !== 'reserve' && isAvailable(p)),
         batters = lineupAuto(players)
           .map((id) => players.find((p) => p.id === id)!)
           .filter(Boolean);

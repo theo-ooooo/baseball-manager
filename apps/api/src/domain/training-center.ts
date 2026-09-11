@@ -119,6 +119,7 @@ export function prepareDailyTraining(g: GameState, days: TrainingDays) {
   const facility = 1 + ((g.facilities?.training || 1) - 1) * 0.08;
   const results = new Map<string, PlayerTrainingDay>();
   for (const p of g.roster) {
+    if (p.internationalDuty) continue;
     const result = playerTrainingDay(
       g,
       p,
