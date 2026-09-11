@@ -1160,3 +1160,10 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - 공개 버전을 0.5.12로 올리고 루트 package.json/lockfile을 일치시켰다. 기존 AppVersion의 릴리스·빌드 표시와 v0.5.11 태그를 유지하며 이번 수정은 별도 태그로 구분한다.
 - 이번 릴리스에는 감독 재접촉 수정, 전체 재계약 서류 발송, FA 현재 가치 협상, 계약 글씨 대비/서명 후 종료, 코치 인터뷰 사기 반영, 기회·위기 카드 사용 모달과 경기장 결과 알림을 포함한다. 각 구현은 별도 한국어 커밋으로 기록했다.
 - 구현 전체는 프로덕션 빌드·313개 테스트·타입·린트·포맷 검사와 위의 격리된 브라우저/API 검증을 마쳤다. 이 버전 메타데이터 변경 뒤 최종 빌드 표시, 사용자 GitHub main/작업 브랜치 갱신, Actions 배포와 공개 버전 확인을 진행한다.
+
+## 2026-09-11 — v0.5.12 공개 배포 완료
+
+- 구현/릴리스 5개 커밋을 사용자 GitHub `theo-ooooo/baseball-manager`의 main과 `codex/international-match-advice`에 푸시했다. 두 원격 브랜치와 v0.5.12 주석 태그가 릴리스 소스 `7f67eab0ab3fd42536624bed181238ea423d1692`를 가리키는 것을 확인했다. 기존 최신 작업 폴더 dace-match-recovery도 같은 커밋으로 fast-forward해 작업 이력을 유지했다.
+- 버전 변경 후 최종 프로덕션 빌드가 성공했고 생성 자산에서 0.5.12/빌드 `7f67eab`를 확인했다. Actions `34571333881`의 test와 deploy 작업이 모두 성공했다.
+- 공개 `https://baseball-manager.kkwondev.workers.dev`에서 0.5.12/빌드 `7f67eab`와 `game-Dyb-lR1b.js`, 전체 재계약 서류·FA 요구액 조회·감독 결정 카드 모달·경기장 안 알림이 포함된 자산을 확인했다. `/api/health`는 HTTP 200 및 NestJS/Vinext/D1, 카탈로그 `world-2026-09-11-v14`로 정상 응답했다. 공개 사용자 저장의 계약이나 경기는 검증을 위해 변경하지 않았다.
+- 이 릴리스의 남은 배포 차단 요인은 없다. FA 요구액과 카드 등급 효과는 게임 내 밸런스 수치이며 실제 연봉·모든 리그 규칙의 완전한 재현을 의미하지 않는다. 짧은 시즌은 KBO 기준 상대 9팀×2경기=정규시즌 18경기이고 시범경기·포스트시즌은 별도다.
