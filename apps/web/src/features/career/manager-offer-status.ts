@@ -1,6 +1,7 @@
 import type { GameState } from '@dugout/shared/types';
 import type { ManagerOffer } from '@dugout/shared/manager-career';
 import { managerInterviewQuestions } from '@dugout/shared/manager-interview';
+import { finalManagerTerms } from '@dugout/shared/manager-career';
 import { gameDate } from '@dugout/shared/calendar';
 
 export function managerOfferActionLabel(offer: ManagerOffer | undefined, g: GameState) {
@@ -9,7 +10,7 @@ export function managerOfferActionLabel(offer: ManagerOffer | undefined, g: Game
   if (offer.status === 'offered') {
     if (offer.contractTerms?.status === 'agreed') return '최종 계약서 서명';
     if (offer.contractTerms?.status === 'pending') return '계약 검토 현황';
-    return '계약 협상';
+    return finalManagerTerms(offer.contractTerms) ? '최종 제안 확인' : '계약 협상';
   }
   if (offer.status === 'invited') return '면접 초청 확인';
   if (offer.status === 'interview')

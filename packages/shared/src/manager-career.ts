@@ -4,6 +4,7 @@ import type { GameState } from './types';
 export type ManagerContract = {
   club: string;
   salary: number;
+  signingBonus?: number;
   targetRank: number;
   signed: string;
   throughYear: number;
@@ -17,6 +18,15 @@ export type ManagerOffer = {
   club: string;
   targetRank: number;
   salary: number;
+  signingBonus?: number;
+  expectation?: ClubExpectation;
+  valuation?: {
+    currentSalary: number;
+    increasePercent: number;
+    performance: number;
+    reason: string;
+  };
+  negotiationBudget?: { salary: number; signingBonus: number; total: number; years: number };
   applied: string;
   due: string;
   expires: string;
@@ -31,19 +41,21 @@ export type ManagerOffer = {
   reminderDate?: string;
   budgetAdjustment?: number;
   contractTerms?: {
-    status: 'proposal' | 'pending' | 'counter' | 'agreed';
+    status: 'proposal' | 'pending' | 'counter' | 'final' | 'agreed';
     salary: number;
+    signingBonus?: number;
     years: number;
     targetRank: number;
     round: number;
     version: number;
     due?: string;
-    proposed?: { salary: number; years: number; targetRank: number };
+    proposed?: { salary: number; signingBonus?: number; years: number; targetRank: number };
     history: {
       date: string;
       speaker: 'manager' | 'board';
       text: string;
       salary: number;
+      signingBonus?: number;
       years: number;
       targetRank: number;
     }[];
@@ -105,8 +117,30 @@ export type ClubManagerJob = {
   appointed: string;
   startWins: number;
   startLosses: number;
+  startDraws?: number;
   vacantSince?: string;
+  expectation?: ClubExpectation & { year: number };
+  board?: {
+    year: number;
+    appointed: string;
+    games: number;
+    rank: number;
+    leaderGames: number;
+    topGames: number;
+    credit: number;
+    previousConfidence: number;
+    change: number;
+  };
 };
+export type ClubExpectation = {
+  targetRank: number;
+  strengthRank: number;
+  previousRank?: number;
+  tier: string;
+  reason: string;
+};
+export const finalManagerTerms = (terms: ManagerOffer['contractTerms']) =>
+  terms?.status === 'final' || (terms?.status === 'counter' && terms.round >= 3);
 export const MANAGER_APPLICATION_THRESHOLD = 35;
 export const managerJobOpen = (job: ClubManagerJob) =>
   job.vacant || job.confidence < MANAGER_APPLICATION_THRESHOLD;

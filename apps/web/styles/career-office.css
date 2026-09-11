@@ -1843,3 +1843,237 @@
     scroll-margin-block: 76px 90px;
   }
 }
+
+.manager-contract-room {
+  max-width: 1080px;
+  margin-inline: auto;
+}
+.manager-negotiation-content {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.manager-negotiation-content .contract-reply {
+  margin: 0;
+}
+.manager-negotiation-content .contract-reply > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.manager-offer-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.manager-offer-comparison {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.manager-offer-comparison table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.manager-offer-comparison caption {
+  padding: 14px;
+  text-align: left;
+  font-weight: 700;
+  background: var(--muted);
+}
+.manager-offer-comparison th,
+.manager-offer-comparison td {
+  padding: 12px 14px;
+  text-align: right;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--border);
+}
+.manager-offer-comparison th:first-child {
+  text-align: left;
+}
+.manager-offer-comparison th {
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.manager-offer-comparison td:last-child {
+  font-weight: 700;
+  color: var(--primary);
+}
+.manager-offer-comparison tr:last-child {
+  background: var(--muted);
+}
+.manager-proposal-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.manager-proposal-title h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.manager-proposal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.manager-proposal-grid > * {
+  min-width: 0;
+}
+.manager-proposal-grid strong {
+  font-size: 14px;
+}
+.manager-money-field {
+  display: grid;
+  gap: 8px;
+}
+.manager-money-input {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--background);
+}
+.manager-money-input:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.manager-money-input input {
+  width: 100%;
+  min-width: 0;
+  font-size: 22px;
+  font-weight: 650;
+  border: 0;
+  padding: 12px;
+  background: transparent;
+}
+.manager-money-input select {
+  width: 88px;
+  flex-shrink: 0;
+  padding: 8px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: var(--muted);
+}
+.manager-money-field > span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.manager-money-shortcuts {
+  display: flex;
+  gap: 6px;
+}
+.manager-money-shortcuts button {
+  min-height: 36px;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--muted);
+  font-size: 12px;
+}
+.manager-proposal-grid .contract-year-options {
+  margin-top: 8px;
+  gap: 6px;
+}
+.manager-proposal-grid .contract-year-options button {
+  min-height: 44px;
+  padding: 8px;
+}
+.manager-proposal-delta {
+  background: var(--muted);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+.manager-negotiation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.manager-negotiation-actions .text-button {
+  margin-left: auto;
+}
+.manager-negotiation-content > .muted {
+  font-size: 12px;
+  margin: 0;
+}
+.contact-valuation {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.board-trust-meter {
+  margin: 14px 0;
+  max-width: 500px;
+}
+.board-trust-meter > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.board-trust-meter progress {
+  width: 100%;
+  height: 12px;
+  accent-color: var(--primary);
+  margin: 8px 0;
+}
+.board-trust-meter small {
+  display: block;
+  color: var(--muted-foreground);
+}
+@media (max-width: 600px) {
+  .manager-negotiation-content {
+    padding: 14px;
+    gap: 16px;
+  }
+  .manager-contract-room .contract-room-header {
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+  .manager-contract-room .contract-room-header h2 {
+    font-size: 18px;
+  }
+  .manager-proposal-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .manager-offer-comparison th,
+  .manager-offer-comparison td {
+    padding: 10px 7px;
+    font-size: 12px;
+  }
+  .manager-offer-comparison caption {
+    font-size: 13px;
+    padding: 12px;
+  }
+  .manager-proposal-title {
+    align-items: flex-start;
+  }
+  .manager-proposal-title .text-button {
+    font-size: 11px;
+  }
+  .manager-negotiation-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .manager-negotiation-actions > * {
+    width: 100%;
+    justify-content: center;
+    margin: 0;
+    min-height: 44px;
+  }
+  .manager-offer-context {
+    font-size: 11px;
+  }
+}

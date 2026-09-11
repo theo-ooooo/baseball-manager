@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import { LockKeyhole, Megaphone, ArrowRight } from 'lucide-react';
 import {
   Dialog,
@@ -9,8 +8,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import type { GameState } from '@dugout/shared/types';
-import { isUnemployed, managerJobOpen } from '@dugout/shared/manager-career';
-import { useWorld } from './world-context';
+import { managerJobOpen } from '@dugout/shared/manager-career';
+import { useManagerApplication } from './use-manager-application';
 import { Badge, Choice } from '../../components/game-ui';
 import type { Act } from './game-contracts';
 export function ManagerApplication({
@@ -26,12 +25,8 @@ export function ManagerApplication({
   busy: boolean;
   close: () => void;
 }) {
-  const { clubs, getClub } = useWorld(),
-    club = getClub(clubId),
-    employed = !isUnemployed(g);
-  const count = clubs.filter((c) => c.league === club.league).length;
-  const [channel, setChannel] = useState<'private' | 'public'>('private'),
-    [target, setTarget] = useState(Math.ceil(count / 2));
+  const { club, employed, count, channel, setChannel, target, setTarget, submit } =
+    useManagerApplication(g, clubId, act, busy, close);
   return (
     <Dialog
       open
@@ -73,6 +68,10 @@ export function ManagerApplication({
         </div>
         <div className="application-pitch">
           <label>이사회에 전할 첫 약속</label>
+          <p>
+            {g.managerJobs?.[clubId]?.expectation?.tier} · 구단 기대{' '}
+            {g.managerJobs?.[clubId]?.expectation?.targetRank ?? target}위 이내
+          </p>
           <Choice
             label="지원할 구단의 시즌 순위 목표"
             value={String(target)}
@@ -93,17 +92,7 @@ export function ManagerApplication({
           <button
             className="button primary"
             disabled={busy || !g.managerJobs?.[clubId] || !managerJobOpen(g.managerJobs[clubId])}
-            onClick={async () => {
-              if (
-                await act({
-                  type: 'applyManager',
-                  club: clubId,
-                  targetRank: target,
-                  public: channel === 'public',
-                })
-              )
-                close();
-            }}
+            onClick={() => void submit()}
           >
             {channel === 'private' ? '비공개 접촉 전달' : '공개 도전 선언'}
             <ArrowRight size={16} />

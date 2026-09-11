@@ -1,8 +1,6 @@
 'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FileSignature, Handshake, PenLine, UserRound } from 'lucide-react';
+import { FileSignature, Handshake, PenLine, LockKeyhole } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,13 +11,63 @@ import {
 import type { GameState } from '@dugout/shared/types';
 import type { ManagerOffer } from '@dugout/shared/manager-career';
 import { isUnemployed } from '@dugout/shared/manager-career';
-import { fromManwon, money, toManwon } from '@dugout/shared/game-view';
+import { money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
 import { useWorld } from './world-context';
-import { SalaryInput } from '../contracts/salary-input';
+import { useManagerContractNegotiation } from './use-manager-contract-negotiation';
 import { Choice } from '../../components/game-ui';
 import type { Act } from './game-contracts';
 
+type MoneyField = ReturnType<typeof useManagerContractNegotiation>['salary'];
+function OfferMoneyField({
+  label,
+  field,
+  disabled,
+  baseline,
+}: {
+  label: string;
+  field: MoneyField;
+  disabled: boolean;
+  baseline: number;
+}) {
+  return (
+    <div className="manager-money-field">
+      <strong>{label}</strong>
+      <div className="manager-money-input">
+        <input
+          aria-label={label}
+          inputMode="decimal"
+          value={field.value}
+          disabled={disabled}
+          onChange={(e) => field.setValue(e.target.value)}
+        />
+        <select
+          aria-label={`${label} 단위`}
+          value={field.unit}
+          disabled={disabled}
+          onChange={(e) => field.changeUnit(e.target.value)}
+        >
+          <option>억 원</option>
+          <option>만 원</option>
+        </select>
+      </div>
+      <span>{Number.isFinite(field.amount) ? money(field.amount) : '금액을 입력해 주세요'}</span>
+      <div className="manager-money-shortcuts" role="group" aria-label={`${label} 빠른 조정`}>
+        {[-5, 5, 10, 20].map((pct) => (
+          <button
+            type="button"
+            key={pct}
+            disabled={disabled || baseline === 0}
+            onClick={() => field.setAmount(baseline * (1 + pct / 100))}
+          >
+            {pct > 0 ? '+' : ''}
+            {pct}%
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 export function ManagerContractNegotiation({
   g,
   offer: o,
@@ -32,27 +80,51 @@ export function ManagerContractNegotiation({
   busy: boolean;
 }) {
   const { getClub, clubs } = useWorld(),
-    t = o.contractTerms,
-    router = useRouter();
-  const [salary, setSalary] = useState(String(toManwon(t?.salary ?? o.salary))),
-    [years, setYears] = useState(t?.years || 1),
-    [target, setTarget] = useState(String(t?.targetRank || o.targetRank)),
-    [editing, setEditing] = useState(false),
-    [signing, setSigning] = useState(false),
-    [ink, setInk] = useState(false);
-  const club = getClub(o.club),
-    agreed = t?.status === 'agreed',
-    waiting = t?.status === 'pending',
-    amount = fromManwon(Number(salary)),
-    valid = salary.trim() !== '' && Number.isFinite(amount) && amount > 0 && amount <= o.salary * 3;
+    club = getClub(o.club);
+  const {
+    t,
+    current,
+    salary,
+    bonus,
+    years,
+    setYears,
+    target,
+    setTarget,
+    signing,
+    setSigning,
+    ink,
+    setInk,
+    agreed,
+    waiting,
+    final,
+    valid,
+    changed,
+    send,
+    reset,
+  } = useManagerContractNegotiation(g, o, act, busy);
   const maxRank = Math.min(o.targetRank + 2, clubs.filter((c) => c.league === club.league).length);
+  const editable = !agreed && !final && !waiting;
   const reply = waiting
-    ? `${t.due}까지 이사회가 제안을 검토합니다.`
+    ? `${t?.due}까지 이사회가 제안을 검토합니다.`
     : agreed
-      ? '계약 조건에 합의했습니다. 최종 계약서를 확인하고 서명해 주세요.'
-      : t?.status === 'counter'
-        ? '이사회가 수정된 조건을 보내왔습니다. 동의하거나 다시 제안할 수 있습니다.'
-        : '구단의 최초 제안입니다. 조건을 검토하고 협상을 시작하세요.';
+      ? '조건 합의가 완료되었습니다. 합의한 조건은 확정되었으며 최종 서명만 남았습니다.'
+      : final
+        ? '구단이 제시할 수 있는 최종 조건입니다. 배정된 예산을 더 늘릴 수 없습니다. 수락하거나 협상을 종료해 주세요.'
+        : t?.status === 'counter'
+          ? o.message
+          : '구단의 제안을 바로 수락하거나 희망 조건을 제안하세요. 구단마다 협상할 수 있는 예산에 한도가 있습니다.';
+  const delta = salary.amount - current.salary;
+  const comparison = [
+    ['시즌 연봉', money(current.salary), valid ? money(salary.amount) : '—'],
+    ['계약금 · 1회', money(current.signingBonus), valid ? money(bonus.amount) : '—'],
+    ['계약 기간', `${current.years}시즌`, `${years}시즌`],
+    ['성적 목표', `${current.targetRank}위 이내`, `${target}위 이내`],
+    [
+      '보장 총액',
+      money(current.salary * current.years + current.signingBonus),
+      valid ? money(salary.amount * years + bonus.amount) : '—',
+    ],
+  ];
   return (
     <section className="contract-room manager-contract-room">
       <header className="contract-room-header">
@@ -61,128 +133,96 @@ export function ManagerContractNegotiation({
         </span>
         <div>
           <small>{club.name} · 감독 고용 협상</small>
-          <h2>
-            {g.manager}
-            <span>감독</span>
-          </h2>
+          <h2>계약 조건 조율</h2>
         </div>
         <span className="contract-status">
           {waiting
             ? '구단 검토 중'
             : agreed
               ? '조건 합의'
-              : t?.status === 'counter'
-                ? '구단 역제안'
-                : '최초 제안'}
+              : final
+                ? '최종 제안'
+                : `협상 ${Math.min(3, (t?.round || 0) + 1)} / 3`}
         </span>
       </header>
-      <ol className="contract-steps">
-        {['조건 협상', '조건 합의', '최종 서명'].map((label, i) => (
-          <li
-            key={label}
-            className={i === (agreed ? 2 : 0) ? 'current' : agreed ? 'done' : ''}
-            aria-current={i === (agreed ? 2 : 0) ? 'step' : undefined}
-          >
-            <span>{i + 1}</span>
-            {label}
-          </li>
-        ))}
-      </ol>
-      <div className="contract-room-body">
-        <aside className="contract-agent">
-          <div className="contract-agent-avatar">
-            <UserRound size={30} />
-          </div>
-          <small>구단 측 협상 담당</small>
-          <h3>{club.name} 이사회</h3>
-          <p>감독 선임 및 고용 계약</p>
-          <div className="contract-agent-note">
-            <strong>구단의 현재 조건</strong>
-            <p>{money(t?.salary ?? o.salary)} / 시즌</p>
-            <p>
-              {t?.years || 1}시즌 · {t?.targetRank || o.targetRank}위 이내
-            </p>
-          </div>
-          <div className="contract-agent-note">
-            <strong>답변 기한</strong>
-            <p>{o.expires}</p>
-            <small>최종 서명 전까지 현재 신분을 유지합니다.</small>
-          </div>
-        </aside>
-        <div className="contract-discussion">
-          <div
-            className={`contract-reply ${t?.status === 'counter' ? 'counter' : ''}`}
-            aria-live="polite"
-          >
-            <span>이사회 브리핑</span>
-            <p>{reply}</p>
-          </div>
-          {!!o.budgetAdjustment && (
-            <p className="rule-notice">
-              취임 시 기준 운영 예산 {o.budgetAdjustment > 0 ? '10% 추가 지원' : '10% 절감'}에
-              합의했습니다.
-            </p>
+      <div className="manager-negotiation-content">
+        <div className={`contract-reply ${final ? 'counter' : ''}`} aria-live="polite">
+          <span>{agreed || final ? <LockKeyhole size={15} /> : null} 이사회 답변</span>
+          <p>{reply}</p>
+        </div>
+        <div className="manager-offer-context">
+          <span>
+            답변 기한 <strong>{o.expires}</strong>
+          </span>
+          {o.expectation && (
+            <span>
+              {o.expectation.tier} · {o.expectation.reason}
+            </span>
           )}
-          {agreed && !editing ? (
-            <>
-              <h3>합의한 고용 조건</h3>
-              <dl className="contract-term-summary">
-                <div>
-                  <dt>감독 연봉</dt>
-                  <dd>{money(t.salary)}</dd>
-                </div>
-                <div>
-                  <dt>계약 기간</dt>
-                  <dd>{t.years}시즌</dd>
-                </div>
-                <div>
-                  <dt>성적 목표</dt>
-                  <dd>{t.targetRank}위 이내</dd>
-                </div>
-              </dl>
-              <div className="contract-room-actions">
-                <button
-                  className="button secondary"
-                  disabled={busy}
-                  onClick={() => setEditing(true)}
-                >
-                  조건 다시 조정
-                </button>
-                <button className="button primary" disabled={busy} onClick={() => setSigning(true)}>
-                  <FileSignature size={17} />
-                  계약서 검토 · 서명
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="contract-proposal-heading">
-                <h3>감독의 수정 제안</h3>
-                <small>구단의 조건과 비교하며 조율하세요</small>
-              </div>
-              <div className="contract-term-row">
-                <div>
-                  <strong>희망 연봉</strong>
-                  <small>현재 제안 {money(t?.salary ?? o.salary)}</small>
-                  <strong>{valid ? money(amount) : '연봉을 확인해 주세요'}</strong>
-                </div>
-                <SalaryInput
-                  value={salary}
-                  onChange={setSalary}
-                  disabled={busy || waiting}
-                  label="희망 감독 연봉 (만 원)"
-                />
-              </div>
-              <div className="contract-term-row">
-                <div>
-                  <strong>계약 기간</strong>
-                  <small>현재 제안 {t?.years || 1}시즌</small>
-                </div>
+        </div>
+        {!!o.budgetAdjustment && (
+          <p className="rule-notice">
+            취임 시 기준 운영 예산 {o.budgetAdjustment > 0 ? '10% 추가 지원' : '10% 절감'}에
+            합의했습니다.
+          </p>
+        )}
+        <div className="manager-offer-comparison">
+          <table>
+            <caption>
+              {agreed
+                ? '합의한 계약 조건'
+                : final
+                  ? '구단의 최종 제안'
+                  : '구단 제안과 내 제안 비교'}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">조건</th>
+                <th scope="col">{agreed ? '합의 완료' : '구단 제안'}</th>
+                {!agreed && !final && (
+                  <th scope="col">{waiting ? '검토 중인 내 제안' : '내 제안'}</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {comparison.map(([label, board, draft]) => (
+                <tr key={label}>
+                  <th scope="row">{label}</th>
+                  <td>{board}</td>
+                  {!agreed && !final && <td>{draft}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {editable && (
+          <>
+            <div className="manager-proposal-title">
+              <h3>희망 조건</h3>
+              <button className="text-button" disabled={busy} onClick={reset}>
+                구단 제안으로 되돌리기
+              </button>
+            </div>
+            <div className="manager-proposal-grid">
+              <OfferMoneyField
+                label="희망 연봉"
+                field={salary}
+                disabled={busy}
+                baseline={current.salary}
+              />
+              <OfferMoneyField
+                label="희망 계약금"
+                field={bonus}
+                disabled={busy}
+                baseline={current.signingBonus}
+              />
+              <div>
+                <strong>계약 기간</strong>
                 <div className="contract-year-options" role="group" aria-label="감독 계약 기간">
                   {[1, 2, 3].map((y) => (
                     <button
                       key={y}
-                      disabled={busy || waiting}
+                      disabled={busy}
                       aria-pressed={years === y}
                       onClick={() => setYears(y)}
                     >
@@ -191,86 +231,81 @@ export function ManagerContractNegotiation({
                   ))}
                 </div>
               </div>
-              <div className="contract-term-row">
-                <div>
-                  <strong>성적 목표</strong>
-                  <small>현재 제안 {t?.targetRank || o.targetRank}위 이내</small>
-                </div>
-                <fieldset disabled={busy || waiting}>
-                  <Choice
-                    label="계약 성적 목표"
-                    value={target}
-                    onChange={setTarget}
-                    items={Array.from({ length: maxRank }, (_, i) => ({
-                      value: String(i + 1),
-                      label: `${i + 1}위 이내`,
-                    }))}
-                  />
-                </fieldset>
-              </div>
-              <div className="contract-room-actions">
-                <button
-                  className="button primary"
-                  disabled={busy || waiting || !valid || (t?.round || 0) >= 4}
-                  onClick={() =>
-                    void act({
-                      type: 'negotiateManagerContract',
-                      id: o.id,
-                      termsVersion: t?.version || 1,
-                      salary: amount,
-                      years,
-                      targetRank: Number(target),
-                    })
-                  }
-                >
-                  수정 제안 보내기
-                </button>
-                <button
-                  className="button secondary"
-                  disabled={busy || waiting}
-                  onClick={() =>
-                    void act({
-                      type: 'acceptManagerTerms',
-                      id: o.id,
-                      termsVersion: t?.version || 1,
-                    })
-                  }
-                >
-                  구단 조건에 동의
-                </button>
-              </div>
-              <p className="muted">조건 합의 후 최종 계약서에 서명하면 취임합니다.</p>
-            </>
+              <fieldset disabled={busy}>
+                <Choice
+                  label="계약 성적 목표"
+                  value={target}
+                  onChange={setTarget}
+                  items={Array.from({ length: maxRank }, (_, i) => ({
+                    value: String(i + 1),
+                    label: `${i + 1}위 이내`,
+                  }))}
+                />
+              </fieldset>
+            </div>
+            <p className="manager-proposal-delta" aria-live="polite">
+              {valid
+                ? `구단 제안 대비 연봉 ${delta >= 0 ? '+' : '−'}${money(Math.abs(delta))} (${delta >= 0 ? '+' : ''}${((delta / current.salary) * 100).toFixed(1)}%) · 계약금은 체결 때 한 번 지급`
+                : '연봉은 0보다 크게, 계약금은 0 이상으로 입력해 주세요. 제안 범위는 최초 연봉의 3배까지입니다.'}
+            </p>
+          </>
+        )}
+        <div className="manager-negotiation-actions">
+          {editable && (
+            <button
+              className="button primary"
+              disabled={busy || !valid || !changed}
+              onClick={() => void send('negotiateManagerContract')}
+            >
+              수정 제안 보내기
+            </button>
+          )}
+          {!waiting && !agreed && (
+            <button
+              className={`button ${final ? 'primary' : 'secondary'}`}
+              disabled={busy}
+              onClick={() => void send('acceptManagerTerms')}
+            >
+              {final ? '최종 조건 수락' : '구단 조건에 동의'}
+            </button>
+          )}
+          {agreed && (
+            <button className="button primary" disabled={busy} onClick={() => setSigning(true)}>
+              <FileSignature size={17} />
+              계약서 검토 · 서명
+            </button>
           )}
           {waiting && (
-            <Link className="button secondary contract-leave" href="/?view=inbox">
-              협상실 나가기 · 답변 기다리기
+            <Link className="button secondary" href="/?view=inbox">
+              수신함으로 · 답변 기다리기
             </Link>
           )}
           <button
-            className="text-button contract-withdraw"
+            className="text-button"
             disabled={busy}
-            onClick={() => void act({ type: 'declineManager', id: o.id })}
+            onClick={() => void send('declineManager')}
           >
-            채용 제안 거절 · 협상 철회
+            제안 거절 · 협상 종료
           </button>
-          {!!t?.history.length && (
-            <details className="interview-transcript">
-              <summary>계약 협상 기록 · {t.history.length}건</summary>
-              {t.history.map((h, i) => (
-                <div key={i}>
-                  <strong>
-                    {h.date} · {h.speaker === 'board' ? '이사회' : g.manager}
-                  </strong>
-                  <p>{h.text}</p>
-                  <small>
-                    {money(h.salary)} · {h.years}시즌 · {h.targetRank}위 이내
-                  </small>
-                </div>
-              ))}
-            </details>
-          )}
         </div>
+        <p className="muted">조건 합의 후 최종 서명하면 취임합니다.</p>
+        {!!t?.history.length && (
+          <details className="interview-transcript">
+            <summary>협상 기록 · {t.history.length}건</summary>
+            {t.history.map((h, i) => (
+              <div key={i}>
+                <strong>
+                  {h.date} · {h.speaker === 'board' ? '이사회' : g.manager}
+                </strong>
+                <p>{h.text}</p>
+                <small>
+                  연봉 {money(h.salary)} · 계약금 {money(h.signingBonus || 0)} · {h.years}시즌 ·{' '}
+                  {h.targetRank}위 이내
+                </small>
+              </div>
+            ))}
+          </details>
+        )}
       </div>
       {signing && agreed && (
         <Dialog
@@ -310,17 +345,24 @@ export function ManagerContractNegotiation({
                 <div>
                   <dt>02 · 보장 연봉</dt>
                   <dd>
-                    {money(t.salary)}
+                    {money(current.salary)}
                     <small>매 시즌 감독 급여</small>
                   </dd>
                 </div>
                 <div>
-                  <dt>03 · 계약 기간</dt>
-                  <dd>{t.years}시즌</dd>
+                  <dt>03 · 계약금</dt>
+                  <dd>
+                    {money(current.signingBonus)}
+                    <small>체결 시 1회 지급 · 연봉과 별도</small>
+                  </dd>
                 </div>
                 <div>
-                  <dt>04 · 성적 목표</dt>
-                  <dd>{t.targetRank}위 이내</dd>
+                  <dt>04 · 계약 기간</dt>
+                  <dd>{current.years}시즌</dd>
+                </div>
+                <div>
+                  <dt>05 · 성적 목표</dt>
+                  <dd>{current.targetRank}위 이내</dd>
                 </div>
               </dl>
               <p className="contract-budget">
@@ -359,17 +401,7 @@ export function ManagerContractNegotiation({
               <button
                 className="button primary"
                 disabled={busy || !ink || ['semifinal', 'final'].includes(g.phase)}
-                onClick={async () => {
-                  if (
-                    await act({
-                      type: 'signManager',
-                      id: o.id,
-                      termsVersion: t.version,
-                      signature: g.manager,
-                    })
-                  )
-                    router.push('/?view=home');
-                }}
+                onClick={() => void send('signManager')}
               >
                 <PenLine size={16} />
                 {busy ? '계약 저장 중…' : '서명한 계약 최종 체결'}

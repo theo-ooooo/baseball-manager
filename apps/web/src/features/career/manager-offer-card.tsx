@@ -73,13 +73,27 @@ export function ManagerOfferCard({
         </div>
         <div>
           <dt>제안 연봉</dt>
-          <dd>{money(o.salary)}</dd>
+          <dd>{money(o.contractTerms?.salary ?? o.salary)}</dd>
+        </div>
+        <div>
+          <dt>계약금 · 체결 시 1회</dt>
+          <dd>{money(o.contractTerms?.signingBonus ?? o.signingBonus ?? 0)}</dd>
         </div>
         <div>
           <dt>{o.status === 'pending' ? '다음 연락' : '답변 기한'}</dt>
           <dd>{o.status === 'pending' ? o.due : o.expires}</dd>
         </div>
       </dl>
+      {o.valuation && o.valuation.currentSalary > 0 && (
+        <p className="contact-valuation">
+          현재 연봉 대비 +{o.valuation.increasePercent}% · {o.valuation.reason}
+        </p>
+      )}
+      {o.expectation && (
+        <p className="contact-valuation">
+          {o.expectation.tier} · {o.expectation.reason}
+        </p>
+      )}
       {!summary && o.status === 'invited' && !expired && (
         <div className="contact-actions">
           <button
@@ -161,7 +175,7 @@ export function ManagerOfferCard({
           busy={busy}
         />
       )}
-      {!summary && active && (
+      {!summary && active && o.status !== 'offered' && (
         <button
           className="text-button contact-decline"
           disabled={busy}

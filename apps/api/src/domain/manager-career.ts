@@ -1,3 +1,5 @@
+import { clubExpectation, clubStrengthRanks } from '@dugout/shared/club-expectations';
+import { approachValuation, clubNegotiationBudget, updateBoardTrust } from './manager-valuation';
 import { isClubDutyReport } from '@dugout/shared/employment-reports';
 import { rememberRegistration } from './registration-log';
 import { rememberCoaches } from './coach-employment';
@@ -77,10 +79,29 @@ export function createManagerCareer(world: WorldCatalog) {
         appointed: gameDate(g),
         startWins: row?.w || 0,
         startLosses: row?.l || 0,
+        startDraws: row?.d || 0,
       };
       const job = g.managerJobs[c.id];
       if (!job.vacant && /현 감독$/.test(job.managerName))
         job.managerName = c.manager?.name || `${generatedManager(c.id, 'initial')} (가상)`;
+    }
+    if (Object.values(g.managerJobs).some((job) => job.expectation?.year !== g.year)) {
+      const ranks = clubStrengthRanks(world.clubs, (club) => view.rosterFor(g, club));
+      for (const job of Object.values(g.managerJobs)) {
+        if (job.expectation?.year === g.year) continue;
+        const previousRank = job.board?.year === g.year - 1 ? job.board.rank : undefined;
+        job.expectation = {
+          ...clubExpectation(ranks[job.club], count(job.club), previousRank),
+          year: g.year,
+        };
+        if (job.board && job.board.year !== g.year) {
+          job.baseConfidence = Math.max(35, Math.min(85, job.confidence));
+          job.startWins = 0;
+          job.startLosses = 0;
+          job.startDraws = 0;
+          delete job.board;
+        }
+      }
     }
     g.managerCareer ??= {
       status: 'employed',
@@ -90,12 +111,60 @@ export function createManagerCareer(world: WorldCatalog) {
       history: [],
       contract: {
         club: g.club,
-        salary: salary(g.club, Math.ceil(count(g.club) / 2)),
-        targetRank: Math.ceil(count(g.club) / 2),
+        salary: salary(g.club, g.managerJobs[g.club].expectation!.targetRank),
+        targetRank: g.managerJobs[g.club].expectation!.targetRank,
         signed: gameDate(g),
         throughYear: g.year,
       },
     };
+    for (const offer of g.managerCareer.offers) {
+      if (
+        offer.expectation ||
+        !['invited', 'pending', 'interview', 'offered'].includes(offer.status)
+      )
+        continue;
+      const expectation = g.managerJobs[offer.club]?.expectation;
+      if (!expectation) continue;
+      offer.expectation = expectation;
+      const budget = clubNegotiationBudget(
+        g,
+        offer.club,
+        salary(offer.club, expectation.targetRank),
+        teamBudget(view.getClub(offer.club).league),
+      );
+      // Keep promises made by an older save, while giving untouched invitations current valuations.
+      budget.salary = Math.max(budget.salary, offer.salary, offer.contractTerms?.salary || 0);
+      budget.signingBonus = Math.max(
+        budget.signingBonus,
+        offer.signingBonus || 0,
+        offer.contractTerms?.signingBonus || 0,
+      );
+      budget.years = Math.max(budget.years, offer.contractTerms?.years || 1);
+      budget.total = Math.round((budget.salary * budget.years + budget.signingBonus) * 100) / 100;
+      offer.negotiationBudget ??= budget;
+      if (
+        offer.source === 'approach' &&
+        offer.status === 'invited' &&
+        !offer.contractTerms &&
+        !offer.interview?.length
+      ) {
+        const valuation = approachValuation(
+          g,
+          salary(offer.club, expectation.targetRank),
+          offer.negotiationBudget,
+        );
+        offer.salary = Math.max(offer.salary, valuation.salary);
+        offer.signingBonus = Math.max(offer.signingBonus || 0, valuation.signingBonus);
+        offer.valuation = {
+          ...valuation.valuation,
+          increasePercent: valuation.valuation.currentSalary
+            ? Math.round((offer.salary / valuation.valuation.currentSalary - 1) * 100)
+            : 0,
+        };
+        offer.targetRank = expectation.targetRank;
+        offer.message = `${expectation.tier}을 위해 ${offer.targetRank}위 이내를 기대합니다. 연봉 ${money(offer.salary)} · 계약금 ${money(offer.signingBonus)}으로 면접을 제안합니다. ${valuation.valuation.reason}.`;
+      }
+    }
     if (!isUnemployed(g)) {
       const job = g.managerJobs[g.club];
       if (firstContract)
@@ -238,10 +307,12 @@ export function createManagerCareer(world: WorldCatalog) {
             appointed: today,
             startWins: row.w,
             startLosses: row.l,
+            startDraws: row.d,
             managerName: `${generatedManager(job.club, today)} (가상)`,
             reason: '공개 채용을 거쳐 새 감독 선임',
           });
           delete job.vacantSince;
+          delete job.board;
           worldEvent(g, {
             kind: 'appointment',
             club: job.club,
@@ -253,28 +324,18 @@ export function createManagerCareer(world: WorldCatalog) {
       const row = g.standings[view.getClub(job.club).league].find((s) => s.club === job.club)!;
       const wins = Math.max(0, row.w - job.startWins),
         losses = Math.max(0, row.l - job.startLosses);
-      const targetPressure =
-        job.club === g.club && m.contract
-          ? Math.max(0, Math.ceil(count(g.club) / 2) - m.contract.targetRank)
-          : 1;
-      job.confidence = Math.max(
-        0,
-        Math.min(
-          100,
-          Math.round(
-            job.baseConfidence +
-              wins * 1.5 -
-              losses * (1.5 + targetPressure * 0.3) -
-              (job.club === g.club ? finance?.penalty || 0 : 0),
-          ),
-        ),
-      );
-      job.reason =
-        job.confidence < 35
-          ? '성적과 운영 방향에 대한 구단주 불만'
-          : job.confidence >= 70
-            ? '성적과 운영 방향에 신뢰'
-            : '성적과 운영 방향을 평가 중';
+      const table = view.standings(g, view.getClub(job.club).league);
+      updateBoardTrust(job, {
+        year: g.year,
+        rank: table.findIndex((row) => row.club === job.club) + 1,
+        target:
+          job.club === g.club && m.contract ? m.contract.targetRank : job.expectation!.targetRank,
+        count: count(job.club),
+        wins,
+        losses,
+        draws: Math.max(0, row.d - (job.startDraws || 0)),
+        financePenalty: job.club === g.club ? finance?.penalty || 0 : 0,
+      });
       if (job.club === g.club && finance?.penalty)
         job.reason = `${finance.status} · ${finance.reasons.join(' · ')} (신뢰도 −${finance.penalty})`;
       if (wins + losses >= 10 && job.confidence < 15) {
@@ -327,7 +388,7 @@ export function createManagerCareer(world: WorldCatalog) {
         offer.message = accepted
           ? needsInterview
             ? `최종 면접 초청 · 경쟁 후보 평가 ${offer.rivalScore}점. 구단은 ${{ win: '즉시 성적', youth: '유망주 육성', budget: '지출 관리' }[offer.priority!]}을 우선합니다. 운영 방향을 설명해 주세요.`
-            : `최종 후보 비교를 통과했습니다. 연봉 ${money(offer.salary)} · 목표 ${offer.targetRank}위 이내. 서명하면 취임합니다.`
+            : `최종 후보 비교를 통과했습니다. 연봉 ${money(offer.salary)} · 계약금 ${money(offer.signingBonus || 0)} · 목표 ${offer.targetRank}위 이내. 조건 합의 후 서명하면 취임합니다.`
           : '현 감독의 신임도 회복, 평판 요건 또는 경쟁 후보 평가에 따라 채용이 종료됐습니다.';
         if (offer.status === 'offered' && offer.interview?.length) prepareManagerTerms(offer);
         report(
@@ -370,20 +431,41 @@ export function createManagerCareer(world: WorldCatalog) {
           m.reputation >= view.getLeague(view.getClub(j.club).league).level - 18 &&
           !m.offers.some((o) => o.club === j.club && daysBetween(o.applied, today) < 28),
       );
-      const candidate = candidates.sort(
-        (a, b) =>
-          Number(g.knowledge?.leagues.includes(view.getClub(b.club).league)) -
-            Number(g.knowledge?.leagues.includes(view.getClub(a.club).league)) ||
-          hash(`${a.club}:${today}`) - hash(`${b.club}:${today}`),
-      )[0];
+      const candidate = candidates
+        .sort(
+          (a, b) =>
+            Number(g.knowledge?.leagues.includes(view.getClub(b.club).league)) -
+              Number(g.knowledge?.leagues.includes(view.getClub(a.club).league)) ||
+            hash(`${a.club}:${today}`) - hash(`${b.club}:${today}`),
+        )
+        .find((job) => {
+          const base = salary(job.club, job.expectation!.targetRank);
+          const cap = clubNegotiationBudget(
+            g,
+            job.club,
+            base,
+            teamBudget(view.getClub(job.club).league),
+          );
+          return seeking || cap.salary >= (m.contract?.salary || 0) * 1.05;
+        });
       if (candidate) {
-        const targetRank = Math.ceil(count(candidate.club) / 2);
+        const targetRank = candidate.expectation!.targetRank;
+        const base = salary(candidate.club, targetRank);
+        const negotiationBudget = clubNegotiationBudget(
+          g,
+          candidate.club,
+          base,
+          teamBudget(view.getClub(candidate.club).league),
+        );
+        const valuation = approachValuation(g, base, negotiationBudget);
         const priority = (['win', 'youth', 'budget'] as const)[hash(candidate.club) % 3];
         const offer: ManagerOffer = {
           id: `approach-${candidate.club}-${today}`,
           club: candidate.club,
           targetRank,
-          salary: salary(candidate.club, targetRank),
+          ...valuation,
+          expectation: candidate.expectation,
+          negotiationBudget,
           applied: today,
           due: today,
           expires: addDays(today, 14),
@@ -391,7 +473,7 @@ export function createManagerCareer(world: WorldCatalog) {
           source: 'approach',
           priority,
           rivalScore: Math.max(40, view.getLeague(view.getClub(candidate.club).league).level - 18),
-          message: `${g.manager} 감독님, 우리 구단의 다음 시즌을 함께 이끌어 주실 분을 찾고 있습니다. 감독님의 경력에 관심이 있어 비공개로 연락드립니다. 감독직 면접에 참여하시겠습니까?`,
+          message: `${g.manager} 감독님, 우리 구단의 다음 시즌을 함께 이끌어 주실 분을 찾고 있습니다. 감독님의 경력에 관심이 있어 비공개로 연락드립니다. ${valuation.valuation.reason}. 연봉 ${money(valuation.salary)}${valuation.valuation.currentSalary ? ` · 현재보다 ${valuation.valuation.increasePercent}% 인상` : ''} · 계약금 ${money(valuation.signingBonus)}을 제안합니다. 구단은 ${candidate.expectation!.tier}을 위해 ${targetRank}위 이내를 기대합니다. 감독직 면접에 참여하시겠습니까?`,
         };
         m.offers.unshift(offer);
         m.offers = m.offers.slice(0, 30);
@@ -577,8 +659,10 @@ export function createManagerCareer(world: WorldCatalog) {
       appointed: date,
       startWins: row.w,
       startLosses: row.l,
+      startDraws: row.d,
     });
     delete job.vacantSince;
+    delete job.board;
     m.status = 'employed';
     m.contract = {
       club: g.club,
@@ -591,6 +675,13 @@ export function createManagerCareer(world: WorldCatalog) {
         : {}),
     };
     delete m.unemployedSince;
+    const signingBonus = offer.signingBonus || 0;
+    m.contract.signingBonus = signingBonus;
+    if (signingBonus > g.budget)
+      throw new Error('구단의 현재 잔액으로 계약금을 지급할 수 없습니다.');
+    g.budget -= signingBonus;
+    g.expenses += signingBonus;
+    m.earnings += signingBonus;
     if (offer.budgetAdjustment) {
       const adjustment = Math.round(
         teamBudget(view.getClub(g.club).league) * offer.budgetAdjustment,
@@ -609,7 +700,7 @@ export function createManagerCareer(world: WorldCatalog) {
     report(
       g,
       `${view.getClub(g.club).name} 감독으로 취임`,
-      `${offer.targetRank}위 이내 · 연봉 ${money(offer.salary)}에 계약했습니다. 기존 리그 순위와 구단 선수단을 이어받았습니다.`,
+      `${offer.targetRank}위 이내 · 연봉 ${money(offer.salary)} · 계약금 ${money(signingBonus)}(체결 시 1회 지급)에 계약했습니다. 기존 리그 순위와 구단 선수단을 이어받았습니다.`,
     );
   }
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
@@ -671,6 +762,7 @@ export function createManagerCareer(world: WorldCatalog) {
         if (t.status !== 'agreed' || a.termsVersion !== t.version || a.signature !== g.manager)
           throw new Error('계약 조건에 합의한 뒤 최신 계약서에 감독 이름으로 서명해 주세요.');
         offer.salary = t.salary;
+        offer.signingBonus = t.signingBonus || 0;
         offer.targetRank = t.targetRank;
       }
       if (g.phase === 'semifinal' || g.phase === 'final')
@@ -712,11 +804,26 @@ export function createManagerCareer(world: WorldCatalog) {
         if (m.offers.some((o) => o.club === club && daysBetween(o.applied, gameDate(g)) < 14))
           throw new Error('같은 구단에는 14일 뒤 다시 지원할 수 있습니다.');
         const today = gameDate(g);
+        const expectation = g.managerJobs![club].expectation!;
+        const boardTarget = Math.min(target, expectation.targetRank);
+        const baseSalary = salary(club, expectation.targetRank);
+        const negotiationBudget = clubNegotiationBudget(
+          g,
+          club,
+          baseSalary,
+          teamBudget(view.getClub(club).league),
+        );
         m.offers.unshift({
           id: `manager-${club}-${today}-${hash(g.manager)}`,
           club,
-          targetRank: target,
-          salary: salary(club, target),
+          targetRank: boardTarget,
+          salary: baseSalary,
+          signingBonus: Math.min(
+            negotiationBudget.signingBonus,
+            Math.round(baseSalary * 0.08 * 100) / 100,
+          ),
+          expectation,
+          negotiationBudget,
           applied: today,
           due: addDays(today, 3),
           expires: addDays(today, 17),
@@ -728,7 +835,7 @@ export function createManagerCareer(world: WorldCatalog) {
             40,
             view.getLeague(view.getClub(club).league).level - 18 + (hash(club + today) % 6),
           ),
-          message: '구단이 지원서를 검토합니다. 3일 뒤 답변 예정입니다.',
+          message: `구단이 지원서를 검토합니다. ${expectation.tier}을 위해 ${boardTarget}위 이내를 기대합니다. 3일 뒤 답변 예정입니다.`,
         });
         m.offers = m.offers.slice(0, 30);
         if (!isUnemployed(g) && a.public === true) {

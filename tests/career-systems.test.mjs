@@ -52,7 +52,7 @@ test('Resignation, unemployment and re-employment continue the same world and re
   const beforeDate = gameDate(g);
   g = hire(g, 'kbo-lg');
   assert.ok(gameDate(g) > beforeDate);
-  assert.equal(g.managerCareer.earnings, earnings);
+  assert.equal(g.managerCareer.earnings, earnings + g.managerCareer.contract.signingBonus);
   assert.equal(g.club, 'kbo-lg');
   assert.equal(g.managerCareer.history[0].club, 'kbo-lotte');
   const oldTeam = g.transferred.filter((p) => p.club === 'kbo-lotte');

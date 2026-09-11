@@ -199,5 +199,6 @@ test('Dismissal and nonrenewal explain their exact trigger, close club mail and 
   assert.equal(midseason.managerCareer.history[0].endKind, 'dismissal');
   assert.match(midseason.managerCareer.history[0].detail, /0승 40패/);
   assert.match(midseason.managerCareer.history[0].detail, /15% 미만/);
-  assert.equal(midseason.managerCareer.history[0].confidence, 5);
+  assert.ok(midseason.managerCareer.history[0].confidence >= 0);
+  assert.ok(midseason.managerCareer.history[0].confidence < 15);
 });
