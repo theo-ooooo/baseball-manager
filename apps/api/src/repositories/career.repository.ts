@@ -6,6 +6,15 @@ import type { PlayerCareerRecord } from '@dugout/shared/long-term';
 type CareerRow = { state: string; revision: number };
 @Injectable()
 export class CareerRepository {
+  async lastPlayerSeason(db: D1Database, user: string, playerId: string) {
+    const row = await db
+      .prepare(
+        "SELECT data FROM career_player_records WHERE user_id=? AND player_id=? AND kind='season' ORDER BY season DESC,id DESC LIMIT 1",
+      )
+      .bind(user, playerId)
+      .first<{ data: string }>();
+    return row ? (JSON.parse(row.data) as PlayerCareerRecord).stats : undefined;
+  }
   async playerRecords(db: D1Database, user: string, playerId: string) {
     const rows = await db
       .prepare(

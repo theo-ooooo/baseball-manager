@@ -1126,6 +1126,190 @@
 }
 .renewal-room .contract-room-header {
   background: var(--brand-soft);
+  color: var(--text);
+}
+.renewal-room .contract-room-header small,
+.renewal-room .contract-room-header h2 span {
+  color: var(--text-2);
+}
+.renewal-room .contract-room-icon,
+.renewal-room .contract-status {
+  color: #fff;
+}
+.renewal-documents-launch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.renewal-documents-launch small {
+  color: var(--text-2);
+}
+.renewal-documents-dialog {
+  width: min(880px, calc(100vw - 24px));
+  max-width: 880px !important;
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  gap: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface-1);
+  color: var(--text);
+}
+.renewal-documents-header {
+  padding: 22px 44px 18px 22px;
+  background: var(--brand-soft);
+  text-align: left;
+  flex-shrink: 0;
+}
+.renewal-documents-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+.renewal-documents-header p {
+  color: var(--text);
+  line-height: 1.6;
+}
+.renewal-documents-dialog form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.renewal-documents-scroll {
+  padding: 20px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.renewal-bulk-terms,
+.renewal-document-row {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.renewal-bulk-terms {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px auto;
+  gap: 12px;
+  align-items: end;
+  background: var(--surface-2);
+}
+.renewal-bulk-terms legend {
+  font-size: 13px;
+  padding: 0 4px;
+}
+.renewal-bulk-terms label,
+.renewal-document-terms label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+.renewal-documents-dialog input[type='number'],
+.renewal-documents-dialog select {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+}
+.renewal-selection-heading,
+.renewal-documents-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.renewal-selection-heading {
+  margin: 20px 0 10px;
+  font-size: 13px;
+}
+.renewal-document-rows {
+  display: grid;
+  gap: 10px;
+}
+.renewal-document-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.renewal-document-player {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+.renewal-document-player input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--brand);
+}
+.renewal-document-player span {
+  display: grid;
+  gap: 5px;
+}
+.renewal-document-player small,
+.renewal-document-row p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.renewal-document-terms {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px;
+  gap: 10px;
+}
+.renewal-document-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding-top: 20px;
+}
+.renewal-document-totals div {
+  display: grid;
+  gap: 6px;
+}
+.renewal-document-totals dt {
+  font-size: 12px;
+}
+.renewal-document-totals dd {
+  margin: 0;
+  font-weight: 700;
+}
+.renewal-documents-footer {
+  flex-shrink: 0;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-1);
+}
+@media (max-width: 600px) {
+  .renewal-documents-header {
+    padding: 18px 38px 14px 16px;
+  }
+  .renewal-documents-scroll {
+    padding: 14px;
+  }
+  .renewal-bulk-terms {
+    grid-template-columns: minmax(0, 1fr) 80px;
+  }
+  .renewal-bulk-terms button {
+    grid-column: 1 / -1;
+  }
+  .renewal-document-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .renewal-documents-footer {
+    padding: 12px;
+  }
+  .renewal-documents-footer .button {
+    font-size: 12px;
+    padding: 10px;
+  }
 }
 .renewal-room .contract-agent {
   background: var(--bg);

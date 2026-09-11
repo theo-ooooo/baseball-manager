@@ -175,7 +175,9 @@ export type Deal = {
   responseDay?: number;
   expires?: number;
   history?: NegotiationRound[];
+  freeAgentTerms?: FreeAgentTerms;
 };
+export type FreeAgentTerms = { salary: number; years: number; basis: string };
 export type CoachDeal = {
   id: string;
   coach: Coach;

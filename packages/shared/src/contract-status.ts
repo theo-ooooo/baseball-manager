@@ -1,10 +1,35 @@
-import type { GameState, NewsItem, Player } from './types';
+import type { Deal, GameState, NewsItem, Player } from './types';
 import { gameDate } from './calendar';
 
+export const MAX_PLAYER_NEGOTIATIONS = 128;
+export function activePlayerDeal(g: Pick<GameState, 'year' | 'day'>, d: Deal) {
+  return (
+    ['pending', 'counter', 'accepted'].includes(d.status) &&
+    (d.year === undefined || d.year === g.year) &&
+    g.day <= (d.expires ?? d.day + 14)
+  );
+}
+
+export function renewalUnavailableReason(g: GameState, p: Player) {
+  if (
+    g.managerCareer?.status === 'unemployed' ||
+    p.club !== g.club ||
+    !g.roster.some((x) => x.id === p.id)
+  )
+    return '소속 선수만 재계약할 수 있습니다.';
+  if (!needsContractReview(g, p)) return '계약 만료 대상이 아니거나 이번 시즌 계약을 마쳤습니다.';
+  if (g.deals.some((d) => d.player.id === p.id && activePlayerDeal(g, d)))
+    return '진행 중인 협상에서 답변·서명을 마쳐 주세요.';
+  return undefined;
+}
+
 export function needsContractReview(g: Pick<GameState, 'year' | 'roster' | 'news'>, p: Player) {
-  if (p.years !== 1 || p.contractSigned?.year === g.year) return false;
+  return p.years === 1 && !contractSignedThisYear(g, p);
+}
+export function contractSignedThisYear(g: Pick<GameState, 'year' | 'news'>, p: Player) {
+  if (p.contractSigned?.year === g.year) return true;
   // Older saves have signing reports, but no signing marker on the player yet.
-  return !g.news.some(
+  return g.news.some(
     (n) =>
       n.playerId === p.id &&
       n.year === g.year &&

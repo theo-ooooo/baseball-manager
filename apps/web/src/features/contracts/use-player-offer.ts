@@ -3,14 +3,24 @@ import { useState } from 'react';
 import type { Deal, GameState, Player } from '@dugout/shared/types';
 import { askPrice, fromManwon, toManwon } from '@dugout/shared/game-view';
 import { useWorld } from '../career/world-context';
+import { useFreeAgentQuote } from './use-free-agent-quote';
 export function usePlayerOffer(player: Player, g: GameState, deal: Deal | undefined, own: boolean) {
   const { agentFor } = useWorld();
   const previous = deal?.history?.findLast((h) => h.side === 'club');
-  const [salary, setSalary] = useState(
-      String(toManwon(previous?.salary ?? deal?.salary ?? player.salary * 1.1)),
-    ),
-    [years, setYears] = useState(previous?.years ?? deal?.years ?? 3),
+  const valuation = useFreeAgentQuote(
+    !own && player.club === 'fa' ? player.id : undefined,
+    g.club,
+    g.year,
+    g.day,
+  );
+  const [salaryInput, setSalary] = useState<string | null>(null),
+    [yearInput, setYears] = useState<number | null>(null),
     [fee, setFee] = useState(String(toManwon(deal?.fee ?? askPrice(player))));
+  const initial =
+    previous?.salary ?? deal?.salary ?? (own ? player.salary * 1.1 : valuation.quote?.salary);
+  const salary = salaryInput ?? (initial === undefined ? '' : String(toManwon(initial)));
+  const years =
+    yearInput ?? previous?.years ?? deal?.years ?? (own ? 3 : (valuation.quote?.years ?? 2));
   const amount = fromManwon(Number(salary)),
     agentFee = Math.round(amount * agentFor(player).fee);
   const retained =
@@ -43,5 +53,6 @@ export function usePlayerOffer(player: Player, g: GameState, deal: Deal | undefi
     transfer,
     cost,
     valid,
+    ...valuation,
   };
 }

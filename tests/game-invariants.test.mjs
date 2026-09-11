@@ -134,7 +134,7 @@ test('Agent negotiation, signing, resale and coach hiring update actual resource
   let g = e.newGame('mlb-dodgers', 'Test', 'short', 9);
   const p = e.marketPlayers(g).find((p) => p.club === 'fa');
   const submittedBudget = g.budget;
-  g = e.negotiate(g, p.id, p.salary * 2, 3);
+  g = e.negotiate(g, p.id, e.faDemand(g, p), 3);
   assert.equal(g.budget, submittedBudget);
   assert.equal(g.deals[0].status, 'pending');
   assert.throws(() => e.signDeal(g, g.deals[0].id), /기다려/);
@@ -198,7 +198,7 @@ test('First-year restriction blocks both offers and previously accepted external
   g = e.signDeal(g, g.deals[0].id);
   const unlocked = structuredClone(g);
   unlocked.rules.firstSeasonTransferBan = false;
-  e.negotiate(unlocked, external.id, external.salary * 2, 3);
+  e.negotiate(unlocked, external.id, e.faDemand(unlocked, external), 3);
   waitForReply(e, unlocked, unlocked.deals[0].id);
   g.deals = unlocked.deals;
   assert.throws(() => e.signDeal(g, g.deals[0].id), /첫 시즌/);

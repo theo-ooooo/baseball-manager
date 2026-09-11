@@ -22,7 +22,7 @@ test('Player terms arrive on a later date; counter acceptance and signing are se
   g.reputation = 99;
   const p = e.marketPlayers(g).find((p) => p.club === 'fa');
   const initial = structuredClone(g);
-  g = e.applyAction(g, { type: 'negotiate', id: p.id, salary: p.salary * 0.85, years: 1 });
+  g = e.applyAction(g, { type: 'negotiate', id: p.id, salary: e.faDemand(g, p) * 0.85, years: 1 });
   const id = g.deals[0].id;
   assert.equal(g.deals[0].status, 'pending');
   assert.equal(g.budget, initial.budget);

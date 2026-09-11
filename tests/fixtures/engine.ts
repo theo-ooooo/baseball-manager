@@ -1,11 +1,15 @@
 import { buildSeedWorld } from '../../apps/api/seed/world';
 import { createGameEngine } from '../../apps/api/src/domain/game-engine';
 import * as view from '@dugout/shared/game-view';
+import { freeAgentValuation } from '../../apps/api/src/domain/free-agent-valuation';
 export const world = buildSeedWorld();
 export const engine = {
   ...view,
   ...view.createGameView(world),
   ...createGameEngine(world),
+  faDemand(g: import('@dugout/shared/types').GameState, p: import('@dugout/shared/types').Player) {
+    return freeAgentValuation(g, p, world.clubs.find((c) => c.id === g.club)!.league).salary;
+  },
   acceptRenewal(g: import('@dugout/shared/types').GameState) {
     const offer = g.managerCareer?.offers.find(
       (o) => o.source === 'renewal' && o.status === 'offered',

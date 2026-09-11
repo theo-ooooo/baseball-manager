@@ -1067,6 +1067,7 @@ export function createGameEngine(world: WorldCatalog) {
           Number(a.years),
           a.renew ? 'renew' : 'buy',
           a.fee === undefined ? undefined : Number(a.fee),
+          a.freeAgentTerms as import('@dugout/shared/types').FreeAgentTerms | undefined,
         );
       case 'sign':
         return signDeal(s, String(a.id));

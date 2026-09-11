@@ -841,7 +841,16 @@ test('Daily calendar progression persists one date and a retried request cannot 
 test('Negotiation, signing, reselling and coaches update relational rows and accounting atomically', async () => {
   const catalog = (await call('/api/catalog')).body;
   const p = catalog.players.find((p) => p.club === 'fa');
-  let negotiated = await action({ type: 'negotiate', id: p.id, salary: p.salary * 2, years: 3 });
+  const quote = await call(`/api/career/contracts/${p.id}/quote`);
+  assert.equal(quote.status, 200);
+  let negotiated = await action({
+    type: 'negotiate',
+    id: p.id,
+    salary: quote.body.salary * 1.2,
+    years: 3,
+    freeAgentTerms: { salary: 1, years: 1, basis: 'forged' },
+  });
+  assert.deepEqual(negotiated.state.deals[0].freeAgentTerms, quote.body);
   assert.equal(negotiated.state.deals[0].status, 'pending');
   const premature = await call('/api/career', {
     type: 'sign',
@@ -1752,6 +1761,11 @@ test('D1 bounded manager conversations preserve the rest of a career and safely 
     call('/api/career', { ...next, requestId: crypto.randomUUID() }, user),
   ]);
   assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+  const contact = (await call('/api/career', undefined, user)).body.state.managerCareer;
+  const declined = contact.offers.find((offer) => offer.id === id);
+  assert.equal(declined.status, 'rejected');
+  assert.ok(declined.closedAt);
+  assert.equal(contact.approachHistory[declined.club].closedAt, declined.closedAt);
   const count = await db
     .prepare('SELECT COUNT(*) AS n FROM career_actions WHERE user_id=?')
     .bind(user)
@@ -1974,4 +1988,45 @@ test('A date action saves all locally read IDs in the same revision and preserve
   assert.equal(latest.body.revision, saved.body.revision);
   assert.equal(latest.body.state.day, saved.body.state.day);
   assert.ok(latest.body.state.news.filter((n) => ids.includes(n.id)).every((n) => n.read));
+});
+
+test('Batch renewal persists all proposals once, preserves contracts and rejects stale or invalid batches without partial writes', async () => {
+  const user = 'batch-renewals-qa';
+  const started = await action(
+    { type: 'start', club: 'kbo-kia', manager: '일괄 재계약', mode: 'short', preseason: false },
+    user,
+  );
+  const players = started.state.roster.filter((p) => p.years === 1).slice(0, 3);
+  assert.equal(players.length, 3);
+  const command = {
+    type: 'renewContracts',
+    offers: players.map((p) => ({ id: p.id, salary: p.salary * 1.1, years: 3 })),
+    revision: started.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const invalid = await call(
+    '/api/career',
+    { ...command, offers: [...command.offers, { ...command.offers[0], id: 'not-owned' }] },
+    user,
+  );
+  assert.equal(invalid.status, 400);
+  assert.equal((await call('/api/career', undefined, user)).body.revision, started.revision);
+  const sent = await call('/api/career', command, user);
+  assert.equal(sent.status, 201);
+  assert.equal(sent.body.revision, started.revision + 1);
+  assert.equal(sent.body.state.deals.length, 3);
+  assert.ok(sent.body.state.deals.every((d) => d.status === 'pending' && d.type === 'renew'));
+  assert.equal(sent.body.state.budget, started.state.budget);
+  assert.deepEqual(sent.body.state.roster, started.state.roster);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, sent.body);
+  const retry = await call('/api/career', command, user);
+  assert.equal(retry.status, 201);
+  assert.equal(retry.body.revision, sent.body.revision);
+  const repeated = await call(
+    '/api/career',
+    { ...command, requestId: crypto.randomUUID(), revision: sent.body.revision },
+    user,
+  );
+  assert.equal(repeated.status, 400);
+  assert.equal((await call('/api/career', undefined, user)).body.revision, sent.body.revision);
 });

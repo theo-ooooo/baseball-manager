@@ -122,6 +122,10 @@ async function dispatch(request: Request): Promise<Response> {
     status = 201;
   } else if (get && path.startsWith('/api/career/matches/') && !path.slice(20).includes('/'))
     result = await app.get(CareerController).match(input, parameter('/api/career/matches/'));
+  else if (get && /^\/api\/career\/contracts\/[^/]+\/quote$/.test(path))
+    result = await app
+      .get(CareerController)
+      .contractQuote(input, parameter('/api/career/contracts/').slice(0, -6));
   else if (get && path === '/api/career/export')
     result = await app.get(CareerTransferController).backup(input);
   else if (method === 'POST' && path === '/api/career/import')

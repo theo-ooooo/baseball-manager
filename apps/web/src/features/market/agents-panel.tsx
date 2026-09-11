@@ -5,19 +5,25 @@ import { NegotiationHistory, negotiationLabels } from './negotiation-details';
 import { useWorld } from '../career/world-context';
 import { type GameState, type Player, overall, money } from '@dugout/shared/game-view';
 import { Rating, PlayerName } from '../../components/game-ui';
+import type { Act } from '../career/game-contracts';
+import { RenewalDocuments } from '../contracts/renewal-documents';
+import { useRenewalDocuments } from '../contracts/use-renewal-documents';
 
 export function Agents({
   g,
+  act,
   busy,
   onPlayer,
   onNegotiate,
 }: {
   g: GameState;
+  act: Act;
   busy: boolean;
   onPlayer: (p: Player) => void;
   onNegotiate: (p: Player) => void;
 }) {
   const { agentFor } = useWorld();
+  const documents = useRenewalDocuments();
   return (
     <>
       <div className="agent-intro">
@@ -30,6 +36,21 @@ export function Agents({
           </p>
         </div>
       </div>
+      {g.roster.some((p) => p.years === 1) && (
+        <div className="renewal-documents-launch">
+          <button
+            className="button primary"
+            disabled={busy}
+            onClick={() => documents.setOpen(true)}
+          >
+            전체 재계약 서류 작성
+          </button>
+          <small>만료 예정 선수 선택 · 조건 일괄 조정 · 제안 발송</small>
+        </div>
+      )}
+      {documents.open && (
+        <RenewalDocuments g={g} act={act} busy={busy} close={() => documents.setOpen(false)} />
+      )}
       {g.roster.some((p) => p.years === 1) && (
         <details className="contract-renewals" open={g.deals.length === 0}>
           <summary>
@@ -125,7 +146,7 @@ export function Agents({
                     </div>
                   </div>
                   <div className="cost-line">
-                    <span>지금 지출 · 계약금 15% + 수수료 + 이적료</span>
+                    <span>서명 시 지출 · 계약금 5% + 수수료 + 이적료</span>
                     <strong>{money(d.fee + d.agentFee + d.salary * 0.05)}</strong>
                   </div>
                   <button

@@ -744,7 +744,13 @@ export function GameScreen({
             />
           )}
           {view === 'agents' && (
-            <Agents g={g} busy={busy} onPlayer={setPlayer} onNegotiate={setContractPlayer} />
+            <Agents
+              g={g}
+              act={act}
+              busy={busy}
+              onPlayer={setPlayer}
+              onNegotiate={setContractPlayer}
+            />
           )}
           {view === 'staff' && <CoachPanel g={g} act={act} busy={busy} />}
           {view === 'finance' && <Finance g={g} ledger={ledger} />}

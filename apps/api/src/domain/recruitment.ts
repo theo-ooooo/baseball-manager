@@ -2,7 +2,14 @@ import { recordBoardTransaction } from './board-transactions';
 import { reconcileManagerPeople } from './manager-people';
 import { managerCoachingStance, playerPersonality } from '@dugout/shared/personality';
 import { archivePlayer } from './world-simulation';
-import type { CoachDeal, Deal, GameState, WorldCatalog } from '@dugout/shared/types';
+import type {
+  CoachDeal,
+  Deal,
+  FreeAgentTerms,
+  GameState,
+  WorldCatalog,
+} from '@dugout/shared/types';
+import { freeAgentValuation } from './free-agent-valuation';
 import {
   coachRoles,
   createGameView,
@@ -17,6 +24,12 @@ import { createTransferMarket } from './transfer-market';
 import { prepareDevelopment } from './player-development';
 import { coachDirectory } from '@dugout/shared/coach-directory';
 import { rememberCoaches, releaseCoach } from './coach-employment';
+import {
+  activePlayerDeal,
+  contractSignedThisYear,
+  MAX_PLAYER_NEGOTIATIONS,
+  renewalUnavailableReason,
+} from '@dugout/shared/contract-status';
 
 type Offer = Deal | CoachDeal;
 function terms(salary: number, years: number) {
@@ -97,6 +110,7 @@ export function createRecruitment(world: WorldCatalog) {
     years: number,
     type: 'buy' | 'renew' = 'buy',
     offeredFee?: number,
+    freeAgentTerms?: FreeAgentTerms,
   ) {
     terms(salary, years);
     if (type === 'buy' && transfersBlocked(g))
@@ -107,9 +121,16 @@ export function createRecruitment(world: WorldCatalog) {
         '타 구단 소속 선수와 직접 계약할 수 없습니다. 트레이드를 제안하거나 FA가 된 뒤 협상하세요.',
       );
     if (!p) throw new Error('해당 선수를 찾을 수 없습니다.');
+    if (type === 'renew' && contractSignedThisYear(g, p))
+      throw new Error('이번 시즌에 이미 계약을 체결한 선수입니다.');
     const previous = g.deals.find((d) => d.player.id === id);
-    if (previous?.status === 'pending')
+    if (previous?.status === 'pending' && activePlayerDeal(g, previous))
       throw new Error('상대가 제안을 검토 중입니다. 답변을 기다리거나 협상을 철회해 주세요.');
+    if (
+      g.deals.filter((d) => d.player.id !== id && activePlayerDeal(g, d)).length >=
+      MAX_PLAYER_NEGOTIATIONS
+    )
+      throw new Error('진행 중인 선수 협상을 마친 뒤 새 조건을 제안해 주세요.');
     const keepClubAgreement =
       previous?.stage === 'player' &&
       previous.seller &&
@@ -140,6 +161,10 @@ export function createRecruitment(world: WorldCatalog) {
       message: '',
       history: previous?.history || [],
       seller: keepClubAgreement ? previous!.seller : undefined,
+      freeAgentTerms:
+        p.club === 'fa'
+          ? (freeAgentTerms ?? freeAgentValuation(g, p, view.getClub(g.club).league))
+          : undefined,
     };
     record(
       g,
@@ -149,7 +174,12 @@ export function createRecruitment(world: WorldCatalog) {
         : '에이전트에게 계약 조건을 보냈습니다. 1~2일 안에 답변이 도착합니다.',
       'club',
     );
-    g.deals = [d, ...g.deals.filter((old) => old.player.id !== id)].slice(0, 30);
+    const remaining = g.deals.filter((old) => old.player.id !== id);
+    g.deals = [
+      d,
+      ...remaining.filter((old) => activePlayerDeal(g, old)),
+      ...remaining.filter((old) => !activePlayerDeal(g, old)).slice(0, 30),
+    ];
     return g;
   }
   function resolvePlayer(g: GameState, d: Deal) {
@@ -191,14 +221,20 @@ export function createRecruitment(world: WorldCatalog) {
       const personality = playerPersonality(p);
       const staying =
         d.type === 'renew' && personality.homeClub === g.club && personality.loyalty >= 70;
+      const fa =
+        p.club === 'fa'
+          ? (d.freeAgentTerms ?? freeAgentValuation(g, p, view.getClub(g.club).league))
+          : undefined;
       const desiredYears =
-        staying && personality.loyalty >= 85 && personality.stubbornness >= 75 ? 3 : 2;
+        fa?.years ??
+        (staying && personality.loyalty >= 85 && personality.stubbornness >= 75 ? 3 : 2);
       const temperament =
         1 +
         Math.max(0, personality.money - 60) / 400 +
         Math.max(0, personality.stubbornness - 70) / 600 -
         (staying ? personality.loyalty / 1200 : 0);
-      const demand = Math.max(5, Math.round(p.salary * (1.04 + gap * 0.03) * temperament));
+      const demand =
+        fa?.salary ?? Math.max(5, Math.round(p.salary * (1.04 + gap * 0.03) * temperament));
       const preference = staying
         ? '이 구단에 오래 남고 싶습니다. 안정적인 계약 기간을 중요하게 생각합니다.'
         : personality.money >= 70
@@ -206,7 +242,7 @@ export function createRecruitment(world: WorldCatalog) {
           : personality.ambition >= 70
             ? '우승 경쟁을 할 수 있는 구단과 기회를 원합니다.'
             : '역할과 계약 조건을 함께 고려하고 있습니다.';
-      const willing = gap < 18 || d.salary >= demand * 1.3;
+      const willing = !!fa || gap < 18 || d.salary >= demand * 1.3;
       d.status =
         d.salary >= demand &&
         (d.years >= desiredYears || (desiredYears === 2 && d.salary >= demand * 1.1)) &&
@@ -219,7 +255,8 @@ export function createRecruitment(world: WorldCatalog) {
         d.status = 'rejected';
         record(g, d, '이적료·계약금·수수료를 감당할 예산이 부족합니다.');
       } else if (d.status === 'counter') {
-        d.salary = Math.round(demand * (d.years === 1 ? 1.1 : 1) * (willing ? 1 : 1.3));
+        const counter = demand * (d.years < desiredYears ? 1.1 : 1) * (willing ? 1 : 1.3);
+        d.salary = fa ? Math.round(counter * 100) / 100 : Math.round(counter);
         d.years = Math.max(desiredYears, d.years);
         d.agentFee = Math.round(d.salary * view.agentFor(p).fee);
         record(
@@ -434,6 +471,40 @@ export function createRecruitment(world: WorldCatalog) {
     }
   }
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
+    if (a.type === 'renewContracts') {
+      if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+      if (!Array.isArray(a.offers) || a.offers.length < 1 || a.offers.length > 85)
+        throw new Error('재계약할 선수를 1~85명 선택해 주세요.');
+      const ids = new Set<string>();
+      let cost = 0;
+      const offers = a.offers.map((item: unknown) => {
+        if (!item || typeof item !== 'object') throw new Error('재계약 서류를 확인해 주세요.');
+        const row = item as Record<string, unknown>;
+        const p = g.roster.find((p) => p.id === row.id);
+        if (!p || ids.has(p.id)) throw new Error('소속 선수를 중복 없이 선택해 주세요.');
+        ids.add(p.id);
+        const reason = renewalUnavailableReason(g, p);
+        if (reason) throw new Error(`${p.name}: ${reason}`);
+        const salary = Number(row.salary),
+          years = Number(row.years);
+        terms(salary, years);
+        cost += Math.round(salary * view.agentFor(p).fee) + salary * 0.05;
+        return { id: p.id, salary, years };
+      });
+      if (cost > g.budget) throw new Error('전체 계약금과 수수료가 가용 예산을 초과합니다.');
+      // Stage every offer first. A failure must not leave a partially sent batch.
+      const staged = { ...g, deals: [...g.deals] };
+      for (const offer of offers) negotiate(staged, offer.id, offer.salary, offer.years, 'renew');
+      g.deals = staged.deals;
+      postNews(
+        g,
+        `선수 ${offers.length}명 · 재계약 서류 발송`,
+        `${offers.length}명에게 계약 조건을 제안했습니다. 1~2일 안에 답변이 도착하며, 합의 후 선수별 계약서에 서명하면 체결됩니다.`,
+        'transfer',
+        { actionView: 'agents' },
+      );
+      return g;
+    }
     if (a.type === 'reviseContractSalary') {
       if (a.kind !== 'player' && a.kind !== 'coach') throw new Error('계약 대상을 선택해 주세요.');
       const d = (a.kind === 'coach' ? g.coachDeals || [] : g.deals).find((d) => d.id === a.id);
@@ -446,7 +517,15 @@ export function createRecruitment(world: WorldCatalog) {
       if (salary === d.salary) throw new Error('조율할 연봉을 변경해 주세요.');
       if ('coach' in d)
         return coachOffer(g, { id: d.coach.id, role: d.role, salary, years: d.years });
-      return negotiate(g, d.player.id, salary, d.years, d.type, d.fee);
+      return negotiate(
+        g,
+        d.player.id,
+        salary,
+        d.years,
+        d.type,
+        d.fee,
+        a.freeAgentTerms as FreeAgentTerms | undefined,
+      );
     }
     if (a.type === 'coachOffer' || a.type === 'coach') return coachOffer(g, a);
     if (

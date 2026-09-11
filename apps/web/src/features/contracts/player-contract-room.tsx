@@ -49,8 +49,18 @@ export function PlayerContractRoom({
   onWait,
 }: Props & { onWait?: () => void }) {
   const { agentFor, getClub, rosterFor } = useWorld();
-  const { player, own, deal, found, editingId, setEditingId, signing, setSigning } =
-    usePlayerContractRoom(g, requested);
+  const {
+    player,
+    own,
+    deal,
+    found,
+    editingId,
+    setEditingId,
+    signing,
+    setSigning,
+    completed,
+    sign,
+  } = usePlayerContractRoom(g, requested, act, onWait);
   const agent = agentFor(player);
   const expired =
     !!deal &&
@@ -78,6 +88,21 @@ export function PlayerContractRoom({
       </section>
     );
   const standing = playerClubStanding(player, own ? g.roster : rosterFor(g, player.club));
+  if (completed)
+    return (
+      <section className="contract-room panel-content">
+        <h2>{player.name} · 계약 체결 완료</h2>
+        <p>
+          연봉 {money(player.salary)} · {player.years}년 계약
+        </p>
+        <p>이번 시즌 계약을 마쳤습니다. 새 조건은 선수 정보에 반영되었습니다.</p>
+        {onWait && (
+          <button className="button primary" onClick={onWait}>
+            닫기
+          </button>
+        )}
+      </section>
+    );
   if (!own && player.club !== 'fa')
     return (
       <section className="player-trade-overview">
@@ -157,15 +182,16 @@ export function PlayerContractRoom({
             ))}
           </div>
           <div className="contract-agent-note">
-            <strong>현재 계약</strong>
+            <strong>{player.club === 'fa' ? '직전 계약 연봉' : '현재 계약'}</strong>
             <p>{money(player.salary)} / 시즌</p>
             <p>
-              {player.years}년 남음 ·{' '}
-              {own
-                ? '소속 선수'
-                : player.club === 'fa'
-                  ? '자유계약 선수'
-                  : getClub(player.club)?.name}
+              {player.club === 'fa' ? (
+                '현재 소속 없음 · 새 계약 협상 가능'
+              ) : (
+                <>
+                  {player.years}년 남음 · {own ? '소속 선수' : getClub(player.club)?.name}
+                </>
+              )}
             </p>
           </div>
           <div className="contract-agent-note">
@@ -331,7 +357,7 @@ export function PlayerContractRoom({
           }}
           g={g}
           busy={busy}
-          sign={async () => !!(await act({ type: 'sign', id: signing.id }))}
+          sign={sign}
           reviseSalary={async (salary) =>
             !!(await act({ type: 'reviseContractSalary', kind: 'player', id: signing.id, salary }))
           }

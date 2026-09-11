@@ -28,6 +28,10 @@ export class CareerController {
   async match(@Req() request: ApiRequest, @Param('id') id: string) {
     return this.careers.match(env.DB, userId(request), id);
   }
+  @Get('contracts/:id/quote')
+  async contractQuote(@Req() request: ApiRequest, @Param('id') id: string) {
+    return this.careers.contractQuote(env.DB, userId(request), id);
+  }
 
   @Post()
   async action(@Req() request: ApiRequest) {

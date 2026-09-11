@@ -13,6 +13,9 @@ import { CareerRepository } from '../repositories/career.repository';
 import { createGameEngine } from '../domain/game-engine';
 import { prepareSquad } from '../domain/squad-management';
 import { prepareDynamics } from '../domain/club-dynamics';
+import { createGameView } from '@dugout/shared/game-view';
+import type { GameState, WorldCatalog } from '@dugout/shared/types';
+import { freeAgentValuation } from '../domain/free-agent-valuation';
 
 @Injectable()
 export class CareerService {
@@ -38,6 +41,30 @@ export class CareerService {
     const result = await this.careers.match(db, user, id);
     if (!result) throw new NotFoundException('경기 기록을 찾을 수 없습니다.');
     return result;
+  }
+  private async freeAgentTerms(
+    db: D1Database,
+    user: string,
+    state: GameState,
+    world: WorldCatalog,
+    id: string,
+  ) {
+    const view = createGameView(world);
+    const p = view.marketPlayers(state).find((p) => p.id === id && p.club === 'fa');
+    if (!p) return undefined;
+    const previous = await this.careers.lastPlayerSeason(db, user, id);
+    return freeAgentValuation(state, p, view.getClub(state.club).league, previous);
+  }
+  async contractQuote(db: D1Database, user: string, id: string) {
+    const [current, world] = await Promise.all([
+      this.careers.read(db, user),
+      this.catalog.getWorld(db),
+    ]);
+    if (!current.state || current.state.managerCareer?.status === 'unemployed')
+      throw new BadRequestException('소속 구단에서 FA 협상을 시작해 주세요.');
+    const terms = await this.freeAgentTerms(db, user, current.state, world, id);
+    if (!terms) throw new NotFoundException('현재 자유계약 선수만 요구 조건을 조회할 수 있습니다.');
+    return terms;
   }
   async act(db: D1Database, user: string, action: Record<string, unknown>) {
     const requestId =
@@ -101,6 +128,24 @@ export class CareerService {
           throw new Error('한 번에 1~7일을 진행할 수 있습니다.');
         const safeAction = { ...action };
         delete safeAction.retiredCandidate;
+        delete safeAction.freeAgentTerms;
+        if (
+          action.type === 'negotiate' ||
+          (action.type === 'reviseContractSalary' && action.kind === 'player')
+        ) {
+          const id =
+            action.type === 'negotiate'
+              ? String(action.id)
+              : current.state.deals.find((d) => d.id === action.id)?.player.id;
+          if (id)
+            safeAction.freeAgentTerms = await this.freeAgentTerms(
+              db,
+              user,
+              current.state,
+              world,
+              id,
+            );
+        }
         if (action.type === 'hireRetiredCoach') {
           const records = await this.careers.playerRecords(db, user, String(action.playerId));
           safeAction.retiredCandidate = records.find((r) => r.kind === 'retirement')?.coach;

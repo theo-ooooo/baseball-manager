@@ -29,6 +29,10 @@ export function PlayerOfferForm({
     transfer,
     cost,
     valid,
+    quote,
+    error,
+    loading,
+    retry,
   } = usePlayerOffer(player, g, deal, own);
   return (
     <form
@@ -54,9 +58,32 @@ export function PlayerOfferForm({
         <h3>{own ? '다음 계약을 제안해 보세요' : '우리 구단의 제안'}</h3>
         <small>금액 단위: 만 원</small>
       </div>
+      {!own && player.club === 'fa' && (
+        <div className="contract-reply" aria-live="polite">
+          <strong>
+            {quote
+              ? `에이전트 요구 연봉 ${money(quote.salary)} · ${quote.years}년`
+              : loading
+                ? 'FA 요구 조건 확인 중…'
+                : 'FA 요구 조건'}
+          </strong>
+          <p>
+            {quote?.basis || error || '현재 선수 가치와 영입할 리그를 기준으로 조건을 확인합니다.'}
+          </p>
+          {quote && <small>직전 연봉과 별도로 평가한 새 계약 요구액입니다.</small>}
+          {error && (
+            <button type="button" className="text-button" onClick={retry}>
+              다시 불러오기
+            </button>
+          )}
+        </div>
+      )}
       <div className="contract-term-row">
         <label htmlFor={`salary-${player.id}`}>
-          보장 연봉<small>현재 {money(player.salary)}</small>
+          보장 연봉
+          <small>
+            {player.club === 'fa' ? '직전' : '현재'} {money(player.salary)}
+          </small>
         </label>
         <div>
           <div className="contract-number">
@@ -143,7 +170,7 @@ export function PlayerOfferForm({
         </div>
       </section>
       <p className="renewal-salary-change">
-        현재 연봉 대비{' '}
+        {player.club === 'fa' ? '직전 연봉 대비' : '현재 연봉 대비'}{' '}
         {Number.isFinite(amount) && player.salary > 0
           ? `${(amount / player.salary - 1) * 100 >= 0 ? '+' : ''}${((amount / player.salary - 1) * 100).toFixed(1)}%`
           : '—'}{' '}
