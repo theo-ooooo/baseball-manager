@@ -19,6 +19,7 @@ import { MatchDecisionBar } from './match-decision-bar';
 import { CoachSubstitutionCard } from './coach-substitution-card';
 import { CoachCommandCard } from './coach-command-card';
 import { MatchSubstitutionNotice, MatchSubstitutionHistory } from './match-substitution-notice';
+import { MatchCommandResultNotice, MatchCommandResultHistory } from './match-command-result-notice';
 import {
   Dialog,
   DialogContent,
@@ -161,6 +162,10 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
       <div className="match-broadcast" hidden={panel !== 'watch'}>
         <div className="match-broadcast-main">
           <MatchAtBat result={result} cursor={cursor} settled={settled} />
+          <MatchCommandResultNotice
+            event={m.commandResults.current}
+            onDismiss={m.commandResults.dismiss}
+          />
           <div className="match-field-view">
             <MatchSubstitutionNotice
               event={m.substitutions.current}
@@ -243,6 +248,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           {m.report === 'overview' && (
             <>
               <MatchOverview result={result} consumed={m.consumed} />
+              <MatchCommandResultHistory events={m.commandResults.events} />
               <MatchSubstitutionHistory events={m.substitutions.events} />
             </>
           )}

@@ -1,0 +1,91 @@
+.match-command-result {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 50px 18px 20px;
+  color: #eef4f5;
+  background: #243741;
+  border-block: 1px solid #627a83;
+  animation: command-result-appear 240ms ease-out both;
+}
+.match-command-result.is-success {
+  color: #142918;
+  background: linear-gradient(115deg, #c9f88d, #a6e5bf);
+  border-color: #dbffb4;
+}
+.match-command-result.is-homerun {
+  color: #39230a;
+  background: linear-gradient(115deg, #ffe5a0, #ffc16e);
+  border-color: #fff0c7;
+}
+.match-command-result small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.match-command-result strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 850;
+  margin-top: 5px;
+}
+.match-command-result p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+.match-command-result-label {
+  font-size: clamp(24px, 3.5vw, 46px);
+  line-height: 1.1;
+  letter-spacing: -0.05em;
+  text-align: right;
+  text-wrap: balance;
+}
+.match-command-result > button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+}
+.match-command-result > button:hover {
+  background: #0001;
+}
+.match-command-result-history .is-success strong {
+  color: var(--brand);
+}
+@keyframes command-result-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 600px) {
+  .match-command-result {
+    padding: 12px 42px 12px 12px;
+    gap: 10px;
+  }
+  .match-command-result > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .match-command-result-label {
+    max-width: 42%;
+    font-size: 28px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .match-command-result {
+    animation: none;
+  }
+}

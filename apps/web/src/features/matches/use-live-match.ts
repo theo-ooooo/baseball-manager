@@ -18,6 +18,7 @@ import { useMatchPauseSettings, type MatchPauseSettings } from './use-match-paus
 import { useMatchResume } from './use-match-resume';
 import { useMatchSubstitutions } from './use-match-substitutions';
 import { useCoachSubstitution } from './use-coach-substitution';
+import { useMatchCommandResults } from './use-match-command-results';
 
 export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const live = g.liveMatch!,
@@ -72,6 +73,13 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     setSoundPaused(true);
   }, [pausePlayback]);
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
+  const commandResults = useMatchCommandResults(
+    result,
+    consumed,
+    g.club,
+    panel === 'watch',
+    live.commands,
+  );
   const decision = useMemo(() => matchDecision(live, g.club, consumed), [live, g.club, consumed]);
   const commandAdvice = useMemo(
     () => (!playback.playing && playback.settled ? coachMatchCommand(g, consumed) : undefined),
@@ -148,6 +156,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   return {
     ...playback,
     substitutions,
+    commandResults,
     coachSubstitution,
     autoPause: {
       ...autoPause,

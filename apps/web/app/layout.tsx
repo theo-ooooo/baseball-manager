@@ -23,6 +23,7 @@ import '../styles/app-version.css';
 import '../styles/league-records.css';
 import '../styles/match-center.css';
 import '../styles/match-substitutions.css';
+import '../styles/match-command-results.css';
 import '../styles/coach-center.css';
 import '../styles/international.css';
 import '../styles/training-center.css';
