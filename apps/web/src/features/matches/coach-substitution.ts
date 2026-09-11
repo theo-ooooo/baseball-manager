@@ -11,7 +11,7 @@ import { matchPlanAt, type MatchPlan } from './match-plan-state';
 
 export type CoachSubstitution = {
   id: string;
-  kind: 'pitcher' | 'batter';
+  kind: 'pitcher' | 'batter' | 'fielder';
   coach: string;
   judgment: string;
   outgoing: Player;
@@ -48,6 +48,52 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
     preparation: string | undefined,
     canWarm = false;
   const next = { ...plan, lineup: [...plan.lineup], defense: { ...plan.defense } };
+  // 함수 선언은 호이스팅되어 위쪽 coach 좁히기가 적용되지 않으므로 이름을 미리 고정한다.
+  const coachName = coach.name;
+  /**
+   * 대수비 제안. 리드를 지켜야 하는 후반에 수비가 약한 야수를 더 나은 수비수로 바꾼다.
+   * 투수 교체 사유가 없을 때만 검토하므로 한 번에 한 가지 제안만 올라간다.
+   */
+  function fielder(): CoachSubstitution | undefined {
+    if (decision.inning < 7 || lead <= 0) return;
+    const fieldScore = (p: Player, pos: DefensivePosition) =>
+      (p.field * 0.7 + familiarity(p, pos) * 0.3) * (0.7 + condition(p) / 333);
+    const bench = players.filter(
+      (p) => p.pos !== 'P' && !usedBatters.has(p.id) && condition(p) >= 65,
+    );
+    if (!bench.length) return;
+    let best:
+      { pos: DefensivePosition; slot: number; out: Player; in: Player; gain: number } | undefined;
+    for (const pos of Object.keys(plan.defense) as DefensivePosition[]) {
+      if (pos === 'P') continue;
+      const out = byId.get(plan.defense[pos]!);
+      const slot = plan.lineup.indexOf(plan.defense[pos]!);
+      if (!out || slot < 0) continue;
+      const candidate = bench
+        .filter((p) => familiarity(p, pos) >= 65)
+        .toSorted((a, b) => fieldScore(b, pos) - fieldScore(a, pos))[0];
+      if (!candidate) continue;
+      const gain = fieldScore(candidate, pos) - fieldScore(out, pos);
+      if (gain < judgment.minimumGain) continue;
+      if (!best || gain > best.gain) best = { pos, slot, out, in: candidate, gain };
+    }
+    if (!best) return;
+    const plan2 = { ...plan, lineup: [...plan.lineup], defense: { ...plan.defense } };
+    plan2.lineup[best.slot] = best.in.id;
+    plan2.defense[best.pos] = best.in.id;
+    return {
+      id: `${cursor}:${best.out.id}:${best.in.id}`,
+      kind: 'fielder',
+      coach: coachName,
+      judgment: `능력 ${judgment.skill} · ${judgment.label}`,
+      outgoing: best.out,
+      incoming: best.in,
+      reason: `${decision.inning}회 ${lead}점 리드입니다. ${best.pos} 수비를 ${best.out.name}(수비 ${best.out.field})에서 ${best.in.name}(수비 ${best.in.field})으로 바꿔 리드를 지키는 것을 권합니다.`,
+      plan: plan2,
+      emergency: false,
+      canWarm: false,
+    };
+  }
   if (!decision.attacking) {
     if (!g.pitching) return;
     const appearances = past.filter((e) => e.half !== own && e.play?.pitcher === outgoing.id);
@@ -75,7 +121,7 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
       reason = `${decision.inning}회 ${lead}점 리드입니다. 승리를 지킬 투수가 필요합니다.`;
     else if (outs >= 18)
       reason = `${Math.floor(outs / 3)}이닝을 소화했습니다. 다음 승부는 불펜에 맡기는 것을 권합니다.`;
-    else return;
+    else return fielder();
     const candidates = players.filter((p) => p.pos === 'P' && condition(p) >= 55);
     const ranked = candidates.toSorted(
       (a, b) =>
@@ -136,25 +182,33 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
       .toSorted((a, b) => battingScore(b) - battingScore(a))[0];
     if (!incoming) return;
     const gain = battingScore(incoming) - battingScore(outgoing);
+    const atBats = past.filter(
+      (e) =>
+        e.half === own &&
+        e.play?.batter === outgoing.id &&
+        e.play.plateAppearance !== false &&
+        !['walk', 'sacrifice'].includes(playKind(e.text)),
+    );
+    const hits = atBats.filter((e) =>
+      ['single', 'double', 'triple', 'homeRun'].includes(playKind(e.text)),
+    ).length;
+    const today = atBats.length ? `오늘 ${atBats.length}타수 ${hits}안타입니다. ` : '';
+    const season = outgoing.stats.ab >= 20 ? outgoing.stats.h / outgoing.stats.ab : undefined;
     if (condition(outgoing) <= judgment.fatigue && gain >= judgment.minimumGain * 0.6)
       reason = `경기 체력이 ${Math.round(condition(outgoing))}%입니다. 같은 수비 위치를 맡을 수 있는 대타를 권합니다.`;
     else if (
       decision.kind === 'opportunity' &&
       decision.inning >= 7 &&
       gain >= judgment.minimumGain
-    ) {
-      const atBats = past.filter(
-        (e) =>
-          e.half === own &&
-          e.play?.batter === outgoing.id &&
-          e.play.plateAppearance !== false &&
-          !['walk', 'sacrifice'].includes(playKind(e.text)),
-      );
-      const hits = atBats.filter((e) =>
-        ['single', 'double', 'triple', 'homeRun'].includes(playKind(e.text)),
-      ).length;
-      reason = `${atBats.length ? `오늘 ${atBats.length}타수 ${hits}안타입니다. ` : ''}득점 기회에 타격 기대치가 더 높은 대타를 권합니다.`;
-    } else return;
+    )
+      reason = `${today}득점 기회에 타격 기대치가 더 높은 대타를 권합니다.`;
+    // 상황과 무관한 타격 부진도 교체 사유로 본다. 기회 상황만 보면 계속 못 치는
+    // 선수가 경기 끝까지 타순에 남는다.
+    else if (atBats.length >= 3 && hits === 0 && gain >= judgment.minimumGain)
+      reason = `${today}타격이 맞지 않습니다. 남은 타석은 대타에게 맡기는 것을 권합니다.`;
+    else if (season !== undefined && season < 0.24 && gain >= judgment.minimumGain)
+      reason = `${today}시즌 타율 ${season.toFixed(3)}로 타격이 풀리지 않았습니다. 대타를 권합니다.`;
+    else return fielder();
     next.lineup[decision.slot] = incoming.id;
     next.defense[position] = incoming.id;
   }

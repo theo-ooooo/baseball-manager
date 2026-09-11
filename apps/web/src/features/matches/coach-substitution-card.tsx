@@ -13,7 +13,12 @@ export function CoachSubstitutionCard({
   return (
     <section className="coach-substitution-card" aria-label="코치 교체 제안">
       <small>
-        {suggestion.coach} 코치 · {suggestion.kind === 'pitcher' ? '투수 교체 제안' : '대타 제안'}
+        {suggestion.coach} 코치 ·{' '}
+        {suggestion.kind === 'pitcher'
+          ? '투수 교체 제안'
+          : suggestion.kind === 'fielder'
+            ? '대수비 제안'
+            : '대타 제안'}
       </small>
       <small className="coach-judgment">{suggestion.judgment}</small>
       <strong>
@@ -37,7 +42,11 @@ export function CoachSubstitutionCard({
           disabled={busy}
           onClick={() => void coach.apply()}
         >
-          {suggestion.emergency ? '긴급 교체 · 경기 재개' : '추천대로 교체 · 경기 재개'}
+          {suggestion.emergency
+            ? '긴급 교체 · 경기 재개'
+            : suggestion.kind === 'fielder'
+              ? '대수비 투입 · 경기 재개'
+              : '추천대로 교체 · 경기 재개'}
         </button>
         <button disabled={busy} onClick={coach.dismiss}>
           현재 선수 유지

@@ -8,7 +8,7 @@ const output = join(tmpdir(), 'dugout-coach-substitution-tests.cjs');
 buildSync({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './apps/web/src/features/matches/coach-substitution';export * from './apps/web/src/features/matches/match-plan-state';export * from './packages/shared/src/coach-assessment';export * from './packages/shared/src/coach-directory';export * from './packages/shared/src/match-energy';export * from './packages/shared/src/match-decision';",
+      "export * from './tests/fixtures/engine';export * from './apps/web/src/features/matches/coach-substitution';export * from './apps/web/src/features/matches/match-plan-state';export * from './packages/shared/src/coach-assessment';export * from './packages/shared/src/coach-directory';export * from './packages/shared/src/match-energy';export * from './packages/shared/src/match-decision';export * from './packages/shared/src/management';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -26,6 +26,7 @@ const {
   coachEmployer,
   matchPlanAt,
   matchDecision,
+  familiarity,
 } = createRequire(import.meta.url)(output);
 const start = (seed = 407) => {
   const g = e.newGame('kbo-lotte', 'Coach QA', 'full', seed);
@@ -260,4 +261,143 @@ test('Signing a foreign coach updates actual employer and releases the outgoing 
     years: 2,
   });
   assert.equal(g.coachDeals[0].coach.id, outgoing.id);
+});
+
+/**
+ * 수비가 약한 야수와 확실히 나은 벤치 후보를 만든다. 경기 로그는 건드리지 않는다.
+ * reviseMatch 는 재생성한 타임라인의 소비 구간이 동일해야 통과하므로, 로그를 직접
+ * 수정하면 적용이 거부된다.
+ */
+function weakenDefense(g) {
+  const { plan } = matchPlanAt(g, 1);
+  const position = Object.keys(plan.defense).find(
+    (pos) =>
+      pos !== 'P' &&
+      g.roster.some(
+        (p) =>
+          p.pos !== 'P' &&
+          p.squad !== 'reserve' &&
+          !plan.lineup.includes(p.id) &&
+          familiarity(p, pos) >= 65,
+      ),
+  );
+  assert.ok(position, '벤치 후보가 있는 수비 위치가 필요하다');
+  const weak = g.roster.find((p) => p.id === plan.defense[position]);
+  weak.field = 15;
+  for (const p of g.roster)
+    if (p.pos !== 'P' && p.squad !== 'reserve' && !plan.lineup.includes(p.id)) {
+      p.field = 95;
+      p.condition = 95;
+    }
+  return { position, weak };
+}
+
+/** 실제 로그에서 우리 팀이 앞선 7회 이후 수비 상황을 훑어 첫 대수비 제안을 찾는다. */
+function fielderAdvice(g) {
+  const live = g.liveMatch,
+    own = live.home === g.club ? 1 : 0;
+  for (let cursor = 1; cursor < live.timeline.log.length; cursor++) {
+    const d = matchDecision(live, g.club, cursor);
+    if (d.attacking || d.inning < 7) continue;
+    const score = live.timeline.log.slice(0, cursor).at(-1)?.play?.after.score || [0, 0];
+    if (score[own] - score[1 - own] <= 0) continue;
+    const suggestion = coachSubstitution(g, cursor);
+    if (suggestion?.kind === 'fielder') return { cursor, suggestion };
+  }
+  return null;
+}
+
+test('타격 부진 타자는 기회 상황이 아니어도 대타를 추천한다', () => {
+  const g = start(901);
+  let found = null;
+  for (let cursor = 1; cursor < g.liveMatch.timeline.log.length && !found; cursor++) {
+    const d = matchDecision(g.liveMatch, g.club, cursor);
+    if (!d.attacking || d.inning < 6 || d.kind === 'opportunity') continue;
+    const { plan } = matchPlanAt(g, cursor);
+    const batter = g.roster.find((p) => p.id === d.batterId);
+    const position = Object.keys(plan.defense).find(
+      (pos) => pos !== 'P' && plan.defense[pos] === d.batterId,
+    );
+    if (!batter || !position) continue;
+    const bench = g.roster.filter(
+      (p) =>
+        p.pos !== 'P' &&
+        p.squad !== 'reserve' &&
+        !plan.lineup.includes(p.id) &&
+        familiarity(p, position) >= 65,
+    );
+    if (!bench.length) continue;
+    // 시즌 타율을 0.240 미만으로 만들고 벤치에 확실히 나은 타자를 둔다.
+    Object.assign(batter.stats, { ab: 120, h: 20 });
+    batter.contact = 25;
+    batter.power = 25;
+    for (const p of bench) {
+      p.condition = 95;
+      p.contact = 95;
+      p.power = 90;
+    }
+    const suggestion = coachSubstitution(g, cursor);
+    if (suggestion?.kind === 'batter' && suggestion.outgoing.id === batter.id)
+      found = { suggestion, batter };
+  }
+  assert.ok(found, '기회 상황이 아닌 타석에서도 부진 사유로 추천이 나와야 한다');
+  assert.match(found.suggestion.reason, /타율|타격이 맞지/);
+});
+
+test('리드 중 후반에는 수비가 약한 야수에 대해 대수비를 추천한다', () => {
+  const g = start(902);
+  const { position, weak } = weakenDefense(g);
+  const found = fielderAdvice(g);
+  assert.ok(found, '7회 이후 리드 상황에서 대수비 제안을 찾아야 한다');
+  const { suggestion } = found;
+  assert.equal(suggestion.kind, 'fielder');
+  assert.equal(suggestion.outgoing.id, weak.id);
+  assert.match(suggestion.reason, /수비/);
+  assert.ok(suggestion.incoming.field > weak.field, '수비가 더 좋은 선수를 골라야 한다');
+  assert.equal(suggestion.plan.defense[position], suggestion.incoming.id);
+  assert.equal(suggestion.plan.lineup.length, 9);
+  assert.equal(new Set(suggestion.plan.lineup).size, 9);
+  assert.ok(suggestion.plan.lineup.includes(suggestion.incoming.id));
+  assert.equal(suggestion.emergency, false);
+  assert.equal(suggestion.canWarm, false);
+});
+
+test('앞서지 않는 상황에서는 대수비를 추천하지 않는다', () => {
+  const g = start(902);
+  weakenDefense(g);
+  const live = g.liveMatch,
+    own = live.home === g.club ? 1 : 0;
+  let checked = 0;
+  for (let cursor = 1; cursor < live.timeline.log.length; cursor++) {
+    const d = matchDecision(live, g.club, cursor);
+    if (d.attacking) continue;
+    const score = live.timeline.log.slice(0, cursor).at(-1)?.play?.after.score || [0, 0];
+    const lead = score[own] - score[1 - own];
+    if (lead > 0 && d.inning >= 7) continue;
+    checked++;
+    assert.notEqual(
+      coachSubstitution(g, cursor)?.kind,
+      'fielder',
+      `커서 ${cursor} (${d.inning}회 · ${lead}점차) 에서 대수비가 나왔다`,
+    );
+  }
+  assert.ok(checked > 0, '검사한 커서가 있어야 한다');
+});
+
+test('대수비 추천 명단은 reviseMatch 서버 검증을 통과한다', () => {
+  const g = start(902);
+  const { position } = weakenDefense(g);
+  const found = fielderAdvice(g);
+  assert.ok(found, '대수비 제안을 찾아야 한다');
+  const { cursor, suggestion } = found;
+  const before = structuredClone(g.liveMatch.timeline.log.slice(0, cursor));
+  const next = e.applyAction(g, {
+    type: 'reviseMatch',
+    ...suggestion.plan,
+    cursor,
+    timelineVersion: g.liveMatch.timelineVersion,
+  });
+  assert.deepEqual(next.liveMatch.timeline.log.slice(0, cursor), before);
+  assert.equal(matchPlanAt(next, cursor).plan.defense[position], suggestion.incoming.id);
+  assert.ok(matchPlanAt(next, cursor).usedBatters.has(suggestion.incoming.id));
 });
