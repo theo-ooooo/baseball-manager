@@ -1,3 +1,4 @@
+import { rotateLineup } from './lineup-rotation';
 import type { GameState, NewsItem, Player, WorldCatalog } from '@dugout/shared/types';
 import { createGameView, lineupAuto } from '@dugout/shared/game-view';
 import { firstTeam, autoDefense, preseasonFixtures } from '@dugout/shared/management';
@@ -82,7 +83,8 @@ export function createLineupReports(world: WorldCatalog) {
         ),
       })),
     );
-    const chosen = selection.map((id) => batters.find((p) => p.id === id)!);
+    const rotationPlan = rotateLineup(g, batters, selection);
+    const chosen = rotationPlan.ids.map((id) => batters.find((p) => p.id === id)!);
     const ids = lineupAuto(chosen);
     const pitchers = active.filter((p) => p.pos === 'P');
     const scheduled = pitchers.find((p) => p.id === g.starter);
@@ -103,11 +105,13 @@ export function createLineupReports(world: WorldCatalog) {
     const explanation = (p: Player) =>
       !isAvailable(p)
         ? `${p.injury?.name || '부상'} · 출전 제외`
-        : p.squad === 'reserve'
-          ? '현재 2군 소속'
-          : p.condition < 70
-            ? `컨디션 ${Math.round(p.condition)}% · 1군을 유지하며 선발 휴식`
-            : `${battingRecord(p)} · 같은 포지션 선수의 기량·컨디션${protectDefense ? '·수비력' : ''} 비교`;
+        : rotationPlan.changes.some((change) => change.outgoing.id === p.id)
+          ? `최근 기용이 많아 휴식 · 같은 포지션의 ${rotationPlan.changes.find((change) => change.outgoing.id === p.id)!.incoming.name}에게 출전 기회 분배`
+          : p.squad === 'reserve'
+            ? '현재 2군 소속'
+            : p.condition < 70
+              ? `컨디션 ${Math.round(p.condition)}% · 1군을 유지하며 선발 휴식`
+              : `${battingRecord(p)} · 같은 포지션 선수의 기량·컨디션${protectDefense ? '·수비력' : ''} 비교`;
     const recommendation: NonNullable<NewsItem['lineupRecommendation']> = {
       club: g.club,
       fixture: fixture.id,
@@ -139,6 +143,17 @@ export function createLineupReports(world: WorldCatalog) {
         ],
         sections: [
           {
+            title: '출전 기회 분배',
+            body: rotationPlan.changes.length
+              ? rotationPlan.changes
+                  .map(
+                    ({ incoming, outgoing, recent, sample }) =>
+                      `${incoming.name}: 최근 ${sample}경기 중 ${recent}경기 출전. 기량 차이가 크지 않은 같은 포지션의 ${outgoing.name}와 선발 기회를 나눕니다.`,
+                  )
+                  .join('\n')
+              : '최근 출전량·포지션·컨디션을 함께 검토했습니다. 전력과 수비 배치를 유지하면서 비교 가능한 후보에게 다음 기회를 배분합니다.',
+          },
+          {
             title: '상대 팀과 기용 방향',
             body:
               recent.length >= 3
@@ -159,7 +174,7 @@ export function createLineupReports(world: WorldCatalog) {
           return {
             id,
             name: `${i + 1}번 ${p.name}`,
-            detail: `${Object.entries(defense).find(([pos, pid]) => pos !== 'P' && pid === id)?.[0] || p.pos} · 컨디션 ${Math.round(p.condition)}% · ${lineupReason(p, i)} · ${battingRecord(p)}`,
+            detail: `${rotationPlan.changes.some((change) => change.incoming.id === p.id) ? '출전 기회 분배 · ' : ''}${Object.entries(defense).find(([pos, pid]) => pos !== 'P' && pid === id)?.[0] || p.pos} · 컨디션 ${Math.round(p.condition)}% · ${lineupReason(p, i)} · ${battingRecord(p)}`,
           };
         }),
       },
