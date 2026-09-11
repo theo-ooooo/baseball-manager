@@ -17,9 +17,13 @@ buildSync({
   format: 'cjs',
   outfile: output,
 });
-const { engine: e, previewSubstitution, battingLine, matchPlanAt, familiarity } = createRequire(
-  import.meta.url,
-)(output);
+const {
+  engine: e,
+  previewSubstitution,
+  battingLine,
+  matchPlanAt,
+  familiarity,
+} = createRequire(import.meta.url)(output);
 
 const start = (seed = 811) => {
   const g = e.newGame('kbo-lotte', 'Preview QA', 'full', seed);
