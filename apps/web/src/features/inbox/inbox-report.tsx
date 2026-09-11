@@ -1,6 +1,7 @@
 import { isClosedClubReport } from '@dugout/shared/employment-reports';
 import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
 import { isClubSeasonRest } from '@dugout/shared/season-status';
+import { InternationalDutyPanel } from '../squad/international-duty-panel';
 import { LineupRecommendationActions } from './lineup-recommendation-actions';
 import { MedicalDecision } from '../squad/medical-decision';
 import { CoachRecommendations } from '../squad/coach-recommendations';
@@ -263,6 +264,9 @@ export function InboxReport({
         )}
         {!resolution && news.lineupRecommendation && (
           <LineupRecommendationActions {...{ g, news, act, busy }} />
+        )}
+        {!resolution && news.internationalEventId && (
+          <InternationalDutyPanel {...{ g, act, busy }} eventId={news.internationalEventId} />
         )}
         {news.actionView === 'medical' && player && (
           <MedicalDecision g={g} player={player} act={act} busy={busy} />

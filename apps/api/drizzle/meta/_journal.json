@@ -127,6 +127,13 @@
       "when": 1789034529701,
       "tag": "0017_career_snapshot_parts",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1789089036383,
+      "tag": "0018_player_nationalities",
+      "breakpoints": true
     }
   ]
 }

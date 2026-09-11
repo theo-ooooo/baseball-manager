@@ -1,5 +1,6 @@
 import managers from './club-managers-2026-09-09.json';
 import portraits from './kbo-portraits-2026-09-10.json';
+import nationalities from './player-nationalities-2026-09-11.json';
 import logos from './club-logos.json';
 import type { ClubLogo } from '@dugout/shared/types';
 import schedule from './schedule-2026.json';
@@ -57,6 +58,16 @@ export function buildSeedWorld(): WorldCatalog {
   for (const p of players) {
     const portrait = (portraits.players as Record<string, Player['portrait']>)[p.id];
     if (portrait) p.portrait = portrait;
+    const nationality = (
+      nationalities.players as Record<
+        string,
+        { country: string; nationalTeam: NonNullable<Player['nationalTeam']> }
+      >
+    )[p.id];
+    if (nationality) {
+      p.country = nationality.country;
+      p.nationalTeam = nationality.nationalTeam;
+    }
   }
   const coaches: Coach[] = coachRoles.flatMap((role, i) =>
     Array.from({ length: 4 }, (_, n) => {
@@ -88,7 +99,7 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-10-v10',
+    version: 'world-2026-09-11-v11',
     year: 2026,
     clubs: clubs.map((club) => ({
       ...club,

@@ -1,5 +1,6 @@
 import { prepareSeasonRest } from './season-rest';
 import { scoutingGuide } from '@dugout/shared/scouting-guide';
+import { createInternational } from './international';
 import { createLineupReports } from './lineup-reports';
 import { createAiRegistrations } from './ai-registrations';
 import { createTrades } from './trades';
@@ -99,6 +100,7 @@ export function createGameEngine(world: WorldCatalog) {
   const managerCareer = createManagerCareer(world);
   const worldSimulation = createWorldSimulation(world);
   const registrations = createAiRegistrations(world);
+  const international = createInternational(world);
   const lineupReports = createLineupReports(world);
   const mediaAction = createMatchMediaActions(world);
   const { negotiate, signDeal } = recruitment;
@@ -231,10 +233,11 @@ export function createGameEngine(world: WorldCatalog) {
         { actionView: 'jobs' },
       );
     }
+    international.tick(g);
     return g;
   }
   function teamStrength(g: GameState, id: string) {
-    const r = rosterFor(g, id).filter((p) => p.squad !== 'reserve');
+    const r = rosterFor(g, id).filter((p) => p.squad !== 'reserve' && isAvailable(p));
     return r.reduce((s, p) => s + overall(p), 0) / (r.length || 1);
   }
   function doMatch(
@@ -342,6 +345,7 @@ export function createGameEngine(world: WorldCatalog) {
     }
   }
   function advance(g: GameState, count = 1, pauseAfterOwn = false) {
+    international.tick(g);
     prepareSquad(g, world);
     if (g.phase === 'finished') throw new Error('시즌이 종료됐습니다. 다음 시즌을 시작해 주세요.');
     const r = rng(g.seed);
@@ -441,6 +445,7 @@ export function createGameEngine(world: WorldCatalog) {
       recordDailyTraining(g, training);
       g.day++;
       for (const p of g.roster) {
+        if (p.internationalDuty) continue;
         p.condition = clamp(
           p.condition + 4 + coachSkill(g, '체력') * 0.09 + (training.get(p.id)?.recovery || 0),
           20,
@@ -460,6 +465,7 @@ export function createGameEngine(world: WorldCatalog) {
       worldSimulation.tick(g);
       medicalTick(g, training);
       managerCareer.tick(g);
+      international.tick(g);
       lineupReports.prepare(g);
       if (g.phase === 'preseason' && g.day === 0) {
         g.phase = 'regular';
@@ -714,6 +720,7 @@ export function createGameEngine(world: WorldCatalog) {
       `${departed.length}명 계약 만료. 베테랑 은퇴와 노쇠화가 반영됐습니다. 신인 선발에서 새 유망주를 지명하세요.`,
       'league',
     );
+    international.tick(g);
     return g;
   }
   /**
@@ -793,6 +800,7 @@ export function createGameEngine(world: WorldCatalog) {
         ? { ...g, liveMatch: { ...g.liveMatch } }
         : structuredClone(g);
     if (!s.liveMatch) {
+      international.tick(s);
       prepareSquad(s, world);
       prepareDynamics(s);
       preparePitching(s);
@@ -806,7 +814,11 @@ export function createGameEngine(world: WorldCatalog) {
     if (s.draft?.status === 'open' && ['resignManager', 'signManager'].includes(String(a.type)))
       rookieDraft.progress(s, true);
     const careerAction = managerCareer.action(s, a);
-    if (careerAction) return careerAction;
+    if (careerAction) {
+      international.sync(careerAction);
+      repairMedicalSelection(careerAction);
+      return careerAction;
+    }
     if (
       a.type === 'managerContinue' ||
       ((isUnemployed(s) || s.managerCareer!.vacationUntil) &&
@@ -850,6 +862,7 @@ export function createGameEngine(world: WorldCatalog) {
           scheduledGames(s, random);
           s.seed = Math.floor(random() * 4294967295);
           s.day++;
+          international.tick(s);
           worldSimulation.tick(s);
           trades.tick(s);
           scouting.tick(s);
@@ -913,6 +926,8 @@ export function createGameEngine(world: WorldCatalog) {
     }
     const live = liveAction(s, a);
     if (live) return live;
+    const nationalAction = international.action(s, a);
+    if (nationalAction) return nationalAction;
     const medical = medicalAction(s, a);
     if (medical) return medical;
     const media = mediaAction(s, a);

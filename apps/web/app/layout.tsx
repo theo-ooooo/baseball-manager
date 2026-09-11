@@ -24,6 +24,7 @@ import '../styles/league-records.css';
 import '../styles/match-center.css';
 import '../styles/match-substitutions.css';
 import '../styles/coach-center.css';
+import '../styles/international.css';
 import '../styles/training-center.css';
 import '../styles/clubhouse-theme.css';
 import '../styles/workspace-layout.css';

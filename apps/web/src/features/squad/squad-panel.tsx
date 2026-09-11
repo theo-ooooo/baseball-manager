@@ -1,4 +1,5 @@
 'use client';
+import { InternationalDutyPanel } from './international-duty-panel';
 import Link from 'next/link';
 import { SlidersHorizontal, ArrowRight, Activity, Users } from 'lucide-react';
 import { type GameState, type Player } from '@dugout/shared/game-view';
@@ -25,6 +26,7 @@ export function Squad({
     s = useSquadBrowser(g);
   return (
     <div className="squad-workspace">
+      <InternationalDutyPanel {...{ g, act, busy }} />
       <section className="panel squad-list-panel" aria-label="선수 명단">
         <header className="squad-list-heading">
           <div className="squad-scope" role="group" aria-label="볼 선수단">

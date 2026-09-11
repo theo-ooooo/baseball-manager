@@ -240,6 +240,8 @@ test('Version 2 saved pitching still regenerates its deployed timeline exactly',
   });
   const { generateTimeline, createMatchSimulator, world } = require(outfile);
   let g = e.newGame('kbo-lotte', 'V2 frozen', 'full', 407);
+  // This regression represents a pre-callup saved lineup; new careers now have national duties.
+  g.international.events = g.international.events.map((event) => ({ ...event, players: [] }));
   g.day = -22;
   g = e.applyAction(g, { type: 'startMatch' });
   g.liveMatch.pitchingVersion = 2;

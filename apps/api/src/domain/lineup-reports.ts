@@ -105,7 +105,7 @@ export function createLineupReports(world: WorldCatalog) {
     const defense = autoDefense({ ...g, lineup: ids, starter: starter.id, defense: undefined });
     const explanation = (p: Player) =>
       !isAvailable(p)
-        ? `${p.injury?.name || '부상'} · 출전 제외`
+        ? `${p.internationalDuty?.name || p.injury?.name || '부상'} · 출전 제외`
         : rotationPlan.changes.some((change) => change.outgoing.id === p.id)
           ? `최근 기용이 많아 휴식 · 같은 포지션의 ${rotationPlan.changes.find((change) => change.outgoing.id === p.id)!.incoming.name}에게 출전 기회 분배`
           : p.squad === 'reserve'

@@ -29,7 +29,7 @@ const {
 function ready() {
   const g = e.newGame('kbo-lotte', 'Media QA', 'short', 321);
   g.day = -22;
-  return g;
+  return e.applyAction(g, { type: 'auto' });
 }
 const pre = (g) =>
   preMatchConversation(

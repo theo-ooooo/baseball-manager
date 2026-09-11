@@ -53,7 +53,7 @@ test('D1 catalog serves verified KBO photo identities by player id', async () =>
   const seed = JSON.parse(await readFile('apps/api/seed/kbo-portraits-2026-09-10.json', 'utf8'));
   const catalog = await call('/api/catalog');
   assert.equal(catalog.status, 200, JSON.stringify(catalog.body).slice(0, 300));
-  assert.equal(catalog.body.version, 'world-2026-09-10-v10');
+  assert.equal(catalog.body.version, 'world-2026-09-11-v11');
   const withPortrait = catalog.body.players.filter((p) => p.portrait);
   assert.equal(withPortrait.length, Object.keys(seed.players).length);
   for (const p of withPortrait) {
@@ -160,4 +160,40 @@ test('an existing active match gains KBO photos on read without rewriting the sa
   delete expectedLive.prepared;
   delete expectedLive.opponents;
   assert.deepEqual(result.body.state.liveMatch, expectedLive);
+});
+
+test('D1 nationality migration corrects foreign players and carries national associations through a saved career', async () => {
+  const catalog = await call('/api/catalog');
+  const reyes = catalog.body.players.find((p) => p.name === '레이예스' && p.club === 'kbo-lotte');
+  assert.equal(reyes.country, '베네수엘라');
+  assert.equal(reyes.nationalTeam.country, '베네수엘라');
+  const ohtani = catalog.body.players.find((p) => p.original === 'Shohei Ohtani');
+  assert.equal(ohtani.nationalTeam.country, '일본');
+  assert.ok(
+    catalog.body.players
+      .filter((p) => p.club.startsWith('mlb-'))
+      .every((p) => p.country !== '미국 · 캐나다'),
+  );
+  const user = 'national-career';
+  const initial = await call('/api/career', undefined, user);
+  const started = await call(
+    '/api/career',
+    {
+      type: 'start',
+      club: 'kbo-lotte',
+      manager: '국가대표 검증',
+      mode: 'full',
+      preseason: true,
+      revision: initial.body.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(started.status, 201);
+  const loaded = await call('/api/career', undefined, user);
+  assert.deepEqual(loaded.body.state.international, started.body.state.international);
+  assert.equal(
+    loaded.body.state.roster.find((p) => p.id === reyes.id).nationalTeam.country,
+    '베네수엘라',
+  );
 });

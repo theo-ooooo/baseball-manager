@@ -84,7 +84,13 @@ export function createPlayerGenerator(world: { clubs: Club[]; leagues: League[] 
     const c = club === 'fa' ? null : getClub(club);
     const l = getLeague(c?.league || 'kbo');
     const r = rng(hash(`${club}:${index}:${real?.name || year}`));
-    const country = real?.country || l.country;
+    const country =
+      real?.country ||
+      (l.country === '미국 · 캐나다' && !real
+        ? club === 'mlb-bluejays'
+          ? '캐나다'
+          : '미국'
+        : l.country);
     const name = real?.name || generatedName(country, r);
     const pos = (real?.pos ||
       [

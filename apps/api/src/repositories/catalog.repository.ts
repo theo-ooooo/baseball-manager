@@ -74,8 +74,19 @@ export class CatalogRepository {
         ]);
     // Official photo identities live in catalog_meta and attach by player id, never by name.
     const portraits: Record<string, Player['portrait']> = JSON.parse(meta.player_portraits || '{}');
+    const nationalities: Record<string, Pick<Player, 'country' | 'nationalTeam'>> = JSON.parse(
+      meta.player_nationalities || '{}',
+    );
     const players = (playerRows.results as unknown as Player[]).map((p) => ({
       ...p,
+      country:
+        nationalities[p.id]?.country ||
+        (!p.real && p.country === '미국 · 캐나다'
+          ? p.club === 'mlb-bluejays'
+            ? '캐나다'
+            : '미국'
+          : p.country),
+      nationalTeam: nationalities[p.id]?.nationalTeam,
       portrait: portraits[p.id],
       rating: typeof p.rating === 'string' ? JSON.parse(p.rating) : p.rating,
       real: Boolean(p.real),

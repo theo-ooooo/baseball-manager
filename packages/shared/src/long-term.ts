@@ -102,7 +102,8 @@ export type MedicalCase = {
   rehabilitated?: boolean;
   lastCheck?: string;
 };
-export const isAvailable = (p: Player) => !p.injury || p.injury.phase === 'earlyReturn';
+export const isAvailable = (p: Player) =>
+  !p.internationalDuty && (!p.injury || p.injury.phase === 'earlyReturn');
 export type TradeOffer = {
   id: string;
   club: string;

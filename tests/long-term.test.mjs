@@ -267,7 +267,9 @@ test('AI box scores never assign more hits than at bats and transfer archives st
 test('Bullpen warm-up shares the match change cap and cannot alter consumed play', () => {
   let g = reachFixture(e, game());
   g = e.applyAction(g, { type: 'startMatch' });
-  const p = g.roster.find((p) => p.pos === 'P' && p.squad !== 'reserve' && p.id !== g.starter);
+  const p = g.roster.find(
+    (p) => p.pos === 'P' && p.squad !== 'reserve' && !p.internationalDuty && p.id !== g.starter,
+  );
   const before = structuredClone(g.liveMatch.timeline);
   g = e.applyAction(g, { type: 'bullpen', id: p.id, mode: 'warm', cursor: 0, timelineVersion: 1 });
   assert.deepEqual(g.liveMatch.timeline, before);

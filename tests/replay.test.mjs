@@ -19,7 +19,7 @@ buildSync({
 });
 const { engine: e, replayScene, runnerPoint, bases } = createRequire(import.meta.url)(out);
 test('New matches record every plate appearance, base state and actual selected defenders', () => {
-  let g = e.newGame('kbo-lotte', 'Replay', 'short', 91);
+  let g = e.newGame('kbo-lotte', 'Replay', 'short', 91, { preseason: false });
   g = e.applyAction(g, { type: 'defense', id: g.defense.LF, position: 'SS' });
   const ss = g.defense.SS;
   while (g.phase === 'preseason') g = e.advance(g, 7);
@@ -98,7 +98,7 @@ test('Mobile readout shows only consumed outcomes and applies substitutions at t
   });
   const { matchReadout } = createRequire(import.meta.url)(target);
   let g = e.newGame('kbo-lotte', 'Mobile replay', 'full', 402);
-  g = e.applyAction(g, { type: 'continue' });
+  for (let i = 0; i < 10 && !e.nextFixture(g); i++) g = e.applyAction(g, { type: 'continue' });
   g = e.applyAction(g, { type: 'startMatch' });
   const result = g.liveMatch.timeline;
   const before = matchReadout(result, 0);

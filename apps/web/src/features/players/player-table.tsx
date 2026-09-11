@@ -81,6 +81,11 @@ export function PlayerTable({
             <TableRow key={p.id}>
               <TableCell className="player-identity-cell">
                 <PlayerName p={p} onClick={onPlayer} />
+                {p.internationalDuty && (
+                  <small className="recall-note">
+                    대표팀 차출 · {p.internationalDuty.returnDate.slice(5)} 복귀
+                  </small>
+                )}
                 {p.squad === 'reserve' && recallStatus(g, p)?.remaining ? (
                   <small className="recall-note">
                     {recallStatus(g, p)!.eligible.slice(5).replace('-', '/')} 재등록

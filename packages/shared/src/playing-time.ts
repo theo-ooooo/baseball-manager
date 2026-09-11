@@ -10,6 +10,7 @@ export function playingTimeAssessment(g: Pick<GameState, 'phase' | 'pitching'>, 
     g.phase === 'finished' ||
     p.squad === 'reserve' ||
     p.injury ||
+    p.internationalDuty ||
     p.condition < 65 ||
     p.mood?.role === 'prospect'
   )
