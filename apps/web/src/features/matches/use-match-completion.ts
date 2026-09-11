@@ -17,28 +17,21 @@ export function useMatchCompletion(
   const key = `${live.playbackId}:${live.timelineVersion}`;
   useEffect(() => {
     if (!finished || busy || attempted.current === key) return;
-    // Let a final commanded play's result remain readable before navigating away.
-    const timer = setTimeout(
-      () => {
-        attempted.current = key;
-        void act({ type: 'completeMatch', cursor, timelineVersion: live.timelineVersion }).then(
-          (next) => {
-            if (next && !next.liveMatch)
-              router.push(
-                '/?view=inbox&report=' +
-                  encodeURIComponent(
-                    next.news.find((n) => n.matchId === next.history[0]?.id)?.id || '',
-                  ),
-              );
-          },
-        );
-      },
-      live.timeline?.log.at(-1)?.play?.command ||
-        live.timeline?.log.at(-1)?.play?.cards ||
-        live.timeline?.log.at(-1)?.play?.augmentations
-        ? 7000
-        : 0,
-    );
+    // Complete on the next task, independently of any result notice still on screen.
+    const timer = setTimeout(() => {
+      attempted.current = key;
+      void act({ type: 'completeMatch', cursor, timelineVersion: live.timelineVersion }).then(
+        (next) => {
+          if (next && !next.liveMatch)
+            router.push(
+              '/?view=inbox&report=' +
+                encodeURIComponent(
+                  next.news.find((n) => n.matchId === next.history[0]?.id)?.id || '',
+                ),
+            );
+        },
+      );
+    }, 0);
     return () => clearTimeout(timer);
-  }, [finished, busy, key, cursor, live.timelineVersion, live.timeline, act, router]);
+  }, [finished, busy, key, cursor, live.timelineVersion, act, router]);
 }

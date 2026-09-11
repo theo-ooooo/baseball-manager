@@ -216,13 +216,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
             />
             <MatchDecisionBar
               decision={m.decision}
-              paused={
-                panel === 'watch' &&
-                m.decisionVisible &&
-                !m.commandOpen &&
-                !m.commandResults.current &&
-                !m.effects.event
-              }
+              paused={panel === 'watch' && m.decisionVisible && !m.commandOpen}
               pauseReason={m.pauseReason}
               busy={busy}
               onPlan={() => m.showPanel('plan')}
