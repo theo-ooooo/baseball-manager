@@ -84,8 +84,8 @@ export function InternationalDutyPanel({
           </article>
         ))}
       </div>
-      <Link className="button secondary compact" href="/?view=schedule#national-teams">
-        나라별 대표팀 명단 보기
+      <Link className="button secondary compact" href="/countries/대한민국">
+        대한민국 대표팀 보기
       </Link>
     </section>
   );

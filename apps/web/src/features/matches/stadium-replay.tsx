@@ -175,7 +175,7 @@ export function StadiumScene(props: StadiumSceneProps) {
                 <circle r="23" />
                 <path d="M -13 -16 Q 0 -27 13 -16" className="player-cap" />
                 <text y="8" className="player-number">
-                  {scene.batting?.players.find((p) => p.id === r.id)?.number || '·'}
+                  {scene.batting?.players.find((p) => p.id === r.id)?.number ?? '·'}
                 </text>
                 <g
                   className="player-caption"

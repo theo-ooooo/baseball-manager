@@ -37,21 +37,16 @@ export function usePreseasonDelegation({
     closeProgress();
     const next = await act({ type: 'skipPreseason', futureSeasons: skipFuture });
     if (!next) return;
-    const arrived = next.progress?.newsIds || [];
-    // Interrupted: land on the contact that needs the manager, not on the delegation summary.
-    const report =
-      (next.progress?.stop === 'report'
-        ? next.news.find((n) => arrived.includes(n.id) && n.managerOfferId)?.id
-        : undefined) || arrived[0];
+    const hasReport = next.news.some((n) => !n.read);
     if (next.progress?.stop === 'season') {
       toast.success(
         `${next.progress.to - next.progress.from}일을 코치진에게 맡기고 개막일에 도착했습니다.`,
       );
-      if (report) openReport(report);
+      if (hasReport) openReport();
       else openMatchday();
     } else {
       toast.info('감독의 답변이 필요한 연락이 도착해 개막 전에 멈췄습니다.');
-      openReport(report);
+      openReport();
     }
   }
 

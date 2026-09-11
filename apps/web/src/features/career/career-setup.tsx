@@ -434,7 +434,7 @@ export function NewCareer({
                     />
                     <span>
                       <strong>첫 시즌 외부 선수 영입 금지</strong>
-                      <small>FA 포함 · 재계약, 매각, 코치 선임은 가능</small>
+                      <small>FA 포함 · 재계약, 트레이드, 코치 선임은 가능</small>
                     </span>
                   </label>
                   <label className={`ui-check ${reveal ? 'active' : ''}`}>

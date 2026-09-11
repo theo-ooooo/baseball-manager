@@ -203,7 +203,7 @@ export function MatchBench({ draft }: { draft: MatchPlanDraft }) {
               }}
               onClick={() => draft.chooseBench(p.id)}
             >
-              <span className="plan-shirt">{p.number || '·'}</span>
+              <span className="plan-shirt">{p.number ?? '·'}</span>
               <span className="plan-reserve-info">
                 <strong>{p.name}</strong>
                 <small>

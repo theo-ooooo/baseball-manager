@@ -636,3 +636,329 @@
     padding: 8px 4px;
   }
 }
+
+/* Letters keep the message prominent and supporting figures compact. */
+.inbox-report-header h2 {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.inbox-report-labels > small {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.inbox-sender-avatar {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+.inbox-letter-greeting {
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+.inbox-letter-body p {
+  font-size: 15px;
+  line-height: 1.95;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+.inbox-letter-body p:first-child {
+  color: var(--text-1);
+}
+.inbox-facts.inbox-facts-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 0 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.inbox-facts.inbox-facts-compact > div {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.32fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+.inbox-facts.inbox-facts-compact > div:last-child {
+  border-bottom: 0;
+}
+.inbox-facts.inbox-facts-compact dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  font-weight: 500;
+}
+.inbox-report-section p {
+  line-height: 1.85;
+  white-space: pre-line;
+}
+.inbox-letter-footer > small {
+  display: block;
+  color: var(--text-3);
+  font-size: 12px;
+  margin-bottom: 16px;
+  font-weight: 400;
+}
+.inbox-report-content .coach-evidence {
+  white-space: pre-line;
+}
+@media (max-width: 767px) {
+  .inbox-letter-body p {
+    font-size: 14px;
+  }
+  .inbox-facts.inbox-facts-compact {
+    padding: 0 12px;
+  }
+  .inbox-facts.inbox-facts-compact > div {
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .inbox-facts.inbox-facts-compact dd {
+    font-size: 12px;
+  }
+  .inbox-sender {
+    flex-wrap: wrap;
+  }
+  .inbox-sender > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .inbox-sender time {
+    width: 100%;
+    text-align: left;
+    margin-left: 0;
+  }
+}
+
+.coach-registration-proposals {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-1);
+}
+.coach-registration-proposals > header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.coach-registration-proposals > header > small {
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 700;
+}
+.coach-registration-proposals h2 {
+  font-size: 19px;
+  line-height: 1.5;
+  margin: 0;
+}
+.coach-registration-proposals > header > p {
+  font-size: 13px;
+  color: var(--text-3);
+  margin: 0;
+}
+.coach-registration-card + .coach-registration-card {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.coach-registration-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.coach-registration-pair > div {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.coach-registration-pair .promotion {
+  background: var(--brand-soft);
+}
+.coach-registration-pair small {
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.coach-registration-pair a {
+  font-size: 20px;
+  font-weight: 700;
+}
+.coach-registration-pair span {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.coach-registration-date {
+  margin: 14px 0 22px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.coach-registration-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.coach-registration-actions .button {
+  min-height: 48px;
+  padding: 12px 22px;
+}
+.coach-registration-review {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.coach-registration-notice {
+  padding: 14px;
+  margin: 18px 0;
+  font-size: 13px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  line-height: 1.8;
+}
+@media (max-width: 767px) {
+  .coach-registration-proposals {
+    padding: 18px 14px;
+    margin: 24px 0;
+  }
+  .coach-registration-proposals h2 {
+    font-size: 17px;
+  }
+  .coach-registration-pair {
+    gap: 10px;
+  }
+  .coach-registration-pair > div {
+    padding: 14px 10px;
+    gap: 10px;
+  }
+  .coach-registration-pair a {
+    font-size: 17px;
+  }
+  .coach-registration-pair small {
+    font-size: 11px;
+    min-height: 34px;
+  }
+  .coach-registration-actions {
+    gap: 10px;
+  }
+  .coach-registration-actions .button {
+    flex: 1;
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+}
+.match-box-score {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin: 20px 0;
+  padding: 22px;
+  min-width: 0;
+}
+.match-box-score > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.match-box-score h3 {
+  margin: 4px 0 0;
+  font-size: 19px;
+}
+.match-box-score h4 {
+  margin: 24px 0 12px;
+  font-size: 14px;
+}
+.match-box-score nav {
+  display: flex;
+  gap: 6px;
+}
+.match-box-score nav button {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.match-box-score nav button[aria-pressed='true'] {
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-color: var(--brand);
+}
+.box-score-totals {
+  display: flex;
+  gap: 22px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.box-score-totals b {
+  font-size: 20px;
+  margin-left: 6px;
+}
+.box-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.box-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.box-table-scroll th,
+.box-table-scroll td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+.box-table-scroll th:first-child {
+  text-align: left;
+}
+.box-table-scroll thead,
+.box-table-scroll tfoot {
+  background: var(--bg);
+}
+.box-table-scroll a {
+  color: var(--brand);
+  font-weight: 600;
+}
+.box-hit {
+  color: var(--brand);
+  font-weight: 800;
+  background: var(--brand-soft);
+}
+.box-score-note {
+  display: block;
+  margin-top: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+@media (max-width: 600px) {
+  .match-box-score {
+    padding: 14px;
+  }
+  .match-box-score > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .match-box-score nav button {
+    flex: 1;
+  }
+  .box-score-totals {
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .box-table-scroll th,
+  .box-table-scroll td {
+    padding: 10px 8px;
+  }
+}

@@ -1,4 +1,6 @@
 'use client';
+import { AugmentationsPanel } from './augmentations-panel';
+import { RetiredPlayerProfile } from '../players/retired-player-profile';
 import { useGameResources } from './use-game-resources';
 import { useCareerSession } from './use-career-session';
 import { UnemployedHome } from './unemployed-home';
@@ -45,6 +47,9 @@ import { DynamicsPanel } from '../clubs/club-panels';
 import { InboxPanel } from '../inbox/inbox-panel';
 import { PlayerContractDialog } from '../contracts/player-contract-room';
 import { SchedulePanel } from '../schedule/schedule-panel';
+import { CoachProfile } from '../squad/coach-profile';
+import { ManagerPersonProfile } from './manager-person-profile';
+import { CountryProfile } from '../clubs/country-profile';
 import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
 import { StadiumReplay } from '../matches/stadium-replay';
 import { LiveMatchScreen } from '../matches/live-match-screen';
@@ -89,6 +94,9 @@ export function GameScreen({
   initialReportId,
   initialOfferId,
   initialClubId,
+  initialCountry,
+  initialCoachId,
+  initialManagerId,
   initialTradeTarget,
   initialScoutTab,
   initialScoutMission,
@@ -100,6 +108,9 @@ export function GameScreen({
   initialReportId?: string;
   initialOfferId?: string;
   initialClubId?: string;
+  initialCountry?: string;
+  initialCoachId?: string;
+  initialManagerId?: string;
   initialTradeTarget?: string;
   initialScoutTab?: string;
   initialScoutMission?: string;
@@ -107,15 +118,21 @@ export function GameScreen({
   const { clubs, leagues, getClub, getLeague, nextFixture, catalogVersion, marketPlayers } =
     useWorld();
   const router = useRouter();
-  const requestedView = initialClubId
-    ? 'club'
-    : initialOfferId
-      ? 'job-offers'
-      : initialPlayerId
-        ? 'player'
-        : nav.some((n) => n.id === initialView)
-          ? initialView!
-          : 'inbox';
+  const requestedView = initialCoachId
+    ? 'coach-profile'
+    : initialManagerId
+      ? 'manager-person'
+      : initialCountry
+        ? 'country'
+        : initialClubId
+          ? 'club'
+          : initialOfferId
+            ? 'job-offers'
+            : initialPlayerId
+              ? 'player'
+              : nav.some((n) => n.id === initialView)
+                ? initialView!
+                : 'inbox';
   const setView = (id: string) =>
     router.push(id === 'match' ? '/match' : '/?view=' + encodeURIComponent(id));
   const setPlayer = (p: Player) =>
@@ -143,6 +160,9 @@ export function GameScreen({
       'home',
       'inbox',
       'world',
+      'country',
+      'coach-profile',
+      'manager-person',
       'club',
       'player',
       'manager',
@@ -212,7 +232,7 @@ export function GameScreen({
       return;
     }
     const next = await calendarProgress.run(g, count === 1 ? 45 : count, count > 1);
-    if (next?.progress?.newsIds.length) openReport(next.progress.newsIds[0]);
+    if (next?.progress?.newsIds.length) openReport();
     else if (next?.progress?.stop === 'fixture') setView('matchday');
   }
   const pair = g ? nextFixture(g) : null;
@@ -233,7 +253,7 @@ export function GameScreen({
     if (g.managerCareer?.vacationUntil && !isUnemployed(g)) {
       const days = Math.max(1, daysBetween(gameDate(g), g.managerCareer.vacationUntil));
       const next = await calendarProgress.run(g, days, true);
-      if (next && !next.managerCareer?.vacationUntil) openReport(next.progress?.newsIds[0]);
+      if (next && !next.managerCareer?.vacationUntil) openReport();
       return;
     }
     if (awayFromClub) {
@@ -243,9 +263,7 @@ export function GameScreen({
       }
       const next = await act({ type: 'managerContinue', count: 7 });
       if (next) {
-        const latest = next.progress?.newsIds?.[0];
-        if (latest) openReport(latest);
-        else setView('inbox');
+        openReport();
       }
       return;
     }
@@ -272,7 +290,7 @@ export function GameScreen({
       } else setView('matchday');
     } else if (step.kind === 'season') {
       const next = await act({ type: 'nextSeason' });
-      if (next) openReport(next.news[0]?.id);
+      if (next) openReport();
     } else await simulate();
   }
   const matchAct: Act = async (action) => {
@@ -502,7 +520,7 @@ export function GameScreen({
             g={g}
             pause={calendarProgress.pause}
             close={calendarProgress.close}
-            onReports={() => openReport(g.progress?.newsIds[0])}
+            onReports={() => openReport()}
             onMatchday={() => setView('matchday')}
           />
         )}
@@ -593,11 +611,7 @@ export function GameScreen({
                   busy={busy}
                 />
               ) : (
-                <section className="panel panel-content">
-                  <h2>선수를 찾을 수 없습니다</h2>
-                  <p>이 커리어에 없거나 더 이상 조회할 수 없는 선수입니다.</p>
-                  <Link href="/?view=squad">선수단으로</Link>
-                </section>
+                <RetiredPlayerProfile g={g} id={initialPlayerId || ''} />
               )}
             </>
           )}
@@ -637,6 +651,7 @@ export function GameScreen({
           )}
           {view === 'matchday' && (
             <MatchdayBriefing
+              act={act}
               g={g}
               onView={setView}
               onPlayer={setPlayer}
@@ -696,6 +711,13 @@ export function GameScreen({
           {view === 'training' && <TrainingCenterPanel key={g.club} g={g} act={act} busy={busy} />}
           {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
+          {view === 'coach-profile' && initialCoachId && <CoachProfile g={g} id={initialCoachId} />}
+          {view === 'manager-person' && initialManagerId && (
+            <ManagerPersonProfile g={g} id={initialManagerId} act={act} busy={busy} />
+          )}
+          {view === 'country' && initialCountry && (
+            <CountryProfile key={initialCountry} g={g} country={initialCountry} />
+          )}
           {view === 'world' && <World g={g} onPlayer={setPlayer} />}
 
           {view === 'medical' && <MedicalPanel g={g} act={act} busy={busy} />}
@@ -708,6 +730,7 @@ export function GameScreen({
               targetId={initialTradeTarget}
             />
           )}
+          {view === 'augmentations' && <AugmentationsPanel g={g} act={act} busy={busy} />}
           {view === 'draft' && <DraftPanel g={g} act={act} busy={busy} />}
           {view === 'market' && <Market g={g} onPlayer={setPlayer} />}
           {view === 'scouting' && (
@@ -784,7 +807,7 @@ export function GameScreen({
               managerOffer: '감독 면접·계약 제안',
               deal: '선수 계약 답변',
               coachDeal: '코치 계약 답변',
-              saleOffer: '선수 매각 제안',
+              saleOffer: '현금 트레이드 제안',
               draft: '진행 중인 신인 선발',
               trade: '트레이드 답변',
             } as const;
@@ -902,6 +925,9 @@ export default function Game({
   initialReportId,
   initialOfferId,
   initialClubId,
+  initialCountry,
+  initialCoachId,
+  initialManagerId,
   initialTradeTarget,
   initialScoutTab,
   initialScoutMission,
@@ -911,6 +937,9 @@ export default function Game({
   initialReportId?: string;
   initialOfferId?: string;
   initialClubId?: string;
+  initialCountry?: string;
+  initialCoachId?: string;
+  initialManagerId?: string;
   initialTradeTarget?: string;
   initialScoutTab?: string;
   initialScoutMission?: string;
@@ -951,6 +980,9 @@ export default function Game({
         initialReportId={initialReportId}
         initialOfferId={initialOfferId}
         initialClubId={initialClubId}
+        initialCountry={initialCountry}
+        initialCoachId={initialCoachId}
+        initialManagerId={initialManagerId}
         initialTradeTarget={initialTradeTarget}
         initialScoutTab={initialScoutTab}
         initialScoutMission={initialScoutMission}

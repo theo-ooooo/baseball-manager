@@ -1,4 +1,6 @@
 'use client';
+import Link from 'next/link';
+import { countryPath, leagueCountries } from '@dugout/shared/countries';
 import { useWorldPanel } from './use-world-panel';
 import { PlayerLeaderboard } from '../players/player-leaderboard';
 import { ExternalLink } from 'lucide-react';
@@ -61,7 +63,15 @@ export function World({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
           </div>
           <StandingsTable g={g} league={lid} />
           <div className="panel-foot">
-            {l.country} · {l.season}
+            <span>
+              {leagueCountries(l).map((country, i) => (
+                <span key={country}>
+                  {i > 0 ? ' · ' : ''}
+                  <Link href={countryPath(country)}>{country}</Link>
+                </span>
+              ))}{' '}
+              · {l.season}
+            </span>
             <span>게임 내 순위 · 현실 리그 성적과 별도</span>
           </div>
         </section>

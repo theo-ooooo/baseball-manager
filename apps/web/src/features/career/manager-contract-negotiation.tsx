@@ -83,6 +83,7 @@ export function ManagerContractNegotiation({
     club = getClub(o.club);
   const {
     t,
+    previous,
     current,
     salary,
     bonus,
@@ -165,6 +166,27 @@ export function ManagerContractNegotiation({
             취임 시 기준 운영 예산 {o.budgetAdjustment > 0 ? '10% 추가 지원' : '10% 절감'}에
             합의했습니다.
           </p>
+        )}
+        {previous && (
+          <aside className="manager-previous-proposal">
+            <strong>내가 보낸 직전 제안</strong>
+            <dl>
+              <div>
+                <dt>연봉</dt>
+                <dd>{money(previous.salary)}</dd>
+              </div>
+              <div>
+                <dt>계약금</dt>
+                <dd>{money(previous.signingBonus || 0)}</dd>
+              </div>
+              <div>
+                <dt>기간 · 목표</dt>
+                <dd>
+                  {previous.years}시즌 · {previous.targetRank}위 이내
+                </dd>
+              </div>
+            </dl>
+          </aside>
         )}
         <div className="manager-offer-comparison">
           <table>

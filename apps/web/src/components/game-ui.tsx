@@ -9,18 +9,22 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { type Player } from '@dugout/shared/game-view';
-import { isUnrated, ratingText } from '@dugout/shared/ratings';
+import { isUnrated, ratingText, ratingBasis } from '@dugout/shared/ratings';
 import { PlayerPortrait } from '../features/players/player-portrait';
 
 export { ClubBadge as Badge } from './club-badge';
 
 export function Rating({ value, player }: { value: number; player?: Player }) {
   if (player?.observation) return <span className="rating">{ratingText(player)}</span>;
-  if (player && isUnrated(player)) return <span className="muted tiny">미평가</span>;
   return (
-    <span className={`rating ${value >= 85 ? 'elite' : value >= 70 ? 'good' : ''}`}>
+    <span
+      title={player ? ratingBasis(player) : undefined}
+      className={`rating ${value >= 85 ? 'elite' : value >= 70 ? 'good' : ''}`}
+    >
       {Math.round(value)}
-      {player?.rating?.status === 'provisional' && '*'}
+      {player &&
+        (isUnrated(player) || ['provisional', 'estimated'].includes(player.rating?.status || '')) &&
+        '*'}
     </span>
   );
 }

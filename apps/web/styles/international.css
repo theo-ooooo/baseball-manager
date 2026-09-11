@@ -197,43 +197,83 @@
   font-size: 12px;
   line-height: 1.7;
 }
-.international-team-roster {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
-  padding: 0;
-  gap: 8px;
+/* A compact table remains a table on mobile: the four comparison columns stay aligned. */
+.national-roster-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
 }
-.international-team-roster li {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) minmax(75px, 0.8fr);
-  gap: 10px;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #e1e7ee;
-  border-radius: 10px;
-  min-width: 0;
+.national-roster-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.national-roster-table th,
+.national-roster-table td {
+  padding: 13px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.national-roster-table thead {
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 11px;
+}
+.national-roster-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.national-roster-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.national-name-col {
+  width: 30%;
+}
+.national-club-col {
+  width: 38%;
+}
+.national-rating-col,
+.national-position-col {
+  width: 16%;
+}
+.national-roster-table td:nth-child(n + 3),
+.national-roster-table thead th:nth-child(n + 3) {
+  text-align: center;
+}
+.national-rating {
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
 }
 .international-position {
   font-size: 12px;
   font-weight: 700;
-  color: #31558b;
+  color: var(--text-2);
 }
-.international-team-roster a {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.international-team-roster small {
-  display: block;
-  font-size: 10px;
-  color: #64748b;
-  margin-top: 4px;
-}
-.international-player-club {
-  color: #56677e;
-  text-align: right;
+@media (max-width: 480px) {
+  .national-roster-table {
+    font-size: 12px;
+  }
+  .national-roster-table th,
+  .national-roster-table td {
+    padding: 12px 5px;
+  }
+  .national-roster-table thead th {
+    font-size: 10px;
+  }
+  .national-name-col {
+    width: 28%;
+  }
+  .national-club-col {
+    width: 36%;
+  }
+  .national-rating-col,
+  .national-position-col {
+    width: 18%;
+  }
 }
 .international-empty {
   padding: 20px 12px;
@@ -249,5 +289,296 @@
   }
   .international-team-controls {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+.country-league {
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.country-league > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.country-league a {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.country-dossier .international-team-controls {
+  grid-template-columns: minmax(0, 1fr);
+}
+.country-dossier {
+  min-width: 0;
+}
+.country-dossier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+  background: linear-gradient(110deg, #172b3b, #28495b);
+  color: #fff;
+  border-radius: 12px 12px 0 0;
+}
+.country-identity {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.country-flag {
+  font-size: 72px;
+  line-height: 1.1;
+}
+.country-kicker {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: #bdd1dd;
+}
+.country-identity h1 {
+  margin: 6px 0;
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+.country-identity p {
+  color: #c0d1dc;
+  font-size: 12px;
+}
+.country-headline-stats {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+}
+.country-headline-stats dt {
+  color: #c0d1dc;
+  font-size: 11px;
+}
+.country-headline-stats dd {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 5px 0 0;
+}
+.country-headline-stats small {
+  font-size: 12px;
+  margin-left: 4px;
+  font-weight: 400;
+}
+.dossier-tabs {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+  gap: 18px;
+  padding-inline: 20px;
+  min-height: 48px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  margin-bottom: 20px;
+}
+.dossier-tabs [data-slot='tabs-trigger'] {
+  flex: 0 0 auto;
+  min-height: 48px;
+  font-size: 13px;
+}
+.country-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+}
+.dossier-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  min-width: 0;
+}
+.dossier-card > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+.dossier-card h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.dossier-card > header > span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.dossier-badge {
+  background: var(--brand-soft);
+  color: var(--brand) !important;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.country-team-feature {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 18px 0;
+}
+.country-emblem {
+  font-size: 44px;
+}
+.country-team-feature small,
+.country-team-feature p {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.country-team-feature h3 {
+  font-size: 19px;
+  margin: 5px 0;
+}
+.dossier-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+.dossier-facts dt {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.dossier-facts dd {
+  font-size: 15px;
+  font-weight: 650;
+  margin: 5px 0 0;
+}
+.country-notable-players > a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.country-notable-players > a:last-child {
+  border: 0;
+}
+.country-notable-players > a > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.country-notable-players strong {
+  font-size: 14px;
+}
+.country-notable-players small {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.country-notable-players b {
+  color: var(--brand);
+  font-size: 17px;
+}
+.country-league-summary > div {
+  padding: 12px 0;
+}
+.country-league-summary strong {
+  font-size: 20px;
+}
+.country-league-summary p,
+.country-league-summary small {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.country-event-timeline > button {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  gap: 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 14px 0;
+}
+.country-event-timeline > button > span {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand);
+}
+.country-event-timeline > button > div {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+}
+.country-event-timeline strong {
+  font-size: 13px;
+}
+.country-event-timeline small {
+  font-size: 11px;
+  color: var(--text-3);
+}
+@media (max-width: 700px) {
+  .country-dossier-header {
+    display: block;
+    padding: 20px;
+  }
+  .country-flag {
+    font-size: 52px;
+  }
+  .country-identity {
+    gap: 14px;
+  }
+  .country-identity h1 {
+    font-size: 26px;
+  }
+  .country-headline-stats {
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid #ffffff25;
+  }
+  .country-headline-stats dd {
+    font-size: 23px;
+  }
+  .country-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .dossier-card {
+    padding: 16px;
+  }
+  .dossier-tabs {
+    padding-inline: 10px;
+    gap: 12px;
+  }
+  .dossier-tabs [data-slot='tabs-trigger'] {
+    font-size: 12px;
+  }
+  .country-team-feature {
+    gap: 12px;
+  }
+  .country-team-feature h3 {
+    font-size: 16px;
+  }
+}
+.international-position small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .national-name-col {
+    width: 25%;
+  }
+  .national-club-col {
+    width: 34%;
+  }
+  .national-rating-col {
+    width: 15%;
+  }
+  .national-position-col {
+    width: 26%;
   }
 }

@@ -1,8 +1,9 @@
 'use client';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { usePitchingRecommendation } from './use-pitching-recommendation';
+import { ArrowDown, ArrowUp, Sparkles } from 'lucide-react';
 import type { GameState, Player } from '@dugout/shared/types';
 import { firstTeam } from '@dugout/shared/management';
-import { pitchingAssignment, pitchingRole } from '@dugout/shared/pitching';
+import { pitchingAssignment, pitchingRole, pitcherResource } from '@dugout/shared/pitching';
 import { ratingText } from '@dugout/shared/ratings';
 
 /** Read-only role derivation lives in shared; the server owns every change through `pitchingRole`. */
@@ -80,6 +81,7 @@ type Props = {
   onPlayer: (p: Player) => void;
 };
 export function PitchingPanel({ g, busy, act, onPlayer }: Props) {
+  const recommendation = usePitchingRecommendation(g, act, busy);
   const plan = g.pitching;
   if (!plan) return null;
   const pitchers = firstTeam(g).filter((p) => p.pos === 'P'),
@@ -112,6 +114,61 @@ export function PitchingPanel({ g, busy, act, onPlayer }: Props) {
           {plan.closer ? 1 : 0}
         </span>
       </div>
+      <section className="pitching-coach-recommendation">
+        <div>
+          <Sparkles size={20} />
+          <div>
+            <strong>코치의 투수진 구성</strong>
+            <p>
+              등판 기록과 구위·제구로 선발과 불펜을 나누고, 회복 상태에 맞춰 다음 선발을 정합니다.
+            </p>
+          </div>
+          <button
+            className="button secondary"
+            disabled={busy || !!g.liveMatch}
+            onClick={() => recommendation.setPreview(!recommendation.preview)}
+          >
+            {recommendation.preview ? '추천 접기' : '추천 배치 보기'}
+          </button>
+        </div>
+        {recommendation.preview && (
+          <>
+            <ul>
+              {[
+                ...recommendation.plan.rotation,
+                recommendation.plan.closer,
+                ...recommendation.plan.bullpen,
+              ]
+                .filter(Boolean)
+                .map((id) => {
+                  const p = byId.get(id)!;
+                  return (
+                    <li key={id}>
+                      <button className="text-button" onClick={() => onPlayer(p)}>
+                        {p.name}
+                      </button>
+                      <strong>{pitchingRole({ ...g, pitching: recommendation.plan }, p)}</strong>
+                      <small>
+                        {pitcherResource(p).reason}
+                        {p.condition < 65 ? ' 현재 체력이 낮아 다음 경기에는 휴식을 권합니다.' : ''}
+                      </small>
+                    </li>
+                  );
+                })}
+            </ul>
+            <footer>
+              <p>검토 후 적용하면 현재 1군의 투수 보직과 로테이션이 변경됩니다.</p>
+              <button
+                className="button primary"
+                disabled={busy || !!g.liveMatch}
+                onClick={() => void recommendation.apply()}
+              >
+                추천 배치 적용
+              </button>
+            </footer>
+          </>
+        )}
+      </section>
       <div className="ui-pitching">
         {groups.map(({ role, players }) => (
           <section className="ui-pitching-group" key={role} aria-labelledby={`ui-pg-${role}`}>
@@ -134,7 +191,7 @@ export function PitchingPanel({ g, busy, act, onPlayer }: Props) {
                       <button className="ui-pitcher-name" onClick={() => onPlayer(p)}>
                         <strong>
                           {role === 'starter' && <em>{at + 1}</em>}
-                          {p.name}
+                          <span>{p.name}</span>
                         </strong>
                         <small>
                           능력 {ratingText(p)} ·{' '}
@@ -144,13 +201,14 @@ export function PitchingPanel({ g, busy, act, onPlayer }: Props) {
                           {g.starter === p.id && <b className="ui-next-tag">다음 경기 선발</b>}
                         </small>
                       </button>
+                      <small className="pitcher-resource">{pitcherResource(p).resource}</small>
                       <div className="ui-pitcher-controls">
                         <button
                           className="button secondary compact"
                           disabled={busy || g.starter === p.id}
                           onClick={() => void act({ type: 'starter', id: p.id })}
                         >
-                          {g.starter === p.id ? '다음 선발' : '다음 경기 선발로 지정'}
+                          {g.starter === p.id ? '다음 선발' : '다음 선발 지정'}
                         </button>
                         {role === 'starter' && (
                           <>

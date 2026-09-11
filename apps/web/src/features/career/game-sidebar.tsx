@@ -47,7 +47,7 @@ export function AppSidebar({
   const children: Record<string, string[]> = {
     home: ['manager', 'manager-contract', 'manager-history', 'job-offers', 'media'],
     squad: ['reserves', 'registrations', 'training', 'tactics', 'medical', 'dynamics'],
-    scouting: ['market', 'trade', 'draft', 'agents'],
+    scouting: ['market', 'trade', 'draft', 'augmentations', 'agents'],
     world: ['records', 'club'],
     staff: ['jobs', 'job-security'],
     vision: ['finance'],

@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import type { GameState } from '@dugout/shared/types';
 import { boardProgress } from '@dugout/shared/manager-career';
-import { gameDate } from '@dugout/shared/calendar';
 import { useWorld } from './world-context';
 import type { Act } from './game-contracts';
 export function useClubVision(g: GameState, act: Act, busy: boolean) {
@@ -33,10 +32,7 @@ export function useClubVision(g: GameState, act: Act, busy: boolean) {
                   ? 'D'
                   : 'F';
   const max = Math.ceil(clubs.filter((c) => c.league === club.league).length * 0.75),
-    canNegotiate =
-      !g.liveMatch &&
-      !g.managerCareer?.vacationUntil &&
-      (g.day < 0 || contract.signed === gameDate(g));
+    canNegotiate = !g.liveMatch && !g.managerCareer?.vacationUntil;
   const progress = contract.objective ? boardProgress(g, contract.objective) : 0,
     profit = g.income - g.expenses;
   const expectation =

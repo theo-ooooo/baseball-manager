@@ -1,29 +1,21 @@
 'use client';
+import { PlayerRoleCard } from './player-role-card';
 import { nationalCountry } from '@dugout/shared/international';
 import { ClubBadge } from '../../components/club-badge';
 
-import { useState } from 'react';
+import { usePlayerProfile } from './use-player-profile';
+import { PlayerOverview } from './player-overview';
+import { countryFlags, countryPath } from '@dugout/shared/countries';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { GameState, Player, Stats } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { PlayerContractRoom } from '../contracts/player-contract-room';
-import { potentialText, ratingText } from '@dugout/shared/ratings';
-import { lineupReason } from '@dugout/shared/player-attributes';
-import { defensivePositions, familiarity } from '@dugout/shared/management';
-import {
-  LOW_CONDITION,
-  REPLACEMENT_NOTE,
-  RoleBadge,
-  RoleSelect,
-  assignmentLabel,
-  pitchingAssignment,
-  roleHelp,
-} from '../squad/pitching-panel';
+import { potentialText, ratingText, ratingBasis } from '@dugout/shared/ratings';
+import { playerPosition } from '@dugout/shared/management';
+import { RoleBadge, assignmentLabel, pitchingAssignment } from '../squad/pitching-panel';
 import { useWorld } from '../career/world-context';
-import { Mood, OutgoingTransferPanel } from '../clubs/club-panels';
-import { PositionTraining } from '../squad/management-panels';
-import { RosterMoveControl } from '../squad/roster-moves';
+import { OutgoingTransferPanel } from '../clubs/club-panels';
 import { DevelopmentPanel } from './development-panel';
 import { ScoutPlayer } from '../scouting/scout-player';
 import { PlayerAttributes, PlayerGrowth } from './growth-indicator';
@@ -39,7 +31,6 @@ type Props = {
   busy: boolean;
   act: (action: Record<string, unknown>) => Promise<GameState | null>;
 };
-const positionNames = { P: '투수', C: '포수', IF: '내야수', OF: '외야수', DH: '지명타자' };
 const innings = (outs: number) => `${Math.floor(outs / 3)}${outs % 3 ? ` ${outs % 3}/3` : ''}`;
 
 function SeasonStats({ stats, pitcher }: { stats: Stats; pitcher: boolean }) {
@@ -95,7 +86,7 @@ function PerformanceEvidence({ player }: { player: Player }) {
           ['장타율', record.slg?.toFixed(3)],
         ];
   return (
-    <section className="profile-evidence">
+    <section className="profile-evidence dossier-card">
       <h3>
         {record.season} 공식 시즌 성적 · {record.league.toUpperCase()}
       </h3>
@@ -115,7 +106,24 @@ function PerformanceEvidence({ player }: { player: Player }) {
 }
 
 function ContractPanel({ player, game, busy, act }: Props) {
-  const own = game.roster.some((p) => p.id === player.id);
+  const own =
+    game.managerCareer?.status !== 'unemployed' && game.roster.some((p) => p.id === player.id);
+  if (game.managerCareer?.status === 'unemployed')
+    return (
+      <section className="dossier-card">
+        <h3>선수 계약 정보</h3>
+        <dl className="dossier-facts">
+          <div>
+            <dt>연봉</dt>
+            <dd>{money(player.salary)}</dd>
+          </div>
+          <div>
+            <dt>잔여 계약</dt>
+            <dd>{player.years}년</dd>
+          </div>
+        </dl>
+      </section>
+    );
   return (
     <>
       <PlayerContractRoom player={player} g={game} act={act} busy={busy} />
@@ -126,11 +134,14 @@ function ContractPanel({ player, game, busy, act }: Props) {
 }
 
 export function PlayerProfile(props: Props) {
-  const { player, game, act, busy } = props;
+  const { player, game, act } = props;
+  const busy =
+    props.busy ||
+    game.managerCareer?.status === 'unemployed' ||
+    !!game.managerCareer?.vacationUntil;
   const { getClub } = useWorld();
-  const own = game.roster.some((p) => p.id === player.id);
-  const slot = game.lineup.indexOf(player.id);
-  const [tab, setTab] = useState('profile');
+  const profile = usePlayerProfile(player, game);
+  const { own, tab, setTab } = profile;
   const portrait = officialPortrait(player);
   return (
     <article className="panel player-page">
@@ -144,7 +155,7 @@ export function PlayerProfile(props: Props) {
           <h2>{player.name}</h2>
           <p>
             {player.original !== player.name && `${player.original} · `}
-            {positionNames[player.pos]} · {player.ageEstimated ? '게임 나이 ' : ''}
+            {playerPosition(player).label} · {player.ageEstimated ? '게임 나이 ' : ''}
             {player.age}세 ·{' '}
             {player.club === 'fa' ? (
               'FA · 자유계약'
@@ -164,10 +175,21 @@ export function PlayerProfile(props: Props) {
           </p>
         </div>
         <div className="profile-rating-trend">
-          <span className="rating">{ratingText(player)}</span>
+          <span className="rating" title={ratingBasis(player)}>
+            {ratingText(player)}
+          </span>
           {own && <PlayerGrowth player={player} />}
         </div>
       </header>
+      <div className="player-profile-ribbon">
+        <Link href={countryPath(nationalCountry(player))}>
+          {countryFlags[nationalCountry(player)] || '🌐'} {nationalCountry(player)}
+        </Link>
+        <span>{profile.ready}</span>
+        {game.rules?.revealPotential && <span>잠재력 {potentialText(player)}</span>}
+        <span>연봉 {money(player.salary)}</span>
+        <span>계약 {player.years}년</span>
+      </div>
       {player.internationalDuty && (
         <p className="international-player-note">
           {nationalCountry(player)} 대표팀 · {player.internationalDuty.name} 차출 중 ·{' '}
@@ -176,15 +198,34 @@ export function PlayerProfile(props: Props) {
       )}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="profile-tabs" variant="line">
-          <TabsTrigger value="profile">프로필 · 세부 능력</TabsTrigger>
+          <TabsTrigger value="overview">개요</TabsTrigger>
+          <TabsTrigger value="profile">능력·역할</TabsTrigger>
           <TabsTrigger value="records">성적</TabsTrigger>
-          {own && <TabsTrigger value="development">성장 기록</TabsTrigger>}
-          {!own && <TabsTrigger value="scouting">관찰 · 관심 명단</TabsTrigger>}
+          {own && <TabsTrigger value="development">성장</TabsTrigger>}
+          {!own && game.managerCareer?.status !== 'unemployed' && (
+            <TabsTrigger value="scouting">관찰 · 관심 명단</TabsTrigger>
+          )}
           <TabsTrigger value="contract">
-            {own ? '계약 · 방출' : player.club === 'fa' ? 'FA 계약' : '트레이드'}
+            {game.managerCareer?.status === 'unemployed'
+              ? '계약 정보'
+              : own
+                ? '계약·거래'
+                : player.club === 'fa'
+                  ? 'FA 계약'
+                  : '트레이드'}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="profile">
+        <TabsContent value="overview">
+          <PlayerOverview player={player} game={game} profile={profile} />
+        </TabsContent>
+        <TabsContent value="profile" className="player-detail-tab player-abilities-tab">
+          <header className="detail-tab-heading">
+            <div>
+              <small>ATTRIBUTES & ROLE</small>
+              <h3>능력과 선수단 역할</h3>
+            </div>
+            <p>확인된 평가와 현재 기용 계획을 살펴보세요.</p>
+          </header>
           <div className="profile-facts">
             <div>
               <small>연봉 · 게임 설정</small>
@@ -212,80 +253,52 @@ export function PlayerProfile(props: Props) {
                 : `${player.observation.date} 스카우트 보고의 평가 범위입니다. 실제 능력치는 공개되지 않습니다.`}
             </p>
           )}
-          <PlayerAttributes player={player} owned={own} />
-          {own && (
-            <section className="profile-development">
-              <h3>선수단 역할</h3>
-              <Mood p={player} />
-              <p>{player.mood?.reason}</p>
-              {player.pos === 'P' ? (
-                <div className="ui-scope ui-profile-role">
-                  <div className="ui-profile-role-head">
-                    <RoleBadge role={pitchingAssignment(game, player)}>
-                      {assignmentLabel(game, player)}
-                    </RoleBadge>
-                    {game.starter === player.id && <b className="ui-next-tag">다음 경기 선발</b>}
-                    {player.condition < LOW_CONDITION && (
-                      <b className="ui-next-tag ui-warn">체력 부족 · 휴식 권장</b>
-                    )}
-                  </div>
-                  <p>
-                    {roleHelp[pitchingAssignment(game, player) || 'bullpen']}
-                    {pitchingAssignment(game, player) !== 'reserve' && ` ${REPLACEMENT_NOTE}`}
-                  </p>
-                  <RoleSelect g={game} p={player} busy={busy} act={act} />
-                  <Link className="text-button" href="/?view=tactics&panel=pitching">
-                    투수 운용 · 로테이션 순서 →
-                  </Link>
-                </div>
-              ) : (
-                <p>
-                  {slot >= 0
-                    ? `${slot + 1}번 · ${lineupReason(player, slot)}`
-                    : '벤치 · 타순 미등록'}
-                </p>
-              )}
-              <PositionTraining p={player} act={act} busy={busy} />
-              <RosterMoveControl player={player} g={game} act={act} busy={busy} />
-              <dl className="profile-stat-grid">
-                {defensivePositions
-                  .filter((pos) => (pos === 'P') === (player.pos === 'P'))
-                  .map((pos) => (
-                    <div key={pos}>
-                      <dt>{pos} 숙련</dt>
-                      <dd>{Math.round(familiarity(player, pos))}%</dd>
-                    </div>
-                  ))}
-              </dl>
-            </section>
-          )}
-          <p className="profile-note">
-            실명 선수는 확인된 공식 성적을 표본 크기로 보정한 게임 평가입니다. 수비·송구·구종·구속
-            등 확인하지 못한 항목은 미평가로 표시합니다. 주력은 도루 성적을 참고한 추정입니다. 종합
-            능력은 주요 능력의 가중 평균이며 모든 세부 지표를 합친 수치는 아닙니다.
-            {player.rating?.status === 'provisional' && ' 100타석·30이닝 미만의 잠정 평가입니다.'}
-            {game.rules?.revealPotential && ' 잠재력은 성적과 나이에 따른 추정입니다.'}
-          </p>
-          {player.source && (
-            <a href={player.source} target="_blank" rel="noreferrer">
-              선수 명단 출처 ↗
-            </a>
-          )}
-          {portrait && (
-            <a
-              className="profile-photo-source"
-              href={portrait.sourcePage}
-              target="_blank"
-              rel="noreferrer"
-            >
-              공식 사진 출처 · {portrait.league.toUpperCase()} ↗
-            </a>
-          )}
+          <section className="dossier-card">
+            <header>
+              <h2>세부 능력</h2>
+              <span>{player.observation ? '스카우트 평가 범위' : '게임 내 능력'}</span>
+            </header>
+            <PlayerAttributes player={player} owned={own} />
+          </section>
+          {own && <PlayerRoleCard player={player} game={game} busy={busy} act={act} />}
+          <details className="player-data-sources">
+            <summary>평가 기준 · 데이터 출처</summary>
+            <p className="profile-note">
+              오버롤은 게임에서 사용하는 종합 능력입니다. * 표시는 자료가 부족한 생성 능력 또는
+              표본이 적은 잠정 평가입니다. 확인된 실적 점수는 유지하고, 미확인 능력은 선수마다
+              고정된 난수로 채웠습니다. 이후 훈련과 경기에 따른 성장·하락이 반영됩니다. 게임 생성
+              수치는 실제 선수의 측정 기록이 아닙니다.
+              {player.rating?.status === 'provisional' && ' 100타석·30이닝 미만의 잠정 평가입니다.'}
+              {game.rules?.revealPotential && ' 잠재력은 성적과 나이에 따른 추정입니다.'}
+            </p>
+            {player.source && (
+              <a href={player.source} target="_blank" rel="noreferrer">
+                선수 명단 출처 ↗
+              </a>
+            )}
+            {portrait && (
+              <a
+                className="profile-photo-source"
+                href={portrait.sourcePage}
+                target="_blank"
+                rel="noreferrer"
+              >
+                공식 사진 출처 · {portrait.league.toUpperCase()} ↗
+              </a>
+            )}
+          </details>
         </TabsContent>
-        <TabsContent value="records">
+        <TabsContent value="records" className="player-detail-tab player-records-tab">
+          <header className="detail-tab-heading">
+            <div>
+              <small>CAREER & STATISTICS</small>
+              <h3>시즌 성적과 통산 기록</h3>
+            </div>
+            <p>게임에서 쌓은 성적과 공식 성적의 출처를 구분해 확인하세요.</p>
+          </header>
           <CareerRecords playerId={player.id} current={player} year={game.year} />
           <PerformanceEvidence player={player} />
-          <section className="profile-evidence">
+          <section className="profile-evidence dossier-card">
             <h3>게임 내 1군 시즌 기록</h3>
             <SeasonStats stats={player.stats} pitcher={player.pos === 'P'} />
             {player.reserveStats && (
@@ -296,16 +309,30 @@ export function PlayerProfile(props: Props) {
             )}
           </section>
         </TabsContent>
-        <TabsContent value="contract">
-          <ContractPanel {...props} />
+        <TabsContent value="contract" className="player-detail-tab player-contract-tab">
+          <header className="detail-tab-heading">
+            <div>
+              <small>CONTRACT & TRANSACTIONS</small>
+              <h3>{getClub(player.club)?.name || '자유계약'} · 선수 계약</h3>
+            </div>
+            <p>연봉과 잔여 계약, 현재 소속에 맞는 업무를 확인하세요.</p>
+          </header>
+          <ContractPanel {...props} busy={busy} />
         </TabsContent>
         {!own && (
-          <TabsContent value="scouting">
+          <TabsContent value="scouting" className="player-detail-tab">
             <ScoutPlayer player={player} g={game} act={act} busy={busy} />
           </TabsContent>
         )}
         {own && (
-          <TabsContent value="development">
+          <TabsContent value="development" className="player-detail-tab player-development-tab">
+            <header className="detail-tab-heading">
+              <div>
+                <small>DEVELOPMENT</small>
+                <h3>성장과 개인 훈련</h3>
+              </div>
+              <p>관찰한 변화에 맞춰 다음 훈련을 계획하세요.</p>
+            </header>
             <TrainingPlanForm
               key={JSON.stringify(player.trainingPlan) || player.id}
               player={player}

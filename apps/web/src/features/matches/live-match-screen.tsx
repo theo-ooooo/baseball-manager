@@ -10,6 +10,7 @@ import { MatchPlanEditor } from './match-plan-editor';
 import { MatchCommandPanel } from './match-command-panel';
 import { matchCommandLabels } from '@dugout/shared/match-commands';
 import { useLiveMatch } from './use-live-match';
+import { MatchDelegation } from './match-delegation';
 import { MatchPreview } from './match-preview';
 import { MatchOverview } from './match-overview';
 import { MatchAudioSettings } from './match-audio-settings';
@@ -116,6 +117,15 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           <Maximize size={17} />
         </button>
       </header>
+      {!finished && (
+        <MatchDelegation
+          g={g}
+          act={act}
+          busy={busy || m.planDirty}
+          cursor={m.consumed}
+          onStart={m.pause}
+        />
+      )}
       {panel === 'preview' && (
         <MatchPreview
           g={g}

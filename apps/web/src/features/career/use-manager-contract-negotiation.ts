@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { GameState } from '@dugout/shared/types';
 import type { ManagerOffer } from '@dugout/shared/manager-career';
-import { finalManagerTerms } from '@dugout/shared/manager-career';
+import { finalManagerTerms, lastManagerProposal } from '@dugout/shared/manager-career';
 import { fromManwon, toManwon } from '@dugout/shared/game-view';
 import type { Act } from './game-contracts';
 
@@ -41,7 +41,8 @@ export function useManagerContractNegotiation(
     years: t?.years || 1,
     targetRank: t?.targetRank || o.targetRank,
   };
-  const initial = t?.proposed || current;
+  const previous = lastManagerProposal(o);
+  const initial = previous || current;
   const salary = useOfferMoney(initial.salary),
     bonus = useOfferMoney(initial.signingBonus || 0);
   const [years, setYears] = useState(initial.years),
@@ -85,6 +86,7 @@ export function useManagerContractNegotiation(
   }
   return {
     t,
+    previous,
     current,
     salary,
     bonus,

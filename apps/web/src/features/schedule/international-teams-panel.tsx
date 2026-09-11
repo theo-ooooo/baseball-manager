@@ -1,10 +1,27 @@
 'use client';
 import Link from 'next/link';
+import { playerPosition } from '@dugout/shared/management';
+import { ratingText, ratingBasis } from '@dugout/shared/ratings';
 import type { GameState } from '@dugout/shared/types';
 import { useInternationalTeams } from './use-international-teams';
 
-export function InternationalTeamsPanel({ g }: { g: GameState }) {
-  const teams = useInternationalTeams(g);
+export function InternationalTeamsPanel({
+  g,
+  fixedCountry,
+}: {
+  g: GameState;
+  fixedCountry?: string;
+}) {
+  const teams = useInternationalTeams(g, fixedCountry);
+  return <InternationalTeamsContent teams={teams} fixedCountry={fixedCountry} />;
+}
+export function InternationalTeamsContent({
+  teams,
+  fixedCountry,
+}: {
+  teams: ReturnType<typeof useInternationalTeams>;
+  fixedCountry?: string;
+}) {
   const { event, selection, country, players } = teams;
   return (
     <section
@@ -13,7 +30,7 @@ export function InternationalTeamsPanel({ g }: { g: GameState }) {
       aria-label="나라별 국가대표 팀"
     >
       <div className="panel-header">
-        <h2>나라별 국가대표 팀</h2>
+        <h2>{fixedCountry ? `${fixedCountry} 국가대표` : '나라별 국가대표 팀'}</h2>
         <span>게임 내 선발 명단</span>
       </div>
       <div className="international-team-controls">
@@ -28,16 +45,18 @@ export function InternationalTeamsPanel({ g }: { g: GameState }) {
             ))}
           </select>
         </label>
-        <label>
-          국가
-          <select value={country} onChange={(e) => teams.setCountry(e.target.value)}>
-            {teams.countries.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!fixedCountry && (
+          <label>
+            국가
+            <select value={country} onChange={(e) => teams.setCountry(e.target.value)}>
+              {teams.countries.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       <header className="international-team-heading">
         <h3>{country} 대표팀</h3>
@@ -58,29 +77,59 @@ export function InternationalTeamsPanel({ g }: { g: GameState }) {
         </p>
       )}
       {players.length ? (
-        <ul className="international-team-roster">
-          {players.map((p) => (
-            <li key={p.id}>
-              <span className="international-position">{p.pos}</span>
-              <div>
-                <Link href={`/players/${encodeURIComponent(p.id)}`}>{p.name}</Link>
-                <small>
-                  {p.age}세 · {p.real ? '실제 선수' : '생성 선수'}
-                </small>
-              </div>
-              {p.club === 'fa' ? (
-                <span className="international-player-club">자유계약</span>
-              ) : (
-                <Link
-                  className="international-player-club"
-                  href={`/clubs/${encodeURIComponent(p.club)}`}
-                >
-                  {teams.getClub(p.club)?.name || p.club}
-                </Link>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div
+          className="national-roster-scroll"
+          role="region"
+          aria-label={`${country} 대표팀 명단`}
+          tabIndex={0}
+        >
+          <table className="national-roster-table">
+            <caption className="sr-only">{country} 대표팀 선수의 소속 구단, 오버롤, 포지션</caption>
+            <colgroup>
+              <col className="national-name-col" />
+              <col className="national-club-col" />
+              <col className="national-rating-col" />
+              <col className="national-position-col" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">선수</th>
+                <th scope="col">소속 구단</th>
+                <th scope="col">오버롤</th>
+                <th scope="col">포지션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map((p) => (
+                <tr key={p.id}>
+                  <th scope="row">
+                    <Link href={`/players/${encodeURIComponent(p.id)}`}>{p.name}</Link>
+                  </th>
+                  <td>
+                    {p.club === 'fa' ? (
+                      'FA'
+                    ) : (
+                      <Link href={`/clubs/${encodeURIComponent(p.club)}`}>
+                        {teams.getClub(p.club)?.name || p.club}
+                      </Link>
+                    )}
+                  </td>
+                  <td>
+                    <strong className="national-rating" title={ratingBasis(p)}>
+                      {ratingText(p)}
+                    </strong>
+                  </td>
+                  <td>
+                    <span className="international-position">
+                      {playerPosition(p).group}
+                      {playerPosition(p).detail && <small>({playerPosition(p).detail})</small>}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <p className="international-empty">
           {!selection
@@ -92,7 +141,7 @@ export function InternationalTeamsPanel({ g }: { g: GameState }) {
       )}
       <p className="international-team-note">
         실제 대회 확정 명단이 아닌 게임 내 선발 결과입니다. 선수와 구단을 누르면 상세 정보를 볼 수
-        있습니다.
+        있습니다. 세부 포지션은 게임 내 수비 숙련도 기준입니다.
       </p>
     </section>
   );

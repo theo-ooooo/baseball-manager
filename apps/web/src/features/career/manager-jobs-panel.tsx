@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { managerPersonId, managerPersonPath } from '@dugout/shared/manager-directory';
 import { useState, type CSSProperties } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { gameDate } from '@dugout/shared/calendar';
@@ -156,7 +157,15 @@ export function ManagerJobsPanel({
                       </div>
                     </td>
                     <td className="job-manager-cell">
-                      <span>{job.vacant ? '—' : job.managerName}</span>
+                      <span>
+                        {job.vacant ? (
+                          '—'
+                        ) : (
+                          <Link href={managerPersonPath(managerPersonId(job))}>
+                            {job.managerName}
+                          </Link>
+                        )}
+                      </span>
                       <small>{job.vacant ? '선임 절차 진행 중' : `${job.appointed} 취임`}</small>
                     </td>
                     <td>

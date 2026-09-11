@@ -1,7 +1,13 @@
 'use client';
 import Link from 'next/link';
 import type { GameState } from '@dugout/shared/types';
-import { coachRoles, money } from '@dugout/shared/game-view';
+import {
+  coachRoles,
+  coachingRoles,
+  coachRoleLabel,
+  coachRoleDetails,
+  money,
+} from '@dugout/shared/game-view';
 import { useCoachDirectory } from './use-coach-directory';
 import { coachJudgment } from '@dugout/shared/coach-assessment';
 import type { Act } from '../career/game-contracts';
@@ -29,33 +35,54 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
             <h2>{directory.clubName(g.club)} · 담당 코치진</h2>
             <span>현재 우리 팀에서 지도하는 코치</span>
           </div>
-          <div className="staff-summary">
-            {coachRoles.map((role) => {
-              const c = g.staff.find((c) => c.role === role);
-              return (
-                <div key={role}>
-                  <small>{role} 코치</small>
-                  <strong>{c?.name || '공석'}</strong>
-                  <span>
-                    {c
-                      ? `능력 ${c.skill} · ${coachJudgment(c).label}`
-                      : '담당 코치를 선임해 주세요'}
-                  </span>
-                  <small>
-                    연봉 {money(c?.salary || 0)}
-                    {c?.contractUntil ? ` · ${c.contractUntil - g.year}시즌 계약` : ''}
-                  </small>
-                  <small>
-                    {role === '투수'
-                      ? '투수 교체 판단 · 구위 평가'
-                      : role === '타격'
-                        ? '대타 판단 · 타격 평가'
-                        : '담당 분야 훈련 지도'}
-                  </small>
-                </div>
-              );
-            })}
-          </div>
+          {[
+            { title: '코칭 보직', roles: coachingRoles },
+            { title: '선수 관찰 스태프', roles: ['스카우트'] },
+          ].map((section) => (
+            <div className="staff-role-section" key={section.title}>
+              <h3>{section.title}</h3>
+              <div className="staff-summary">
+                {section.roles.map((role) => {
+                  const c = g.staff.find((c) => c.role === role);
+                  return (
+                    <div key={role} className={c ? '' : 'staff-vacancy'}>
+                      <small>{coachRoleLabel(role)}</small>
+                      <strong>
+                        {c ? (
+                          <Link href={`/coaches/${encodeURIComponent(c.id)}`}>{c.name}</Link>
+                        ) : (
+                          '공석'
+                        )}
+                      </strong>
+                      <span>
+                        {c
+                          ? `능력 ${c.skill} · ${coachJudgment(c).label}`
+                          : '새 담당자를 선임할 수 있습니다'}
+                      </span>
+                      {c && (
+                        <small>
+                          연봉 {money(c.salary)}
+                          {c.contractUntil ? ` · ${c.contractUntil - g.year}시즌 계약` : ''}
+                        </small>
+                      )}
+                      <small>{coachRoleDetails[role]}</small>
+                      {!c && (
+                        <button
+                          className="text-button"
+                          onClick={() => {
+                            directory.setRole(role);
+                            directory.setGroup('free');
+                          }}
+                        >
+                          영입 후보 보기 →
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           <p className="panel-content tiny">
             코치 능력이 높을수록 교체 후보 평가 오차가 줄고 피로를 일찍 파악합니다. 추천은 코치의
             판단이며 경기 결과를 보장하지 않습니다.
@@ -142,7 +169,9 @@ export function CoachPanel({ g, act, busy }: { g: GameState; act: Act; busy: boo
               {rows.map(({ coach: c, club, assigned }) => (
                 <tr key={c.id}>
                   <td>
-                    <strong>{c.name}</strong>
+                    <strong>
+                      <Link href={`/coaches/${encodeURIComponent(c.id)}`}>{c.name}</Link>
+                    </strong>
                     <small>
                       {c.real ? '실명' : '가상'} · {c.real ? c.verifiedRole : c.style}
                     </small>

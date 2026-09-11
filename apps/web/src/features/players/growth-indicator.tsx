@@ -6,7 +6,8 @@ import {
   developmentChange,
   visibleChange,
 } from '@dugout/shared/development';
-import { abilityText, isUnrated } from '@dugout/shared/ratings';
+import { isUnrated } from '@dugout/shared/ratings';
+import { profileAttributes } from '@dugout/shared/player-profile-view';
 import { detailedAttributes } from '@dugout/shared/player-attributes';
 import { Progress } from '@/components/ui/progress';
 
@@ -52,13 +53,13 @@ export function PlayerGrowth({ player: p }: { player: Player }) {
   );
 }
 export function PlayerAttributes({ player: p, owned }: { player: Player; owned: boolean }) {
-  const baseline = owned ? developmentBaseline(p) : null;
+  const baseline = owned && !p.observation ? developmentBaseline(p) : null;
   const previous = baseline
     ? new Map(detailedAttributes({ ...p, ...baseline.abilities }).map((a) => [a.label, a.value]))
     : null;
-  const attributes = detailedAttributes(p).map((a) => ({
+  const attributes = profileAttributes(p).map((a) => ({
     ...a,
-    value: a.key && a.value !== null ? p[a.key] : a.value,
+
     delta:
       baseline && a.value !== null && !isUnrated(p)
         ? a.key
@@ -82,7 +83,7 @@ export function PlayerAttributes({ player: p, owned }: { player: Player; owned: 
         </div>
       )}
       <div className="attribute-grid">
-        {attributes.map(({ label, key, value, basis, delta }) => (
+        {attributes.map(({ label, text, value, basis, delta }) => (
           <div
             key={label}
             className={
@@ -95,14 +96,10 @@ export function PlayerAttributes({ player: p, owned }: { player: Player; owned: 
           >
             <span>{label}</span>
             <div className="attribute-value">
-              <strong>
-                {p.observation
-                  ? (key && p.observation.abilities?.[key]?.map(abilityText).join('–')) || '?'
-                  : abilityText(value)}
-              </strong>
+              <strong>{text}</strong>
               {baseline && <GrowthChange delta={delta} since={baseline.date} label={label} />}
             </div>
-            <Progress value={value ?? 0} aria-label={`${label} ${abilityText(value)}`} />
+            <Progress value={value ?? 0} aria-label={`${label} ${text}`} />
             <small>{basis}</small>
           </div>
         ))}

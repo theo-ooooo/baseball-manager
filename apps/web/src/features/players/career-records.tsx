@@ -8,13 +8,14 @@ import { Choice, SearchBox } from '../../components/game-ui';
 import { useWorld } from '../career/world-context';
 import type { Act } from '../career/game-contracts';
 
-function useRecords(path: string) {
+export function useRecords(path: string | null) {
   const [snapshot, setSnapshot] = useState<{
     path: string;
     data: PlayerCareerRecord[] | null;
     error: string;
   }>({ path: '', data: null, error: '' });
   useEffect(() => {
+    if (!path) return;
     const controller = new AbortController();
     fetch(path, { signal: controller.signal })
       .then(async (r) => {
@@ -53,7 +54,7 @@ export function CareerRecords({
     for (const key of statKeys) totals[key] = (totals[key] || 0) + (stats[key] || 0);
   const pitcher = current?.pos === 'P' || data[0]?.pos === 'P';
   return (
-    <section className="panel-content">
+    <section className="panel-content dossier-card career-record-card">
       <h3>게임 내 통산 기록 · 소속팀 이력</h3>
       <p>
         {totals.g}경기 ·{' '}
@@ -82,7 +83,9 @@ export function CareerRecords({
               <tr key={r.id}>
                 <td>{r.year}</td>
                 <td>{getClub(r.club)?.name || 'FA'}</td>
-                <td>{{ season: '시즌 종료', transfer: '이적', retirement: '은퇴' }[r.kind]}</td>
+                <td>
+                  {{ season: '시즌 종료', transfer: '구단 이동', retirement: '은퇴' }[r.kind]}
+                </td>
                 <td>{r.stats.g}</td>
                 <td>
                   {pitcher

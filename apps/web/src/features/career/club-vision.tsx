@@ -86,6 +86,19 @@ export function ClubVision({ g, act, busy }: { g: GameState; act: Act; busy: boo
                   </small>
                 )}
               </div>
+              {g.managerJobs?.[g.club]?.transfers?.year === g.year && (
+                <div className="board-transfer-feedback">
+                  <strong>
+                    선수단 구성 평가 {g.managerJobs[g.club].transfers!.credit > 0 ? '+' : ''}
+                    {g.managerJobs[g.club].transfers!.credit}
+                  </strong>
+                  {g.managerJobs[g.club].transfers!.events.slice(0, 3).map((e) => (
+                    <p key={e.id}>
+                      <small>{e.date}</small> {e.reason}
+                    </p>
+                  ))}
+                </div>
+              )}
               <span className="vision-contract">
                 계약 기간 · {contract.throughYear}시즌까지 / 연봉 {money(contract.salary)}
               </span>
@@ -243,7 +256,7 @@ export function ClubVision({ g, act, busy }: { g: GameState; act: Act; busy: boo
                 </p>
                 <button
                   className="button secondary"
-                  disabled={!canNegotiate || contract.negotiatedYear === g.year}
+                  disabled={!canNegotiate}
                   onClick={() => setMeeting('support')}
                 >
                   추가 지원 논의
@@ -256,27 +269,22 @@ export function ClubVision({ g, act, busy }: { g: GameState; act: Act; busy: boo
         <section className="panel vision-requests">
           <h2>이사회에 요청하기</h2>
           <p>
-            구단의 기대와 제공할 지원을 함께 이야기합니다. 개막 전 또는 취임 당일에 협상할 수
-            있습니다.
+            시즌 중에도 기대와 지원에 관한 의견을 보낼 수 있습니다. 이사회가 이전 약속의 이행과 구단
+            여건을 살펴 답변합니다.
           </p>
           <div className="vision-request-options">
             <button disabled={!canNegotiate} onClick={() => setMeeting('target')}>
               <Flag size={24} />
               <strong>시즌 기대 조정</strong>
-              <span>목표 순위에 맞춰 감독 연봉을 협의합니다.</span>
+              <span>시즌 목표와 현재 전력에 관한 의견을 전달합니다.</span>
             </button>
-            <button
-              disabled={!canNegotiate || contract.negotiatedYear === g.year}
-              onClick={() => setMeeting('support')}
-            >
+            <button disabled={!canNegotiate} onClick={() => setMeeting('support')}>
               <Sprout size={24} />
               <strong>선수단에 투자해 주십시오.</strong>
               <span>육성·재정 약속을 제시하고 시설 또는 자금을 요청합니다.</span>
             </button>
           </div>
-          {!canNegotiate && (
-            <p>현재 협상 기간이 아닙니다. 다음 시즌 개막 전 다시 논의할 수 있습니다.</p>
-          )}
+          {!canNegotiate && <p>경기 또는 휴가를 마친 뒤 요청할 수 있습니다.</p>}
         </section>
       )}
       <Dialog

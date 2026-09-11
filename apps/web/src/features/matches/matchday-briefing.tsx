@@ -8,10 +8,13 @@ import { Badge } from '../../components/game-ui';
 import { useWorld } from '../career/world-context';
 import { MatchClubStanding } from './match-club-standing';
 import { useUpcomingFixture } from './use-upcoming-fixture';
+import { MatchDelegation } from './match-delegation';
+import type { Act } from '../career/game-contracts';
 import { isClubSeasonRest } from '@dugout/shared/season-status';
 
 export function MatchdayBriefing({
   g,
+  act,
   onView,
   onPlayer,
   onContinue,
@@ -19,6 +22,7 @@ export function MatchdayBriefing({
   busy,
 }: {
   g: GameState;
+  act: Act;
   onView: (view: string) => void;
   onPlayer: (p: Player) => void;
   onContinue: () => void;
@@ -118,6 +122,7 @@ export function MatchdayBriefing({
           </button>
         </div>
       </section>
+      <MatchDelegation g={g} act={act} busy={busy} />
       <div className="matchday-grid">
         <section className="matchday-lineup">
           <header>

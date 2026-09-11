@@ -1165,3 +1165,118 @@
     font-weight: 750;
   }
 }
+/* Each group can be narrow even on a wide screen: controls never compete with names. */
+.ui-pitching {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+.ui-pitcher {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 16px;
+}
+.ui-pitcher-name {
+  width: 100%;
+}
+.ui-pitcher-name strong {
+  font-size: 16px;
+}
+.ui-pitcher-name strong span {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.ui-pitcher-name strong em {
+  flex-shrink: 0;
+}
+.ui-pitcher-name small {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ui-pitcher-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ui-pitcher-controls .button {
+  font-size: 12px;
+  padding: 8px 10px;
+  min-height: 38px;
+}
+.ui-pitcher-controls .ui-order {
+  width: 36px;
+  height: 38px;
+}
+.ui-pitcher-controls .ui-role-select {
+  min-width: 96px;
+  flex: 1;
+  max-width: 160px;
+  height: 38px;
+}
+.pitcher-resource {
+  color: var(--ui-muted);
+  font-size: 12px;
+}
+.pitching-coach-recommendation {
+  margin: 16px;
+  padding: 18px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  background: var(--ui-brand-soft);
+}
+.pitching-coach-recommendation > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.pitching-coach-recommendation > div > div {
+  flex: 1;
+  min-width: 0;
+}
+.pitching-coach-recommendation p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ui-muted);
+}
+.pitching-coach-recommendation ul {
+  padding: 0;
+  list-style: none;
+}
+.pitching-coach-recommendation li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--ui-line);
+}
+.pitching-coach-recommendation li small {
+  grid-column: 1/-1;
+  color: var(--ui-muted);
+}
+.pitching-coach-recommendation footer {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .ui-pitching {
+    padding: 10px;
+  }
+  .pitching-coach-recommendation {
+    margin: 10px;
+    padding: 14px;
+  }
+  .pitching-coach-recommendation > div {
+    flex-wrap: wrap;
+  }
+  .pitching-coach-recommendation > div > .button {
+    width: 100%;
+  }
+  .pitching-coach-recommendation footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -74,7 +74,7 @@ export function InboxPanel({
           <div className="inbox-navigation">
             <div className="inbox-filters" role="group" aria-label="수신함 보기">
               {[
-                ['all', '전체 보고', g.news.length],
+                ['all', '전체 소식', g.news.length],
                 ['unread', '안 읽음', unread.length],
                 ['decision', '처리 필요', decisions.length],
               ].map(([value, label, count]) => (
@@ -122,7 +122,7 @@ export function InboxPanel({
             <Search size={16} />
             <input
               aria-label="수신함 검색"
-              placeholder="보고 검색"
+              placeholder="보낸 사람 · 선수 · 내용 검색"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -177,8 +177,7 @@ export function InboxPanel({
               <ArrowLeft size={16} /> 목록
             </button>
             <span className="inbox-reading-position">
-              {index >= 0 ? `${index + 1} / ${items.length}` : '보고 열람'} ·{' '}
-              {order === 'oldest' ? '오래된순' : '최신순'}
+              {index >= 0 ? `${index + 1} / ${items.length}` : '보고 열람'} · 과거 → 최신
             </span>
             <div className="inbox-letter-navigation">
               <button
@@ -200,7 +199,7 @@ export function InboxPanel({
                 disabled={!nextUnread}
                 onClick={() => nextUnread && select(nextUnread.id)}
               >
-                다음 안 읽은 보고 <ChevronRight size={15} />
+                다음 안 읽은 메일 <ChevronRight size={15} />
               </button>
             </div>
           </div>

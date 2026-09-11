@@ -34,7 +34,7 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
         <Metric
           label="이번 시즌 수입"
           value={money(g.income)}
-          sub="스폰서·중계 지원금 · 경기 · 매각 · 상금"
+          sub="스폰서·중계 지원금 · 경기 · 트레이드 · 상금"
           icon={<ArrowUpRight size={18} />}
         />
         <Metric
@@ -113,7 +113,7 @@ export function Finance({ g, ledger }: { g: GameState; ledger: FinanceEntry[] })
                     continueDay: '날짜 진행 · 경기 수입 · 급여',
                     sign: '선수 계약',
                     releasePlayer: '선수 방출 · 보장 급여 정산',
-                    sell: '선수 매각',
+                    sell: '현금 트레이드',
                     coach: '코치 계약',
                     signCoach: '코치 계약 · 교체 보상금',
                     nextSeason: '새 시즌 지원금',

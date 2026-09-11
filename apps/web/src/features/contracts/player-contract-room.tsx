@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { playerClubStanding } from '@dugout/shared/trade-policy';
+import { usePlayerContractRoom } from './use-player-contract-room';
 import Link from 'next/link';
 import { Clock3, FileSignature, Handshake, UserRound } from 'lucide-react';
 import {
@@ -9,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import type { Deal } from '@dugout/shared/types';
+import { playerPersonalityLabels } from '@dugout/shared/personality';
 import { money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
 import { transfersBlocked } from '@dugout/shared/management';
@@ -41,18 +42,16 @@ export function PlayerContractDialog({ close, ...props }: Props & { close: () =>
   );
 }
 export function PlayerContractRoom({
-  player,
+  player: requested,
   g,
   act,
   busy,
   onWait,
 }: Props & { onWait?: () => void }) {
-  const { agentFor, getClub } = useWorld();
-  const own = g.roster.some((p) => p.id === player.id),
-    agent = agentFor(player);
-  const deal = g.deals.find((d) => d.player.id === player.id);
-  const [editingId, setEditingId] = useState<string | null>(null),
-    [signing, setSigning] = useState<Deal | null>(null);
+  const { agentFor, getClub, rosterFor } = useWorld();
+  const { player, own, deal, found, editingId, setEditingId, signing, setSigning } =
+    usePlayerContractRoom(g, requested);
+  const agent = agentFor(player);
   const expired =
     !!deal &&
     (deal.status === 'expired' ||
@@ -64,12 +63,25 @@ export function PlayerContractRoom({
   const steps =
     own || player.club === 'fa'
       ? ['조건 제안', '답변·재협상', '최종 서명']
-      : ['구단 이적 협의', '개인 조건 협상', '최종 서명'];
+      : ['트레이드 제안', '구단 답변', '최종 확정'];
   const current =
     deal?.status === 'accepted' && !expired ? 2 : deal && deal.stage !== 'club' ? 1 : 0;
-  if (!own && player.club !== 'fa')
+  if (!found || g.managerCareer?.status === 'unemployed')
     return (
       <section className="contract-room panel-content">
+        <h2>{player.name} · 계약 정보</h2>
+        <p>
+          {!found
+            ? '현재 선수 기록을 찾을 수 없습니다.'
+            : '소속 구단의 감독만 계약을 협상할 수 있습니다.'}
+        </p>
+      </section>
+    );
+  const standing = playerClubStanding(player, own ? g.roster : rosterFor(g, player.club));
+  if (!own && player.club !== 'fa')
+    return (
+      <section className="player-trade-overview">
+        <small>구단 간 트레이드</small>
         <h2>
           {player.name} · {getClub(player.club)?.name} 소속
         </h2>
@@ -80,6 +92,11 @@ export function PlayerContractRoom({
           타 구단 소속 선수에게는 직접 연봉 협상을 제안할 수 없습니다. 계약 조건을 승계하는 구단 간
           트레이드로 영입하거나, 자유계약 신분이 된 뒤 협상하세요.
         </p>
+        <div className="player-trade-standing">
+          <strong>{standing.label}</strong>
+          <p>{standing.reason}</p>
+          <small>게임 내 전력과 잔류 성향을 바탕으로 한 구단 평가입니다.</small>
+        </div>
         {getClub(player.club)?.league === getClub(g.club)?.league ? (
           <Link
             className="button primary"
@@ -93,14 +110,14 @@ export function PlayerContractRoom({
       </section>
     );
   return (
-    <section className="contract-room">
+    <section className={`contract-room ${own ? 'renewal-room' : ''}`}>
       <header className="contract-room-header">
         <span className="contract-room-icon">
           <Handshake size={24} />
         </span>
         <div>
           <small>
-            {getClub(g.club).name} · {own ? '재계약 협상' : '선수 영입 협상'}
+            {getClub(g.club).name} · {own ? '선수 재계약' : '선수 영입 협상'}
           </small>
           <h2>
             {player.name}
@@ -134,6 +151,11 @@ export function PlayerContractRoom({
           <h3>{agent.name}</h3>
           <p>{agent.agency}</p>
           <span className="pill">{agent.priority}</span>
+          <div className="player-personality-tags">
+            {playerPersonalityLabels(player).map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
           <div className="contract-agent-note">
             <strong>현재 계약</strong>
             <p>{money(player.salary)} / 시즌</p>
@@ -149,7 +171,7 @@ export function PlayerContractRoom({
           <div className="contract-agent-note">
             <strong>구단 가용 예산</strong>
             <p>{money(g.budget)}</p>
-            <small>최종 서명 때 계약금·수수료·이적료가 반영됩니다.</small>
+            <small>최종 서명 때 계약금과 에이전트 수수료가 반영됩니다.</small>
           </div>
         </aside>
         <div className="contract-discussion">
@@ -216,8 +238,12 @@ export function PlayerContractRoom({
                   <dd>{deal.years}년</dd>
                 </div>
                 <div>
-                  <dt>이적료</dt>
-                  <dd>{money(deal.fee)}</dd>
+                  <dt>계약금 · 연봉의 5%</dt>
+                  <dd>{money(deal.salary * 0.05)}</dd>
+                </div>
+                <div>
+                  <dt>보장 연봉 총액</dt>
+                  <dd>{money(deal.salary * deal.years)}</dd>
                 </div>
                 <div>
                   <dt>계약금 · 수수료 포함 지출</dt>
@@ -300,7 +326,7 @@ export function PlayerContractRoom({
             costs: [
               { label: '계약금 · 연봉의 5%', amount: signing.salary * 0.05 },
               { label: '에이전트 수수료', amount: signing.agentFee },
-              { label: '이적료', amount: signing.fee },
+              ...(signing.fee > 0 ? [{ label: '구단 간 지급액', amount: signing.fee }] : []),
             ],
           }}
           g={g}
@@ -312,7 +338,7 @@ export function PlayerContractRoom({
           estimateCosts={(salary) => [
             { label: '계약금 · 연봉의 5%', amount: salary * 0.05 },
             { label: '에이전트 수수료', amount: Math.round(salary * agent.fee) },
-            { label: '이적료', amount: signing.fee },
+            ...(signing.fee > 0 ? [{ label: '구단 간 지급액', amount: signing.fee }] : []),
           ]}
           close={() => setSigning(null)}
         />

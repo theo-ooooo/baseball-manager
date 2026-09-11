@@ -1,5 +1,5 @@
 import type { GameState } from '@dugout/shared/types';
-import { newsNeedsAction } from '../inbox/inbox-model';
+import { orderedInbox } from '../inbox/inbox-order';
 
 export type ManagerStep = {
   kind: 'decision' | 'report' | 'matchday' | 'media' | 'live' | 'season' | 'continue';
@@ -23,8 +23,8 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
       detail: `${g.managerCareer.vacationUntil} 복귀 후 모인 보고를 확인합니다.`,
     };
   if (g.managerCareer?.status === 'unemployed') {
-    const unread = g.news.filter((n) => !n.read);
-    const report = unread.find((n) => newsNeedsAction(n, g)) || unread[0];
+    const unread = orderedInbox(g, g.news).filter((n) => !n.read);
+    const report = unread[0];
     if (report)
       return {
         kind: 'report',
@@ -38,10 +38,10 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
       detail: '세계의 뉴스와 새 구단의 연락을 기다립니다.',
     };
   }
-  const decision = g.news.find((n) => n.choiceKind && !n.choice);
+  const decision = orderedInbox(g, g.news).find((n) => n.choiceKind && !n.choice);
   if (decision)
     return { kind: 'decision', label: '필수 답변', detail: decision.title, reportId: decision.id };
-  const unread = g.news.filter((n) => !n.read);
+  const unread = orderedInbox(g, g.news).filter((n) => !n.read);
   if (g.media?.pending) {
     const matchReport = unread.find(
       (n) => n.kind === 'match' && `post:${n.matchId}` === g.media!.pending!.key,
@@ -59,7 +59,7 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
           detail: '취재진과 선수단에 경기 평가를 전하고 다음 일정을 준비하세요.',
         };
   }
-  const report = unread.find((n) => newsNeedsAction(n, g)) || unread[0];
+  const report = unread[0];
   if (report)
     return {
       kind: 'report',

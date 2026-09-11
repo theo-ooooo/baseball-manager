@@ -3,11 +3,13 @@ import {
   useMatchConversation,
   useConversationForm,
   useConversationFocus,
+  useConversationReactions,
 } from './use-match-conversation';
 import { Check, Mic, Users, ArrowRight } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
 import { type MatchConversation, type ConversationRecord } from '@dugout/shared/match-media';
 import type { Act } from '../career/game-contracts';
+import Link from 'next/link';
 import { ClubBadge } from '../../components/club-badge';
 
 export function MatchConversationPanel({
@@ -21,7 +23,7 @@ export function MatchConversationPanel({
   busy: boolean;
   onContinue: () => void;
 }) {
-  const { context, selected, setSelected, journal, prior, completed, getClub } =
+  const { context, selected, setSelected, journal, prior, completed, getClub, finish } =
     useMatchConversation(g);
   return (
     <div className="match-media-page">
@@ -32,19 +34,30 @@ export function MatchConversationPanel({
           <ClubBadge club={getClub(g.club)} size="small" />
           <div>
             <span>MEDIA ROOM · CLUBHOUSE</span>
-            <h2>{context?.stage === 'post' ? '경기 후 기자회견' : '경기 전 기자회견'}</h2>
+            <h2>
+              {(completed?.stage || context?.stage) === 'post' ? '경기 후' : '경기 전'} ·{' '}
+              {completed ? '대화 결과' : '인터뷰와 팀 대화'}
+            </h2>
           </div>
-          <small>{context?.date || completed?.date || '구단 일정'}</small>
+          <small>{completed?.date || context?.date || '구단 일정'}</small>
         </header>
         {completed ? (
           <ConversationResult
+            key={completed.key}
             record={completed}
             onContinue={prior ? () => setSelected(null) : onContinue}
             busy={busy}
             historical={!!prior}
           />
         ) : context ? (
-          <ConversationForm key={context.key} context={context} g={g} act={act} busy={busy} />
+          <ConversationForm
+            key={context.key}
+            context={context}
+            g={g}
+            act={act}
+            busy={busy}
+            onComplete={finish}
+          />
         ) : (
           <div className="media-empty">
             <Mic size={32} />
@@ -57,11 +70,6 @@ export function MatchConversationPanel({
               다음 일정 확인 <ArrowRight size={16} />
             </button>
           </div>
-        )}
-        {prior && (
-          <button className="button secondary media-return" onClick={() => setSelected(null)}>
-            현재 인터뷰로 돌아가기
-          </button>
         )}
       </section>
       {!!journal.length && (
@@ -91,15 +99,18 @@ function ConversationForm({
   g,
   act,
   busy,
+  onComplete,
 }: {
   context: MatchConversation;
+  onComplete: (key: string) => void;
   g: GameState;
   act: Act;
   busy: boolean;
 }) {
-  const f = useConversationForm(context, act, busy);
+  const f = useConversationForm(context, act, busy, onComplete);
   const { at, setAt, answers, selected, last, question, questionHeading } = f;
-  const coach = g.staff.find((c) => c.role === '수석') || g.staff[0];
+  const coach =
+    g.staff.find((c) => c.role === '수석') || g.staff.find((c) => c.role !== '스카우트');
   return (
     <form
       className={`media-conversation ${question.room === 'team' ? 'is-team-talk' : ''}`}
@@ -118,8 +129,8 @@ function ConversationForm({
       <ol className="media-steps" aria-label="인터뷰와 팀 대화 순서">
         {context.questions.map((q, i) => (
           <li key={q.id} aria-current={i === at ? 'step' : undefined}>
-            {i < 2 ? <Mic size={14} /> : <Users size={14} />}
-            <span>{i < 2 ? `질문 ${i + 1}` : '팀 대화'}</span>
+            {q.room === 'press' ? <Mic size={14} /> : <Users size={14} />}
+            <span>{q.room === 'press' ? `질문 ${i + 1}` : '팀 대화'}</span>
             {answers[q.id] && <Check size={13} />}
           </li>
         ))}
@@ -189,7 +200,7 @@ function ConversationForm({
           이전 질문
         </button>
         <button type="submit" className="button primary" disabled={busy || !selected}>
-          {busy ? '메시지 전달 중…' : last ? '답변 확정 · 선수단에 전달' : '이 답변으로 다음 질문'}
+          {busy ? '메시지 전달 중…' : last ? '대화 마치기' : '다음 질문'}
           <ArrowRight size={16} />
         </button>
       </footer>
@@ -223,8 +234,7 @@ function ConversationResult({
   busy: boolean;
   historical?: boolean;
 }) {
-  const positive = record.reactions.filter((r) => r.after > r.before).length,
-    negative = record.reactions.filter((r) => r.after < r.before).length;
+  const reactions = useConversationReactions(record);
   const resultHeading = useConversationFocus(record.key);
   return (
     <div className="media-result">
@@ -240,34 +250,95 @@ function ConversationResult({
         </div>
       </div>
       <div className="media-reaction-summary">
-        <span>
-          의욕·안정감 <b>{positive}명</b>
-        </span>
-        <span>
-          부담 <b>{negative}명</b>
-        </span>
-        <span>
-          차분한 반응 <b>{record.reactions.length - positive - negative}명</b>
-        </span>
+        <div className="positive">
+          <span>자신감을 얻었어요</span>
+          <strong>
+            {reactions.counts.positive}
+            <small>명</small>
+          </strong>
+        </div>
+        <div className="neutral">
+          <span>차분히 받아들였어요</span>
+          <strong>
+            {reactions.counts.neutral}
+            <small>명</small>
+          </strong>
+        </div>
+        <div className="negative">
+          <span>부담을 느꼈어요</span>
+          <strong>
+            {reactions.counts.negative}
+            <small>명</small>
+          </strong>
+        </div>
       </div>
-      <button className="button primary" disabled={busy} onClick={onContinue}>
-        {historical ? '현재 일정으로' : record.stage === 'pre' ? '경기장으로' : '다음 일정으로'}
-        <ArrowRight size={16} />
-      </button>
-      <h4>선수단의 반응</h4>
-      <div className="media-reactions">
-        {record.reactions.map((r) => (
-          <div
-            key={r.id}
-            className={r.after > r.before ? 'positive' : r.after < r.before ? 'negative' : ''}
+      <div className="media-result-next">
+        <p>
+          {historical
+            ? '당시의 발언과 반응입니다.'
+            : record.stage === 'pre'
+              ? '선수들에게 메시지를 전했습니다. 이제 경기를 준비할 시간입니다.'
+              : '오늘 대화는 기록해 두었습니다. 다음 일정으로 이어가세요.'}
+        </p>
+        <button className="button primary" disabled={busy} onClick={onContinue}>
+          {historical ? '현재 일정으로' : record.stage === 'pre' ? '경기장으로' : '다음 일정으로'}
+          <ArrowRight size={16} />
+        </button>
+      </div>
+      <div className="media-reaction-heading">
+        <h4>선수들은 이렇게 받아들였습니다</h4>
+        <small>대화 직후 사기 변화</small>
+      </div>
+      <nav className="media-reaction-filters" aria-label="선수 반응 보기">
+        {(
+          [
+            ['all', '전체'],
+            ['positive', '긍정'],
+            ['neutral', '차분'],
+            ['negative', '부담'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            aria-pressed={reactions.filter === key}
+            onClick={() => reactions.setFilter(key)}
           >
-            <strong>{r.name}</strong>
-            <span>{r.reason}</span>
-            <b>
-              사기 {r.before.toFixed(1)} → {r.after.toFixed(1)}
-            </b>
-          </div>
+            {label}
+            <b>{reactions.counts[key]}</b>
+          </button>
         ))}
+      </nav>
+      <div className="media-reaction-table-wrap">
+        <table className="media-reaction-table">
+          <thead>
+            <tr>
+              <th>선수 · 반응</th>
+              <th>사기</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reactions.rows.map((r) => (
+              <tr key={r.id} className={reactions.tone(r)}>
+                <td>
+                  <Link href={`/players/${encodeURIComponent(r.id)}`}>{r.name}</Link>
+                  <span>{r.reason}</span>
+                </td>
+                <td>
+                  <strong>{r.after.toFixed(2)}</strong>
+                  <small>
+                    {r.after > r.before ? '+' : ''}
+                    {(r.after - r.before).toFixed(2)}
+                  </small>
+                </td>
+              </tr>
+            ))}
+            {!reactions.rows.length && (
+              <tr>
+                <td colSpan={2}>이 반응을 보인 선수는 없습니다.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
       <details className="media-transcript">
         <summary>질문과 답변 다시 읽기</summary>

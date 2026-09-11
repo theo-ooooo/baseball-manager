@@ -51,7 +51,7 @@ export function PlayerOfferForm({
       }}
     >
       <div className="contract-proposal-heading">
-        <h3>우리 구단의 제안</h3>
+        <h3>{own ? '다음 계약을 제안해 보세요' : '우리 구단의 제안'}</h3>
         <small>금액 단위: 만 원</small>
       </div>
       <div className="contract-term-row">
@@ -124,21 +124,31 @@ export function PlayerOfferForm({
           )}
         </div>
       )}
-      <details className="contract-estimate">
-        <summary>부대 비용 · 서명 시 예상 지출 {money(valid ? cost : 0)}</summary>
+      <section className="renewal-cost-overview" aria-label="새 계약 비용">
         <div>
-          <span>계약금 · 연봉의 5%</span>
+          <small>보장 연봉 총액 · {years}년</small>
+          <strong>{money(valid ? amount * years : 0)}</strong>
+        </div>
+        <div>
+          <small>계약금 · 연봉의 5%</small>
           <strong>{money(valid ? amount * 0.05 : 0)}</strong>
         </div>
         <div>
-          <span>에이전트 수수료</span>
+          <small>에이전트 수수료</small>
           <strong>{money(valid ? agentFee : 0)}</strong>
         </div>
         <div>
-          <span>서명 시 예상 지출</span>
+          <small>서명할 때 구단에서 지출</small>
           <strong>{money(valid ? cost : 0)}</strong>
         </div>
-      </details>
+      </section>
+      <p className="renewal-salary-change">
+        현재 연봉 대비{' '}
+        {Number.isFinite(amount) && player.salary > 0
+          ? `${(amount / player.salary - 1) * 100 >= 0 ? '+' : ''}${((amount / player.salary - 1) * 100).toFixed(1)}%`
+          : '—'}{' '}
+        · 연봉은 시즌 중 급여로 별도 정산합니다.
+      </p>
       {valid && cost > g.budget && (
         <p className="rule-notice">
           가용 예산을 {money(cost - g.budget)} 초과합니다. 조건을 낮춰 주세요.

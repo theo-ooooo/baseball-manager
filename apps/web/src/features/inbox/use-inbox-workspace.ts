@@ -6,7 +6,7 @@ import { useWorld } from '../career/world-context';
 import { useIsMobile } from '../../hooks/use-mobile';
 import type { GameState } from '@dugout/shared/types';
 import type { useInboxReadQueue } from './use-inbox-read-queue';
-import { orderedInbox, nextUnreadAfter } from './inbox-order';
+import { orderedInbox, inboxReadingOrder } from './inbox-order';
 import { newsMeta, newsNeedsAction } from './inbox-model';
 export function useInboxWorkspace(
   g: GameState,
@@ -27,7 +27,12 @@ export function useInboxWorkspace(
   );
   const displayGame = useMemo(() => ({ ...g, news }), [g, news]);
   const initialReport = news.find((n) => n.id === initialReportId);
-  const [selectedId, setSelectedId] = useState(initialReport?.id || news[0]?.id || ''),
+  const [selectedId, setSelectedId] = useState(
+      initialReport?.id ||
+        orderedInbox(g, news).find((n) => !n.read)?.id ||
+        orderedInbox(g, news)[0]?.id ||
+        '',
+    ),
     [filter, setFilter] = useState('all'),
     [category, setCategory] = useState('all'),
     [search, setSearch] = useState(''),
@@ -65,8 +70,9 @@ export function useInboxWorkspace(
     setSelectedId(id);
     setDetailOpen(true);
   }
-  const nextUnread = nextUnreadAfter(items, selectedId);
-  const index = items.findIndex((n) => n.id === selectedId);
+  const readingItems = inboxReadingOrder(g, news, items);
+  const nextUnread = readingItems.find((n) => !n.read && n.id !== selectedId);
+  const index = readingItems.findIndex((n) => n.id === selectedId);
   return {
     displayGame,
     selectedId,
@@ -84,8 +90,8 @@ export function useInboxWorkspace(
     setOrder,
     toolbarRef,
     index,
-    previous: index > 0 ? items[index - 1] : undefined,
-    next: items[index + 1],
+    previous: index > 0 ? readingItems[index - 1] : undefined,
+    next: readingItems[index + 1],
     setFilter: (value: string) => {
       setUnreadSession(new Set(unread.map((n) => n.id)));
       setFilter(value);

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ManagerPersonProfile } from './manager-person-profile';
 import { departureLabel, departureDetail } from '@dugout/shared/manager-departure';
 import { ManagerInterviewSession } from './manager-interview-session';
 import { ManagerOfferCard } from './manager-offer-card';
@@ -10,7 +11,7 @@ import { isUnemployed } from '@dugout/shared/manager-career';
 import { money } from '@dugout/shared/game-view';
 import { useWorld } from './world-context';
 import type { Act } from './game-contracts';
-import { Choice, Metric } from '../../components/game-ui';
+import { Choice } from '../../components/game-ui';
 export function ManagerPanel({
   g,
   act,
@@ -66,39 +67,7 @@ export function ManagerPanel({
       )}
       {mode === 'profile' && (
         <>
-          <section className="panel panel-content">
-            <h2>{g.manager}</h2>
-            <p>{unemployed ? '소속 없음 · 구직 중' : `${getClub(g.club).name} 감독`}</p>
-            <div className="metrics">
-              <Metric label="평판" value={m?.reputation ?? g.reputation} sub="채용 심사에 반영" />
-              <Metric
-                label="감독 연봉"
-                value={money(m?.contract?.salary || 0)}
-                sub={m?.contract ? `${m.contract.throughYear}시즌까지` : '급여 없음'}
-              />
-              <Metric label="통산 수령 급여" value={money(m?.earnings || 0)} sub="감독 개인 경력" />
-            </div>
-            <p>
-              {m?.vacationUntil
-                ? `${m.vacationUntil}까지 휴가 중`
-                : unemployed
-                  ? `${m?.unemployedSince}부터 새 구단을 찾고 있습니다.`
-                  : `${m?.contract?.signed} 취임 · 구단주 신임도 ${g.managerJobs?.[g.club]?.confidence ?? 65}%`}
-            </p>
-            <div className="manager-form">
-              <Link className="button secondary" href="/?view=manager-contract">
-                계약 · 휴가 · 사퇴
-              </Link>
-              {!unemployed && (
-                <Link className="button secondary" href="/?view=vision">
-                  구단 비전
-                </Link>
-              )}
-              <Link className="button primary" href="/?view=jobs">
-                채용 센터
-              </Link>
-            </div>
-          </section>
+          <ManagerPersonProfile g={g} id="self" act={act} busy={busy} />
           {!!active.length && (
             <section className="panel panel-content">
               <h2>진행 중인 채용 {active.length}건</h2>

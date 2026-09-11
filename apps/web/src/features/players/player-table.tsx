@@ -14,7 +14,8 @@ import { useWorld } from '../career/world-context';
 import { type GameState, type Player, overall, money } from '@dugout/shared/game-view';
 import { potentialText } from '@dugout/shared/ratings';
 import { Mood } from '../clubs/club-panels';
-import { Rating, PlayerName, positions } from '../../components/game-ui';
+import { playerPosition } from '@dugout/shared/management';
+import { Rating, PlayerName } from '../../components/game-ui';
 import { RoleBadge, assignmentLabel, pitchingAssignment } from '../squad/pitching-panel';
 import { DevelopmentBadge } from './development-panel';
 import { PlayerGrowth } from './growth-indicator';
@@ -99,7 +100,7 @@ export function PlayerTable({
                 )}
               </TableCell>
               <TableCell className="player-secondary-column">
-                {positions[p.pos]}
+                {playerPosition(p).label}
                 {kind !== 'market' &&
                   (role ? (
                     <small className="block">

@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useCoachNegotiations } from './use-coach-negotiations';
+import { useCoachOffer } from './use-coach-offer';
 import { ContractSigning } from '../contracts/contract-signing';
 import { toast } from 'sonner';
 import {
@@ -9,8 +10,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import type { Coach, CoachDeal, GameState } from '@dugout/shared/types';
-import { coachRoles, fromManwon, money, toManwon } from '@dugout/shared/game-view';
+import type { Coach, GameState } from '@dugout/shared/types';
+import { coachRoles, money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
 import { NegotiationHistory, negotiationLabels } from '../market/negotiation-details';
 import type { Act } from '../career/game-contracts';
@@ -24,15 +25,18 @@ export function CoachOfferDialog({
   busy,
   close,
 }: Props & { coach: Coach; role: string; close: () => void }) {
-  const previous = g.coachDeals?.find((d) => d.coach.id === coach.id);
-  const [role, setRole] = useState(previous?.role || (coach.real ? initialRole : coach.role));
-  const [salary, setSalary] = useState(String(toManwon(previous?.salary || coach.salary * 1.1)));
-  const [years, setYears] = useState(previous?.years || 2);
-  const amount = fromManwon(Number(salary));
-  const outgoing = g.staff.find((c) => c.role === role);
-  const compensation = outgoing?.contractUntil
-    ? outgoing.salary * Math.max(0, outgoing.contractUntil - g.year) * 0.25
-    : 0;
+  const {
+    previous,
+    role,
+    setRole,
+    salary,
+    setSalary,
+    years,
+    setYears,
+    amount,
+    outgoing,
+    compensation,
+  } = useCoachOffer(g, coach, initialRole);
   return (
     <Dialog
       open
@@ -60,7 +64,11 @@ export function CoachOfferDialog({
           <div className="contract-inputs">
             <label>
               담당 보직
-              <select value={role} disabled={!coach.real} onChange={(e) => setRole(e.target.value)}>
+              <select
+                value={role}
+                disabled={!coach.real && !coach.managerPersonId}
+                onChange={(e) => setRole(e.target.value)}
+              >
                 {coachRoles.map((r) => (
                   <option key={r}>{r}</option>
                 ))}
@@ -135,13 +143,13 @@ export function CoachNegotiations({
   busy,
   onOffer,
 }: Props & { onOffer: (coach: Coach) => void }) {
-  const [signing, setSigning] = useState<CoachDeal | null>(null);
-  if (!g.coachDeals?.length && !signing) return null;
+  const { deals, signing, setSigning } = useCoachNegotiations(g);
+  if (!deals.length) return null;
   return (
     <section className="coach-negotiations">
       <h2>코치 협상</h2>
       <div className="deal-grid">
-        {g.coachDeals?.map((d) => {
+        {deals.map((d) => {
           const expired =
             d.year !== g.year || g.day > (d.expires ?? d.day + 14) || d.status === 'expired';
           return (

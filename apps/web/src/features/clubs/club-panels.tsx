@@ -108,19 +108,19 @@ export function OutgoingTransferPanel({
     offer = offers.find((o) => o.id === selected);
   return (
     <div className="outgoing-transfer">
-      <h3>구단 영입 제안</h3>
+      <h3>현금 트레이드 제안</h3>
       <button
         className="button secondary full-width"
         disabled={busy}
         onClick={() => void act({ type: 'listPlayer', id: p.id, value: !listed })}
       >
-        {listed ? '이적 명단에서 제외' : '이적 명단 등록 · 관심 구단 확인'}
+        {listed ? '트레이드 대상에서 제외' : '트레이드 대상 등록 · 관심 구단 확인'}
       </button>
       {!offers.length && (
         <p className="tiny">
           {listed
             ? '관심 구단에 문의 중입니다. 2일 뒤부터 제안이 도착할 수 있으며, 관심이 없으면 주간 보고로 알려드립니다.'
-            : '등록 즉시 이적되지 않습니다. 구단이 제시한 금액과 행선지를 확인한 뒤 결정합니다.'}
+            : '지정 즉시 선수가 이동하지 않습니다. 구단이 제시한 금액과 행선지를 확인한 뒤 결정합니다.'}
         </p>
       )}
       {offers.map((o) => (
@@ -154,10 +154,10 @@ export function OutgoingTransferPanel({
       >
         <AlertDialogContent className="confirm-dialog">
           <AlertDialogHeader>
-            <AlertDialogTitle>{p.name} 이적 제안을 수락할까요?</AlertDialogTitle>
+            <AlertDialogTitle>{p.name} 현금 트레이드를 확정할까요?</AlertDialogTitle>
             <AlertDialogDescription>
               {offer &&
-                `${getClub(offer.club).name}으로 이적하며 ${money(offer.fee)}을 받습니다. 같은 포지션의 1군 대체 선수가 필요합니다.`}
+                `${getClub(offer.club).name}으로 이동하며 ${money(offer.fee)}을 받습니다. 기존 연봉과 잔여 계약은 상대 구단이 승계하며 선수와 새 계약을 협상하지 않습니다. 같은 포지션의 1군 대체 선수가 필요합니다.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -169,7 +169,7 @@ export function OutgoingTransferPanel({
                   setSelected('');
               }}
             >
-              이적 확정
+              트레이드 확정
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,3 +1,4 @@
+import { MatchBoxScore } from '../matches/match-box-score';
 import { isClosedClubReport } from '@dugout/shared/employment-reports';
 import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
 import { isClubSeasonRest } from '@dugout/shared/season-status';
@@ -7,7 +8,7 @@ import { MedicalDecision } from '../squad/medical-decision';
 import { CoachRecommendations } from '../squad/coach-recommendations';
 import { managerOfferActionLabel } from '../career/manager-offer-status';
 import Link from 'next/link';
-import { ArrowUpRight, FileSignature, UserRound } from 'lucide-react';
+import { ArrowUpRight, FileSignature } from 'lucide-react';
 import type { GameState, NewsItem, Player, Result } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { dateLabel } from '@dugout/shared/calendar';
@@ -45,6 +46,11 @@ export function InboxReport({
     review = contractReview(news),
     resolution = isClosedClubReport(g, news) ? 'departed' : contractReportStatus(g, news),
     reviewComplete = review && !newsNeedsAction(news, g);
+  const coachRecommendation =
+    news.kind === 'training'
+      ? g.coachRecommendations?.find((r) => r.playerId === news.playerId && r.date === news.date)
+      : undefined;
+  const needsAction = newsNeedsAction(news, g);
   const destination = resolution ? null : reportDestination(news, g);
   const trade = news.tradeId ? g.trades?.find((offer) => offer.id === news.tradeId) : undefined;
   const players =
@@ -73,13 +79,11 @@ export function InboxReport({
       <header className="inbox-report-header">
         <div className="inbox-report-labels">
           <span>{meta.label}</span>
-          {newsNeedsAction(news, g) && <b>감독 확인 필요</b>}
+          {needsAction ? <b>답변을 기다리고 있어요</b> : <small>읽어두면 좋은 소식</small>}
         </div>
         <h2>{news.title}</h2>
         <div className="inbox-sender">
-          <span className="inbox-sender-avatar">
-            <UserRound size={20} />
-          </span>
+          <span className="inbox-sender-avatar">{(meta.name || meta.sender).slice(0, 1)}</span>
           <div>
             <strong>{meta.name || meta.sender}</strong>
             <small>
@@ -116,6 +120,7 @@ export function InboxReport({
             )}
           </section>
         )}
+        {match && <MatchBoxScore key={match.id} match={match} club={g.club} />}
         {(resolution || reviewComplete) && (
           <section className="inbox-resolved" role="status">
             <strong>
@@ -130,7 +135,7 @@ export function InboxReport({
             <p>이 보고서는 이전 연락 기록입니다. 추가 서명이나 재계약 처리가 필요하지 않습니다.</p>
           </section>
         )}
-        <p className="inbox-letter-greeting">{g.manager} 감독님께,</p>
+        {!news.body.startsWith('감독님') && <p className="inbox-letter-greeting">감독님,</p>}
         {!resolution && trade && !isActiveTrade(g, trade) && (
           <section className="inbox-resolved" role="status">
             <strong>트레이드 {tradeStatusLabels[tradeStatus(g, trade)]}</strong>
@@ -156,7 +161,7 @@ export function InboxReport({
           </section>
         )}
         {!!news.report?.facts?.length && (
-          <dl className="inbox-facts">
+          <dl className="inbox-facts inbox-facts-compact">
             {news.report.facts.map((fact) => (
               <div key={fact.label}>
                 <dt>{fact.label}</dt>
@@ -170,10 +175,15 @@ export function InboxReport({
           news.report?.sections?.map((section) => (
             <section className="inbox-report-section" key={section.title}>
               <h3>{section.title}</h3>
-              <p>{section.body}</p>
+              {section.body
+                .split('\n')
+                .filter(Boolean)
+                .map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
             </section>
           ))}
-        {players.length > 0 && (
+        {players.length > 0 && !coachRecommendation && (
           <section className="inbox-report-section">
             <h3>
               {review
@@ -291,62 +301,65 @@ export function InboxReport({
             </Link>
           </section>
         )}
-        <div className="inbox-report-actions">
-          {!resolution &&
-            (news.actionView === 'manager'
-              ? '감독 경력 · 계약 확인'
-              : news.actionView === 'reserves'
-                ? '1군 · 2군 등록 확인'
-                : news.actionView === 'agents' &&
-                  subject && (
-                    <button
-                      className="button primary"
-                      disabled={busy}
-                      onClick={() => onNegotiate(subject)}
-                    >
-                      <FileSignature size={16} />
-                      {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
-                    </button>
-                  ))}
-          {!resolution &&
-            !destination &&
-            news.actionView &&
-            !news.lineupRecommendation &&
-            news.actionView !== 'medical' &&
-            !(news.actionView === 'agents' && subject) && (
-              <Link className="button secondary" href={`/?view=${news.actionView}`}>
-                {news.actionView === 'job-offers'
-                  ? '모든 구단 연락'
-                  : news.actionView === 'jobs'
-                    ? '채용 센터'
-                    : news.actionView === 'vision'
-                      ? '구단 비전'
-                      : news.actionView === 'manager'
-                        ? '감독 경력 · 계약 확인'
-                        : news.actionView === 'reserves'
-                          ? '1군 · 2군 등록 확인'
-                          : news.actionView === 'agents'
-                            ? '전체 계약 협상'
-                            : news.actionView === 'media'
-                              ? '인터뷰 · 라커룸으로'
-                              : news.actionView === 'staff'
-                                ? '코치 협상 확인'
-                                : news.actionView === 'scouting'
-                                  ? '관찰 보고 · 선수 비교'
-                                  : news.actionView === 'market'
-                                    ? '영입 대상 확인'
-                                    : '선수단 확인'}
-                <ArrowUpRight size={15} />
-              </Link>
+        {!coachRecommendation && (
+          <div className="inbox-report-actions">
+            {!resolution && news.actionView === 'agents' && subject && (
+              <button
+                className="button primary"
+                disabled={busy}
+                onClick={() => onNegotiate(subject)}
+              >
+                <FileSignature size={16} />
+                {deal?.status === 'accepted' ? '계약서 검토 · 서명' : '협상실로 이동'}
+              </button>
             )}
-          {player && !review && (
-            <button className="button secondary" onClick={() => onPlayer(player)}>
-              선수 상세 보기
-            </button>
-          )}
-        </div>
+            {!resolution &&
+              !destination &&
+              news.actionView &&
+              !news.lineupRecommendation &&
+              news.actionView !== 'medical' &&
+              !(news.actionView === 'agents' && subject) && (
+                <Link className="button secondary" href={`/?view=${news.actionView}`}>
+                  {news.actionView === 'job-offers'
+                    ? '모든 구단 연락'
+                    : news.actionView === 'jobs'
+                      ? '채용 센터'
+                      : news.actionView === 'vision'
+                        ? '구단 비전'
+                        : news.actionView === 'manager'
+                          ? '감독 경력 · 계약 확인'
+                          : news.actionView === 'reserves'
+                            ? '1군 · 2군 등록 확인'
+                            : news.actionView === 'agents'
+                              ? '전체 계약 협상'
+                              : news.actionView === 'media'
+                                ? '인터뷰 · 라커룸으로'
+                                : news.actionView === 'staff'
+                                  ? '코치 협상 확인'
+                                  : news.actionView === 'scouting'
+                                    ? '관찰 보고 · 선수 비교'
+                                    : news.actionView === 'market'
+                                      ? '영입 대상 확인'
+                                      : '선수단 확인'}
+                  <ArrowUpRight size={15} />
+                </Link>
+              )}
+            {player && !review && (
+              <button className="button secondary" onClick={() => onPlayer(player)}>
+                선수 상세 보기
+              </button>
+            )}
+          </div>
+        )}
         {!resolution && news.playerId && news.kind === 'training' && (
-          <CoachRecommendations g={g} act={act} busy={busy} playerId={news.playerId} />
+          <CoachRecommendations
+            g={g}
+            act={act}
+            busy={busy}
+            playerId={news.playerId}
+            recommendationId={coachRecommendation?.id}
+            compact
+          />
         )}
         {news.choiceKind && !news.choice && !resolution && !isClubSeasonRest(g) && (
           <section className="inbox-decision">
@@ -373,6 +386,11 @@ export function InboxReport({
         )}
         {news.response && <p className="inbox-resolved">답변 완료 · {news.response}</p>}
         <footer className="inbox-letter-footer">
+          <small>
+            {needsAction
+              ? '살펴보시고 의견을 들려주세요.'
+              : '다음 소식이 있으면 다시 전해드리겠습니다.'}
+          </small>
           {meta.name || meta.sender}
           <span>{meta.role}</span>
         </footer>

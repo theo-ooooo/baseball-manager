@@ -5,8 +5,11 @@ import { askPrice, fromManwon, toManwon } from '@dugout/shared/game-view';
 import { useWorld } from '../career/world-context';
 export function usePlayerOffer(player: Player, g: GameState, deal: Deal | undefined, own: boolean) {
   const { agentFor } = useWorld();
-  const [salary, setSalary] = useState(String(toManwon(deal?.salary ?? player.salary * 1.1))),
-    [years, setYears] = useState(deal?.years ?? 3),
+  const previous = deal?.history?.findLast((h) => h.side === 'club');
+  const [salary, setSalary] = useState(
+      String(toManwon(previous?.salary ?? deal?.salary ?? player.salary * 1.1)),
+    ),
+    [years, setYears] = useState(previous?.years ?? deal?.years ?? 3),
     [fee, setFee] = useState(String(toManwon(deal?.fee ?? askPrice(player))));
   const amount = fromManwon(Number(salary)),
     agentFee = Math.round(amount * agentFor(player).fee);

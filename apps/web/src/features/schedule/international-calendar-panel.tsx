@@ -1,10 +1,13 @@
+import { participatesInTournament } from '@dugout/shared/countries';
 import { isUnemployed } from '@dugout/shared/manager-career';
 import { internationalCalendar } from '@dugout/shared/international';
 import { gameDate } from '@dugout/shared/calendar';
 import type { GameState } from '@dugout/shared/types';
 
-export function InternationalCalendarPanel({ g }: { g: GameState }) {
-  const events = internationalCalendar(g.year),
+export function InternationalCalendarPanel({ g, country }: { g: GameState; country?: string }) {
+  const events = internationalCalendar(g.year).filter(
+      (event) => !country || participatesInTournament(country, event.kind),
+    ),
     today = gameDate(g);
   if (!events.length) return null;
   return (

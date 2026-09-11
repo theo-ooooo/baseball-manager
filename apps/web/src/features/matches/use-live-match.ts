@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { isSpaceShortcut } from '../career/space-shortcut';
+import { useMatchCompletion } from './use-match-completion';
 import { useMatchPlayback } from './use-match-playback';
 import { useMatchAudio } from './use-match-audio';
 import type { MatchCue } from './match-commentary';
@@ -38,6 +39,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     shouldPause,
     resume,
   );
+  useMatchCompletion(g, playback.finished, playback.cursor, busy, act);
   const [panel, setPanel] = useState<'preview' | 'watch' | 'plan'>(() =>
     playback.cursor ? 'watch' : 'preview',
   );

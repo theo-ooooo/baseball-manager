@@ -3,6 +3,21 @@ import { scoutingGuide } from '@dugout/shared/scouting-guide';
 import { tradeNeedsConfirmation, tradeStatus, isActiveTrade } from '@dugout/shared/trade-status';
 
 export function reportDestination(news: NewsItem, g?: GameState) {
+  if (news.actionView === 'augmentations')
+    return {
+      href: '/?view=augmentations',
+      label: '카드 · 증강 보관함 열기',
+      detail: '카드로 상대 선수를 방해하고 증강으로 우리 팀을 강화합니다.',
+      guide: false,
+    };
+  if (news.actionView === 'draft')
+    return {
+      href: '/?view=draft',
+      label: '신인 드래프트 · 지명하러 가기',
+      detail:
+        '스카우트 → 신인 드래프트에서 후보를 보고 지명하거나 코치에게 남은 지명을 맡길 수 있습니다.',
+      guide: false,
+    };
   if (news.actionView === 'scouting') {
     const completed = !!news.report;
     return {
