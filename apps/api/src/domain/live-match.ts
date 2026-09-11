@@ -1,4 +1,5 @@
 import { createAiRegistrations } from './ai-registrations';
+import { chooseMatchCards, drawMatchCards } from './match-cards';
 import { bullpenAction } from './bullpen';
 import type { WorldCatalog, GameState } from '@dugout/shared/types';
 import { createGameView } from '@dugout/shared/game-view';
@@ -18,6 +19,22 @@ export function createLiveMatchActions(
   const { nextFixture, rosterFor } = createGameView(world);
   const registrations = createAiRegistrations(world);
   function liveAction(g: GameState, a: Record<string, unknown>): GameState | null {
+    if (a.type === 'chooseMatchCards') return chooseMatchCards(g, a, simulateMatch);
+    if (
+      g.liveMatch?.cards &&
+      !g.liveMatch.cards.selected &&
+      ['reviseMatch', 'bullpen'].includes(String(a.type)) &&
+      Number(a.cursor || 0) > 0
+    )
+      throw new Error('경기 시작 전에 카드 3장을 확정해 주세요.');
+    if (
+      g.liveMatch?.cards &&
+      !g.liveMatch.cards.selected &&
+      ['matchCommand', 'cancelMatchCommand', 'stepMatch', 'matchCursor', 'completeMatch'].includes(
+        String(a.type),
+      )
+    )
+      throw new Error('경기 시작 전에 카드 3장을 확정해 주세요.');
     if (a.type === 'bullpen') return bullpenAction(g, a);
     if (a.type === 'matchCommand' || a.type === 'cancelMatchCommand')
       return matchCommandAction(g, a, simulateMatch);
@@ -72,6 +89,7 @@ export function createLiveMatchActions(
           home === g.club ? [] : rosterFor(g, home),
         ]),
       };
+      if (a.matchCards === true) g.liveMatch.cards = drawMatchCards(g);
       if (a.type === 'startMatch') {
         generateTimeline(g, simulateMatch);
         return g;
@@ -79,6 +97,8 @@ export function createLiveMatchActions(
     }
     if (a.type === 'delegateMatch') {
       const live = g.liveMatch!;
+      if (live.cards && !live.cards.selected)
+        live.cards.selected = live.cards.offered.slice(0, 3).map((card) => card.id);
       const coach =
         g.staff.find(
           (c) => c.role === '수석' && (c.contractUntil === undefined || c.contractUntil > g.year),

@@ -10,6 +10,8 @@ export function matchCommandAction(
 ) {
   const live = g.liveMatch;
   if (!live) throw new Error('진행 중인 경기가 없습니다.');
+  if (live.cards && !live.cards.selected)
+    throw new Error('경기 시작 전에 카드 3장을 확정해 주세요.');
   if (!live.timeline || !live.prepared) generateTimeline(g, simulate);
   const cursor = validateCursor(live, a);
   if (cursor >= live.timeline!.log.length || live.finished)

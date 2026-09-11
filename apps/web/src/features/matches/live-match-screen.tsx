@@ -10,6 +10,7 @@ import { MatchPlanEditor } from './match-plan-editor';
 import { MatchCommandPanel } from './match-command-panel';
 import { matchCommandLabels } from '@dugout/shared/match-commands';
 import { useLiveMatch } from './use-live-match';
+import { MatchCardsPanel, MatchCardsSummary } from './match-cards-panel';
 import { MatchDelegation } from './match-delegation';
 import { MatchPreview } from './match-preview';
 import { MatchOverview } from './match-overview';
@@ -29,6 +30,8 @@ import {
 } from '@/components/ui/dialog';
 export function LiveMatchScreen({ g, act, busy }: { g: GameState; act: Act; busy: boolean }) {
   const live = g.liveMatch!;
+  if (live.cards && !live.cards.selected)
+    return <MatchCardsPanel key={live.cards.id} g={g} act={act} busy={busy} />;
   // Old partial matches are prepared by an explicit action, never by rendering or GET.
   if (!live.timeline)
     return (
@@ -127,6 +130,7 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           onStart={m.pause}
         />
       )}
+      {live.cards?.selected && <MatchCardsSummary draft={live.cards} />}
       {panel === 'preview' && (
         <MatchPreview
           g={g}

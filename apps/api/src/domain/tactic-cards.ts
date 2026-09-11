@@ -38,6 +38,7 @@ export function tacticCardAction(g: GameState, a: Record<string, unknown>, world
   return g;
 }
 export function consumeTacticCard(g: GameState, r: Result) {
+  if (r.matchCards) return;
   const s = g.tacticCards;
   if (r.friendly || !s?.armed || ![r.home, r.away].includes(s.armed.opponent)) return;
   const a = s.armed;

@@ -1,4 +1,5 @@
 import type { TacticCardState } from './tactic-cards';
+import type { MatchCardDraft, MatchCardSummary } from './match-cards';
 import type { AugmentationState, AugmentationKind } from './augmentations';
 import type { ManagerRecord } from './manager-directory';
 import type { InternationalState, InternationalDuty } from './international';
@@ -127,6 +128,7 @@ export type Standing = {
   form: string[];
 };
 export type Result = {
+  matchCards?: MatchCardSummary;
   augmentation?: AugmentationKind;
   delegatedBy?: string;
   id: string;
@@ -583,6 +585,7 @@ export type PitchingPlan = {
   chase?: string[];
 };
 export type LiveMatch = {
+  cards?: MatchCardDraft;
   delegation?: { coachId: string; name: string; cursor: number };
   home: string;
   away: string;

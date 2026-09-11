@@ -1,4 +1,9 @@
 import { cardEffectPlayer } from '@dugout/shared/tactic-cards';
+import {
+  effectiveMatchAugmentation,
+  matchCardPlayer,
+  matchCardSummary,
+} from '@dugout/shared/match-cards';
 import { matchAugmentation, augmentationModifiers } from '@dugout/shared/augmentations';
 import { isAvailable } from '@dugout/shared/long-term';
 import type {
@@ -67,6 +72,7 @@ function createSimulator({
     post = false,
   ): Generator<Result, Result> {
     const involved = home === g.club || away === g.club;
+    const matchCards = involved ? g.liveMatch?.cards : undefined;
     const rosters = [
       away === g.club
         ? firstTeam(g).filter(isAvailable)
@@ -79,7 +85,12 @@ function createSimulator({
             (p) => p.squad !== 'reserve' && isAvailable(p),
           ),
     ];
-    if (involved && g.tacticCards?.armed)
+    if (matchCards)
+      for (let side = 0; side < 2; side++)
+        rosters[side] = rosters[side].map((p) =>
+          matchCardPlayer(matchCards, p, (side ? home : away) === g.club),
+        );
+    else if (involved && g.tacticCards?.armed)
       for (let side = 0; side < 2; side++)
         rosters[side] = rosters[side].map((p) => cardEffectPlayer(g, p));
     const lineups = rosters.map((r, i) => {
@@ -168,10 +179,10 @@ function createSimulator({
         if (bases && (side ? home : away) === g.club) {
           for (let base = 0; base < bases.length; base++) {
             const slot = lineups[side].findIndex((p) => p.id === bases[base]?.id);
-            if (slot >= 0) bases[base] = g.roster.find((p) => p.id === change.lineup[slot])!;
+            if (slot >= 0) bases[base] = rosters[side].find((p) => p.id === change.lineup[slot])!;
           }
         }
-        lineups[side] = change.lineup.map((id) => g.roster.find((p) => p.id === id)!);
+        lineups[side] = change.lineup.map((id) => rosters[side].find((p) => p.id === id)!);
         for (const p of lineups[side]) {
           battingParticipants[side].add(p);
           if (!replayTeams[side].players.some((v) => v.id === p.id))
@@ -187,7 +198,7 @@ function createSimulator({
         g.instructions = { ...change.instructions };
         if (pitchers[side].id !== change.pitcher) {
           pendingPitchingChanges[side] = undefined;
-          pitchers[side] = g.roster.find((p) => p.id === change.pitcher)!;
+          pitchers[side] = rosters[side].find((p) => p.id === change.pitcher)!;
           if (change.coldEntry && g.liveMatch?.bullpenVersion) energy.spend(pitchers[side], 12);
           entered[side] = inning;
           pitchingStats(side);
@@ -431,7 +442,13 @@ function createSimulator({
             play.defense = { ...(ownPitch ? g.defense! : replayTeams[1 - side].defense) };
           if (command) play.command = command.kind;
           if (approach !== 'balanced') play.pitching = approach;
-          const augment = augmentationModifiers(ownBat ? matchAugmentation(g) : undefined);
+          const augment = augmentationModifiers(
+            matchCards
+              ? effectiveMatchAugmentation(matchCards, ownBat)
+              : ownBat
+                ? matchAugmentation(g)
+                : undefined,
+          );
           const hitAndRun = command?.kind === 'hitAndRun';
           const stats = ownBat ? p.stats : blankStats();
           let runs = 0;
@@ -758,7 +775,8 @@ function createSimulator({
               100,
             );
       }
-      for (const p of battingParticipants[side]) {
+      for (const participant of battingParticipants[side]) {
+        const p = g.roster.find((player) => player.id === participant.id)!;
         p.stats.g++;
         p.condition = energyEnabled ? energy.get(p) : clamp(p.condition - 6, 25, 100);
       }
@@ -775,7 +793,10 @@ function createSimulator({
       }
     }
     return {
-      ...(involved && matchAugmentation(g) ? { augmentation: matchAugmentation(g) } : {}),
+      ...(matchCards?.selected ? { matchCards: matchCardSummary(matchCards) } : {}),
+      ...(!matchCards && involved && matchAugmentation(g)
+        ? { augmentation: matchAugmentation(g) }
+        : {}),
       ...(g.liveMatch?.delegation ? { delegatedBy: g.liveMatch.delegation.name } : {}),
       id: `${g.year}-${g.day}-${home}-${away}`,
       day: g.day,

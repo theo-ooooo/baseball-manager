@@ -211,8 +211,9 @@ test('Box score counts individual hits and pitching outs including a steal witho
   assert.equal(box[1].pitchers[0].outs, 1);
   assert.equal(box[1].pitchers[0].r, 1);
 });
-test('Initial hand has five stable cards, grades change strength, and use/return cannot duplicate cards', () => {
+test('Legacy card hands retain their grades and use/return cannot duplicate cards', () => {
   let g = game();
+  g.tacticCards = m.initialCards(g.seed);
   g.phase = 'regular';
   g.day = 0;
   assert.equal(g.tacticCards.hand.length, 5);

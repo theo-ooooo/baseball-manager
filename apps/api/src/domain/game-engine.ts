@@ -1,4 +1,3 @@
-import { initialCards } from '@dugout/shared/tactic-cards';
 import { tacticCardAction, consumeTacticCard } from './tactic-cards';
 import { augmentationAction, afterAugmentedMatch } from './augmentations';
 import { recordBoardTransaction } from './board-transactions';
@@ -187,7 +186,6 @@ export function createGameEngine(world: WorldCatalog) {
       expenses: 0,
       worldRevenue: {},
     };
-    g.tacticCards = initialCards(g.seed);
     prepareCalendar(g, world, true);
     prepareSquad(g, world);
     prepareKnowledge(g, world);

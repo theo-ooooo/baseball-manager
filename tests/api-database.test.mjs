@@ -159,6 +159,53 @@ test('Live commands save a large career with a bounded patch, retain watched eve
   assert.equal(completed.body.state.liveMatch, undefined);
 });
 
+test('Match card choices persist once in D1 and survive the compact in-game command path', async () => {
+  const user = 'match-card-draft-owner';
+  await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Card draft', mode: 'short', preseason: false },
+    user,
+  );
+  const initial = await action({ type: 'startMatch', matchCards: true }, user);
+  const live = initial.state.liveMatch,
+    draft = live.cards;
+  assert.equal(draft.offered.length, 5);
+  assert.equal(draft.selected, undefined);
+  const payload = {
+    type: 'chooseMatchCards',
+    draftId: draft.id,
+    ids: draft.offered.slice(0, 3).map((c) => c.id),
+    cursor: 0,
+    timelineVersion: live.timelineVersion,
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const choice = await call('/api/career', payload, user);
+  assert.equal(choice.status, 201, JSON.stringify(choice.body));
+  assert.equal(choice.body.state.liveMatch.cards.selected.length, 3);
+  assert.equal(choice.body.state.liveMatch.prepared, undefined);
+  assert.deepEqual((await call('/api/career', payload, user)).body, choice.body);
+  const reloaded = await call('/api/career', undefined, user);
+  assert.deepEqual(reloaded.body.state.liveMatch.cards, choice.body.state.liveMatch.cards);
+  const timeline = reloaded.body.state.liveMatch.timeline;
+  const command = {
+    type: 'matchCommand',
+    command:
+      timeline.log[1].half === (live.home === initial.state.club ? 1 : 0)
+        ? 'contactFocus'
+        : 'attackBatter',
+    cursor: 1,
+    timelineVersion: reloaded.body.state.liveMatch.timelineVersion,
+    revision: reloaded.body.revision,
+    responseMode: 'patch',
+    requestId: crypto.randomUUID(),
+  };
+  const revised = await call('/api/career', command, user);
+  assert.equal(revised.status, 201, JSON.stringify(revised.body));
+  assert.deepEqual(revised.body.patch.liveMatch.cards, choice.body.state.liveMatch.cards);
+  assert.deepEqual(revised.body.patch.liveMatch.timeline.log.slice(0, 1), timeline.log.slice(0, 1));
+  assert.deepEqual((await call('/api/career', command, user)).body, revised.body);
+});
+
 test('Growing world progress moves to atomic snapshot parts and survives reload, retry, races and career reset', async () => {
   const user = 'split-world-snapshot';
   const initial = await action(

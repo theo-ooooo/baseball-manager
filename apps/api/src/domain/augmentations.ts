@@ -31,6 +31,7 @@ export function augmentationAction(g: GameState, a: Record<string, unknown>) {
   return g;
 }
 export function afterAugmentedMatch(g: GameState, r: Result) {
+  if (r.matchCards) return;
   const s = g.augmentations;
   if (!s?.enabled || s.club !== g.club || r.friendly || s.lastMatch === r.id) return;
   s.lastMatch = r.id;

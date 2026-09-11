@@ -73,6 +73,9 @@ export function useCareerSession(initial: CareerData) {
         ? retry.current.payload
         : {
             ...action,
+            ...(['startMatch', 'delegateMatch'].includes(String(action.type))
+              ? { matchCards: true }
+              : {}),
             ...(isDateProgressCommand(action.type)
               ? { readNewsIds: [...careerMemory.inbox.snapshot()] }
               : {}),
