@@ -1,5 +1,8 @@
 import type { Player } from '@dugout/shared/types';
 import { overall } from '@dugout/shared/game-view';
+/** Presentation only: never round the stored ability used by the simulation. */
+export const abilityText = (value: number | null | undefined) =>
+  value == null || !Number.isFinite(value) ? '미평가' : String(Number(value.toFixed(2)));
 export const isUnrated = (p: Player) => p.real && (!p.rating || p.rating.status === 'missing');
 export const ratingText = (p: Player) =>
   p.observation

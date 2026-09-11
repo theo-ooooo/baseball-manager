@@ -6,7 +6,7 @@ import {
   developmentChange,
   visibleChange,
 } from '@dugout/shared/development';
-import { isUnrated } from '@dugout/shared/ratings';
+import { abilityText, isUnrated } from '@dugout/shared/ratings';
 import { detailedAttributes } from '@dugout/shared/player-attributes';
 import { Progress } from '@/components/ui/progress';
 
@@ -58,6 +58,7 @@ export function PlayerAttributes({ player: p, owned }: { player: Player; owned: 
     : null;
   const attributes = detailedAttributes(p).map((a) => ({
     ...a,
+    value: a.key && a.value !== null ? p[a.key] : a.value,
     delta:
       baseline && a.value !== null && !isUnrated(p)
         ? a.key
@@ -96,12 +97,12 @@ export function PlayerAttributes({ player: p, owned }: { player: Player; owned: 
             <div className="attribute-value">
               <strong>
                 {p.observation
-                  ? (key && p.observation.abilities?.[key]?.join('–')) || '?'
-                  : (value ?? '미평가')}
+                  ? (key && p.observation.abilities?.[key]?.map(abilityText).join('–')) || '?'
+                  : abilityText(value)}
               </strong>
               {baseline && <GrowthChange delta={delta} since={baseline.date} label={label} />}
             </div>
-            <Progress value={value ?? 0} aria-label={`${label} ${value ?? '미평가'}`} />
+            <Progress value={value ?? 0} aria-label={`${label} ${abilityText(value)}`} />
             <small>{basis}</small>
           </div>
         ))}
