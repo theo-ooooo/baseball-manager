@@ -24,8 +24,9 @@ export function useCalendarProgress(act: Act) {
     active.current = true;
     cancelled.current = false;
     let current = g;
+    const vacation = !!g.managerCareer?.vacationUntil;
     let failed = false;
-    let status = '일정을 확인하고 있습니다';
+    let status = vacation ? '휴가 일정을 진행하고 있습니다' : '일정을 확인하고 있습니다';
     setJourney({ start: g.day, day: g.day, limit, status, running: true });
     try {
       for (let i = 0; i < limit && !cancelled.current; i++) {
@@ -49,9 +50,18 @@ export function useCalendarProgress(act: Act) {
                 ? '경기일에 도착했습니다'
                 : stop === 'season'
                   ? '시즌 일정이 변경됐습니다'
-                  : '다음 일정을 확인하고 있습니다';
+                  : vacation
+                    ? '휴가 중 · 보고는 복귀 후 확인합니다'
+                    : '다음 일정을 확인하고 있습니다';
+        if (vacation && !next.managerCareer?.vacationUntil)
+          status = '휴가가 끝났습니다. 모인 보고를 확인하세요';
         setJourney({ start: g.day, day: next.day, limit, status, running: true });
-        if (stop || (next.day === g.day && i === 0)) break;
+        if (
+          stop ||
+          (vacation && !next.managerCareer?.vacationUntil) ||
+          (next.day === g.day && i === 0)
+        )
+          break;
       }
       if (cancelled.current) status = '진행을 멈췄습니다';
       else if (!current.progress?.stop && status !== '저장 상태를 확인해 주세요')

@@ -16,7 +16,13 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
       label: '경기 진행 중',
       detail: '경기를 마치면 경기 후 보고로 이어집니다.',
     };
-  if (g.managerCareer?.status === 'unemployed' || g.managerCareer?.vacationUntil) {
+  if (g.managerCareer?.vacationUntil && g.managerCareer.status !== 'unemployed')
+    return {
+      kind: 'continue',
+      label: '휴가 마무리까지 진행',
+      detail: `${g.managerCareer.vacationUntil} 복귀 후 모인 보고를 확인합니다.`,
+    };
+  if (g.managerCareer?.status === 'unemployed') {
     const unread = g.news.filter((n) => !n.read);
     const report = unread.find((n) => newsNeedsAction(n, g)) || unread[0];
     if (report)
@@ -29,10 +35,7 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
     return {
       kind: 'continue',
       label: '계속 진행',
-      detail:
-        g.managerCareer.status === 'unemployed'
-          ? '세계의 뉴스와 새 구단의 연락을 기다립니다.'
-          : '코치에게 경기를 위임하며 복귀일까지 진행합니다.',
+      detail: '세계의 뉴스와 새 구단의 연락을 기다립니다.',
     };
   }
   const decision = g.news.find((n) => n.choiceKind && !n.choice);

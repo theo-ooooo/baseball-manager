@@ -590,3 +590,49 @@
     display: grid;
   }
 }
+.inbox-sort {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 0;
+  font-size: 12px;
+}
+.inbox-sort select {
+  min-height: 44px;
+  max-width: 160px;
+}
+.inbox-letter-toolbar {
+  flex-wrap: wrap;
+  scroll-margin-top: 130px;
+}
+.inbox-letter-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.inbox-letter-navigation button {
+  min-height: 44px;
+}
+.inbox-read-error {
+  padding: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .inbox-letter-toolbar .inbox-reading-position {
+    display: inline;
+    margin-left: auto;
+  }
+  .inbox-letter-navigation {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+  }
+  .inbox-letter-navigation button {
+    justify-content: center;
+    padding: 8px 4px;
+  }
+}

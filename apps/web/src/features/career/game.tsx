@@ -45,7 +45,7 @@ import { DynamicsPanel } from '../clubs/club-panels';
 import { InboxPanel } from '../inbox/inbox-panel';
 import { PlayerContractDialog } from '../contracts/player-contract-room';
 import { SchedulePanel } from '../schedule/schedule-panel';
-import { dateLabel } from '@dugout/shared/calendar';
+import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
 import { StadiumReplay } from '../matches/stadium-replay';
 import { LiveMatchScreen } from '../matches/live-match-screen';
 import { TacticalBoard } from '../squad/management-panels';
@@ -74,6 +74,7 @@ import { clubSeasonStatus } from '@dugout/shared/season-status';
 import { managerStep, matchReportId } from './manager-flow';
 import { MatchdayBriefing } from '../matches/matchday-briefing';
 import { ActionProgress } from './action-progress';
+import { useInboxReadQueue } from '../inbox/use-inbox-read-queue';
 import { isSpaceShortcut } from './space-shortcut';
 import { conversationKey } from '@dugout/shared/match-media';
 import { usePreseasonDelegation } from './use-preseason-delegation';
@@ -171,6 +172,7 @@ export function GameScreen({
     if (action.type === 'startMatch') router.push('/match');
     return state;
   };
+  const inboxReads = useInboxReadQueue(g);
   const calendarProgress = useCalendarProgress(act);
   const progressing = calendarProgress.journey?.running === true;
   function openReport(id?: string) {
@@ -228,6 +230,12 @@ export function GameScreen({
         : baseStep;
   async function continueFlow() {
     if (!g || !step || busy || progressing) return;
+    if (g.managerCareer?.vacationUntil && !isUnemployed(g)) {
+      const days = Math.max(1, daysBetween(gameDate(g), g.managerCareer.vacationUntil));
+      const next = await calendarProgress.run(g, days, true);
+      if (next && !next.managerCareer?.vacationUntil) openReport(next.progress?.newsIds[0]);
+      return;
+    }
     if (awayFromClub) {
       if (step.reportId) {
         openReport(step.reportId);
@@ -396,7 +404,13 @@ export function GameScreen({
               </details>
               <span className={`save-state ${saveFailed ? 'save-error' : ''}`} aria-live="polite">
                 {pending ? <LoaderCircle className="spin" size={12} /> : <Check size={12} />}{' '}
-                {pending ? '저장 중' : saveFailed ? '저장 확인 필요' : '자동 저장됨'}
+                {pending
+                  ? '저장 중'
+                  : saveFailed
+                    ? '저장 확인 필요'
+                    : inboxReads.viewed.size
+                      ? '읽음은 날짜 진행 시 저장'
+                      : '자동 저장됨'}
               </span>
               <button className="icon-button" aria-label="게임 안내" onClick={() => setHelp(true)}>
                 <CircleHelp size={18} />
@@ -610,7 +624,8 @@ export function GameScreen({
           )}
           {view === 'inbox' && (
             <InboxPanel
-              key={`${g.news[0]?.id}:${initialReportId || ''}:${reportEpoch}`}
+              key={`${initialReportId || ''}:${reportEpoch}`}
+              reads={inboxReads}
               initialReportId={initialReportId}
               onReplay={openReplay}
               onNegotiate={setContractPlayer}
@@ -656,7 +671,8 @@ export function GameScreen({
               key={`${g.club}:${view}`}
               g={g}
               act={act}
-              busy={busy}
+              busy={busy || progressing}
+              onContinue={() => void continueFlow()}
               mode={
                 view === 'manager'
                   ? 'profile'

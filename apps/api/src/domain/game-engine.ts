@@ -1,6 +1,7 @@
 import { prepareSeasonRest } from './season-rest';
 import { scoutingGuide } from '@dugout/shared/scouting-guide';
 import { createInternational } from './international';
+import { pendingReadIds } from '@dugout/shared/inbox-read-intent';
 import { createLineupReports } from './lineup-reports';
 import { createAiRegistrations } from './ai-registrations';
 import { createTrades } from './trades';
@@ -799,6 +800,8 @@ export function createGameEngine(world: WorldCatalog) {
       g.liveMatch?.prepared && ['stepMatch', 'matchCursor'].includes(String(a.type))
         ? { ...g, liveMatch: { ...g.liveMatch } }
         : structuredClone(g);
+    const readIds = pendingReadIds(a);
+    for (const message of s.news) if (readIds.has(message.id)) message.read = true;
     if (!s.liveMatch) {
       international.tick(s);
       prepareSquad(s, world);
@@ -832,6 +835,7 @@ export function createGameEngine(world: WorldCatalog) {
         throw new Error('휴가·무직 기간 또는 시즌 종료 후 사용할 수 있습니다.');
       const from = s.day,
         before = new Set(s.news.map((n) => n.id));
+      const startedOnVacation = !!s.managerCareer!.vacationUntil;
       if (a.type === 'nextSeason') {
         nextSeason(s);
         managerCareer.tick(s);
@@ -868,7 +872,12 @@ export function createGameEngine(world: WorldCatalog) {
           scouting.tick(s);
           medicalTick(s);
           managerCareer.tick(s);
-          if (s.news.some((n) => !before.has(n.id) && n.managerOfferId)) break;
+          if (
+            !s.managerCareer!.vacationUntil &&
+            s.news.some((n) => !before.has(n.id) && n.managerOfferId)
+          )
+            break;
+          if (startedOnVacation && !s.managerCareer!.vacationUntil) break;
           continue;
         }
         const vacation = !!s.managerCareer!.vacationUntil;
@@ -882,13 +891,21 @@ export function createGameEngine(world: WorldCatalog) {
             (n) => before.has(n.id) || n.kind === 'manager' || n.kind === 'league',
           );
         if (vacation && !s.managerCareer!.vacationUntil) break;
-        if (s.news.some((n) => !before.has(n.id) && n.managerOfferId)) break;
+        if (
+          !s.managerCareer!.vacationUntil &&
+          s.news.some((n) => !before.has(n.id) && n.managerOfferId)
+        )
+          break;
       }
       s.progress = {
         from,
         to: s.day,
-        stop: 'report',
-        newsIds: s.news.filter((n) => !before.has(n.id)).map((n) => n.id),
+        stop: s.managerCareer!.vacationUntil ? null : 'report',
+        newsIds: s.managerCareer!.vacationUntil
+          ? []
+          : s.news
+              .filter((n) => (startedOnVacation ? !n.read : !before.has(n.id)))
+              .map((n) => n.id),
       };
       return s;
     }

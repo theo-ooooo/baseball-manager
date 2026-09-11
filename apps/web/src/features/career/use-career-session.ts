@@ -1,5 +1,7 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { isDateProgressCommand } from '@dugout/shared/inbox-read-intent';
+import { useInboxReadQueue } from '../inbox/use-inbox-read-queue';
 import { careerMemory } from './career-memory';
 import { toast } from 'sonner';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
@@ -10,6 +12,17 @@ import type { Act, CareerData } from './game-contracts';
 
 export function useCareerSession(initial: CareerData) {
   const [data, setData] = useState(initial);
+  const { viewed } = useInboxReadQueue(data.state);
+  const visibleState = useMemo(
+    () =>
+      data.state && viewed.size
+        ? {
+            ...data.state,
+            news: data.state.news.map((n) => (viewed.has(n.id) ? { ...n, read: true } : n)),
+          }
+        : data.state,
+    [data.state, viewed],
+  );
   const current = useRef(initial),
     locked = useRef(false);
   const retry = useRef<{ key: string; payload: Record<string, unknown> } | null>(null);
@@ -60,6 +73,9 @@ export function useCareerSession(initial: CareerData) {
         ? retry.current.payload
         : {
             ...action,
+            ...(isDateProgressCommand(action.type)
+              ? { readNewsIds: [...careerMemory.inbox.snapshot()] }
+              : {}),
             responseMode:
               isManagerConversationCommand(action.type) ||
               isInboxCommand(action.type) ||
@@ -102,7 +118,7 @@ export function useCareerSession(initial: CareerData) {
     }
   };
   return {
-    g: data.state,
+    g: visibleState,
     ledger: data.ledger,
     loading,
     error,

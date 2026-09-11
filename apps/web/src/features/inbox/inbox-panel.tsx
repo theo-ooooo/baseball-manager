@@ -1,6 +1,7 @@
 'use client';
 import { useInboxWorkspace } from './use-inbox-workspace';
-import { ArrowLeft, ChevronRight, Inbox, MailCheck, Search } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Inbox, MailCheck, Search } from 'lucide-react';
+import type { useInboxReadQueue } from './use-inbox-read-queue';
 import type { GameState, Player, Result } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
 import { dateLabel } from '@dugout/shared/calendar';
@@ -15,6 +16,7 @@ type Props = {
   onNegotiate: (p: Player) => void;
   initialReportId?: string;
   onReplay?: (r: Result) => void;
+  reads: ReturnType<typeof useInboxReadQueue>;
 };
 export function InboxPanel({
   g,
@@ -24,6 +26,7 @@ export function InboxPanel({
   onNegotiate,
   initialReportId,
   onReplay,
+  reads,
 }: Props) {
   const {
     displayGame,
@@ -42,7 +45,13 @@ export function InboxPanel({
     setCategory,
     setSearch,
     setDetailOpen,
-  } = useInboxWorkspace(g, act, busy, initialReportId);
+    order,
+    setOrder,
+    toolbarRef,
+    index,
+    previous,
+    next,
+  } = useInboxWorkspace(g, reads, initialReportId);
   return (
     <section className={`fm-inbox ${detailOpen ? 'show-letter' : ''}`}>
       <header className="inbox-topbar">
@@ -53,8 +62,8 @@ export function InboxPanel({
         </div>
         <button
           className="text-button"
-          disabled={busy || !unread.length}
-          onClick={() => void act({ type: 'readAllNews' })}
+          disabled={!unread.length}
+          onClick={() => reads.markRead(unread.map((n) => n.id))}
         >
           <MailCheck size={15} /> 모두 읽음
         </button>
@@ -98,7 +107,17 @@ export function InboxPanel({
           </div>
         </aside>
         <div className="inbox-message-list" aria-label="수신 보고 목록">
-          {' '}
+          <label className="inbox-sort">
+            보고 순서
+            <select
+              aria-label="보고 순서"
+              value={order}
+              onChange={(event) => setOrder(event.target.value)}
+            >
+              <option value="newest">최신순</option>
+              <option value="oldest">오래된순</option>
+            </select>
+          </label>{' '}
           <label className="inbox-search">
             <Search size={16} />
             <input
@@ -153,18 +172,37 @@ export function InboxPanel({
           )}
         </div>
         <div className="inbox-reading-pane">
-          <div className="inbox-letter-toolbar">
+          <div className="inbox-letter-toolbar" ref={toolbarRef}>
             <button className="text-button inbox-back" onClick={() => setDetailOpen(false)}>
               <ArrowLeft size={16} /> 목록
             </button>
-            <span>{selected?.read ? '읽은 보고' : '보고 열람'}</span>
-            <button
-              className="text-button"
-              disabled={!nextUnread}
-              onClick={() => nextUnread && select(nextUnread.id)}
-            >
-              다음 안 읽은 보고 <ChevronRight size={15} />
-            </button>
+            <span className="inbox-reading-position">
+              {index >= 0 ? `${index + 1} / ${items.length}` : '보고 열람'} ·{' '}
+              {order === 'oldest' ? '오래된순' : '최신순'}
+            </span>
+            <div className="inbox-letter-navigation">
+              <button
+                className="text-button"
+                disabled={!previous}
+                onClick={() => previous && select(previous.id)}
+              >
+                <ChevronLeft size={15} /> 이전
+              </button>
+              <button
+                className="text-button"
+                disabled={!next}
+                onClick={() => next && select(next.id)}
+              >
+                다음 <ChevronRight size={15} />
+              </button>
+              <button
+                className="text-button"
+                disabled={!nextUnread}
+                onClick={() => nextUnread && select(nextUnread.id)}
+              >
+                다음 안 읽은 보고 <ChevronRight size={15} />
+              </button>
+            </div>
           </div>
           {selected ? (
             <InboxReport
@@ -174,15 +212,6 @@ export function InboxPanel({
             />
           ) : (
             <div className="empty-state">읽을 보고를 선택해 주세요.</div>
-          )}
-          {selected && !selected.read && (
-            <button
-              className="text-button inbox-read-retry"
-              disabled={busy}
-              onClick={() => void act({ type: 'readNews', id: selected.id })}
-            >
-              읽음으로 표시
-            </button>
           )}
         </div>
       </div>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { LoaderCircle } from 'lucide-react';
+import { isInboxReadCommand } from '@dugout/shared/inbox-commands';
 
 const labels: Record<string, string> = {
   start: '새 커리어를 준비하고 있습니다',
@@ -37,7 +38,7 @@ export function ActionProgress({
       setSlow(false);
     };
   }, [action]);
-  if (!action || typeof document === 'undefined') return null;
+  if (!action || isInboxReadCommand(action) || typeof document === 'undefined') return null;
   return createPortal(
     <div className="action-progress" role="status" aria-live="polite" aria-atomic="true">
       <div className="action-progress-rail" role="progressbar" aria-label="요청 처리 중">

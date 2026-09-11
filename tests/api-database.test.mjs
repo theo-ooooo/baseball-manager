@@ -1809,3 +1809,42 @@ test('D1 player conversation patches the target mood and news atomically without
   );
   assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
 });
+
+test('A date action saves all locally read IDs in the same revision and preserves failed requests', async () => {
+  const user = 'deferred-reading-qa';
+  const started = await action(
+    {
+      type: 'start',
+      club: 'kbo-lotte',
+      manager: '날짜와 읽음 저장',
+      mode: 'full',
+      preseason: false,
+    },
+    user,
+  );
+  const ids = started.state.news.slice(0, 2).map((n) => n.id);
+  assert.equal(ids.length, 2);
+  const command = {
+    type: 'continueDay',
+    simulateGames: true,
+    readNewsIds: ids,
+    revision: started.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const saved = await call('/api/career', command, user);
+  assert.equal(saved.status, 201);
+  assert.equal(saved.body.revision, started.revision + 1);
+  assert.equal(saved.body.state.day, started.state.day + 1);
+  assert.ok(saved.body.state.news.filter((n) => ids.includes(n.id)).every((n) => n.read));
+  assert.equal((await call('/api/career', command, user)).body.revision, saved.body.revision);
+  const invalid = await call(
+    '/api/career',
+    { ...command, readNewsIds: [3], revision: saved.body.revision, requestId: crypto.randomUUID() },
+    user,
+  );
+  assert.equal(invalid.status, 400);
+  const latest = await call('/api/career', undefined, user);
+  assert.equal(latest.body.revision, saved.body.revision);
+  assert.equal(latest.body.state.day, saved.body.state.day);
+  assert.ok(latest.body.state.news.filter((n) => ids.includes(n.id)).every((n) => n.read));
+});

@@ -17,12 +17,14 @@ export function ManagerPanel({
   busy,
   mode = 'profile',
   offerId,
+  onContinue,
 }: {
   g: GameState;
   act: Act;
   busy: boolean;
   mode?: 'profile' | 'contract' | 'history' | 'vision' | 'offers';
   offerId?: string;
+  onContinue: () => void;
 }) {
   const { getClub } = useWorld(),
     m = g.managerCareer,
@@ -195,9 +197,13 @@ export function ManagerPanel({
               <button
                 className="button primary"
                 disabled={busy}
-                onClick={() => void act({ type: 'managerContinue', count: 7 })}
+                onClick={() =>
+                  m?.vacationUntil ? onContinue() : void act({ type: 'managerContinue', count: 7 })
+                }
               >
-                최대 7일 진행 · 채용 답변 시 정지
+                {m?.vacationUntil
+                  ? '휴가 마무리까지 진행 · 복귀 후 보고 확인'
+                  : '최대 7일 진행 · 채용 답변 시 정지'}
               </button>
               {g.phase === 'finished' && (
                 <button

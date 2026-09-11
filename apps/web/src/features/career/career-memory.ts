@@ -1,9 +1,11 @@
 import type { WorldCatalog } from '@dugout/shared/types';
 import type { CareerData } from './game-contracts';
+import { createInboxReadMemory } from '../inbox/inbox-read-memory';
 
 type Resources = { world: WorldCatalog; career: CareerData };
 /** Tab memory only; never persisted to disk, rendered into SSR or shared between users. */
 export function createCareerMemory(now = Date.now) {
+  const inbox = createInboxReadMemory();
   let value: Resources | null = null;
   let fetchedAt = 0;
   let generation = 0;
@@ -16,6 +18,7 @@ export function createCareerMemory(now = Date.now) {
       career.state?.scouting?.reports,
     ]);
   return {
+    inbox,
     async load(fetcher: () => Promise<Resources>) {
       if (value && now() - fetchedAt < 30_000) return value;
       if (pending) return pending;
@@ -35,6 +38,7 @@ export function createCareerMemory(now = Date.now) {
       return request;
     },
     career(career: CareerData) {
+      inbox.reconcile(career.state);
       generation++;
       pending = null;
       if (!value) return;
@@ -48,6 +52,7 @@ export function createCareerMemory(now = Date.now) {
       if (value) value = { ...value, world };
     },
     clear() {
+      inbox.clear();
       generation++;
       value = null;
       pending = null;
