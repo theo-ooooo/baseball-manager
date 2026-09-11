@@ -1,4 +1,5 @@
 import type { AbilityKey, Player } from '@dugout/shared/types';
+import { hash } from './game-view';
 import { isUnrated } from '@dugout/shared/ratings';
 const clamp = (n: number) => Math.round(Math.max(20, Math.min(99, n)));
 export function battingProfile(p: Player) {
@@ -41,11 +42,9 @@ export function detailedAttributes(p: Player): DetailedAttribute[] {
   const primary = (label: string, key: AbilityKey) => ({
     label,
     key,
-    value:
-      unknown || (p.real && p.rating?.estimatedAttributes.includes(label))
-        ? null
-        : Math.round(p[key]),
-    basis: '종합 능력',
+    value: Math.round(p[key]),
+    basis:
+      unknown || p.rating?.estimatedAttributes.includes(label) ? '게임 생성 능력' : '종합 능력',
   });
   const rows =
     p.pos === 'P'
@@ -103,6 +102,7 @@ export function detailedAttributes(p: Player): DetailedAttribute[] {
             basis: '등판당 이닝',
           },
           primary('수비', 'field'),
+          primary('주력', 'speed'),
           { label: '구종·구속', value: null, basis: '측정 자료 미확인' },
         ]
       : [
@@ -172,7 +172,21 @@ export function detailedAttributes(p: Player): DetailedAttribute[] {
         value: null,
         basis: p.observation!.status === 'unknown' ? '관찰 필요' : '스카우트 관찰',
       }))
-    : rows;
+    : rows.map((row) =>
+        row.value !== null
+          ? row
+          : {
+              ...row,
+              value: clamp(
+                (p.pos === 'P'
+                  ? (p.stuff + p.control) / 2
+                  : (p.contact + p.power + p.speed + p.field) / 4) +
+                  (hash(`detail-estimate-v1:${p.id}:${row.label}`) % 17) -
+                  8,
+              ),
+              basis: '게임 생성 능력 · 측정 자료 부족',
+            },
+      );
 }
 export function lineupReason(p: Player, slot: number) {
   const profile = battingProfile(p);
@@ -188,5 +202,5 @@ export function lineupReason(p: Player, slot: number) {
       '하위 타선',
       '출루·주루 연결',
     ][slot] || '타선 연결';
-  return `${role} · ${profile.observedOBP === undefined ? '출루 자료 미확인' : `OBP ${profile.observedOBP.toFixed(3)}`} · ${p.real && p.rating?.estimatedAttributes.includes('주력') ? '주력 미평가' : `주력 ${Math.round(p.speed)}`}`;
+  return `${role} · ${profile.observedOBP === undefined ? '출루 자료 미확인' : `OBP ${profile.observedOBP.toFixed(3)}`} · 주력 ${Math.round(p.speed)}${p.rating?.estimatedAttributes.includes('주력') ? ' (게임 생성)' : ''}`;
 }

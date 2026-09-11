@@ -31,3 +31,23 @@ export function contractReportStatus(g: GameState, n: NewsItem): 'signed' | 'clo
     ? 'closed'
     : undefined;
 }
+
+/** A historical report or open dialog must use today's employer and negotiation scope. */
+export function playerContractContext(
+  g: import('./types').GameState,
+  player: import('./types').Player | undefined,
+) {
+  const employed = g.managerCareer?.status !== 'unemployed';
+  const own =
+    !!player && employed && player.club === g.club && g.roster.some((p) => p.id === player.id);
+  const allowed = !!player && employed && (own || player.club === 'fa');
+  const deal = allowed
+    ? g.deals.find(
+        (d) =>
+          d.player.id === player.id &&
+          d.player.club === player.club &&
+          (own ? d.type === 'renew' : d.type === 'buy'),
+      )
+    : undefined;
+  return { own, allowed, found: !!player, deal };
+}

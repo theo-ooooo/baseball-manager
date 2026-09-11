@@ -12,6 +12,7 @@ export type ManagerContract = {
   objective?: BoardObjective;
   benefit?: 'funds' | 'training';
   negotiatedYear?: number;
+  supportLedger?: { year: number; approved: number; lastApproved: string };
 };
 export type ManagerOffer = {
   id: string;
@@ -31,7 +32,7 @@ export type ManagerOffer = {
   due: string;
   expires: string;
   status: 'invited' | 'pending' | 'interview' | 'offered' | 'rejected' | 'expired';
-  source?: 'application' | 'approach';
+  source?: 'application' | 'approach' | 'renewal';
   public?: boolean;
   priority?: 'win' | 'youth' | 'budget';
   answer?: 'win' | 'youth' | 'budget';
@@ -53,6 +54,7 @@ export type ManagerOffer = {
     history: {
       date: string;
       speaker: 'manager' | 'board';
+      kind?: 'proposal' | 'acceptance' | 'reply';
       text: string;
       salary: number;
       signingBonus?: number;
@@ -109,6 +111,7 @@ export const isUnemployed = (g: GameState) => g.managerCareer?.status === 'unemp
 
 export type ClubManagerJob = {
   club: string;
+  managerId?: string;
   managerName: string;
   confidence: number;
   baseConfidence: number;
@@ -120,6 +123,13 @@ export type ClubManagerJob = {
   startDraws?: number;
   vacantSince?: string;
   expectation?: ClubExpectation & { year: number };
+  transfers?: {
+    year: number;
+    appointed: string;
+    credit: number;
+    acquired: string[];
+    events: { id: string; date: string; change: number; reason: string }[];
+  };
   board?: {
     year: number;
     appointed: string;
@@ -170,4 +180,18 @@ export function boardProgress(g: GameState, objective: BoardObjective) {
     g.roster.filter((p) => p.age <= 23).reduce((sum, p) => sum + p.stats.g, 0) -
     objective.baseline.youth;
   return games > 0 ? (Math.max(0, youth) / games) * 100 : 0;
+}
+
+export function lastManagerProposal(offer: ManagerOffer) {
+  const terms = offer.contractTerms;
+  return (
+    terms?.proposed ||
+    [...(terms?.history || [])]
+      .reverse()
+      .find(
+        (entry) =>
+          entry.speaker === 'manager' &&
+          (entry.kind === 'proposal' || entry.text === '계약 조건을 수정해 제안했습니다.'),
+      )
+  );
 }

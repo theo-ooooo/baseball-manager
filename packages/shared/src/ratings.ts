@@ -7,14 +7,18 @@ export const isUnrated = (p: Player) => p.real && (!p.rating || p.rating.status 
 export const ratingText = (p: Player) =>
   p.observation
     ? p.observation.overall?.join('–') || '?'
-    : isUnrated(p)
-      ? '미평가'
-      : `${overall(p)}${p.rating?.status === 'provisional' ? '*' : ''}`;
+    : `${overall(p)}${isUnrated(p) || ['provisional', 'estimated'].includes(p.rating?.status || '') ? '*' : ''}`;
+export const ratingBasis = (p: Player) =>
+  p.observation
+    ? '스카우트 관찰 범위'
+    : isUnrated(p) || p.rating?.status === 'estimated'
+      ? '게임 생성 능력 · 자료가 부족해 선수별 고정 난수로 채운 추정치입니다.'
+      : p.rating?.status === 'provisional'
+        ? '표본이 적은 잠정 평가'
+        : '게임 내 종합 능력';
 export const potentialText = (p: Player) =>
   p.observation
     ? '?'
-    : isUnrated(p)
-      ? '미평가'
-      : p.real
-        ? `${Math.round(p.potential)} · 추정`
-        : String(Math.round(p.potential));
+    : p.real
+      ? `${Math.round(p.potential)} · 추정`
+      : String(Math.round(p.potential));

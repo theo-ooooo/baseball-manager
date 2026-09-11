@@ -1,3 +1,4 @@
+import draftRules from './draft-rules-2026.json';
 import managers from './club-managers-2026-09-09.json';
 import portraits from './kbo-portraits-2026-09-10.json';
 import nationalities from './player-nationalities-2026-09-11.json';
@@ -99,7 +100,8 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-11-v11',
+    version: 'world-2026-09-11-v14',
+    draftRules,
     year: 2026,
     clubs: clubs.map((club) => ({
       ...club,

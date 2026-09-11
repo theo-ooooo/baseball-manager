@@ -64,6 +64,17 @@ export function familiarity(p: Player, pos: DefensivePosition) {
       ? 15
       : 35;
 }
+/** Game position: use current familiarity, while keeping unknown scouting information hidden. */
+export function playerPosition(p: Player) {
+  const group = { P: '투수', C: '포수', IF: '내야수', OF: '외야수', DH: '지명타자' }[p.pos];
+  const candidates: DefensivePosition[] =
+    p.pos === 'IF' ? ['1B', '2B', '3B', 'SS'] : p.pos === 'OF' ? ['LF', 'CF', 'RF'] : [];
+  const primary = !p.observation
+    ? candidates.sort((a, b) => familiarity(p, b) - familiarity(p, a))[0]
+    : undefined;
+  const detail = primary ? positionLabels[primary] : undefined;
+  return { group, primary, detail, label: detail ? `${group}(${detail})` : group };
+}
 export function autoDefense(g: GameState): Defense {
   const batters = g.lineup
     .map((id) => g.roster.find((p) => p.id === id))

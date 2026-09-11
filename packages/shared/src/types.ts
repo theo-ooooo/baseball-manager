@@ -1,3 +1,6 @@
+import type { TacticCardState } from './tactic-cards';
+import type { AugmentationState, AugmentationKind } from './augmentations';
+import type { ManagerRecord } from './manager-directory';
 import type { InternationalState, InternationalDuty } from './international';
 import type { LineupRecommendation } from './lineup-recommendation';
 import type { ManagerCareer, ClubCareer, ClubManagerJob } from './manager-career';
@@ -36,6 +39,7 @@ export type Stats = {
   sh?: number;
 };
 export type Player = {
+  personality?: import('./personality').PlayerPersonality;
   id: string;
   name: string;
   original: string;
@@ -100,6 +104,7 @@ export type PlayerDevelopment = {
   lastGames: { year: number; first: number; reserve: number };
 };
 export type Coach = {
+  managerPersonId?: string;
   id: string;
   name: string;
   role: string;
@@ -122,6 +127,8 @@ export type Standing = {
   form: string[];
 };
 export type Result = {
+  augmentation?: AugmentationKind;
+  delegatedBy?: string;
   id: string;
   day: number;
   home: string;
@@ -184,6 +191,10 @@ export type CoachDeal = {
   history: NegotiationRound[];
 };
 export type GameState = {
+  seasonStandings?: Record<string, string[]>;
+  draftNotice?: string;
+  tacticCards?: TacticCardState;
+  augmentations?: AugmentationState;
   version: 1;
   year: number;
   day: number;
@@ -239,6 +250,7 @@ export type GameState = {
   knowledge?: { leagues: string[]; clubs: string[]; players?: string[] };
   managerCareer?: ManagerCareer;
   managerJobs?: Record<string, ClubManagerJob>;
+  managerPeople?: Record<string, ManagerRecord>;
   /** Server-only preserved club operations; player contracts live in transferred. */
   clubCareers?: Record<string, ClubCareer>;
   worldRevenue?: Record<string, number>;
@@ -328,6 +340,17 @@ export type RealSeed = {
 };
 export type Agent = { id: string; name: string; agency: string; fee: number; priority: string };
 export type WorldCatalog = {
+  draftRules?: Record<
+    string,
+    {
+      year: number;
+      date: string;
+      rounds: number;
+      previousYear: number;
+      previousOrder: string[];
+      source: string;
+    }
+  >;
   version: string;
   year: number;
   leagues: League[];
@@ -452,7 +475,7 @@ export type PlayerPortrait = {
 };
 export type RatingEvidence = {
   version: string;
-  status: 'rated' | 'provisional' | 'missing';
+  status: 'rated' | 'provisional' | 'estimated' | 'missing';
   season: number;
   source?: string;
   record?: PerformanceRecord;
@@ -508,6 +531,7 @@ export type NewsItem = {
     | 'manager'
     | 'medical'
     | 'trade'
+    | 'augmentations'
     | 'draft'
     | 'records'
     | 'jobs'
@@ -559,6 +583,7 @@ export type PitchingPlan = {
   chase?: string[];
 };
 export type LiveMatch = {
+  delegation?: { coachId: string; name: string; cursor: number };
   home: string;
   away: string;
   seed: number;
@@ -597,6 +622,8 @@ export type MatchInput = Pick<
   | 'pitching'
   | 'instructions'
   | 'tacticFamiliarity'
+  | 'augmentations'
+  | 'tacticCards'
   | 'defense'
   | 'calendar'
 >;

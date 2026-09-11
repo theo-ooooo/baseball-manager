@@ -105,3 +105,57 @@ export function pitchingRole(g: GameState, p: Player) {
     '': '',
   }[role];
 }
+
+export function pitcherResource(p: Player) {
+  const r = p.rating?.record;
+  const starts = r?.gs ?? 0,
+    games = r?.g ?? 0,
+    inningsPerGame = games ? (r?.outs ?? 0) / 3 / games : 0;
+  const reliefEvidence = (r?.sv ?? 0) + (r?.hld ?? 0);
+  const starter = (starts >= 5 && starts / Math.max(1, games) >= 0.4) || inningsPerGame >= 3;
+  const relief = reliefEvidence >= 3 || (games >= 15 && inningsPerGame < 2);
+  return {
+    resource: starter
+      ? '선발 자원'
+      : relief
+        ? '불펜 자원'
+        : p.control >= p.stuff
+          ? '선발 후보'
+          : '불펜 후보',
+    reason: starter
+      ? `선발 ${starts}경기 · 등판당 ${inningsPerGame.toFixed(2)}이닝의 기록을 우선했습니다.`
+      : relief
+        ? `세이브·홀드 ${reliefEvidence}개 · 짧은 이닝 등판 기록을 참고했습니다.`
+        : `제구 ${p.control.toFixed(2)} · 구위 ${p.stuff.toFixed(2)}를 비교한 게임 내 추천입니다.`,
+    startScore: starter
+      ? 120 + Math.min(30, starts) + overall(p) * 0.3
+      : relief
+        ? overall(p) * 0.4
+        : overall(p) * 0.7 + p.control * 0.3,
+  };
+}
+/** Explicit coach recommendation; does not change legacy match simulation defaults. */
+export function recommendedPitching(players: Player[]): PitchingPlan {
+  const pitchers = players.filter((p) => p.pos === 'P' && isAvailable(p));
+  const starters = [...pitchers]
+    .sort(
+      (a, b) =>
+        pitcherResource(b).startScore - pitcherResource(a).startScore || a.id.localeCompare(b.id),
+    )
+    .slice(0, Math.min(5, Math.max(1, pitchers.length - 3)));
+  const relief = pitchers
+    .filter((p) => !starters.includes(p))
+    .sort(
+      (a, b) =>
+        (b.rating?.record?.sv ?? 0) - (a.rating?.record?.sv ?? 0) ||
+        overall(b) - overall(a) ||
+        a.id.localeCompare(b.id),
+    );
+  return {
+    rotation: starters.map((p) => p.id),
+    closer: relief[0]?.id || '',
+    bullpen: relief.slice(1).map((p) => p.id),
+    ...reliefGroups(relief.slice(1)),
+    next: 0,
+  };
+}

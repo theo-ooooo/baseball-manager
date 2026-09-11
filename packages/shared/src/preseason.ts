@@ -15,7 +15,7 @@ const blockerLabels: Record<PreseasonSkipBlocker['kind'], string> = {
   managerOffer: '감독 면접·계약 제안',
   deal: '선수 계약 답변',
   coachDeal: '코치 계약 답변',
-  saleOffer: '선수 매각 제안',
+  saleOffer: '현금 트레이드 제안',
   draft: '진행 중인 신인 선발',
   trade: '트레이드 답변',
 };

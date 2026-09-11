@@ -57,6 +57,7 @@ export type WorldPlayerState = {
   age?: number;
   condition?: number;
   stint?: CareerBaseline;
+  personality?: Player['personality'];
   observation?: Player['observation'];
   generated?: {
     name: string;
@@ -115,9 +116,14 @@ export type TradeOffer = {
   expires: string;
   status: 'pending' | 'accepted' | 'counter' | 'rejected' | 'completed' | 'withdrawn' | 'expired';
   counterCash?: number;
+  counterOutgoing?: string[];
+  counterIncoming?: string[];
   message: string;
 };
 export type DraftState = {
+  rounds?: number;
+  orderYear?: number;
+  orderSource?: string;
   year: number;
   league: string;
   mode: 'draft' | 'academy';

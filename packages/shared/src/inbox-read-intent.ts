@@ -7,6 +7,7 @@ export function isDateProgressCommand(type: unknown) {
     'nextSeason',
     'skipPreseason',
     'completeMatch',
+    'delegateMatch',
   ].includes(String(type));
 }
 export function pendingReadIds(action: Record<string, unknown>): Set<string> {

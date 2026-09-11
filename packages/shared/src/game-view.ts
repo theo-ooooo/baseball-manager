@@ -103,7 +103,33 @@ export function lineupAuto(roster: Player[]) {
   return ordered.filter(Boolean).map((p) => p.id);
 }
 
-export const coachRoles = ['타격', '투수', '수비', '체력', '스카우트'];
+// Keep these indices stable: generated staff identities and existing saves use them.
+export const initialCoachRoles = ['타격', '투수', '수비', '체력', '스카우트'];
+export const coachRoles = [...initialCoachRoles, '배터리', '수석', '주루·작전', '불펜', '재활'];
+export const coachingRoles = [
+  '수석',
+  '투수',
+  '불펜',
+  '타격',
+  '수비',
+  '배터리',
+  '주루·작전',
+  '체력',
+  '재활',
+];
+export const coachRoleLabel = (role: string) => (role === '스카우트' ? role : `${role} 코치`);
+export const coachRoleDetails: Record<string, string> = {
+  수석: '전체 선수 훈련 지원 · 인터뷰와 팀 대화 위임',
+  타격: '대타 판단 · 타격 훈련',
+  투수: '투수 교체 판단 · 구위와 제구 훈련',
+  수비: '수비 훈련 · 포지션 숙련도 지도',
+  체력: '체력·주력 훈련 · 신체 능력 유지',
+  배터리: '포수 수비 · 투수 제구 훈련 지원',
+  '주루·작전': '야수 주력 훈련 · 작전 숙련도 지원',
+  불펜: '선발 로테이션 밖 투수의 구위·제구 훈련 지원',
+  재활: '재활 프로그램 선택 시 부상 재발 위험 추가 감소',
+  스카우트: '선수 관찰 · 영입 후보 평가',
+};
 export function coachSkill(g: GameState, role: string) {
   return g.staff.find((c) => c.role === role)?.skill || 35;
 }
@@ -264,6 +290,7 @@ export function createGameView(world: WorldCatalog) {
         next.years = delta.years ?? next.years;
         next.condition = delta.condition ?? 100;
         next.careerBaseline = delta.stint;
+        next.personality = delta.personality ?? next.personality;
         if (delta.observation) next.observation = delta.observation;
       }
       const entry = registered.get(next.club);
