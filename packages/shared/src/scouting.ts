@@ -1,4 +1,5 @@
 import type { AbilityKey, Pos } from './types';
+import type { SigningOutlook } from './signing-outlook';
 
 export type ScoutReport = {
   playerId: string;
@@ -13,6 +14,8 @@ export type ScoutReport = {
   concerns: string[];
   salary: number;
   fee: number;
+  /** 우리 구단에 올 가능성. 예전 보고서에는 없다. */
+  signing?: SigningOutlook;
 };
 export type ScoutAssignment = {
   id: string;

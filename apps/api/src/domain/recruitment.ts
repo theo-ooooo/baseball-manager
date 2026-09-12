@@ -1,6 +1,7 @@
 import { recordBoardTransaction } from './board-transactions';
 import { reconcileManagerPeople } from './manager-people';
 import { managerCoachingStance, playerPersonality } from '@dugout/shared/personality';
+import { signingGap } from '@dugout/shared/signing-outlook';
 import { archivePlayer } from './world-simulation';
 import type {
   CoachDeal,
@@ -10,14 +11,7 @@ import type {
   WorldCatalog,
 } from '@dugout/shared/types';
 import { freeAgentValuation } from './free-agent-valuation';
-import {
-  coachRoles,
-  createGameView,
-  hash,
-  money,
-  overall,
-  askPrice,
-} from '@dugout/shared/game-view';
+import { coachRoles, createGameView, hash, money, askPrice } from '@dugout/shared/game-view';
 import { transfersBlocked } from '@dugout/shared/management';
 import { postNews } from './club-dynamics';
 import { createTransferMarket } from './transfer-market';
@@ -216,8 +210,7 @@ export function createRecruitment(world: WorldCatalog) {
         );
       }
     } else {
-      const ambition = playerPersonality(p).ambition;
-      const gap = Math.max(0, overall(p) - g.reputation - 4 + Math.max(0, ambition - 70) / 5);
+      const gap = signingGap(g, p);
       const personality = playerPersonality(p);
       const staying =
         d.type === 'renew' && personality.homeClub === g.club && personality.loyalty >= 70;

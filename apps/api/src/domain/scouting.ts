@@ -1,5 +1,6 @@
 import type { GameState, Player, Pos, WorldCatalog } from '@dugout/shared/types';
 import type { ScoutAssignment, ScoutReport } from '@dugout/shared/scouting';
+import { signingOutlook } from '@dugout/shared/signing-outlook';
 import { scoutingCost, scoutingDurations } from '@dugout/shared/scouting';
 import { addDays, gameDate } from '@dugout/shared/calendar';
 import { abilityKeys, abilityLabels } from '@dugout/shared/development';
@@ -17,6 +18,22 @@ export function prepareKnowledge(g: GameState, world: WorldCatalog) {
     .map((c) => c.id);
 }
 
+/** 보고서 본문. 기존 강점·우려에 영입 전망을 덧붙인다. */
+function signingLines(g: GameState, r: ScoutReport) {
+  const lines = [...r.strengths, ...r.concerns];
+  if (!r.signing) return lines;
+  const { label, demand, fee, affordable, reason } = r.signing;
+  lines.push(
+    `${label} · 기대 연봉 ${money(demand[0])}~${money(demand[1])}${
+      fee ? ` · 예상 이적료 ${money(fee)}` : ' · 이적료 없음'
+    }`,
+    reason,
+    affordable
+      ? `현재 예산 ${money(g.budget)} 으로 감당할 수 있는 범위입니다.`
+      : `현재 예산 ${money(g.budget)} 으로는 부족합니다.`,
+  );
+  return lines;
+}
 export function createScouting(world: WorldCatalog) {
   const view = createGameView(world);
   const state = (g: GameState) => (g.scouting ??= { shortlist: [], assignments: [], reports: [] });
@@ -166,6 +183,7 @@ export function createScouting(world: WorldCatalog) {
       ],
       salary: p.salary,
       fee: askPrice(p),
+      signing: signingOutlook(g, p, askPrice(p), confidence),
     };
   }
   function tick(g: GameState) {
@@ -205,11 +223,11 @@ export function createScouting(world: WorldCatalog) {
             players: reports.map((r) => ({
               id: r.playerId,
               name: r.playerName,
-              detail: `${r.verdict} · 관찰 OVR ${r.overall.join('–')} · 신뢰도 ${r.confidence}%`,
+              detail: `${r.verdict} · 관찰 OVR ${r.overall.join('–')} · 신뢰도 ${r.confidence}%${r.signing ? ` · ${r.signing.label}` : ''}`,
             })),
             sections: reports.map((r) => ({
               title: r.playerName,
-              body: [...r.strengths, ...r.concerns].join('\n'),
+              body: signingLines(g, r).join('\n'),
             })),
           },
         },

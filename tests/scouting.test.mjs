@@ -9,7 +9,8 @@ buildSync({
   stdin: {
     contents: `export * from './tests/fixtures/engine';
       export * from './packages/shared/src/scouting-guide';
-      export * from './apps/web/src/features/inbox/report-destination';`,
+      export * from './apps/web/src/features/inbox/report-destination';
+      export * from './packages/shared/src/signing-outlook';`,
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -23,6 +24,9 @@ const {
   scoutingGuide,
   presentScoutingNews,
   reportDestination,
+  signingOutlook,
+  signingGap,
+  signingDemand,
 } = createRequire(import.meta.url)(out);
 const game = () => e.newGame('kbo-lotte', 'Scouting', 'full', 76);
 const scout = (g) => g.staff.find((c) => c.role === '스카우트');
@@ -189,4 +193,67 @@ test('Regional scouting discovers bounded candidates and longer observations imp
     e.applyAction(old, { type: 'shortlistPlayer', id: p.id, add: true }).scouting.reports,
     long.scouting.reports,
   );
+});
+
+test('영입 전망은 기량과 구단 평판 차이로 가능성을 나눈다', () => {
+  const g = game();
+  const p = candidate(g);
+  const easy = signingOutlook({ ...g, reputation: 99, budget: 99999 }, p, 0, 90);
+  const hard = signingOutlook({ ...g, reputation: 1, budget: 99999 }, p, 0, 90);
+  assert.equal(easy.chance, 'high');
+  assert.ok(signingGap({ ...g, reputation: 1 }, p) > signingGap({ ...g, reputation: 99 }, p));
+  assert.ok(['high', 'moderate', 'low', 'unlikely'].includes(hard.chance));
+  assert.ok(easy.label.length > 0 && hard.reason.length > 0);
+});
+
+test('예산으로 감당할 수 없으면 영입 어려움으로 본다', () => {
+  const g = game();
+  const p = candidate(g);
+  const outlook = signingOutlook({ ...g, budget: 0 }, p, 500, 90);
+  assert.equal(outlook.affordable, false);
+  assert.equal(outlook.chance, 'unlikely');
+  assert.match(outlook.reason, /예산/);
+});
+
+test('신뢰도가 낮을수록 기대 연봉 구간이 넓어진다', () => {
+  const g = { ...game(), budget: 99999 };
+  // 기대 연봉 하한(5) 근처에서는 반올림 때문에 구간이 같아진다. 연봉 규모가 있는
+  // 선수로 확인한다.
+  const p = { ...candidate(g), salary: 200 };
+  const sure = signingOutlook(g, p, 0, 95);
+  const vague = signingOutlook(g, p, 0, 35);
+  const span = (o) => o.demand[1] - o.demand[0];
+  assert.ok(span(vague) > span(sure), `${span(vague)} > ${span(sure)}`);
+  const demand = signingDemand(g, p);
+  assert.ok(
+    sure.demand[0] <= demand && sure.demand[1] >= demand,
+    '실제 기대 연봉을 구간에 담아야 한다',
+  );
+});
+
+test('도착한 스카우트 보고서와 뉴스에 영입 전망이 담긴다', () => {
+  let g = game();
+  const p = candidate(g);
+  g = e.applyAction(g, request(g, p));
+  for (let i = 0; i < 6; i++) g = e.applyAction(g, { type: 'advance', count: 1 });
+  g = e.applyAction(g, { type: 'continueDay', simulateGames: true });
+  const r = g.scouting.reports[0];
+  assert.ok(r.signing, '보고서에 영입 전망이 있어야 한다');
+  assert.ok(r.signing.demand[0] <= r.signing.demand[1]);
+  assert.equal(typeof r.signing.affordable, 'boolean');
+  assert.ok(r.signing.reason.length > 0);
+  const news = g.news.find(
+    (n) => n.actionView === 'scouting' && n.report?.players?.some((x) => x.id === r.playerId),
+  );
+  assert.ok(news, '스카우트 뉴스를 찾아야 한다');
+  assert.ok(
+    news.report.players.some((x) => x.detail.includes(r.signing.label)),
+    '요약 줄에 전망이 보여야 한다',
+  );
+  const section = news.report.sections.find((x) => x.title === r.playerName);
+  assert.ok(section);
+  assert.ok(section.body.includes(r.signing.label), '본문에 전망이 보여야 한다');
+  assert.ok(section.body.includes(r.signing.reason), '본문에 근거가 보여야 한다');
+  assert.match(section.body, /기대 연봉/);
+  assert.match(section.body, /예산/);
 });
