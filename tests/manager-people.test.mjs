@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 const built = await build({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './apps/api/src/domain/manager-career';export * from './apps/api/src/domain/manager-people';export * from './packages/shared/src/manager-directory';export * from './packages/shared/src/calendar';",
+      "export * from './tests/fixtures/engine';export * from './apps/api/src/domain/manager-career';export * from './apps/api/src/domain/manager-people';export * from './packages/shared/src/manager-directory';export * from './packages/shared/src/calendar';export * from './packages/shared/src/manager-ability';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -24,6 +24,11 @@ const {
   idleDays,
   addDays,
   gameDate,
+  managerAbility,
+  managerAbilityOverall,
+  managerStrengthBonus,
+  coachSkillFromAbility,
+  managerAbilityKeys,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
@@ -204,4 +209,96 @@ test('무직 기간은 idleSince 로 누적되고 재취업하면 초기화된�
   createManagerCareer(world).tick(g);
   assert.equal(job.managerId, person.id);
   assert.equal(person.idleSince, undefined);
+});
+
+test('감독마다 지도 능력이 정해지고 저장본을 오가도 값이 유지된다', () => {
+  const g = e.newGame('kbo-lotte', '새 감독', 'short', 731);
+  const people = Object.values(g.managerPeople);
+  assert.ok(people.length > 10);
+  for (const person of people) {
+    assert.ok(person.ability, `${person.name} 능력치 없음`);
+    for (const key of managerAbilityKeys) {
+      const value = person.ability[key];
+      assert.ok(value >= 20 && value <= 95, `${key}=${value}`);
+    }
+  }
+  // 항목마다 흩어져야 한다. 전원이 평판 그대로면 능력치를 둔 의미가 없다.
+  const spread = people.map(
+    (p) =>
+      Math.max(...managerAbilityKeys.map((k) => p.ability[k])) -
+      Math.min(...managerAbilityKeys.map((k) => p.ability[k])),
+  );
+  assert.ok(spread.filter((n) => n > 0).length > people.length * 0.8, `편차 ${spread.slice(0, 5)}`);
+
+  const person = people[0];
+  const saved = JSON.parse(JSON.stringify(person.ability));
+  // 예전 저장본(능력치 없음)에서도 같은 값으로 복원되어야 한다.
+  delete person.ability;
+  assert.deepEqual(managerAbility(person), saved);
+  reconcileManagerPeople(g, world);
+  assert.deepEqual(g.managerPeople[person.id].ability, saved);
+});
+
+test('컴퓨터 구단 경기 전력 보정은 감독 역량을 따르되 좁은 폭에 묶인다', () => {
+  const strong = managerStrengthBonus({
+    tactics: 95,
+    bullpen: 95,
+    development: 95,
+    motivation: 95,
+    evaluation: 95,
+  });
+  const weak = managerStrengthBonus({
+    tactics: 20,
+    bullpen: 20,
+    development: 20,
+    motivation: 20,
+    evaluation: 20,
+  });
+  assert.ok(strong > weak);
+  assert.ok(strong <= 1.5 && weak >= -1.5, `${strong} / ${weak}`);
+  assert.equal(managerStrengthBonus(undefined), 0, '감독 기록이 없으면 보정이 없어야 한다');
+});
+
+test('코치로 전향하면 보직에 맞는 지도 능력을 지도력으로 삼는다', () => {
+  const teacher = { tactics: 30, bullpen: 30, development: 90, motivation: 30, evaluation: 30 };
+  const pitching = { tactics: 30, bullpen: 90, development: 30, motivation: 30, evaluation: 30 };
+  assert.ok(coachSkillFromAbility(teacher, '타격') > coachSkillFromAbility(pitching, '타격'));
+  assert.ok(coachSkillFromAbility(pitching, '투수') > coachSkillFromAbility(teacher, '투수'));
+  for (const role of ['타격', '투수', '수석', '스카우트', '주루·작전']) {
+    const skill = coachSkillFromAbility(teacher, role);
+    assert.ok(skill >= 35 && skill <= 90, `${role}=${skill}`);
+  }
+
+  const g = e.newGame('kbo-lotte', '새 감독', 'short', 732);
+  for (const person of Object.values(g.managerPeople))
+    assert.equal(
+      person.coach.skill,
+      coachSkillFromAbility(person.ability, person.coach.role),
+      person.name,
+    );
+});
+
+test('평판이 비슷하면 지도 능력이 나은 감독이 먼저 채용된다', () => {
+  const g = e.newGame('kbo-lotte', '새 감독', 'short', 733);
+  const job = g.managerJobs['kbo-lg'];
+  job.vacant = true;
+  job.vacantSince = addDays(gameDate(g), -8);
+  const [a, b] = seedIdleManagers(g, 2, addDays(gameDate(g), -30));
+  // 평판·연고·무직 기간을 같게 맞추고 능력치만 다르게 둔다.
+  for (const person of Object.values(g.managerPeople))
+    if (!person.club && person !== a && person !== b) person.club = 'test-unavailable';
+  for (const person of [a, b]) {
+    person.reputation = 60;
+    person.originClub = 'kbo-lg';
+    person.career = [];
+  }
+  const better = { tactics: 90, bullpen: 90, development: 90, motivation: 90, evaluation: 90 };
+  const worse = { tactics: 25, bullpen: 25, development: 25, motivation: 25, evaluation: 25 };
+  a.ability = worse;
+  b.ability = better;
+  assert.ok(managerAbilityOverall(better) > managerAbilityOverall(worse));
+  assert.equal(availableManager(g, world, 'kbo-lg').id, b.id);
+  a.ability = better;
+  b.ability = worse;
+  assert.equal(availableManager(g, world, 'kbo-lg').id, a.id);
 });

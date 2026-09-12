@@ -1,5 +1,6 @@
 import type { GameState, Coach } from './types';
 import type { ClubManagerJob } from './manager-career';
+import type { ManagerAbility } from './manager-ability';
 export type ManagerRecord = {
   id: string;
   aliases?: string[];
@@ -14,6 +15,8 @@ export type ManagerRecord = {
   /** Set while the person holds no job, so idle time survives saves with undated departures. */
   idleSince?: string;
   coach?: Coach;
+  /** 지도 능력. 예전 저장본에는 없으므로 `managerAbility` 로 채워 읽는다. */
+  ability?: ManagerAbility;
   personality?: import('./personality').ManagerPersonality;
   career: {
     club: string;

@@ -7,6 +7,11 @@ import type { GameState } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { abilityText } from '@dugout/shared/ratings';
 import { departureLabel } from '@dugout/shared/manager-departure';
+import {
+  managerAbilityKeys,
+  managerAbilityLabels,
+  managerAbilityNote,
+} from '@dugout/shared/manager-ability';
 import { useManagerPersonProfile } from './use-manager-person-profile';
 export function ManagerPersonProfile({
   g,
@@ -185,6 +190,13 @@ export function ManagerPersonProfile({
             </dd>
           </div>
           <div>
+            <dt>지도 능력</dt>
+            <dd>
+              {p.abilityOverall !== undefined ? abilityText(p.abilityOverall) : '—'}
+              <small>{p.abilityOverall !== undefined ? '/ 100' : '내 감독'}</small>
+            </dd>
+          </div>
+          <div>
             <dt>리그 순위</dt>
             <dd>
               {p.rank || '—'}
@@ -281,9 +293,39 @@ export function ManagerPersonProfile({
                   </div>
                 )}
               <p className="person-profile-note">
-                게임 내 평판과 재임 성과입니다. 훈련 지도 능력은 담당 코치의 능력치를 따릅니다.
+                {self
+                  ? '내 감독은 지도 능력 대신 실제 지시와 경기 결과로 평가됩니다. 훈련 지도 능력은 담당 코치의 능력치를 따릅니다.'
+                  : '게임 내 평판과 재임 성과입니다. 선수 훈련은 구단 코치의 능력치를 따릅니다.'}
               </p>
             </section>
+            {p.ability && (
+              <section className="dossier-card">
+                <header>
+                  <h2>지도 능력</h2>
+                  <span>종합 {abilityText(p.abilityOverall)} / 100</span>
+                </header>
+                <div className="manager-ability">
+                  {managerAbilityKeys.map((key) => (
+                    <div key={key}>
+                      <span>
+                        {managerAbilityLabels[key]}
+                        <strong>{p.ability![key]} / 100</strong>
+                      </span>
+                      <progress
+                        max={100}
+                        value={p.ability![key]}
+                        aria-label={managerAbilityLabels[key]}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p>{managerAbilityNote(p.ability)}</p>
+                <small>
+                  평판이 명성이라면 지도 능력은 실제 운영 역량입니다. 컴퓨터 구단끼리의 경기 운영,
+                  구단의 감독 채용 심사, 코치로 전향했을 때의 지도력에 반영됩니다.
+                </small>
+              </section>
+            )}
             {contractInfo}
             {history}
             {self && (

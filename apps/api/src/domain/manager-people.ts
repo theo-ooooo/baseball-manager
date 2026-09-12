@@ -3,6 +3,11 @@ import type { ManagerRecord } from '@dugout/shared/manager-directory';
 import { gameDate, daysBetween } from '@dugout/shared/calendar';
 import { hash, rng, teamBudget, coachRoles } from '@dugout/shared/game-view';
 import { managerPersonality } from '@dugout/shared/personality';
+import {
+  managerAbility,
+  managerAbilityOverall,
+  coachSkillFromAbility,
+} from '@dugout/shared/manager-ability';
 import { createPlayerGenerator } from './player-generator';
 const reputation = (level: number) => Math.max(25, Math.min(95, level - 10));
 export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
@@ -80,14 +85,18 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
   }
   for (const person of Object.values(people)) {
     person.personality ??= managerPersonality(person.id);
+    person.ability ??= managerAbility(person);
     const league = world.clubs.find((c) => c.id === person.originClub)?.league || 'kbo';
+    const role = coachRoles[hash(person.id) % coachRoles.length];
     person.coach ??= {
       id: person.id,
       managerPersonId: person.id,
       name: person.name,
       real: person.real,
-      role: coachRoles[hash(person.id) % coachRoles.length],
-      skill: Math.max(35, Math.min(90, person.reputation)),
+      role,
+      // 보직에 맞는 지도 능력을 따른다. 평판만 보면 이름값 높은 감독이 전 보직에서
+      // 유능한 코치가 되어 버린다.
+      skill: coachSkillFromAbility(person.ability, role),
       salary: Math.max(1, Math.round(teamBudget(league) * 0.004 * (person.reputation / 60))),
       style: '선수단 운영 경험',
       source: person.source,
@@ -265,6 +274,9 @@ export function availableManager(
     const sameLeague =
       world.clubs.find((c) => c.id === person.originClub)?.league === club.league ? 12 : 0;
     const fit = 30 - Math.abs(person.reputation - reputation(level));
-    return fit + sameLeague + Math.min(20, Math.floor(idleDays(g, person) / 14) * 4);
+    // 평판이 비슷한 후보 사이에서는 실제 지도 능력을 본다. 평판 적합도를 뒤집지 않도록
+    // 폭을 좁게 둔다.
+    const ability = (managerAbilityOverall(managerAbility(person)) - 55) / 6;
+    return fit + sameLeague + ability + Math.min(20, Math.floor(idleDays(g, person) / 14) * 4);
   }
 }

@@ -22,6 +22,7 @@ import {
 import { prepareFinances, settleClubDay } from './club-finance';
 import { coachReports, coachReportAction } from './coach-reports';
 import { isUnemployed } from '@dugout/shared/manager-career';
+import { managerAbility, managerStrengthBonus } from '@dugout/shared/manager-ability';
 import { createMatchSimulator } from './match-simulation';
 import { createLiveMatchActions } from './live-match';
 import { applyMatchEffects, runMatch } from './match-timeline';
@@ -245,7 +246,13 @@ export function createGameEngine(world: WorldCatalog) {
   }
   function teamStrength(g: GameState, id: string) {
     const r = rosterFor(g, id).filter((p) => p.squad !== 'reserve' && isAvailable(p));
-    return r.reduce((s, p) => s + overall(p), 0) / (r.length || 1);
+    const squad = r.reduce((s, p) => s + overall(p), 0) / (r.length || 1);
+    // 내 구단 경기는 실제로 시뮬레이션하므로 여기 오지 않는다. 컴퓨터끼리의 경기에서만
+    // 감독의 경기 운영이 전력에 얹힌다.
+    const job = g.managerJobs?.[id];
+    const person =
+      job && !job.vacant && job.managerId ? g.managerPeople?.[job.managerId] : undefined;
+    return squad + managerStrengthBonus(person && managerAbility(person));
   }
   function doMatch(
     g: GameState,
