@@ -110,3 +110,27 @@ export function managerAbilityNote(ability: ManagerAbility) {
     ? `${managerAbilityLabels[best.key]} 을 비롯해 전 항목이 고른 유형입니다.`
     : `${managerAbilityLabels[best.key]} 이 강점이고 ${managerAbilityLabels[worst.key]} 이 약점입니다.`;
 }
+
+/**
+ * 컴퓨터 구단 선수의 성장 배율. 육성이 좋은 감독 밑에서 유망주가 더 크고, 노장의 기량
+ * 하락도 더디다. 감독이 없거나 능력치를 모르면 1 — 즉 기존 속도 그대로다.
+ */
+export function managerDevelopmentFactor(ability?: ManagerAbility) {
+  if (!ability) return 1;
+  return Math.round((0.7 + (ability.development / 100) * 0.6) * 1000) / 1000;
+}
+
+/**
+ * 내 감독의 지도 능력. 컴퓨터 감독은 한 번 정해지면 고정이지만, 내 감독은 현재 평판을
+ * 중심으로 계산해 성적이 쌓이면 같이 오른다. 강점·약점의 모양은 이름에 묶여 고정이다.
+ */
+export function selfManagerAbility(g: {
+  manager: string;
+  reputation: number;
+  managerCareer?: { reputation: number };
+}) {
+  return managerAbility({
+    id: `self:${g.manager}`,
+    reputation: g.managerCareer?.reputation ?? g.reputation,
+  });
+}

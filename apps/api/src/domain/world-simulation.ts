@@ -13,6 +13,7 @@ import {
 import { createTransferMarket } from './transfer-market';
 import { createPlayerGenerator } from './player-generator';
 import { gameDate } from '@dugout/shared/calendar';
+import { managerAbility, managerDevelopmentFactor } from '@dugout/shared/manager-ability';
 import { postNews } from './club-dynamics';
 
 export function prepareWorld(g: GameState) {
@@ -232,14 +233,30 @@ export function createWorldSimulation(world: WorldCatalog) {
       if (['pending', 'accepted', 'counter'].includes(trade.status))
         trade.incoming.forEach((id) => unavailable.add(id));
     const all = view.marketPlayers(g);
+    // 구단마다 한 번만 찾아 두고 재사용한다. 주간 성장은 전 리그 선수를 훑는다.
+    const developmentFactors = new Map<string, number>();
+    const developmentFactor = (club: string) => {
+      let factor = developmentFactors.get(club);
+      if (factor === undefined) {
+        const job = g.managerJobs?.[club];
+        const person =
+          job && !job.vacant && job.managerId ? g.managerPeople?.[job.managerId] : undefined;
+        factor = managerDevelopmentFactor(person && managerAbility(person));
+        developmentFactors.set(club, factor);
+      }
+      return factor;
+    };
     for (const p of all) {
       if (p.club === 'fa') continue;
-      const growth =
+      const base =
         p.age < 25
           ? Math.max(0, p.potential - overall(p)) * 0.0006
           : p.age >= 33
             ? -0.05 * (p.age - 32)
             : 0;
+      // 성장은 배로 빨라지고 하락은 배로 느려지도록 같은 배율을 반대로 건다.
+      const factor = base ? developmentFactor(p.club) : 1;
+      const growth = base > 0 ? base * factor : base / factor;
       if (growth) {
         for (const key of ['contact', 'power', 'speed', 'field', 'stuff', 'control'] as const)
           p[key] = Math.max(15, Math.min(99, p[key] + growth));

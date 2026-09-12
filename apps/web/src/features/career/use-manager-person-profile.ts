@@ -4,15 +4,24 @@ import type { GameState } from '@dugout/shared/types';
 import { coachDirectory } from '@dugout/shared/coach-directory';
 import { managerCoachingStance } from '@dugout/shared/personality';
 import { managerDirectory } from '@dugout/shared/manager-directory';
-import { managerAbility, managerAbilityOverall } from '@dugout/shared/manager-ability';
+import {
+  managerAbility,
+  managerAbilityOverall,
+  selfManagerAbility,
+} from '@dugout/shared/manager-ability';
 import { useWorld } from './world-context';
 export function useManagerPersonProfile(g: GameState, id: string) {
   const [tab, setTab] = useState('overview');
   const [offering, setOffering] = useState(false);
   const { getClub, standings, coachPool } = useWorld();
   const person = managerDirectory(g).find((p) => p.id === id || p.record?.aliases?.includes(id));
-  // 예전 저장본에는 능력치가 없으므로 기록에서 그때그때 채워 읽는다.
-  const ability = person?.record ? managerAbility(person.record) : undefined;
+  // 예전 저장본에는 능력치가 없으므로 기록에서 그때그때 채워 읽는다. 내 감독은 기록이
+  // 아니라 현재 평판에서 계산하므로 성적이 쌓이면 값이 따라 오른다.
+  const ability = person?.self
+    ? selfManagerAbility(g)
+    : person?.record
+      ? managerAbility(person.record)
+      : undefined;
   const job = person?.job,
     club = person?.club;
   const table = club ? standings(g, getClub(club).league) : [];

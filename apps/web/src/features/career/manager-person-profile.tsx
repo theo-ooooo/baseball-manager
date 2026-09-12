@@ -193,7 +193,7 @@ export function ManagerPersonProfile({
             <dt>지도 능력</dt>
             <dd>
               {p.abilityOverall !== undefined ? abilityText(p.abilityOverall) : '—'}
-              <small>{p.abilityOverall !== undefined ? '/ 100' : '내 감독'}</small>
+              <small>{p.abilityOverall !== undefined ? '/ 100' : '기록 없음'}</small>
             </dd>
           </div>
           <div>
@@ -294,7 +294,7 @@ export function ManagerPersonProfile({
                 )}
               <p className="person-profile-note">
                 {self
-                  ? '내 감독은 지도 능력 대신 실제 지시와 경기 결과로 평가됩니다. 훈련 지도 능력은 담당 코치의 능력치를 따릅니다.'
+                  ? '게임 내 평판과 재임 성과입니다. 내 구단의 선수 훈련은 담당 코치의 능력치를 따릅니다.'
                   : '게임 내 평판과 재임 성과입니다. 선수 훈련은 구단 코치의 능력치를 따릅니다.'}
               </p>
             </section>
@@ -321,8 +321,9 @@ export function ManagerPersonProfile({
                 </div>
                 <p>{managerAbilityNote(p.ability)}</p>
                 <small>
-                  평판이 명성이라면 지도 능력은 실제 운영 역량입니다. 컴퓨터 구단끼리의 경기 운영,
-                  구단의 감독 채용 심사, 코치로 전향했을 때의 지도력에 반영됩니다.
+                  {self
+                    ? '평판을 중심으로 계산한 값이라 성적이 쌓이면 같이 오릅니다. 강점과 약점의 모양은 고정입니다. 내 구단 경기는 실제 지시대로 진행되므로 이 값이 결과를 바꾸지 않습니다.'
+                    : '평판이 명성이라면 지도 능력은 실제 운영 역량입니다. 컴퓨터 구단의 경기 운영과 선수 육성, 구단의 감독 채용 심사, 코치로 전향했을 때의 지도력에 반영됩니다.'}
                 </small>
               </section>
             )}

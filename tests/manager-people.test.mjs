@@ -29,6 +29,8 @@ const {
   managerStrengthBonus,
   coachSkillFromAbility,
   managerAbilityKeys,
+  managerDevelopmentFactor,
+  selfManagerAbility,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
@@ -301,4 +303,47 @@ test('평판이 비슷하면 지도 능력이 나은 감독이 먼저 채용된�
   a.ability = better;
   b.ability = worse;
   assert.equal(availableManager(g, world, 'kbo-lg').id, a.id);
+});
+
+test('육성이 좋은 감독 밑에서 유망주가 더 크고 노장 하락이 더디다', () => {
+  const good = managerDevelopmentFactor({
+    tactics: 50,
+    bullpen: 50,
+    development: 95,
+    motivation: 50,
+    evaluation: 50,
+  });
+  const poor = managerDevelopmentFactor({
+    tactics: 50,
+    bullpen: 50,
+    development: 20,
+    motivation: 50,
+    evaluation: 50,
+  });
+  assert.ok(good > 1 && poor < 1, `${good} / ${poor}`);
+  assert.equal(managerDevelopmentFactor(undefined), 1, '감독이 없으면 기존 속도 그대로여야 한다');
+  // 성장은 곱하고 하락은 나누므로 같은 배율이 양쪽에 반대로 걸린다.
+  const growth = 0.02;
+  assert.ok(growth * good > growth * poor);
+  assert.ok(-0.05 / good > -0.05 / poor, '좋은 감독이 하락 폭이 작아야 한다');
+});
+
+test('내 감독 능력치는 평판을 따라 오르고 강약점 모양은 유지된다', () => {
+  const low = selfManagerAbility({ manager: '강경원', reputation: 40 });
+  const high = selfManagerAbility({ manager: '강경원', reputation: 80 });
+  assert.ok(managerAbilityOverall(high) > managerAbilityOverall(low));
+  const shape = (a) => {
+    const keys = [...managerAbilityKeys].sort((x, y) => a[y] - a[x] || x.localeCompare(y));
+    return keys.join(',');
+  };
+  assert.equal(shape(high), shape(low), '강점·약점 순서는 평판과 무관하게 고정이어야 한다');
+  // 감독 커리어 평판이 있으면 그쪽을 따른다.
+  const career = selfManagerAbility({
+    manager: '강경원',
+    reputation: 40,
+    managerCareer: { reputation: 80 },
+  });
+  assert.deepEqual(career, high);
+  // 이름이 다르면 강약점 모양도 달라진다.
+  assert.notEqual(shape(selfManagerAbility({ manager: '다른감독', reputation: 80 })), shape(high));
 });
