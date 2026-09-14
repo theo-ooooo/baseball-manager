@@ -1,6 +1,7 @@
 'use client';
 import { useCoachNegotiations } from './use-coach-negotiations';
 import { useCoachOffer } from './use-coach-offer';
+import { coachConnectionDiscount } from '@dugout/shared/manager-journey';
 import { ContractSigning } from '../contracts/contract-signing';
 import { toast } from 'sonner';
 import {
@@ -52,6 +53,12 @@ export function CoachOfferDialog({
             유지됩니다.
           </DialogDescription>
         </DialogHeader>
+        {coachConnectionDiscount(g, coach.id) > 0 && (
+          <p className="person-profile-note">
+            함께한 인연으로 기대 연봉을 {Math.round(coachConnectionDiscount(g, coach.id) * 100)}%
+            낮춰 검토합니다. 보직과 계약 기간, 예산은 별도로 확인합니다.
+          </p>
+        )}
         <form
           onSubmit={async (e) => {
             e.preventDefault();

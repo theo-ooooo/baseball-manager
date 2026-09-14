@@ -11,14 +11,17 @@ import {
   managerAbilityKeys,
 } from '@dugout/shared/manager-ability';
 import { departureLabel } from '@dugout/shared/manager-departure';
+import { coachConnectionDiscount } from '@dugout/shared/manager-journey';
 import { useWorld } from './world-context';
 export function useManagerPersonProfile(g: GameState, id: string) {
   const [tab, setTab] = useState('overview');
   const [offering, setOffering] = useState(false);
+  const [connectionFilter, setConnectionFilter] = useState('all');
+  const [connectionOffer, setConnectionOffer] = useState<string>();
   const { getClub, standings, coachPool } = useWorld();
+  const coaches = coachDirectory(g, coachPool(g.year));
   const person = managerDirectory(g).find((p) => p.id === id || p.record?.aliases?.includes(id));
-  // 예전 저장본에는 능력치가 없으므로 기록에서 그때그때 채워 읽는다. 내 감독은 기록이
-  // 아니라 현재 평판에서 계산하므로 성적이 쌓이면 값이 따라 오른다.
+  // 기존 저장의 시작 능력과 서버에서 누적한 지도 경험을 읽는다.
   const ability = person?.self
     ? selfManagerAbility(g)
     : person?.record
@@ -74,6 +77,28 @@ export function useManagerPersonProfile(g: GameState, id: string) {
   const strongest =
     ability && managerAbilityKeys.reduce((a, b) => (ability[b] > ability[a] ? b : a));
   return {
+    connectionCoach: coaches.find((r) => r.coach.id === connectionOffer && r.club === 'fa')?.coach,
+    setConnectionOffer,
+    canOfferConnection: g.managerCareer?.status === 'employed' && !g.managerCareer.vacationUntil,
+    journey: person?.self ? g.managerCareer?.journey : undefined,
+    connectionFilter,
+    setConnectionFilter,
+    connections: (person?.self ? g.managerCareer?.journey?.connections || [] : [])
+      .filter(
+        (r) =>
+          connectionFilter === 'all' ||
+          (connectionFilter === 'students' ? r.student : r.kind === 'coach'),
+      )
+      .map((r) => ({
+        ...r,
+        discount: coachConnectionDiscount(g, r.id),
+        available:
+          r.kind === 'coach' && coaches.some((c) => c.coach.id === r.id && c.club === 'fa'),
+      }))
+      .sort(
+        (a, b) =>
+          Number(b.origin === 'teammate') - Number(a.origin === 'teammate') || b.trust - a.trust,
+      ),
     tab,
     setTab,
     offering,

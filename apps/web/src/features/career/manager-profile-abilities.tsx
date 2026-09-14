@@ -5,13 +5,22 @@ import {
   managerAbilityNote,
   type ManagerAbility,
 } from '@dugout/shared/manager-ability';
+import type { ManagerJourney } from '@dugout/shared/manager-journey';
+import { managerExperienceBonus, managerExperienceReasons } from '@dugout/shared/manager-journey';
+import { managerPlayingTrait } from '@dugout/shared/manager-traits';
+import type { ManagerBackground } from '@dugout/shared/manager-background';
 export function ManagerProfileAbilities({
   ability,
   self,
+  journey,
+  background,
 }: {
   ability: ManagerAbility;
   self: boolean;
+  journey?: ManagerJourney;
+  background?: ManagerBackground;
 }) {
+  const trait = managerPlayingTrait(background);
   return (
     <section className="dossier-card manager-skill-sheet">
       <header>
@@ -19,6 +28,20 @@ export function ManagerProfileAbilities({
         <span>경기 · 훈련 · 선수단</span>
       </header>
       <p className="manager-background-summary">{managerAbilityNote(ability)}</p>
+      {trait && (
+        <div className="manager-playing-trait">
+          <strong>{trait.name}</strong>
+          <p>{trait.detail}</p>
+          <span>
+            {Object.entries(trait.bonus)
+              .map(
+                ([key, value]) => `${managerAbilityLabels[key as keyof ManagerAbility]} +${value}`,
+              )
+              .join(' · ')}
+          </span>
+          <small>선수 경력에 따른 게임 특성 · 아래 능력에 포함</small>
+        </div>
+      )}
       <div className="manager-skill-rows">
         {managerAbilityKeys.map((key) => (
           <div key={key}>
@@ -31,6 +54,25 @@ export function ManagerProfileAbilities({
             </div>
             <progress max={100} value={ability[key]} aria-label={managerAbilityLabels[key]} />
             <p>{managerAbilityEffects[key]}</p>
+            {journey && (
+              <div className="manager-experience">
+                <span>
+                  시작 {journey.baseAbility[key]} · 경험 성장 +
+                  {managerExperienceBonus(journey.experience[key])}
+                </span>
+                <small>
+                  {journey.experience[key] >= 1200 || ability[key] >= 95
+                    ? '성장 상한 도달'
+                    : `다음 성장 ${journey.experience[key] % 100} / 100 XP`}
+                </small>
+                <progress
+                  max={100}
+                  value={journey.experience[key] >= 1200 ? 100 : journey.experience[key] % 100}
+                  aria-label={`${managerAbilityLabels[key]} 경험`}
+                />
+                <p>{managerExperienceReasons[key]}</p>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -41,8 +83,9 @@ export function ManagerProfileAbilities({
       </p>
       {self && (
         <p className="person-profile-note">
-          현재 평판에 따라 능력이 변합니다. 직접 하는 선수단 대화는 감독 능력, 코치에게 맡긴 대화는
-          담당 코치의 지도력을 따릅니다.
+          평판과 별개로 지도 경험을 쌓아 능력이 성장합니다. 100 XP마다 해당 능력 +1, 경험 성장은
+          항목별 최대 +12입니다. 직접 하는 대화는 감독 능력, 맡긴 대화는 담당 코치의 지도력을
+          따릅니다.
         </p>
       )}
     </section>

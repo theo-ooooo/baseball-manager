@@ -1,4 +1,5 @@
 'use client';
+import { MatchManagerReview } from './match-manager-review';
 import Link from 'next/link';
 import type { Result } from '@dugout/shared/types';
 import { matchBoxScore } from '@dugout/shared/match-box-score';
@@ -23,6 +24,7 @@ export function MatchBoxScore({ match, club }: { match: Result; club: string }) 
     team = rows[side];
   return (
     <section className="match-box-score">
+      <MatchManagerReview result={report.result} />
       <header>
         <div>
           <small>경기 기록</small>

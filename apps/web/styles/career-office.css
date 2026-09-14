@@ -2176,6 +2176,7 @@
 }
 .manager-dossier {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   min-width: 0;
 }
@@ -2784,4 +2785,185 @@
   font-size: 12px;
   color: var(--text-3);
   line-height: 1.8;
+}
+
+.manager-playing-trait {
+  padding: 18px;
+  margin: 16px 0;
+  border-left: 3px solid var(--accent, #b8d68b);
+  background: rgba(154, 185, 121, 0.09);
+}
+.manager-playing-trait strong {
+  font-size: 1.1rem;
+}
+.manager-playing-trait small,
+.manager-playing-trait span {
+  display: block;
+  margin-top: 8px;
+}
+.manager-experience {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  margin-top: 12px;
+}
+.manager-experience progress,
+.manager-experience p {
+  grid-column: 1 / -1;
+}
+.manager-experience progress {
+  height: 4px;
+  accent-color: #b8d68b;
+}
+.manager-experience small {
+  color: var(--muted-foreground);
+}
+.manager-connection-grid,
+.manager-review-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.manager-connection-grid > article {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.manager-connection-grid h3 {
+  margin: 8px 0;
+  font-size: 1.25rem;
+}
+.manager-connection-grid p,
+.manager-connection-grid small {
+  line-height: 1.6;
+}
+.manager-connection-trust {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+.manager-connection-trust progress {
+  width: 100%;
+  height: 5px;
+  accent-color: #b8d68b;
+}
+.manager-next-achievement {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.manager-match-review {
+  padding: 20px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.manager-match-review > header,
+.manager-review-counts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.manager-review-teams > article {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 0;
+}
+.manager-review-teams h4 {
+  margin: 0 0 16px;
+  font-size: 1.2rem;
+}
+.manager-review-cards {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.manager-review-cards li {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.manager-review-cards li > div,
+.manager-review-signs li > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.manager-review-cards p,
+.manager-review-signs p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+.manager-review-augmentation {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  background: rgba(154, 185, 121, 0.09);
+  margin-bottom: 16px;
+}
+.manager-match-review details {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+}
+.manager-match-review summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.manager-review-signs {
+  padding-left: 20px;
+}
+.manager-review-signs li {
+  padding: 12px 0;
+}
+.manager-review-signs .successful strong {
+  color: var(--primary, #b8d68b);
+}
+.manager-review-signs small {
+  display: block;
+  margin-bottom: 6px;
+}
+.manager-dossier .dossier-tabs {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  justify-content: flex-start;
+}
+.manager-dossier > [data-slot='tabs'] {
+  min-width: 0;
+}
+.manager-dossier .dossier-tabs [role='tab'] {
+  flex-shrink: 0;
+}
+.manager-review-highlight {
+  margin: 14px 0;
+  padding: 12px;
+  border-left: 3px solid var(--brand);
+  background: var(--surface-2);
+}
+.manager-review-highlight small,
+.manager-review-highlight strong {
+  display: block;
+  margin-bottom: 6px;
+}
+.manager-review-highlight p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+@media (max-width: 700px) {
+  .manager-connection-grid,
+  .manager-review-teams {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .manager-experience {
+    grid-template-columns: 1fr;
+  }
+  .manager-experience progress,
+  .manager-experience p {
+    grid-column: 1;
+  }
 }

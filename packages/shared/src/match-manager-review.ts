@@ -19,6 +19,12 @@ export function matchManagerReview(result: Result, club: string) {
         : '자동 판단',
   }));
   const draft = result.matchCards;
+  const direct = commands.filter((c) => c.source === '감독 직접 지시');
+  const closeLate = commands.filter((c) => {
+    const score = result.log[c.cursor]?.play?.before.score;
+    return c.inning >= 7 && score && Math.abs(score[0] - score[1]) <= 2;
+  });
+  const highlights = (direct.length ? direct : closeLate.length ? closeLate : commands).slice(-3);
   const own = draft?.club === club;
   const side = own ? 'own' : 'opponent';
   const cards = (draft ? (own ? draft.own : draft.opponent) : []).map((card) => {
@@ -38,6 +44,7 @@ export function matchManagerReview(result: Result, club: string) {
   const manualChanges = result.managerReview?.club === club ? result.managerReview.changes : [];
   return {
     commands,
+    highlights,
     cards,
     augmentation: augmentation && {
       name: augmentationCatalog[augmentation].name,

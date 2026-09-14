@@ -10,6 +10,7 @@ import { managerAbilityLabels } from '@dugout/shared/manager-ability';
 import { useManagerPersonProfile } from './use-manager-person-profile';
 import { ManagerProfileHistory } from './manager-profile-history';
 import { ManagerProfileAbilities } from './manager-profile-abilities';
+import { ManagerConnections, ManagerAchievements } from './manager-journey-panels';
 
 export function ManagerPersonProfile({
   g,
@@ -186,11 +187,20 @@ export function ManagerPersonProfile({
           <TabsTrigger value="overview">프로필</TabsTrigger>
           <TabsTrigger value="history">경력 · 히스토리</TabsTrigger>
           <TabsTrigger value="contract">계약 · 구단 기대</TabsTrigger>
+          {self && <TabsTrigger value="connections">제자 · 인맥</TabsTrigger>}
+          {self && <TabsTrigger value="achievements">업적</TabsTrigger>}
         </TabsList>
         <TabsContent value="overview">
           <div className="manager-profile-layout">
             <div className="manager-profile-main">
-              {p.ability && <ManagerProfileAbilities ability={p.ability} self={self} />}
+              {p.ability && (
+                <ManagerProfileAbilities
+                  ability={p.ability}
+                  self={self}
+                  journey={p.journey}
+                  background={p.background}
+                />
+              )}
               <ManagerProfileHistory profile={p} compact />
             </div>
             <aside className="manager-profile-aside">
@@ -255,6 +265,16 @@ export function ManagerPersonProfile({
           <ManagerProfileHistory profile={p} />
         </TabsContent>
         <TabsContent value="contract">{contractInfo}</TabsContent>
+        {self && (
+          <TabsContent value="connections">
+            <ManagerConnections profile={p} />
+          </TabsContent>
+        )}
+        {self && (
+          <TabsContent value="achievements">
+            <ManagerAchievements profile={p} />
+          </TabsContent>
+        )}
       </Tabs>
       {p.offering && p.coach && act && (
         <CoachOfferDialog
@@ -264,6 +284,16 @@ export function ManagerPersonProfile({
           act={act}
           busy={busy}
           close={() => p.setOffering(false)}
+        />
+      )}
+      {p.connectionCoach && act && (
+        <CoachOfferDialog
+          coach={p.connectionCoach}
+          role={p.connectionCoach.role}
+          g={g}
+          act={act}
+          busy={busy}
+          close={() => p.setConnectionOffer(undefined)}
         />
       )}
     </article>
