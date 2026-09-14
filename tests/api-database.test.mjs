@@ -165,7 +165,14 @@ test('Match card choices persist once in D1 and survive the compact in-game comm
     { type: 'start', club: 'kbo-lotte', manager: 'Card draft', mode: 'short', preseason: false },
     user,
   );
+  // This test needs a playable opening day; cancellation has its own API coverage.
+  await db
+    .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',0) WHERE user_id=?")
+    .bind(user)
+    .run();
   const initial = await action({ type: 'startMatch', matchCards: true }, user);
+  assert.equal(initial.state.liveMatch.weather.sky, 'clear');
+  assert.equal(initial.state.liveMatch.weather.cancellation, undefined);
   const live = initial.state.liveMatch,
     draft = live.cards;
   assert.equal(draft.offered.length, 5);
@@ -2103,3 +2110,69 @@ test('Legacy postseason calendars are repaired on read without writes and comple
   const catalog = await call('/api/catalog', undefined, user);
   assert.equal(catalog.body.clubs.filter((c) => c.ballpark?.roof === 'covered').length, 15);
 });
+
+for (const [reason, seed] of [
+  ['rain', 40],
+  ['ground', 3],
+])
+  test(`${reason} cancellation rejects match preparation without writes and persists rescheduling once`, async () => {
+    const user = `weather-cancel-${reason}`;
+    const initial = await action(
+      { type: 'start', club: 'kbo-lotte', manager: 'Weather API', mode: 'short', preseason: false },
+      user,
+    );
+    // Fixed conditions at Lotte's generated 2026-03-28 home opener.
+    await db
+      .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',?) WHERE user_id=?")
+      .bind(seed, user)
+      .run();
+    const before = await db
+      .prepare('SELECT state,revision FROM careers WHERE user_id=?')
+      .bind(user)
+      .first();
+    const rejected = await call(
+      '/api/career',
+      { type: 'startMatch', revision: initial.revision, requestId: crypto.randomUUID() },
+      user,
+    );
+    assert.equal(rejected.status, 400);
+    assert.deepEqual(
+      await db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first(),
+      before,
+    );
+    const command = {
+      type: 'advance',
+      count: 1,
+      revision: initial.revision,
+      requestId: crypto.randomUUID(),
+    };
+    const progressed = await call('/api/career', command, user);
+    assert.equal(progressed.status, 201, JSON.stringify(progressed.body));
+    const state = progressed.body.state;
+    assert.equal(state.day, initial.state.day + 1);
+    assert.equal(state.history.length, 0);
+    assert.deepEqual(
+      state.standings.kbo.find((s) => s.club === state.club),
+      initial.state.standings.kbo.find((s) => s.club === state.club),
+    );
+    assert.deepEqual(
+      state.roster.map((p) => p.stats),
+      initial.state.roster.map((p) => p.stats),
+    );
+    const own = Object.values(state.weather.postponed).filter((e) =>
+      [e.fixture.home, e.fixture.away].includes(state.club),
+    );
+    assert.equal(own.length, 1);
+    assert.equal(own[0].cancellations.length, 1);
+    assert.equal(own[0].cancellations[0].reason, reason);
+    assert.equal(own[0].cancellations[0].date, '2026-03-28');
+    assert.equal(own[0].fixture.date, '2026-03-30');
+    assert.ok(state.news.some((n) => n.actionView === 'schedule' && n.title.includes('취소')));
+    const repeated = await call('/api/career', command, user);
+    assert.equal(repeated.body.revision, progressed.body.revision);
+    assert.deepEqual(repeated.body.state.weather, state.weather);
+    assert.deepEqual(
+      (await call('/api/career', undefined, user)).body.state.weather,
+      state.weather,
+    );
+  });
