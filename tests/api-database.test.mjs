@@ -2030,3 +2030,76 @@ test('Batch renewal persists all proposals once, preserves contracts and rejects
   assert.equal(repeated.status, 400);
   assert.equal((await call('/api/career', undefined, user)).body.revision, sent.body.revision);
 });
+
+test('Legacy postseason calendars are repaired on read without writes and completed games persist with weather once', async () => {
+  const user = 'postseason-weather-api';
+  await action(
+    {
+      type: 'start',
+      club: 'kbo-kiwoom',
+      manager: 'Postseason API',
+      mode: 'short',
+      preseason: false,
+    },
+    user,
+  );
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  raw.day = raw.rounds;
+  raw.phase = 'semifinal';
+  raw.news = [];
+  raw.series = [
+    { a: raw.club, b: 'kbo-lg', aw: 0, bw: 0 },
+    { a: 'kbo-kia', b: 'kbo-ssg', aw: 0, bw: 0 },
+  ];
+  delete raw.postseason;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const stored = await db
+    .prepare('SELECT state,revision FROM careers WHERE user_id=?')
+    .bind(user)
+    .first();
+  const read = await call('/api/career', undefined, user);
+  assert.equal(read.status, 200);
+  assert.equal(read.body.state.postseason.rounds[0].fixtures.length, 6);
+  assert.deepEqual(
+    await db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first(),
+    stored,
+  );
+  const started = await action({ type: 'startMatch', matchCards: true }, user);
+  assert.equal(started.state.liveMatch.weather.covered, true);
+  assert.equal(started.state.liveMatch.weather.cancellation, undefined);
+  const live = started.state.liveMatch;
+  const payload = {
+    type: 'delegateMatch',
+    date: live.timeline.date,
+    cursor: 0,
+    timelineVersion: live.timelineVersion,
+    playbackId: live.playbackId,
+    revision: started.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const completed = await call('/api/career', payload, user);
+  assert.equal(completed.status, 201, JSON.stringify(completed.body));
+  const result = completed.body.state.history[0];
+  assert.equal(result.post, true);
+  assert.equal(result.weather.covered, true);
+  assert.ok(result.fixtureId.startsWith('post-'));
+  assert.deepEqual(completed.body.state.standings.kbo, raw.standings.kbo);
+  const fixture = completed.body.state.postseason.rounds[0].fixtures.find(
+    (f) => f.id === result.fixtureId,
+  );
+  assert.equal(fixture.status, 'completed');
+  assert.deepEqual(fixture.score, { home: result.homeScore, away: result.awayScore });
+  const again = await call('/api/career', payload, user);
+  assert.equal(again.status, 201);
+  assert.equal(again.body.revision, completed.body.revision);
+  assert.equal(again.body.state.history.length, 1);
+  const restored = await call('/api/career', undefined, user);
+  assert.deepEqual(restored.body.state.postseason, completed.body.state.postseason);
+  const catalog = await call('/api/catalog', undefined, user);
+  assert.equal(catalog.body.clubs.filter((c) => c.ballpark?.roof === 'covered').length, 15);
+});

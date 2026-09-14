@@ -1,4 +1,6 @@
 import { createManagerCareer } from '../domain/manager-career';
+import { preparePostseason } from '../domain/postseason-calendar';
+import { prepareWeather } from '../domain/weather-scheduling';
 import { prepareKnowledge } from '../domain/scouting';
 import { attachPortraits, presentCareer } from './presentation';
 import {
@@ -27,6 +29,11 @@ export class CareerService {
     const current = await this.careers.read(db, user);
     if (!current.state) return current;
     const world = await this.catalog.getWorld(db);
+    prepareWeather(current.state);
+    preparePostseason(
+      current.state,
+      world.clubs.find((club) => club.id === current.state!.club)!.league,
+    );
     if (!current.state.liveMatch) {
       // Repository parsing already owns this request's state; do not clone the entire save again.
       createManagerCareer(world).prepare(current.state);
@@ -78,6 +85,12 @@ export class CareerService {
       this.catalog.getWorld(db),
     ]);
     const refreshed = () => {
+      if (current.state) prepareWeather(current.state);
+      if (current.state)
+        preparePostseason(
+          current.state,
+          world.clubs.find((club) => club.id === current.state!.club)!.league,
+        );
       if (current.state && !current.state.liveMatch) {
         createManagerCareer(world).prepare(current.state);
         prepareSquad(current.state, world);

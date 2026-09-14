@@ -1,0 +1,62 @@
+{
+  "mlb-rays": {
+    "roof": "covered",
+    "source": "https://www.mlb.com/news/featured/tropicana-field-guide-capacity-seating-chart-parking-and-more"
+  },
+  "mlb-bluejays": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "mlb-astros": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "mlb-mariners": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "mlb-rangers": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "mlb-marlins": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "mlb-brewers": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "mlb-dbacks": {
+    "roof": "covered",
+    "source": "https://img.mlbstatic.com/mlb-images/image/upload/mlb/tut5b6d0swnokanjdxva.pdf"
+  },
+  "npb-g": {
+    "roof": "covered",
+    "source": "https://npb.jp/stadium/franchise.html"
+  },
+  "npb-d": {
+    "roof": "covered",
+    "source": "https://npb.jp/stadium/franchise.html"
+  },
+  "npb-h": {
+    "roof": "covered",
+    "source": "https://npb.jp/stadium/franchise.html"
+  },
+  "npb-b": {
+    "roof": "covered",
+    "source": "https://npb.jp/stadium/franchise.html"
+  },
+  "npb-l": {
+    "roof": "covered",
+    "source": "https://npb.jp/stadium/franchise.html"
+  },
+  "npb-f": {
+    "roof": "covered",
+    "source": "https://www.fighters.co.jp/news/detail/202300438050.html"
+  },
+  "kbo-kiwoom": {
+    "roof": "covered",
+    "source": "https://heroesbaseball.co.kr/mobile/heroes/stadium/skydome.do"
+  }
+}

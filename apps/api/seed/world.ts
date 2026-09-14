@@ -1,3 +1,4 @@
+import ballparks from './ballparks-2026.json';
 import draftRules from './draft-rules-2026.json';
 import managers from './club-managers-2026-09-09.json';
 import managerBackgrounds from './manager-backgrounds-2026-09-14.json';
@@ -102,7 +103,7 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-14-v16',
+    version: 'world-2026-09-14-v17',
     draftRules,
     year: 2026,
     clubs: clubs.map((club) => ({
@@ -113,6 +114,9 @@ export function buildSeedWorld(): WorldCatalog {
         ],
         background: (managerBackgrounds as Record<string, ManagerBackground>)[club.id],
       },
+      ballpark: (ballparks as Record<string, import('@dugout/shared/types').Club['ballpark']>)[
+        club.id
+      ],
       logo: (logos as Record<string, ClubLogo>)[club.id],
     })),
     leagues,

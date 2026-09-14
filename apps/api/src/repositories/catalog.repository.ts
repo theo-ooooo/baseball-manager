@@ -102,6 +102,7 @@ export class CatalogRepository {
       !agentRows.results.length
     )
       throw new Error('World database is incomplete');
+    const ballparks: Record<string, Club['ballpark']> = JSON.parse(meta.ballparks || '{}');
     const managers: Record<string, Club['manager']> = JSON.parse(meta.club_managers || '{}');
     return {
       version: meta.version,
@@ -113,6 +114,7 @@ export class CatalogRepository {
         (club) => ({
           ...club,
           manager: managers[club.id],
+          ballpark: ballparks[club.id],
           logo: club.logo ? JSON.parse(club.logo) : undefined,
         }),
       ),

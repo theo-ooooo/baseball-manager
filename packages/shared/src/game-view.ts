@@ -1,6 +1,7 @@
 import { internationalDutyFor } from './international';
 import { battingProfile } from '@dugout/shared/player-attributes';
-import { createCalendarView } from '@dugout/shared/calendar';
+import { createCalendarView, gameDate } from '@dugout/shared/calendar';
+import { canPlayWeather } from './match-weather';
 import { unpackStats } from './long-term';
 import type { WorldCatalog, GameState, Player, Stats, Pos, Coach } from '@dugout/shared/types';
 export * from '@dugout/shared/types';
@@ -391,6 +392,21 @@ export function createGameView(world: WorldCatalog) {
       return i % 2 ? [opp, g.club] : [g.club, opp];
     }
     if (g.phase !== 'regular') {
+      const round =
+        g.postseason?.year === g.year
+          ? g.postseason.rounds.find((round) => round.stage === g.phase)
+          : undefined;
+      if (round) {
+        const fixture = round.fixtures.find(
+          (fixture) =>
+            fixture.date === gameDate(g) &&
+            fixture.status === 'scheduled' &&
+            (fixture.home === g.club || fixture.away === g.club),
+        );
+        return fixture && canPlayWeather(g, fixture, getClub(fixture.home))
+          ? [fixture.home, fixture.away]
+          : null;
+      }
       const target = g.phase === 'semifinal' ? 2 : 3;
       const s = g.series.find(
         (s) => (s.a === g.club || s.b === g.club) && s.aw < target && s.bw < target,
@@ -399,7 +415,11 @@ export function createGameView(world: WorldCatalog) {
     }
     const f = calendar
       .ownFixtures(g)
-      .find((f) => !g.history.some((m) => m.fixtureId === f.id && m.date === f.date));
+      .find(
+        (f) =>
+          !g.history.some((m) => m.fixtureId === f.id && m.date === f.date) &&
+          canPlayWeather(g, f, getClub(f.home)),
+      );
     return f ? [f.home, f.away] : null;
   }
   return {

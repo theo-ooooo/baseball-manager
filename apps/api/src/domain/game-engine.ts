@@ -1,4 +1,8 @@
 import { recordManagerMatch, awardManagerAchievement } from './manager-journey';
+import { preparePostseason, recordPostseason } from './postseason-calendar';
+import { currentPostseasonRound } from '@dugout/shared/postseason';
+import { postponeForWeather, prepareWeather } from './weather-scheduling';
+import { matchWeather } from '@dugout/shared/match-weather';
 import { tacticCardAction, consumeTacticCard } from './tactic-cards';
 import { augmentationAction, afterAugmentedMatch } from './augmentations';
 import { recordBoardTransaction } from './board-transactions';
@@ -192,6 +196,7 @@ export function createGameEngine(
       worldRevenue: {},
     };
     prepareCalendar(g, world, true);
+    prepareWeather(g);
     prepareSquad(g, world);
     prepareKnowledge(g, world);
     prepareWorld(g);
@@ -270,6 +275,7 @@ export function createGameEngine(
     const appearances = new Map(g.roster.map((p) => [p.id, p.stats.g]));
     if (matching && live.prepared && live.timeline) {
       const result = applyMatchEffects(g);
+      result.weather = live.weather || matchWeather(g, { home, date: gameDate(g) }, getClub(home));
       result.managerReview = {
         version: 1,
         club: g.club,
@@ -281,6 +287,9 @@ export function createGameEngine(
     }
     const iterator = simulateMatch(g, home, away, matching ? rng(live.seed) : random, post);
     const result = runMatch(iterator);
+    result.weather =
+      (matching ? live.weather : undefined) ||
+      matchWeather(g, { home, date: gameDate(g) }, getClub(home));
     if (matching)
       result.managerReview = {
         version: 1,
@@ -314,6 +323,7 @@ export function createGameEngine(
         if (g.worldResults?.some((m) => m.fixtureId === fixture.id && m.date === fixture.date))
           continue;
         if ((home === g.club || away === g.club) && g.phase !== 'regular') continue;
+        if (postponeForWeather(g, fixture, world)) continue;
         registrations.prepare(g, home);
         registrations.prepare(g, away);
         const involved = home === g.club || away === g.club;
@@ -355,6 +365,7 @@ export function createGameEngine(
         res.id = `${g.year}-${fixture.id}`;
         res.fixtureId = fixture.id;
         res.date = fixture.date;
+        res.weather ||= matchWeather(g, fixture, getClub(home));
         g.worldResults = [
           { ...res, log: [], replayTeams: undefined },
           ...(g.worldResults || []),
@@ -376,6 +387,8 @@ export function createGameEngine(
     }
   }
   function advance(g: GameState, count = 1, pauseAfterOwn = false) {
+    prepareWeather(g);
+    preparePostseason(g, getClub(g.club).league);
     international.tick(g);
     prepareSquad(g, world);
     if (g.phase === 'finished') throw new Error('시즌이 종료됐습니다. 다음 시즌을 시작해 주세요.');
@@ -411,13 +424,30 @@ export function createGameEngine(
         // Scheduled fixtures were processed for all leagues on this calendar date.
       } else {
         const target = g.phase === 'semifinal' ? 2 : 3;
-        for (const s of g.series) {
+        for (const [seriesIndex, s] of g.series.entries()) {
           if (s.aw >= target || s.bw >= target) continue;
-          const [home, away] = (s.aw + s.bw) % 2 ? [s.b, s.a] : [s.a, s.b];
+          const fixture = currentPostseasonRound(g)?.fixtures.find(
+            (fixture) =>
+              fixture.seriesIndex === seriesIndex &&
+              fixture.date === gameDate(g) &&
+              fixture.status === 'scheduled',
+          );
+          if (!fixture) continue;
+          if (postponeForWeather(g, fixture, world)) continue;
+          const { home, away } = fixture;
           const res = doMatch(g, home, away, r, true);
+          res.id = fixture.id;
+          res.fixtureId = fixture.id;
+          res.date = fixture.date;
+          res.post = true;
           const winner = res.homeScore > res.awayScore ? home : away;
           if (winner === s.a) s.aw++;
           else s.bw++;
+          recordPostseason(g, res);
+          g.worldResults = [
+            { ...res, log: [], replayTeams: undefined },
+            ...(g.worldResults || []),
+          ].slice(0, 450);
           if (home === g.club || away === g.club) afterMatch(g, res);
         }
         if (g.series.every((s) => s.aw >= target || s.bw >= target)) {
@@ -425,11 +455,13 @@ export function createGameEngine(
           if (g.phase === 'semifinal') {
             g.phase = 'final';
             g.series = [{ a: winners[0], b: winners[1], aw: 0, bw: 0 }];
+            preparePostseason(g, ownLeague, g.day + 1);
             news(
               g,
               '챔피언십 대진 확정',
               `${getClub(winners[0]).name} vs ${getClub(winners[1]).name} · 5전 3선승제`,
               'league',
+              { actionView: 'schedule' },
             );
           } else {
             g.phase = 'finished';
@@ -526,12 +558,14 @@ export function createGameEngine(
           { a: top[0].club, b: top[3].club, aw: 0, bw: 0 },
           { a: top[1].club, b: top[2].club, aw: 0, bw: 0 },
         ];
+        preparePostseason(g, ownLeague);
         prepareSeasonRest(g);
         news(
           g,
           qualified ? '포스트시즌 진출' : `정규시즌 종료 · ${rank}위`,
           `${getClub(g.club).name}는 정규시즌 ${rank}위로 ${qualified ? '포스트시즌에 진출했습니다.' : '포스트시즌에 진출하지 못했습니다. 우리 팀 경기는 끝났으며 다른 구단의 포스트시즌이 진행됩니다.'} 진출 구단: ${top.map((s) => getClub(s.club).name).join(', ')}. 현재 게임 규칙은 상위 4개 구단의 3전 2선승 준결승과 5전 3선승 결승입니다.`,
           'league',
+          { actionView: 'schedule' },
         );
         break;
       }
@@ -748,8 +782,10 @@ export function createGameEngine(
     g.lineup = lineupAuto(g.roster);
     g.starter = g.roster.find((p) => p.pos === 'P')!.id;
     g.calendar = undefined;
+    delete g.weather;
     g.day = g.rules?.preseason ? -PRESEASON_DAYS : 0;
     prepareCalendar(g, world, true);
+    prepareWeather(g);
     g.phase = g.rules?.preseason ? 'preseason' : 'regular';
     // A new opening roster must not retain last season's retired/departed registration IDs.
     if (g.registrations) g.registrations.clubs = {};
@@ -758,6 +794,7 @@ export function createGameEngine(
     prepareSquad(g, world);
     prepareKnowledge(g, world);
     g.series = [];
+    delete g.postseason;
     g.champion = '';
     g.history = [];
     g.worldResults = [];
@@ -876,6 +913,8 @@ export function createGameEngine(
       g.liveMatch?.prepared && ['stepMatch', 'matchCursor'].includes(String(a.type))
         ? { ...g, liveMatch: { ...g.liveMatch } }
         : structuredClone(g);
+    preparePostseason(s, getClub(s.club).league);
+    prepareWeather(s);
     const readIds = pendingReadIds(a);
     for (const message of s.news) if (readIds.has(message.id)) message.read = true;
     if (!s.liveMatch) {

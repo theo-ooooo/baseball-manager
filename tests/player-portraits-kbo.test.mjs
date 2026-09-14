@@ -74,7 +74,7 @@ test('seed world attaches portraits by id and the resolver prefers them over MLB
   const { buildSeedWorld } = await vite.ssrLoadModule('/apps/api/seed/world.ts');
   const { officialPortrait } = await vite.ssrLoadModule('/packages/shared/src/player-portrait.ts');
   const world = buildSeedWorld();
-  assert.equal(world.version, 'world-2026-09-14-v16');
+  assert.equal(world.version, 'world-2026-09-14-v17');
   const withPortrait = world.players.filter((p) => p.portrait);
   assert.equal(withPortrait.length, Object.keys(seed.players).length);
   for (const p of withPortrait) {

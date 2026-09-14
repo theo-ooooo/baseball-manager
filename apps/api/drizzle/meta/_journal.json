@@ -169,6 +169,13 @@
       "when": 1789349187521,
       "tag": "0023_manager_playing_careers",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1789364356580,
+      "tag": "0024_covered_ballparks",
+      "breakpoints": true
     }
   ]
 }

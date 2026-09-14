@@ -8,6 +8,7 @@ import { generateTimeline, reviseTimeline, validateCursor, visibleResult } from 
 import { matchCommandAction } from './match-command-actions';
 import { finishPendingConversation, queuePostMatchConversation } from './match-media-actions';
 import { gameDate } from '@dugout/shared/calendar';
+import { matchWeather } from '@dugout/shared/match-weather';
 import { postNews } from './club-dynamics';
 import { snapshotMatchManagers } from './manager-match-abilities';
 
@@ -17,7 +18,7 @@ export function createLiveMatchActions(
   simulateMatch: ReturnType<typeof createMatchSimulator>,
   advance: Advance,
 ) {
-  const { nextFixture, rosterFor } = createGameView(world);
+  const { nextFixture, rosterFor, getClub } = createGameView(world);
   const registrations = createAiRegistrations(world);
   function liveAction(g: GameState, a: Record<string, unknown>): GameState | null {
     if (a.type === 'chooseMatchCards') return chooseMatchCards(g, a, simulateMatch);
@@ -64,6 +65,7 @@ export function createLiveMatchActions(
       registrations.prepare(g, away, g.phase === 'regular');
       finishPendingConversation(g);
       g.liveMatch = {
+        weather: matchWeather(g, { home, date: gameDate(g) }, getClub(home)),
         managers: snapshotMatchManagers(g, home, away),
         home,
         away,

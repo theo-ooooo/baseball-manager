@@ -687,6 +687,7 @@ export function createManagerCareer(world: WorldCatalog) {
       if (last) g.rounds = daysBetween(g.calendar!.openingDate, last.date) + 1;
       g.phase = g.day < 0 ? 'preseason' : g.day >= g.rounds ? 'finished' : 'regular';
       g.series = [];
+      delete g.postseason;
       g.champion = '';
       prepareFinances(g, league);
       if (!saved) {

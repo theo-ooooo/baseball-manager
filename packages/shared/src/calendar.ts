@@ -88,7 +88,7 @@ export function createCalendarView(world: WorldCatalog) {
   }
   const key = (g: GameState, lid: string) =>
     `${g.year}:${g.mode}:${lid}:${g.calendar?.openingDate || ''}:${g.calendar?.startDay || 0}:${JSON.stringify(g.calendar?.remaining || {})}`;
-  function fixtures(g: GameState, lid: string): Fixture[] {
+  function baseFixtures(g: GameState, lid: string): Fixture[] {
     const k = key(g, lid);
     if (cache.has(k)) return cache.get(k)!;
     let result: Fixture[] = [];
@@ -155,11 +155,28 @@ export function createCalendarView(world: WorldCatalog) {
     const k = key(g, lid);
     if (!dateCache.has(k)) {
       const map = new Map<string, Fixture[]>();
-      for (const f of fixtures(g, lid)) map.set(f.date, [...(map.get(f.date) || []), f]);
+      for (const f of baseFixtures(g, lid)) map.set(f.date, [...(map.get(f.date) || []), f]);
       for (const rows of map.values()) Object.freeze(rows);
       dateCache.set(k, map);
     }
-    return dateCache.get(k)!.get(gameDate(g, day)) || [];
+    const date = gameDate(g, day);
+    const base = dateCache.get(k)!.get(date) || [];
+    const moved = g.weather?.year === g.year ? g.weather.postponed : undefined;
+    if (!moved || !Object.keys(moved).length) return base;
+    const extra = Object.values(moved)
+      .map((entry) => entry.fixture)
+      .filter((fixture) => !('post' in fixture) && fixture.league === lid && fixture.date === date);
+    return [...base.filter((fixture) => !moved[fixture.id]), ...extra].sort((a, b) =>
+      a.id.localeCompare(b.id),
+    );
+  }
+  function fixtures(g: GameState, lid: string): Fixture[] {
+    const base = baseFixtures(g, lid);
+    const moved = g.weather?.year === g.year ? g.weather.postponed : undefined;
+    if (!moved || !Object.keys(moved).length) return base;
+    return base
+      .map((fixture) => moved[fixture.id]?.fixture || fixture)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
   }
   function ownFixtures(g: GameState, day = g.day) {
     return onDate(g, world.clubs.find((c) => c.id === g.club)!.league, day).filter(
@@ -169,7 +186,7 @@ export function createCalendarView(world: WorldCatalog) {
   function scheduleNote(g: GameState, lid = world.clubs.find((c) => c.id === g.club)!.league) {
     return official(g, lid)
       ? lid === 'kbo'
-        ? '공식 편성 기반 · 최초 675경기 + 잔여 대진 45경기 · 우천 취소는 재현하지 않음'
+        ? '공식 편성 기반 · 최초 675경기 + 잔여 대진 45경기 · 게임 날씨에 따라 재편성'
         : '2026 공식 경기 날짜·대진 · 9월 8일 스냅샷'
       : g.calendar?.remaining
         ? '기존 결과 유지 · 남은 경기 연전 편성'

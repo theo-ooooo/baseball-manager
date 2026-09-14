@@ -128,6 +128,7 @@ export type Standing = {
   form: string[];
 };
 export type Result = {
+  weather?: import('./match-weather').MatchWeather;
   managerReview?: {
     version: 1;
     club: string;
@@ -234,6 +235,8 @@ export type GameState = {
   past: { year: number; rank: number; w: number; l: number; champion: string }[];
   phase: 'preseason' | 'regular' | 'semifinal' | 'final' | 'finished';
   series: { a: string; b: string; aw: number; bw: number }[];
+  postseason?: import('./postseason').PostseasonState;
+  weather?: import('./match-weather').WeatherSeason;
   champion: string;
   reputation: number;
   income: number;
@@ -322,6 +325,7 @@ export type League = {
   season: string;
 };
 export type Club = {
+  ballpark?: { roof: 'covered'; source: string };
   id: string;
   name: string;
   short: string;
@@ -544,6 +548,7 @@ export type NewsItem = {
   choice?: string;
   response?: string;
   actionView?:
+    | 'schedule'
     | 'agents'
     | 'training'
     | 'staff'
@@ -606,6 +611,7 @@ export type PitchingPlan = {
   chase?: string[];
 };
 export type LiveMatch = {
+  weather?: import('./match-weather').MatchWeather;
   /** Frozen at kickoff. Missing in older games, which keep the previous simulation rules. */
   managers?: {
     version: 1;
