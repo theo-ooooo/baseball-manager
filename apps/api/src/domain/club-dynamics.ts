@@ -130,6 +130,12 @@ export function dailyReports(
       m.lastPlayedDay !== g.day &&
       m.value < 45 &&
       !m.promise &&
+      !g.engagement?.competitions?.some(
+        (c) =>
+          c.club === g.club &&
+          c.status !== 'resolved' &&
+          [c.veteran.id, c.prospect.id].includes(p.id),
+      ) &&
       g.day - (m.lastConcernDay ?? -1000) >= 28 &&
       !g.news.some((n) => n.playerId === p.id && n.choiceKind && !n.choice)
     ) {
@@ -295,7 +301,7 @@ export function respondPlayerNews<
 >(g: T, a: Record<string, unknown>): T {
   const n = g.news.find((n) => n.id === a.id),
     choice = String(a.choice);
-  if (!n?.choiceKind || n.choice || !['promise', 'explain'].includes(choice))
+  if (n?.choiceKind !== 'playingTime' || n.choice || !['promise', 'explain'].includes(choice))
     throw new Error('답변할 면담과 선택지를 확인해 주세요.');
   const p = g.roster.find((p) => p.id === n.playerId);
   if (!p) throw new Error('현재 소속 선수가 아닙니다.');

@@ -128,6 +128,7 @@ export type Standing = {
   form: string[];
 };
 export type Result = {
+  duel?: import('./tactical-duel').TacticalDuel;
   story?: import('./career-engagement').MatchStory;
   weather?: import('./match-weather').MatchWeather;
   managerReview?: {
@@ -434,6 +435,7 @@ export type AutomaticPitchingChange = {
   role: 'closer' | 'setup' | 'chase' | 'relief';
 };
 export type ReplayPlay = {
+  battingIntent?: 'power' | 'patient';
   cards?: { own?: string; opponent?: string };
   augmentations?: {
     own?: import('./augmentations').AugmentationKind;
@@ -548,7 +550,8 @@ export type NewsItem = {
   read?: boolean;
   playerId?: string;
   matchId?: string;
-  choiceKind?: 'playingTime';
+  choiceKind?: 'playingTime' | 'lineupCompetition';
+  competitionId?: string;
   choice?: string;
   response?: string;
   actionView?:
@@ -615,6 +618,7 @@ export type PitchingPlan = {
   chase?: string[];
 };
 export type LiveMatch = {
+  duel?: import('./tactical-duel').TacticalDuel;
   stakes?: import('./career-engagement').MatchStakes;
   weather?: import('./match-weather').MatchWeather;
   /** Frozen at kickoff. Missing in older games, which keep the previous simulation rules. */

@@ -1,3 +1,5 @@
+import { tacticalDuel } from '@dugout/shared/tactical-duel';
+import { defensivePlanModifiers } from './tactical-duel';
 import { cardEffectPlayer } from '@dugout/shared/tactic-cards';
 import {
   effectiveMatchAugmentation,
@@ -81,6 +83,11 @@ function createSimulator({
       managerMatchEffects(managers?.away),
       managerMatchEffects(managers?.home),
     ];
+    const duel = involved
+      ? g.liveMatch
+        ? g.liveMatch.duel
+        : tacticalDuel(g, home, away)
+      : undefined;
     const matchCards = involved ? g.liveMatch?.cards : undefined;
     const activateCards = createMatchCardRuntime(matchCards);
     const rosters = [
@@ -232,6 +239,7 @@ function createSimulator({
       log,
       replayTeams: involved ? replayTeams : undefined,
       mvp: '',
+      ...(duel ? { duel } : {}),
       post,
     });
     yield snapshot();
@@ -400,6 +408,10 @@ function createSimulator({
                     ? g.instructions?.pitching || 'balanced'
                     : 'balanced';
           const pitching = pitchingModifiers(approach, control);
+          const counter = defensivePlanModifiers(
+            (side ? duel?.away : duel?.home)?.plan,
+            bases.some(Boolean),
+          );
           const baseRunners = bases.filter((p): p is Player => !!p);
           if (command?.kind === 'stealSecond' || command?.kind === 'stealThird') {
             const from = command.kind === 'stealSecond' ? 0 : 1;
@@ -420,7 +432,8 @@ function createSimulator({
                   catcher?.field || 50,
                   from === 1,
                 ) +
-                  managerEffects[side].execution * 0.001,
+                  managerEffects[side].execution * 0.001 +
+                  counter.steal,
                 0.15,
                 0.9,
               );
@@ -508,6 +521,7 @@ function createSimulator({
               (p.contact * cond - strength) * 0.0028 +
               bonus +
               pitching.contact +
+              counter.contact +
               (hitAndRun
                 ? 0.02
                 : command?.kind === 'contactFocus'
@@ -531,6 +545,10 @@ function createSimulator({
           const patient =
             command?.kind === 'workCount' ? 1 : ownBat ? instructions.patience / 100 : 0;
           const smallball = ownBat ? instructions.steal / 100 : 0;
+          if (duel && ownBat && command?.kind !== 'intentionalWalk' && command?.kind !== 'bunt') {
+            if (aggressive >= 0.65) play.battingIntent = 'power';
+            else if (patient >= 0.65) play.battingIntent = 'patient';
+          }
           const roll = command?.kind === 'intentionalWalk' ? 1 : random();
           if (command?.kind === 'bunt') {
             if (outs >= 2 || (!bases[0] && !bases[1]) || bases[2])
@@ -577,6 +595,7 @@ function createSimulator({
                   patient * 0.032 +
                   augment.walk +
                   pitching.walk +
+                  counter.walk +
                   (command?.kind === 'workCount'
                     ? 0.02
                     : command?.kind === 'contactFocus'
@@ -597,7 +616,10 @@ function createSimulator({
             }
             bases[0] = p;
             event = command?.kind === 'intentionalWalk' ? '고의4구 · 감독 지시' : '볼넷';
-          } else if (roll < 0.08 + contact + -aggressive * 0.018 + pitching.walk + augment.walk) {
+          } else if (
+            roll <
+            0.08 + contact + -aggressive * 0.018 + pitching.walk + counter.walk + augment.walk
+          ) {
             stats.ab++;
             stats.h++;
             hits[side]++;
@@ -607,6 +629,7 @@ function createSimulator({
                 (p.power * batterFactor - strength) * 0.003 +
                 aggressive * 0.08 +
                 pitching.homeRun +
+                counter.homeRun +
                 augment.homeRun) *
                 (hitAndRun ? 0.65 : 1),
               0.03,
@@ -701,7 +724,8 @@ function createSimulator({
             event += ' · 히트앤드런';
             if (event.startsWith('삼진') && bases[0] && !bases[1] && outs < 3) {
               const runner = bases[0];
-              const safe = random() < stealChance(runner, pitcher, defense);
+              const safe =
+                random() < clamp(stealChance(runner, pitcher, defense) + counter.steal, 0.15, 0.9);
               bases[0] = null;
               if (safe) {
                 bases[1] = runner;
@@ -730,7 +754,7 @@ function createSimulator({
           ) {
             const runnerPlayer = bases[0]!,
               runner = runnerPlayer.id;
-            if (random() < clamp(bases[0]!.speed / 105, 0.3, 0.92)) {
+            if (random() < clamp(bases[0]!.speed / 105 + counter.steal, 0.3, 0.92)) {
               bases[1] = bases[0];
               bases[0] = null;
               play.steal = { runner, safe: true };
@@ -852,6 +876,7 @@ function createSimulator({
       log,
       replayTeams: involved ? replayTeams : undefined,
       mvp: [...performance].sort((a, b) => b[1] - a[1])[0]?.[0] || '',
+      ...(duel ? { duel } : {}),
       post,
     };
   }

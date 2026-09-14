@@ -1,3 +1,4 @@
+import { tacticalDuel } from '@dugout/shared/tactical-duel';
 import { matchStakes } from '@dugout/shared/career-engagement';
 import { createAiRegistrations } from './ai-registrations';
 import { chooseMatchCards, drawMatchCards, consumeMatchCard } from './match-cards';
@@ -66,6 +67,7 @@ export function createLiveMatchActions(
       registrations.prepare(g, away, g.phase === 'regular');
       finishPendingConversation(g);
       g.liveMatch = {
+        duel: tacticalDuel(g, home, away),
         stakes: matchStakes(g, world, home === g.club ? away : home),
         weather: matchWeather(g, { home, date: gameDate(g) }, getClub(home)),
         managers: snapshotMatchManagers(g, home, away),

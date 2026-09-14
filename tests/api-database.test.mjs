@@ -2336,6 +2336,186 @@ async function slotAction(payload, user, slot = 'challenge') {
   return { ...result.body, command };
 }
 
+test('Tactical plans persist atomically, freeze at kickoff and survive bounded command patches without exposing prepared inputs', async () => {
+  const user = 'tactical-plan-owner';
+  await action(
+    { type: 'start', club: 'kbo-lotte', manager: '전술 검증', mode: 'short', preseason: false },
+    user,
+  );
+  await db
+    .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',0) WHERE user_id=?")
+    .bind(user)
+    .run();
+  const initial = await action({ type: 'startMatch' }, user);
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  const { home, away } = raw.liveMatch;
+  delete raw.liveMatch;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const key = `${raw.year}:${raw.day}:${home}:${away}:${raw.history.filter((r) => r.day === raw.day && (r.date?.startsWith(String(raw.year)) ?? true)).length}`;
+  const payload = {
+    type: 'setDefensivePlan',
+    key,
+    plan: 'guardPower',
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const response = await call('/api/career', payload, user);
+  assert.equal(response.status, 201, JSON.stringify(response.body));
+  assert.equal(response.body.state.engagement.tactics.selection.plan, 'guardPower');
+  assert.deepEqual((await call('/api/career', payload, user)).body, response.body);
+  assert.equal(
+    (await call('/api/career', { ...payload, requestId: crypto.randomUUID() }, user)).status,
+    409,
+  );
+  assert.equal((await call('/api/career', payload, 'foreign-tactical-owner')).status, 409);
+  const saved = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(saved.state.engagement.tactics, response.body.state.engagement.tactics);
+  assert.equal(saved.state.day, raw.day);
+  const started = await action({ type: 'startMatch' }, user),
+    live = started.state.liveMatch;
+  assert.equal((live.home === raw.club ? live.duel.home : live.duel.away).plan, 'guardPower');
+  const own = live.home === raw.club ? 1 : 0,
+    cursor = live.timeline.log.findIndex(
+      (event, i) =>
+        i > 0 &&
+        event.half === own &&
+        event.play?.plateAppearance !== false &&
+        event.play?.before.outs < 3,
+    );
+  const changed = await action(
+    {
+      type: 'matchCommand',
+      command: 'swingAway',
+      cursor,
+      timelineVersion: live.timelineVersion,
+      responseMode: 'patch',
+    },
+    user,
+  );
+  assert.deepEqual(changed.patch.liveMatch.duel, live.duel);
+  assert.deepEqual(
+    changed.patch.liveMatch.timeline.log.slice(0, cursor),
+    live.timeline.log.slice(0, cursor),
+  );
+  assert.equal(changed.patch.liveMatch.prepared, undefined);
+  const final = await action(
+    {
+      type: 'completeMatch',
+      cursor: changed.patch.liveMatch.timeline.log.length,
+      timelineVersion: changed.patch.liveMatch.timelineVersion,
+    },
+    user,
+  );
+  assert.equal(final.state.engagement.tactics.observations.length, 2);
+  assert.deepEqual(final.state.history[0].duel, live.duel);
+  assert.ok(
+    final.state.news.some((n) => n.report?.sections?.some((s) => s.title === '벤치 수싸움')),
+  );
+});
+
+test('Competition decisions persist both player reactions once and cannot be bypassed through the single-player inbox endpoint', async () => {
+  const user = 'competition-owner';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '경쟁 검증', mode: 'short', preseason: false },
+    user,
+  );
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  raw.news = [];
+  raw.weather.seed = 0;
+  const [prospect, veteran] = raw.roster.filter((p) => p.pos !== 'P').slice(0, 2);
+  for (const p of [prospect, veteran]) {
+    p.mood.value = 60;
+    p.mood.role = 'regular';
+    p.condition = 100;
+    delete p.injury;
+    delete p.internationalDuty;
+  }
+  const participant = (p) => ({ id: p.id, name: p.name, starts: 0, ab: 0, h: 0, hr: 0 });
+  const c = {
+    id: 'api-competition',
+    club: raw.club,
+    created: raw.calendar?.currentDate || '2026-03-28',
+    status: 'decision',
+    veteran: participant(veteran),
+    prospect: participant(prospect),
+    evidence: '출전 기록에 따른 테스트 사례',
+    games: 0,
+    observed: [],
+  };
+  raw.engagement.competitions = [c];
+  raw.news = [
+    {
+      id: 'api-competition-news',
+      day: raw.day,
+      kind: 'morale',
+      title: '방침 요청',
+      body: c.evidence,
+      playerId: veteran.id,
+      competitionId: c.id,
+      choiceKind: 'lineupCompetition',
+    },
+  ];
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const bad = await call(
+    '/api/career',
+    {
+      type: 'respondNews',
+      id: raw.news[0].id,
+      choice: 'promise',
+      revision: initial.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(bad.status, 400);
+  const read = await action({ type: 'readNews', id: raw.news[0].id }, user);
+  const loaded = (await call('/api/career', undefined, user)).body;
+  assert.equal(loaded.state.engagement.competitions[0].status, 'decision');
+  const payload = {
+    type: 'respondCompetition',
+    id: c.id,
+    choice: 'backProspect',
+    revision: read.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const chosen = await call('/api/career', payload, user);
+  assert.equal(chosen.status, 201, JSON.stringify(chosen.body));
+  const state = chosen.body.state;
+  assert.equal(state.engagement.competitions[0].status, 'trial');
+  assert.equal(state.roster.find((p) => p.id === veteran.id).mood.value, 57);
+  assert.equal(state.roster.find((p) => p.id === veteran.id).mood.role, 'rotation');
+  assert.equal(state.roster.find((p) => p.id === prospect.id).mood.value, 62);
+  assert.equal(state.news.find((n) => n.id === raw.news[0].id).choice, 'backProspect');
+  assert.deepEqual((await call('/api/career', payload, user)).body, chosen.body);
+  assert.equal((await call('/api/career', payload, 'competition-other-owner')).status, 409);
+  assert.equal(
+    (await call('/api/career', { ...payload, requestId: crypto.randomUUID() }, user)).status,
+    409,
+  );
+  const live = await action({ type: 'startMatch' }, user);
+  const finished = await action(
+    {
+      type: 'completeMatch',
+      cursor: live.state.liveMatch.timeline.log.length,
+      timelineVersion: live.state.liveMatch.timelineVersion,
+    },
+    user,
+  );
+  assert.equal(finished.state.engagement.competitions[0].games, 1);
+  const reloaded = (await call('/api/career', undefined, user)).body.state;
+  assert.deepEqual(reloaded.engagement.competitions, finished.state.engagement.competitions);
+});
+
 test('Challenge storage preserves the primary live match, isolates archives and deduplicates within its authenticated slot', async () => {
   const user = 'challenge-isolation';
   await action(

@@ -1,3 +1,10 @@
+import { defensivePlans } from '@dugout/shared/tactical-duel';
+import { setDefensivePlan, recordTacticalEvidence } from './tactical-duel';
+import {
+  prepareCompetitions,
+  competitionAction,
+  recordCompetitionMatch,
+} from './lineup-competition';
 import { conversationKey } from '@dugout/shared/match-media';
 import { createSeriesDelegation } from './series-delegation';
 import {
@@ -598,6 +605,7 @@ export function createGameEngine(
       if (g.news.filter((n) => n.choiceKind && !n.choice).length > pendingBefore) break;
     }
     tickChallenge(g, world);
+    prepareCompetitions(g);
     g.seed = Math.floor(r() * 4294967295);
     return g;
   }
@@ -607,6 +615,8 @@ export function createGameEngine(
     nextStarter(g, true);
     matchMorale(g, res);
     recordEngagementMatch(g, res);
+    recordTacticalEvidence(g, res);
+    recordCompetitionMatch(g, res);
     afterAugmentedMatch(g, res);
     consumeTacticCard(g, res);
     g.history.unshift(res);
@@ -641,6 +651,18 @@ export function createGameEngine(
           sections: [
             ...(res.story?.stakes
               ? [{ title: res.story.stakes.title, body: res.story.stakes.detail }]
+              : []),
+            ...(res.duel
+              ? [
+                  {
+                    title: '벤치 수싸움',
+                    body: [
+                      `우리 수비: ${defensivePlans[(res.home === g.club ? res.duel.home : res.duel.away).plan].label}`,
+                      `상대 수비: ${defensivePlans[(res.home === g.club ? res.duel.away : res.duel.home).plan].label}`,
+                      '경기 전에 정한 대응을 양쪽 투구·도루 확률에 적용했습니다. 승패가 이 대응 하나로 결정됐다는 뜻은 아닙니다.',
+                    ].join('\n'),
+                  },
+                ]
               : []),
             ...(res.story?.support
               ? [
@@ -913,7 +935,7 @@ export function createGameEngine(
       const previousDay = g.day;
       // Player conversations are delegated to the coaching staff, as during a vacation.
       for (const n of g.news)
-        if (n.choiceKind && !n.choice)
+        if (n.choiceKind === 'playingTime' && !n.choice)
           dynamicsAction(g, { type: 'respondNews', id: n.id, choice: 'explain' });
       finishPendingConversation(g);
       g.media = undefined;
@@ -979,14 +1001,19 @@ export function createGameEngine(
     managerCareer.prepare(s);
     prepareEngagement(s);
     tickChallenge(s, world);
+    prepareCompetitions(s);
     lineupReports.prepare(s);
     if (s.draft?.status === 'open' && ['resignManager', 'signManager'].includes(String(a.type)))
       rookieDraft.progress(s, true);
+    if (a.type === 'setDefensivePlan') return setDefensivePlan(s, a, nextFixture(s))!;
+    const competition = competitionAction(s, a);
+    if (competition) return competition;
     const seriesAction = seriesDelegation(s, a);
     if (seriesAction) return seriesAction;
     const careerAction = managerCareer.action(s, a);
     if (careerAction) {
       tickChallenge(careerAction, world);
+      prepareCompetitions(careerAction);
       international.sync(careerAction);
       repairMedicalSelection(careerAction);
       return careerAction;
@@ -1054,7 +1081,7 @@ export function createGameEngine(
         }
         const vacation = !!s.managerCareer!.vacationUntil;
         for (const n of s.news)
-          if (n.choiceKind && !n.choice)
+          if (n.choiceKind === 'playingTime' && !n.choice)
             dynamicsAction(s, { type: 'respondNews', id: n.id, choice: 'explain' });
         s.media = undefined;
         advance(s, 1);

@@ -41,6 +41,8 @@ export type MatchStakes = {
   opponent: string;
 };
 export type CareerEngagement = {
+  tactics?: import('./tactical-duel').TacticalMemory;
+  competitions?: import('./lineup-competition').LineupCompetition[];
   reportMode?: 'important' | 'all';
   interviews?: 'manual' | 'coach';
   prospects: ProspectStory[];

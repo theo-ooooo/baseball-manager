@@ -89,7 +89,9 @@ test('Round robin including odd leagues gives every pair home and away with no d
 test('Match scoring, stats, world standings and next season remain consistent', () => {
   let g = e.newGame('kbo-lg', 'Test', 'short', 129);
   let safe = 0;
-  while (g.phase !== 'finished' && safe++ < 12) g = e.advance(g, 7);
+  // Tactical outcomes can lengthen the postseason and introduce additional player decisions.
+  // Bound the whole season without assuming the former seed's number of advance calls.
+  while (g.phase !== 'finished' && safe++ < 20) g = e.advance(g, 7);
   assert.equal(g.phase, 'finished');
   assert.ok(g.champion);
   assert.equal(g.past.length, 1);
