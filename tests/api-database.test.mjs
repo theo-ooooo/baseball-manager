@@ -2326,3 +2326,159 @@ test('A finished-season manager counterproposal receives a persisted reply once,
   assert.equal(next.state.year, raw.year + 1);
   assert.ok(next.state.managerCareer.contract.throughYear >= next.state.year);
 });
+
+async function slotAction(payload, user, slot = 'challenge') {
+  const headers = { 'x-career-slot': slot };
+  const current = await call('/api/career', undefined, user, headers);
+  const command = { ...payload, revision: current.body.revision, requestId: crypto.randomUUID() };
+  const result = await call('/api/career', command, user, headers);
+  assert.equal(result.status, 201, JSON.stringify(result.body).slice(0, 500));
+  return { ...result.body, command };
+}
+
+test('Challenge storage preserves the primary live match, isolates archives and deduplicates within its authenticated slot', async () => {
+  const user = 'challenge-isolation';
+  await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Original', mode: 'short', preseason: false },
+    user,
+  );
+  await db
+    .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',0) WHERE user_id=?")
+    .bind(user)
+    .run();
+  await action({ type: 'startMatch' }, user);
+  const original = await db.prepare('SELECT * FROM careers WHERE user_id=?').bind(user).first();
+  const headers = { 'x-career-slot': 'challenge' };
+  assert.equal((await call('/api/career', undefined, user, headers)).body.state, null);
+  const started = await slotAction(
+    { type: 'start', club: 'kbo-kia', manager: 'Challenge', mode: 'short', challenge: 'chase' },
+    user,
+  );
+  assert.equal(started.state.challenge.kind, 'chase');
+  assert.equal(started.state.history.length, 0);
+  assert.deepEqual(
+    (await call('/api/career', started.command, user, headers)).body.state,
+    started.state,
+  );
+  const owner =
+    'challenge/' +
+    (await import('node:crypto'))
+      .createHash('sha256')
+      .update('dugout:challenge:' + user)
+      .digest('hex');
+  await db
+    .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',0) WHERE user_id=?")
+    .bind(owner)
+    .run();
+  let live = await slotAction({ type: 'startMatch', matchCards: true }, user);
+  const draft = live.state.liveMatch.cards;
+  live = await slotAction(
+    {
+      type: 'chooseMatchCards',
+      draftId: draft.id,
+      ids: draft.offered.slice(0, 3).map((c) => c.id),
+      cursor: 0,
+      timelineVersion: live.state.liveMatch.timelineVersion,
+    },
+    user,
+  );
+  const completed = await slotAction(
+    {
+      type: 'completeMatch',
+      cursor: live.state.liveMatch.timeline.log.length,
+      timelineVersion: live.state.liveMatch.timelineVersion,
+    },
+    user,
+  );
+  assert.equal(completed.state.challenge.played, 1);
+  assert.equal(
+    (await call('/api/career', completed.command, user, headers)).body.state.challenge.played,
+    1,
+  );
+  const id = completed.state.history[0].id;
+  assert.equal((await call('/api/career/matches/' + id, undefined, user, headers)).status, 200);
+  assert.equal((await call('/api/career/matches/' + id, undefined, user)).status, 404);
+  assert.equal(
+    (await call('/api/career/matches/' + id, undefined, 'another-owner', headers)).status,
+    404,
+  );
+  assert.equal((await call('/api/career', undefined, 'another-owner', headers)).body.state, null);
+  assert.deepEqual(
+    await db.prepare('SELECT * FROM careers WHERE user_id=?').bind(user).first(),
+    original,
+  );
+  const reload = await call('/api/career', undefined, user, headers);
+  assert.equal(reload.body.state.challenge.played, 1);
+  assert.equal(
+    (await call('/api/career', undefined, user, { 'x-career-slot': 'invalid' })).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call(
+        '/api/career',
+        { ...started.command, replace: true, revision: 0, requestId: crypto.randomUUID() },
+        'main-challenge-forgery',
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call(
+        '/api/career',
+        {
+          type: 'start',
+          club: 'kbo-kia',
+          manager: 'Bad',
+          mode: 'short',
+          revision: 0,
+          requestId: crypto.randomUUID(),
+        },
+        'challenge-main-forgery',
+        headers,
+      )
+    ).status,
+    400,
+  );
+  const forged = await call('/api/career', undefined, 'another-owner', {
+    'x-dugout-user-id': owner,
+    'x-dugout-career-slot': 'challenge',
+  });
+  assert.equal(forged.body.state, null);
+});
+
+test('Saved series commands and prospect milestones survive retry and reload without advancing a second game', async () => {
+  const user = 'saved-series-prospect';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: 'Prospect', mode: 'short', preseason: false },
+    user,
+  );
+  const id = initial.state.lineup[0];
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  raw.news = [];
+  raw.weather.seed = 0;
+  raw.roster.find((p) => p.id === id).age = 21;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  await action({ type: 'followProspect', id, goal: 'starts' }, user);
+  await action({ type: 'beginSeriesDelegation' }, user);
+  const result = await slotAction({ type: 'delegateSeriesDay' }, user, 'main');
+  assert.equal(result.state.engagement.seriesRun.played, 1);
+  assert.equal(result.state.engagement.prospects[0].starts, 1);
+  const duplicate = await call('/api/career', result.command, user);
+  assert.equal(duplicate.status, 201);
+  assert.deepEqual(duplicate.body.state.engagement, result.state.engagement);
+  const reloaded = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(reloaded.state.engagement, result.state.engagement);
+  assert.equal(reloaded.state.history.length, 1);
+  assert.ok(reloaded.state.history[0].matchCards);
+  const stopped = await action({ type: 'stopSeriesDelegation' }, user);
+  assert.equal(stopped.state.engagement.seriesRun.status, 'interrupted');
+  assert.equal(stopped.state.history.length, 1);
+  assert.equal(stopped.state.media.pending, undefined);
+});

@@ -28,6 +28,8 @@ const {
 } = createRequire(import.meta.url)(out);
 function ready() {
   const g = e.newGame('kbo-lotte', 'Media QA', 'short', 321);
+  g.engagement.interviews = 'manual';
+  g.engagement.reportMode = 'all';
   g.day = -22;
   return e.applyAction(g, { type: 'auto' });
 }

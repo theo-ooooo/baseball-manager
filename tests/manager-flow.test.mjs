@@ -17,6 +17,7 @@ const { engine: e, managerStep, matchReportId } = createRequire(import.meta.url)
 
 test('Continue handles required decisions and unread reports before the fixture without mutating the career', () => {
   let g = e.newGame('kbo-lotte', 'Flow', 'short', 12);
+  g.engagement.reportMode = 'all';
   const before = structuredClone(g);
   const step = managerStep(g, true, 'home');
   assert.equal(step.kind, 'report');

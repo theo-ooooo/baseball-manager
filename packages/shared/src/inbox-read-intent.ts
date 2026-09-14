@@ -8,6 +8,8 @@ export function isDateProgressCommand(type: unknown) {
     'skipPreseason',
     'completeMatch',
     'delegateMatch',
+    'beginSeriesDelegation',
+    'delegateSeriesDay',
   ].includes(String(type));
 }
 export function pendingReadIds(action: Record<string, unknown>): Set<string> {

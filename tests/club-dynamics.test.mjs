@@ -79,6 +79,7 @@ test('Continue skips idle dates and stops before the next game', () => {
 
 test('Daily continue saves each idle date and stops for reports even with a full inbox', () => {
   let g = e.newGame('kbo-lotte', 'Calendar', 'full', 8);
+  g.engagement.reportMode = 'all';
   g.day = -20;
   g.news = Array.from({ length: 100 }, (_, i) => ({
     id: `old-${i}`,
@@ -125,6 +126,7 @@ test('Continue stops on a rest-day report and unresolved decisions cannot be ski
   assert.deepEqual(paused.history, g.history);
   assert.equal(original.day, 0);
   const clean = e.newGame('kbo-lotte', 'Report stop', 'full', 8);
+  clean.engagement.reportMode = 'all';
   clean.day = -7;
   clean.roster[0].mood.promise = { due: -6, games: 1, startGames: 0 };
   const stopped = e.applyAction(clean, { type: 'continue' });

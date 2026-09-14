@@ -113,6 +113,7 @@ export class CareerService {
       'delegateMatch',
       'completeMatch',
       'skipPreseason',
+      'delegateSeriesDay',
     ].includes(String(action.type))
       ? current.state?.scouting?.assignments
           .filter((task) => task.status === 'active')
@@ -143,6 +144,7 @@ export class CareerService {
             revealPotential: action.revealPotential === true,
             unemployed: action.unemployed === true,
             preseason: action.preseason !== false,
+            challenge: action.challenge as 'chase' | 'rebuild' | undefined,
           },
         );
       } else {

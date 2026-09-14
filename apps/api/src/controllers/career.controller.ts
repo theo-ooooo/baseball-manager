@@ -40,6 +40,11 @@ export class CareerController {
     if (!body || typeof body !== 'object' || Array.isArray(body))
       throw new BadRequestException('요청 형식이 올바르지 않습니다.');
     const action = body as Record<string, unknown>;
+    if (
+      action.type === 'start' &&
+      !!action.challenge !== (request.headers['x-dugout-career-slot'] === 'challenge')
+    )
+      throw new BadRequestException('도전 커리어는 도전 저장에서 시작해 주세요.');
     if (isLiveMatchCommand(action.type)) {
       const response = await this.liveCommands.act(env.DB, user, action);
       if (response)

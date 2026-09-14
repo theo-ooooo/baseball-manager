@@ -128,6 +128,7 @@ export type Standing = {
   form: string[];
 };
 export type Result = {
+  story?: import('./career-engagement').MatchStory;
   weather?: import('./match-weather').MatchWeather;
   managerReview?: {
     version: 1;
@@ -204,6 +205,8 @@ export type CoachDeal = {
   history: NegotiationRound[];
 };
 export type GameState = {
+  engagement?: import('./career-engagement').CareerEngagement;
+  challenge?: import('./career-engagement').CareerChallenge;
   seasonStandings?: Record<string, string[]>;
   draftNotice?: string;
   tacticCards?: TacticCardState;
@@ -534,6 +537,7 @@ export type PlayerMood = {
   promise?: { due: number; games: number; startGames: number };
 };
 export type NewsItem = {
+  priority?: 'urgent' | 'story';
   id: string;
   year?: number;
   day: number;
@@ -611,6 +615,7 @@ export type PitchingPlan = {
   chase?: string[];
 };
 export type LiveMatch = {
+  stakes?: import('./career-engagement').MatchStakes;
   weather?: import('./match-weather').MatchWeather;
   /** Frozen at kickoff. Missing in older games, which keep the previous simulation rules. */
   managers?: {

@@ -108,8 +108,9 @@ test('Vacation continues past ordinary reports and returns with accumulated unre
   assert.ok(g.news.filter((n) => !n.read).length > 1);
 });
 
-test('Inbox entry and continue select the oldest unread including same-day arrival order', () => {
+test('All-report mode selects the oldest unread including same-day arrival order', () => {
   const g = game();
+  g.engagement.reportMode = 'all';
   g.news = [
     { id: 'new', title: '새 보고', kind: 'club', date: '2026-03-30', read: false },
     { id: 'old-read', title: '읽음', kind: 'club', date: '2026-03-27', read: true },

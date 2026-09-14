@@ -73,6 +73,7 @@ test('Scouting guidance does not announce nonexistent reports and corrects only 
 // The catalog is consulted on assignment and completion, not on each replay event.
 test('Scouting adds a saved watchlist and reports only after the observation period', () => {
   let g = game();
+  g.engagement.reportMode = 'all';
   const p = candidate(g),
     before = structuredClone(g);
   g = e.applyAction(g, { type: 'shortlistPlayer', id: p.id, add: true });

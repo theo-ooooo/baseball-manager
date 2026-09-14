@@ -1,3 +1,4 @@
+import { challengeUserId } from '../../apps/api/src/auth/career-slot';
 import { timingSafeEqual } from 'node:crypto';
 import { guestUserId, newGuestToken, readGuestToken } from '../../apps/api/src/auth/guest-session';
 
@@ -60,7 +61,15 @@ export async function authenticateRequest(request: Request, env: AuthEnvironment
   for (const name of [...headers.keys()]) {
     if (name.startsWith('oai-authenticated-') || name.startsWith('x-dugout-')) headers.delete(name);
   }
-  if (user) headers.set('x-dugout-user-id', user);
+  const slot = request.headers.get('x-career-slot') || 'main';
+  headers.set('x-dugout-career-slot', slot);
+  if (user)
+    headers.set(
+      'x-dugout-user-id',
+      slot === 'challenge' && !transfer && url.pathname !== '/api/session'
+        ? await challengeUserId(user)
+        : user,
+    );
   if (token) headers.set('x-dugout-session-token', token);
   if (transfer) headers.set('x-dugout-transfer', importRequest ? 'import' : 'export');
   return { request: new Request(request, { headers }), user, token, newSession };

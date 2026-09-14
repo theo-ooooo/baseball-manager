@@ -1,3 +1,13 @@
+import { conversationKey } from '@dugout/shared/match-media';
+import { createSeriesDelegation } from './series-delegation';
+import {
+  prepareEngagement,
+  engagementAction,
+  recordEngagementMatch,
+  gateSupport,
+} from './career-engagement';
+import { configureChallenge, tickChallenge } from './career-challenge';
+import { matchStakes, type CareerChallenge } from '@dugout/shared/career-engagement';
 import { recordManagerMatch, awardManagerAchievement } from './manager-journey';
 import {
   preparePostseason,
@@ -134,12 +144,14 @@ export function createGameEngine(
   const simulateMatch = createMatchSimulator(world);
   const liveAction = createLiveMatchActions(world, simulateMatch, advance);
   const progression = createCalendarProgression(nextFixture, advance);
+  const seriesDelegation = createSeriesDelegation(world, { nextFixture, advance, liveAction });
   function newGame(
     club: string,
     manager: string,
     mode: 'short' | 'full',
     seed = Date.now(),
     options: {
+      challenge?: CareerChallenge['kind'];
       firstSeasonTransferBan?: boolean;
       revealPotential?: boolean;
       unemployed?: boolean;
@@ -148,8 +160,10 @@ export function createGameEngine(
     } = {},
   ): GameState {
     if (!getClub(club)) throw new Error('구단을 선택해 주세요.');
+    if (options.challenge === 'rebuild') club = 'kbo-kiwoom';
+    if (options.challenge) mode = 'short';
     const league = getClub(club).league;
-    const preseason = options.preseason !== false;
+    const preseason = options.challenge ? false : options.preseason !== false;
     const roster = structuredClone(baseRoster(club));
     const n = clubs.filter((c) => c.league === league).length;
     const g: GameState = {
@@ -262,6 +276,9 @@ export function createGameEngine(
       );
     }
     international.tick(g);
+    if (options.challenge) configureChallenge(g, world, options.challenge);
+    prepareEngagement(g);
+    prepareWeather(g);
     return g;
   }
   function teamStrength(g: GameState, id: string) {
@@ -283,9 +300,11 @@ export function createGameEngine(
   ): Result {
     const live = g.liveMatch,
       matching = live && live.home === home && live.away === away;
+    const stakes = matching ? live.stakes : matchStakes(g, world, home === g.club ? away : home);
     const appearances = new Map(g.roster.map((p) => [p.id, p.stats.g]));
     if (matching && live.prepared && live.timeline) {
       const result = applyMatchEffects(g);
+      if (stakes) result.story = { stakes, moments: [] };
       result.weather = live.weather || matchWeather(g, { home, date: gameDate(g) }, getClub(home));
       result.managerReview = {
         version: 1,
@@ -298,6 +317,7 @@ export function createGameEngine(
     }
     const iterator = simulateMatch(g, home, away, matching ? rng(live.seed) : random, post);
     const result = runMatch(iterator);
+    if (stakes) result.story = { stakes, moments: [] };
     result.weather =
       (matching ? live.weather : undefined) ||
       matchWeather(g, { home, date: gameDate(g) }, getClub(home));
@@ -467,7 +487,7 @@ export function createGameEngine(
             `${postseasonLabel(stage.stage, g.postseason?.format)} 대진 확정`,
             `${getClub(matchup.a).name} vs ${getClub(matchup.b).name} · ${postseasonTarget(stage.stage, g.postseason?.format)}승 선취`,
             'league',
-            { actionView: 'schedule' },
+            { actionView: 'schedule', priority: 'urgent' },
           );
         } else if (roundProgress === 'finished') {
           g.phase = 'finished';
@@ -574,15 +594,19 @@ export function createGameEngine(
         );
         break;
       }
+      tickChallenge(g, world);
       if (g.news.filter((n) => n.choiceKind && !n.choice).length > pendingBefore) break;
     }
+    tickChallenge(g, world);
     g.seed = Math.floor(r() * 4294967295);
     return g;
   }
   function afterMatch(g: GameState, res: Result) {
+    const support = gateSupport(g);
     recordManagerMatch(g, res);
     nextStarter(g, true);
     matchMorale(g, res);
+    recordEngagementMatch(g, res);
     afterAugmentedMatch(g, res);
     consumeTacticCard(g, res);
     g.history.unshift(res);
@@ -594,7 +618,8 @@ export function createGameEngine(
       teamBudget(getClub(g.club).league) *
       (home ? 0.02 : 0.004) *
       (own > opp ? 1.15 : 1) *
-      (res.friendly ? 0.25 : 1);
+      (res.friendly ? 0.25 : 1) *
+      (home && !res.friendly ? support : 1);
     g.budget += earned;
     g.income += earned;
     news(
@@ -614,6 +639,25 @@ export function createGameEngine(
             { label: '경기 수입', value: money(earned) },
           ],
           sections: [
+            ...(res.story?.stakes
+              ? [{ title: res.story.stakes.title, body: res.story.stakes.detail }]
+              : []),
+            ...(res.story?.support
+              ? [
+                  {
+                    title: '팬들의 반응',
+                    body: `${res.story.support.message} 팬 열기 ${res.story.support.before} → ${res.story.support.after}. 다음 홈 경기 수입에 반영됩니다.`,
+                  },
+                ]
+              : []),
+            ...(res.story?.moments.length
+              ? [
+                  {
+                    title: '내가 믿은 선수',
+                    body: res.story.moments.map((m) => m.title).join('\n'),
+                  },
+                ]
+              : []),
             {
               title: '경기 평가',
               body:
@@ -933,11 +977,16 @@ export function createGameEngine(
     prepareKnowledge(s, world);
     if (!s.liveMatch) prepareWorld(s);
     managerCareer.prepare(s);
+    prepareEngagement(s);
+    tickChallenge(s, world);
     lineupReports.prepare(s);
     if (s.draft?.status === 'open' && ['resignManager', 'signManager'].includes(String(a.type)))
       rookieDraft.progress(s, true);
+    const seriesAction = seriesDelegation(s, a);
+    if (seriesAction) return seriesAction;
     const careerAction = managerCareer.action(s, a);
     if (careerAction) {
+      tickChallenge(careerAction, world);
       international.sync(careerAction);
       repairMedicalSelection(careerAction);
       return careerAction;
@@ -1064,6 +1113,28 @@ export function createGameEngine(
       );
       return s;
     }
+    if (
+      s.engagement?.interviews === 'coach' &&
+      !s.liveMatch &&
+      s.staff.length &&
+      ['startMatch', 'continue', 'continueDay', 'advance', 'nextSeason'].includes(String(a.type))
+    ) {
+      if (s.media?.pending)
+        mediaAction(s, {
+          type: 'matchConversation',
+          stage: 'post',
+          key: s.media.pending.key,
+          delegated: true,
+        });
+      const pair = nextFixture(s);
+      if (a.type === 'startMatch' && pair && s.media?.preparedFor !== conversationKey(s, pair))
+        mediaAction(s, {
+          type: 'matchConversation',
+          stage: 'pre',
+          key: conversationKey(s, pair),
+          delegated: true,
+        });
+    }
     const live = liveAction(s, a);
     if (live) return live;
     const nationalAction = international.action(s, a);
@@ -1076,6 +1147,8 @@ export function createGameEngine(
       ['continue', 'continueDay', 'advance', 'nextSeason', 'skipPreseason'].includes(String(a.type))
     )
       finishPendingConversation(s);
+    const engagement = engagementAction(s, a);
+    if (engagement) return engagement;
     const social = dynamicsAction(s, a);
     if (social) return social;
     const traded = trades.action(s, a);

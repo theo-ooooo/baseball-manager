@@ -68,6 +68,19 @@ test('Guest sessions isolate careers, ignore forged identity, restore possession
     });
     assert.ok([401, 403, 404].includes(forgedImport.status));
     assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM careers').first()).n, 1);
+    // A recovery key also restores a user who has created only a challenge save.
+    const challengeOwner =
+      'challenge/' +
+      createHash('sha256')
+        .update('dugout:challenge:' + owner)
+        .digest('hex');
+    await db
+      .prepare('UPDATE careers SET user_id=? WHERE user_id=?')
+      .bind(challengeOwner, owner)
+      .run();
+    const challengeRestore = await restore({ origin: 'https://localhost' });
+    assert.equal(challengeRestore.status, 200);
+    assert.equal(challengeRestore.headers.get('set-cookie'), cookie);
   } finally {
     await worker.dispose();
   }

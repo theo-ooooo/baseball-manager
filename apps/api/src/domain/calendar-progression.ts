@@ -1,3 +1,4 @@
+import { stopsForReport } from '@dugout/shared/career-pace';
 import type { DayProgress, GameState } from '@dugout/shared/types';
 
 export function createCalendarProgression(
@@ -18,6 +19,7 @@ export function createCalendarProgression(
       advance(g, 1);
       progress.to = g.day;
       const reports = g.news.filter((n) => !before.has(n.id));
+      const important = reports.filter((n) => stopsForReport(g, n));
       progress.newsIds = reports.map((n) => n.id);
       progress.stop = g.news.some((n) => n.choiceKind && !n.choice)
         ? 'decision'
@@ -25,7 +27,7 @@ export function createCalendarProgression(
           ? 'season'
           : nextFixture(g) && reports.every((n) => !!n.lineupRecommendation)
             ? 'fixture'
-            : progress.newsIds.length
+            : important.length
               ? 'report'
               : nextFixture(g)
                 ? 'fixture'

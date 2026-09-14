@@ -100,8 +100,9 @@ test('Mentoring needs an eligible teammate with stronger abilities and good mora
   );
 });
 
-test('Automatic rest overrides intense plans, and recovered players stop at a once-only goal report', () => {
+test('Automatic rest overrides intense plans, and all-report mode stops at a once-only goal report', () => {
   const { g, p } = setup();
+  g.engagement.reportMode = 'all';
   p.condition = 40;
   const base = e.applyAction(g, { type: 'continueDay', simulateGames: true });
   const day = new Date(gameDate(g) + 'T12:00:00Z').getUTCDay();

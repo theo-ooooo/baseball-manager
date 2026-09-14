@@ -1,3 +1,4 @@
+import { challengeUserId } from '../auth/career-slot';
 import {
   BadRequestException,
   Controller,
@@ -31,8 +32,11 @@ export class SessionController {
     const key = (request.body as { recoveryKey?: unknown } | null)?.recoveryKey;
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key))
       throw new BadRequestException('복구 키 형식이 올바르지 않습니다.');
-    const career = await env.DB.prepare('SELECT user_id FROM careers WHERE user_id=?')
-      .bind(await guestUserId(key))
+    const owner = await guestUserId(key);
+    const career = await env.DB.prepare(
+      'SELECT user_id FROM careers WHERE user_id IN (?,?) LIMIT 1',
+    )
+      .bind(owner, await challengeUserId(owner))
       .first();
     if (!career) throw new NotFoundException('이 복구 키에 저장된 커리어가 없습니다.');
     response.setHeader('Set-Cookie', guestCookie(key));
