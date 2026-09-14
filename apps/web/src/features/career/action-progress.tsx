@@ -6,6 +6,9 @@ import { isInboxReadCommand } from '@dugout/shared/inbox-commands';
 
 const labels: Record<string, string> = {
   start: '새 커리어를 준비하고 있습니다',
+  beginSeriesDelegation: '연전 일정과 선수단을 확인하고 있습니다',
+  delegateSeriesDay: '코치가 연전을 지휘하고 있습니다',
+  followProspect: '육성 선수와 목표를 기록하고 있습니다',
   lineup: '타순을 저장하고 있습니다',
   tactic: '전술을 적용하고 있습니다',
   instructions: '팀 지시를 적용하고 있습니다',

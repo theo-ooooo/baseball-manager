@@ -5,6 +5,7 @@ import { lineupRecommendationError } from '@dugout/shared/lineup-recommendation'
 import type { GameState, NewsItem } from '@dugout/shared/types';
 import { tradeNeedsConfirmation } from '@dugout/shared/trade-status';
 export const newsKinds: Record<string, { label: string; sender: string; role: string }> = {
+  challenge: { label: '도전', sender: '도전 기록', role: '목표와 결과' },
   league: { label: '세계 야구', sender: '야구 소식', role: '리그 동향' },
   manager: { label: '감독 · 채용', sender: '구단주 사무실', role: '감독 계약·채용' },
   contract: { label: '계약 관리', sender: '계약 담당자', role: '선수 계약 관리' },

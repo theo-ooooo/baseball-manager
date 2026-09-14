@@ -1,4 +1,6 @@
 'use client';
+import { CareerStoryPanel } from './career-story-panel';
+import type { Act } from './game-contracts';
 import { isPostseasonPhase, postseasonTarget } from '@dugout/shared/postseason';
 import { PostseasonPanel } from '../schedule/postseason-panel';
 import { MatchWeatherStrip } from '../matches/match-weather-strip';
@@ -29,6 +31,7 @@ const tactics: Record<string, string> = {
 const TIRED = 70;
 
 export function Dashboard({
+  act,
   g,
   setView,
   simulate,
@@ -39,6 +42,7 @@ export function Dashboard({
   onReport,
 }: {
   g: GameState;
+  act: Act;
   setView: (v: string) => void;
   simulate: () => void;
   continueLabel: string;
@@ -160,6 +164,7 @@ export function Dashboard({
         </div>
       </header>
       <PostseasonPanel g={g} compact />
+      <CareerStoryPanel g={g} act={act} busy={busy} onPlayer={onPlayer} onReport={onReport} />
       <div className="dashboard-command-grid">
         <div className="dashboard-main-column">
           <section className="dashboard-card next-game" aria-labelledby="next-game-title">

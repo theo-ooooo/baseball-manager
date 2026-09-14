@@ -1,4 +1,5 @@
 'use client';
+import { careerFetch } from '../career/career-slot';
 import { useEffect, useState } from 'react';
 import type { FreeAgentTerms } from '@dugout/shared/types';
 
@@ -11,10 +12,13 @@ export function useFreeAgentQuote(id: string | undefined, club: string, year: nu
     const controller = new AbortController();
     async function load() {
       try {
-        const response = await fetch(`/api/career/contracts/${encodeURIComponent(id!)}/quote`, {
-          signal: controller.signal,
-          cache: 'no-store',
-        });
+        const response = await careerFetch(
+          `/api/career/contracts/${encodeURIComponent(id!)}/quote`,
+          {
+            signal: controller.signal,
+            cache: 'no-store',
+          },
+        );
         const body = await response.json();
         if (!response.ok)
           throw new Error(body.error || body.message || 'FA 요구 조건을 불러오지 못했습니다.');

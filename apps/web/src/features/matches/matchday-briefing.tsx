@@ -1,4 +1,7 @@
 'use client';
+import { matchStakes } from '@dugout/shared/career-engagement';
+import { MatchStakesBanner } from '../career/career-story-panel';
+import { rememberMatchWatchMode } from './use-match-watch-mode';
 import { PostseasonPanel } from '../schedule/postseason-panel';
 import { MatchWeatherStrip } from './match-weather-strip';
 import { useMatchWeather } from './use-match-weather';
@@ -32,7 +35,8 @@ export function MatchdayBriefing({
   label: string;
   busy: boolean;
 }) {
-  const { nextFixture, getClub, standings } = useWorld();
+  const world = useWorld();
+  const { nextFixture, getClub, standings } = world;
   const pair = nextFixture(g);
   const upcoming = useUpcomingFixture(g);
   const seasonRest = isClubSeasonRest(g);
@@ -60,7 +64,7 @@ export function MatchdayBriefing({
             ? '선수단은 휴식합니다. 계약 등 남은 구단 업무는 수신함에서 확인하세요.'
             : weather?.weather.cancellation
               ? '계속 진행하면 재편성 일정이 수신함과 달력에 반영됩니다.'
-              : '수신함을 확인하고 진행하면 다음 보고나 경기일에 멈춥니다.'}
+              : '수신함을 확인하고 진행하면 다음 중요한 보고나 경기일에 멈춥니다.'}
         </p>
         {upcoming && (
           <div className="matchday-upcoming">
@@ -81,6 +85,7 @@ export function MatchdayBriefing({
     );
   const [home, away] = pair.map(getClub);
   const opponent = getClub(pair.find((id) => id !== g.club)!);
+  const stakes = matchStakes(g, world, opponent.id);
   const standing = standings(g).find((s) => s.club === opponent.id);
   const byId = new Map(g.roster.map((p) => [p.id, p]));
   const lineup = g.lineup.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
@@ -99,6 +104,7 @@ export function MatchdayBriefing({
       <PostseasonPanel g={g} compact />
       {weather && <MatchWeatherStrip weather={weather.weather} />}
       <section className="matchday-overview">
+        {stakes && <MatchStakesBanner stakes={stakes} />}
         <div className="matchday-caption">
           <span>MATCHDAY · 경기 전 브리핑</span>
           <time>{dateLabel(g)}</time>
@@ -131,12 +137,45 @@ export function MatchdayBriefing({
           <button className="button secondary" onClick={() => onView('reserves')}>
             <Users size={16} /> 1군·2군 교체
           </button>
-          <button className="button primary" disabled={busy} onClick={onContinue}>
+          <button
+            className="button secondary"
+            disabled={busy}
+            onClick={() => {
+              rememberMatchWatchMode('highlights');
+              onContinue();
+            }}
+          >
+            승부처만 지휘
+          </button>
+          <button
+            className="button primary"
+            disabled={busy}
+            onClick={() => {
+              rememberMatchWatchMode('full');
+              onContinue();
+            }}
+          >
             {label}
             <ArrowRight size={16} />
           </button>
         </div>
       </section>
+      {!!g.engagement?.prospects.some((s) => s.active && s.club === g.club) && (
+        <section className="matchday-prospects">
+          <strong>오늘 지켜볼 선수</strong>
+          {g.engagement.prospects
+            .filter((s) => s.active && s.club === g.club)
+            .map((s) => (
+              <p key={s.id}>
+                <b>{s.name}</b> ·{' '}
+                {g.lineup.includes(s.id) || g.starter === s.id
+                  ? '선발 출전 예정'
+                  : '출전 기회를 기다리는 중'}{' '}
+                · {s.moments.at(-1)?.title || '지명 후 첫 경기를 기다립니다'}
+              </p>
+            ))}
+        </section>
+      )}
       <MatchDelegation g={g} act={act} busy={busy} />
       <div className="matchday-grid">
         <section className="matchday-lineup">

@@ -1,4 +1,5 @@
 'use client';
+import { careerFetch, rememberCareerSlot } from './career-slot';
 import { useEffect, useState } from 'react';
 import type { WorldCatalog } from '@dugout/shared/types';
 import type { CareerData } from './game-contracts';
@@ -6,7 +7,7 @@ import { careerMemory } from './career-memory';
 import { careerResponse, careerErrorMessage } from './career-response';
 
 async function read(path: string) {
-  const response = await fetch(path, { cache: 'no-store' });
+  const response = await careerFetch(path, { cache: 'no-store' });
   const value = await careerResponse(response);
   if (!response.ok) throw new Error(value.error || '데이터를 불러오지 못했습니다.');
   return value;
@@ -17,6 +18,7 @@ export function useGameResources() {
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
+    rememberCareerSlot();
     careerMemory
       .load(async () => {
         const [world, career] = await Promise.all([read('/api/catalog'), read('/api/career')]);

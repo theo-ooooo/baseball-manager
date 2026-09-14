@@ -1,4 +1,5 @@
 'use client';
+import { careerFetch } from '../career/career-slot';
 import { useEffect, useState } from 'react';
 import type { Result } from '@dugout/shared/types';
 export function useMatchReport(summary: Result, club: string) {
@@ -10,7 +11,9 @@ export function useMatchReport(summary: Result, club: string) {
   useEffect(() => {
     if (complete) return;
     const controller = new AbortController();
-    fetch(`/api/career/matches/${encodeURIComponent(summary.id)}`, { signal: controller.signal })
+    careerFetch(`/api/career/matches/${encodeURIComponent(summary.id)}`, {
+      signal: controller.signal,
+    })
       .then(async (response) => {
         if (!response.ok) throw new Error('상세 경기 기록을 불러오지 못했습니다.');
         return response.json() as Promise<Result>;

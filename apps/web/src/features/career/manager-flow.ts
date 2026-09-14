@@ -1,3 +1,4 @@
+import { stopsForReport } from '@dugout/shared/career-pace';
 import type { GameState } from '@dugout/shared/types';
 import { orderedInbox } from '../inbox/inbox-order';
 
@@ -55,7 +56,7 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
       detail: `${g.managerCareer.vacationUntil} 복귀 후 모인 보고를 확인합니다.`,
     };
   if (g.managerCareer?.status === 'unemployed') {
-    const unread = orderedInbox(g, g.news).filter((n) => !n.read);
+    const unread = orderedInbox(g, g.news).filter((n) => !n.read && stopsForReport(g, n));
     const report = unread[0];
     if (report)
       return {
@@ -73,8 +74,8 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
   const decision = orderedInbox(g, g.news).find((n) => n.choiceKind && !n.choice);
   if (decision)
     return { kind: 'decision', label: '필수 답변', detail: decision.title, reportId: decision.id };
-  const unread = orderedInbox(g, g.news).filter((n) => !n.read);
-  if (g.media?.pending) {
+  const unread = orderedInbox(g, g.news).filter((n) => !n.read && stopsForReport(g, n));
+  if (g.media?.pending && (g.engagement?.interviews === 'manual' || !g.staff.length)) {
     const matchReport = unread.find(
       (n) => n.kind === 'match' && `post:${n.matchId}` === g.media!.pending!.key,
     );

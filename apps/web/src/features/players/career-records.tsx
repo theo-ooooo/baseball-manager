@@ -1,4 +1,5 @@
 'use client';
+import { careerFetch } from '../career/career-slot';
 import { useEffect, useState } from 'react';
 import type { GameState, Player } from '@dugout/shared/types';
 import type { PlayerCareerRecord } from '@dugout/shared/long-term';
@@ -17,7 +18,7 @@ export function useRecords(path: string | null) {
   useEffect(() => {
     if (!path) return;
     const controller = new AbortController();
-    fetch(path, { signal: controller.signal })
+    careerFetch(path, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error('기록을 불러오지 못했습니다.');
         return r.json();

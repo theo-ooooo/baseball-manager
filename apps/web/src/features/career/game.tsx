@@ -1,4 +1,8 @@
 'use client';
+import { careerFetch, currentCareerSlot, switchCareerSlot } from './career-slot';
+import { ChallengeCareer } from './challenge-career';
+import { useSeriesDelegation } from '../matches/use-series-delegation';
+import { SeriesDelegationPanel } from '../matches/series-delegation-panel';
 import { RetiredPlayerProfile } from '../players/retired-player-profile';
 import { useGameResources } from './use-game-resources';
 import { useCareerSession } from './use-career-session';
@@ -193,7 +197,8 @@ export function GameScreen({
   };
   const inboxReads = useInboxReadQueue(g);
   const calendarProgress = useCalendarProgress(act);
-  const progressing = calendarProgress.journey?.running === true;
+  const seriesControl = useSeriesDelegation(g, act, busy);
+  const progressing = calendarProgress.journey?.running === true || seriesControl.running;
   function openReport(id?: string) {
     setReportEpoch((n) => n + 1);
     router.push('/?view=inbox' + (id ? '&report=' + encodeURIComponent(id) : ''));
@@ -214,7 +219,7 @@ export function GameScreen({
       return;
     }
     try {
-      const res = await fetch('/api/career/matches/' + encodeURIComponent(result.id), {
+      const res = await careerFetch('/api/career/matches/' + encodeURIComponent(result.id), {
         cache: 'no-store',
       });
       const data = await res.json();
@@ -235,7 +240,12 @@ export function GameScreen({
     else if (next?.progress?.stop === 'fixture') setView('matchday');
   }
   const pair = g ? nextFixture(g) : null;
-  const interviewReady = !!(g && pair && g.media?.preparedFor === conversationKey(g, pair));
+  const interviewReady = !!(
+    g &&
+    pair &&
+    (g.media?.preparedFor === conversationKey(g, pair) ||
+      (g.engagement?.interviews !== 'manual' && g.staff.length > 0))
+  );
   const baseStep = g ? managerStep(g, !!pair, view) : null;
   const step =
     baseStep?.kind === 'matchday' && (view === 'matchday' || view === 'media') && !interviewReady
@@ -322,6 +332,25 @@ export function GameScreen({
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   });
+  if ((!g || setup) && currentCareerSlot() === 'challenge')
+    return (
+      <>
+        <ActionProgress action={pendingAction} phase={requestPhase} />
+        <ChallengeCareer
+          g={g}
+          act={act}
+          busy={busy}
+          autoOpen={setup}
+          onClose={() => setSetup(false)}
+          onStarted={async () => {
+            await refreshCatalog();
+            setSetup(false);
+            setView('home');
+          }}
+        />
+        <Toaster theme="light" position="bottom-right" />
+      </>
+    );
   if (!g || setup)
     return (
       <>
@@ -517,6 +546,18 @@ export function GameScreen({
             </div>
           </header>
         )}
+        {currentCareerSlot() === 'challenge' && view !== 'home' && (
+          <div className="challenge-slot-banner">
+            <strong>도전 커리어</strong>
+            <button
+              className="text-button"
+              disabled={busy || progressing}
+              onClick={() => switchCareerSlot('main')}
+            >
+              본 커리어로 돌아가기
+            </button>
+          </div>
+        )}
         <WorkspaceNavigation view={view} unemployed={isUnemployed(g)} onView={setView} />
         {calendarProgress.journey && (
           <CalendarProgress
@@ -527,6 +568,15 @@ export function GameScreen({
             onReports={() => openReport()}
             onMatchday={() => setView('matchday')}
           />
+        )}
+        {seriesControl.running && (
+          <div className="series-running" role="status">
+            <strong>연전 위임 · {g.engagement?.seriesRun?.played || 0}경기 완료</strong>
+            <span>한 경기씩 자동 저장 중</span>
+            <button className="button secondary" onClick={seriesControl.pause}>
+              이번 저장 후 멈춤
+            </button>
+          </div>
         )}
         <div className="workspace-body" inert={progressing || undefined}>
           {saveFailed && (
@@ -620,6 +670,9 @@ export function GameScreen({
             </>
           )}
 
+          {['home', 'matchday'].includes(view) && !awayFromClub && (
+            <SeriesDelegationPanel g={g} busy={busy} control={seriesControl} />
+          )}
           {view === 'home' && isUnemployed(g) && (
             <UnemployedHome
               g={g}
@@ -628,8 +681,20 @@ export function GameScreen({
               continueLabel={step!.label}
             />
           )}
+          {view === 'home' && (
+            <ChallengeCareer
+              g={g}
+              act={act}
+              busy={busy}
+              onStarted={async () => {
+                await refreshCatalog();
+                setView('home');
+              }}
+            />
+          )}
           {view === 'home' && !isUnemployed(g) && (
             <Dashboard
+              act={act}
               g={g}
               setView={setView}
               simulate={continueFlow}

@@ -18,6 +18,7 @@ export function useMatchPlayback(
   busy: boolean,
   shouldPause: (cursor: number) => boolean,
   resume = false,
+  nextCursor?: (from: number) => number,
 ) {
   // Cancel immediately, including callbacks already queued before React commits the pause.
   const stopped = useRef(!resume);
@@ -47,14 +48,19 @@ export function useMatchPlayback(
       setState((previous) => {
         if (previous.phase === 'settled' && previous.cursor >= length) return previous;
         return {
-          cursor: previous.cursor + (previous.phase === 'settled' ? 1 : 0),
+          cursor:
+            previous.phase === 'settled'
+              ? continuous && nextCursor
+                ? nextCursor(previous.cursor)
+                : Math.min(length, previous.cursor + 1)
+              : previous.cursor,
           phase: 'playing',
           continuous,
           pauseReason: null,
         };
       });
     },
-    [length],
+    [length, nextCursor],
   );
   const finishPlay = useCallback(() => {
     if (stopped.current) return;

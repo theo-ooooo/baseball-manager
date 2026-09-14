@@ -358,9 +358,21 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
           )}
           <details className="match-view-settings">
             <summary>
-              <Settings2 size={15} /> 중계 설정 · {m.speed}×
+              <Settings2 size={15} /> {m.watchMode === 'highlights' ? '승부처 중계' : '전체 중계'} ·{' '}
+              {m.speed}×
             </summary>
             <div className="match-view-settings-content">
+              <label className="match-speed-label">
+                중계 범위
+                <select
+                  aria-label="중계 범위"
+                  value={m.watchMode}
+                  onChange={(e) => m.setWatchMode(e.target.value as 'full' | 'highlights')}
+                >
+                  <option value="full">모든 타석</option>
+                  <option value="highlights">승부처와 육성 선수</option>
+                </select>
+              </label>
               <label className="match-speed-label">
                 재생 속도
                 <select

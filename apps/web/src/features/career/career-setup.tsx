@@ -1,4 +1,5 @@
 'use client';
+import { ChallengeEntry } from './challenge-career';
 import { AppVersion } from '@/components/app-version';
 import { useState, type CSSProperties } from 'react';
 import {
@@ -109,6 +110,7 @@ export function NewCareer({
           </span>
         </div>
         <div className="ui-setup-header-right">
+          <ChallengeEntry />
           {existing && (
             <button className="ui-btn ui-btn-ghost" onClick={cancel}>
               기존 커리어로 돌아가기

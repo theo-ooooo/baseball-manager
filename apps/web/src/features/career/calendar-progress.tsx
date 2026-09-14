@@ -172,7 +172,7 @@ export function CalendarProgress({
       </div>
       <p>
         {journey.running
-          ? '하루씩 자동 저장 중 · 경기나 새 리포트가 생기면 멈춥니다.'
+          ? '하루씩 자동 저장 중 · 경기나 확인이 필요한 보고가 생기면 멈춥니다.'
           : `${journey.day - journey.start}일 진행 · 저장된 날짜부터 이어갑니다.`}
       </p>
     </section>

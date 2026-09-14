@@ -1,4 +1,5 @@
 'use client';
+import { careerFetch } from './career-slot';
 import { useMemo, useRef, useState } from 'react';
 import { isDateProgressCommand } from '@dugout/shared/inbox-read-intent';
 import { useInboxReadQueue } from '../inbox/use-inbox-read-queue';
@@ -38,7 +39,7 @@ export function useCareerSession(initial: CareerData) {
     setData(next);
   }
   async function read() {
-    const response = await fetch('/api/career', { cache: 'no-store' });
+    const response = await careerFetch('/api/career', { cache: 'no-store' });
     const next = await careerResponse(response);
     if (!response.ok) throw new Error(next.error || '커리어를 불러오지 못했습니다.');
     install(next);
@@ -90,7 +91,7 @@ export function useCareerSession(initial: CareerData) {
           };
     retry.current = { key, payload };
     try {
-      const response = await fetch('/api/career', {
+      const response = await careerFetch('/api/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

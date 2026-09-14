@@ -34,6 +34,7 @@ import '../styles/lineup-workspace.css';
 import '../styles/registrations.css';
 import '../styles/overlays.css';
 import '../styles/postseason.css';
+import '../styles/career-experience.css';
 import '../styles/match-weather.css';
 import { DialogViewport } from '../src/features/career/dialog-viewport';
 

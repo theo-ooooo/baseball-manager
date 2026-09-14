@@ -1,4 +1,6 @@
 'use client';
+import { highlightCursor } from '@dugout/shared/match-highlights';
+import { useMatchWatchMode } from './use-match-watch-mode';
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import type { GameState } from '@dugout/shared/types';
 import type { Act } from '../career/game-contracts';
@@ -33,6 +35,20 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     },
     [live, g.club, autoPause],
   );
+  const watch = useMatchWatchMode();
+  const nextCursor = useCallback(
+    (from: number) =>
+      watch.mode === 'highlights'
+        ? highlightCursor(
+            live,
+            g.club,
+            from,
+            g.engagement?.prospects.filter((s) => s.active && s.club === g.club).map((s) => s.id) ||
+              [],
+          )
+        : Math.min(result.log.length, from + 1),
+    [watch.mode, live, g.club, g.engagement?.prospects, result.log.length],
+  );
   const playback = useMatchPlayback(
     `dugout:playback:${live.playbackId}:${live.timelineVersion}`,
     live.cursor,
@@ -40,6 +56,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     busy,
     shouldPause,
     resume,
+    nextCursor,
   );
   useMatchCompletion(g, playback.finished, playback.cursor, busy, act);
   const [panel, setPanel] = useState<'preview' | 'watch' | 'plan'>(() =>
@@ -163,6 +180,8 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     else void document.documentElement.requestFullscreen?.().catch(() => {});
   };
   return {
+    watchMode: watch.mode,
+    setWatchMode: watch.setMode,
     ...playback,
     substitutions,
     commandResults,

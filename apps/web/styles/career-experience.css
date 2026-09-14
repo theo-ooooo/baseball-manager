@@ -1,0 +1,456 @@
+.career-story-desk {
+  margin: 20px 0 26px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 10px;
+  overflow: hidden;
+  color: var(--foreground);
+}
+.career-story-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 24px 12px;
+}
+.career-story-heading span {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.career-story-heading h2 {
+  font-size: 20px;
+  margin: 6px 0;
+}
+.career-story-empty {
+  padding: 0 24px 22px;
+  color: var(--muted-foreground);
+  line-height: 1.8;
+}
+.career-stakes {
+  padding: 24px;
+  background: #1d323b;
+  color: #f2f7f8;
+  border-bottom: 3px solid #d8b768;
+}
+.career-stakes > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f2d88f;
+  font-size: 12px;
+}
+.career-stakes h2 {
+  font-size: 26px;
+  margin: 14px 0 10px;
+}
+.career-stakes p {
+  margin: 0;
+  color: #ccdade;
+  line-height: 1.8;
+}
+.matchday-overview > .career-stakes {
+  margin-bottom: 22px;
+  border-radius: 8px;
+}
+.prospect-story-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 8px 24px 24px;
+}
+.prospect-story-list article {
+  border: 1px solid var(--border);
+  border-top: 3px solid #2b7058;
+  padding: 16px;
+  background: var(--background);
+  border-radius: 6px;
+  min-width: 0;
+}
+.prospect-story-list article.achieved {
+  border-top-color: #a57525;
+}
+.prospect-story-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.prospect-story-name button {
+  text-align: left;
+  display: grid;
+  gap: 7px;
+}
+.prospect-story-name strong {
+  font-size: 18px;
+}
+.prospect-story-name small,
+.prospect-story-list details small {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.prospect-story-name > span {
+  font-size: 12px;
+  color: var(--primary);
+}
+.prospect-story-list p {
+  font-size: 12px;
+  margin: 15px 0 9px;
+}
+.prospect-story-list progress {
+  width: 100%;
+  height: 6px;
+  accent-color: #2b7058;
+}
+.prospect-story-moment {
+  font-weight: 600;
+  line-height: 1.6;
+}
+.prospect-story-list summary {
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted-foreground);
+}
+.prospect-story-list ol {
+  padding: 0;
+  list-style: none;
+}
+.prospect-story-list li {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.prospect-story-list time {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+.prospect-story-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+  font-size: 11px;
+}
+.prospect-story-actions a {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary);
+}
+.career-weekly {
+  border-top: 1px solid var(--border);
+  padding: 18px 24px;
+}
+.career-weekly summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.career-weekly summary span {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.career-weekly p {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.career-weekly ul {
+  padding-left: 16px;
+}
+.career-weekly li {
+  margin: 12px 0;
+  font-size: 13px;
+}
+.career-weekly li button {
+  text-align: left;
+}
+.career-weekly b {
+  color: var(--primary);
+  font-size: 10px;
+}
+.career-report-preference {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.career-report-preference select,
+.prospect-pick-dialog select,
+.challenge-form select,
+.challenge-form input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--background);
+  color: var(--foreground);
+  max-width: 100%;
+}
+.prospect-pick-dialog {
+  max-width: 620px !important;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.prospect-pick-list {
+  max-height: 42dvh;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.prospect-pick-list button {
+  padding: 14px;
+  border: 1px solid var(--border);
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  border-radius: 6px;
+}
+.prospect-pick-list button[aria-pressed='true'] {
+  border-color: var(--primary);
+  background: var(--secondary);
+}
+.prospect-pick-list span {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.prospect-pick-dialog > label {
+  display: grid;
+  gap: 9px;
+  font-size: 13px;
+}
+.series-delegation-panel,
+.series-running {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 16px 0;
+}
+.series-delegation-panel strong {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
+.series-delegation-panel p,
+.series-running > span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  margin: 7px 0 0;
+}
+.series-running {
+  margin: 16px 24px;
+  border-color: var(--primary);
+}
+.challenge-start {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px 24px;
+}
+.challenge-start header {
+  margin: 40px 0 30px;
+}
+.challenge-start header > span {
+  color: var(--primary);
+  font-size: 13px;
+}
+.challenge-start h1 {
+  font-size: 32px;
+  line-height: 1.4;
+  margin: 12px 0;
+}
+.challenge-start header p {
+  color: var(--muted-foreground);
+}
+.challenge-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.challenge-options > button {
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 24px;
+  text-align: left;
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.challenge-options > button[aria-pressed='true'] {
+  border: 2px solid var(--primary);
+  padding: 23px;
+  background: var(--secondary);
+}
+.challenge-options small {
+  color: var(--primary);
+  font-size: 12px;
+}
+.challenge-options h3 {
+  margin: 0;
+  font-size: 22px;
+}
+.challenge-options p {
+  margin: 0;
+  line-height: 1.8;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.challenge-options strong {
+  font-size: 13px;
+  margin-top: auto;
+}
+.challenge-form {
+  display: grid;
+  gap: 18px;
+  margin: 25px 0;
+}
+.challenge-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.challenge-note {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+.challenge-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  border: 1px solid #d1bb8f;
+  border-left: 4px solid #9b762c;
+  border-radius: 8px;
+  background: #fff9ec;
+  color: #263941;
+  margin: 15px 0;
+}
+.challenge-status span,
+.challenge-status p {
+  font-size: 12px;
+  color: #59645d;
+}
+.challenge-status h2 {
+  font-size: 23px;
+  margin: 8px 0;
+}
+.challenge-status strong {
+  font-size: 13px;
+}
+.challenge-status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-end;
+  justify-content: center;
+}
+.challenge-dialog {
+  max-width: 760px !important;
+  max-height: 90dvh;
+  overflow: auto;
+}
+.challenge-slot-banner {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: #fff2ce;
+  color: #604311;
+  font-size: 12px;
+}
+@media (max-width: 800px) {
+  .prospect-story-list {
+    grid-template-columns: 1fr;
+  }
+  .career-story-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px 18px 12px;
+  }
+  .career-story-heading h2 {
+    font-size: 18px;
+  }
+  .career-story-empty {
+    padding: 0 18px 18px;
+  }
+  .career-stakes {
+    padding: 20px 18px;
+  }
+  .career-stakes h2 {
+    font-size: 22px;
+  }
+  .prospect-story-list {
+    padding: 8px 18px 18px;
+  }
+  .career-weekly {
+    padding: 16px 18px;
+  }
+  .career-weekly summary span {
+    width: 100%;
+    margin-left: 0;
+    line-height: 1.7;
+  }
+  .career-report-preference {
+    padding: 12px 18px;
+  }
+  .series-delegation-panel,
+  .series-running {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .challenge-status {
+    flex-direction: column;
+  }
+  .challenge-status-actions {
+    align-items: stretch;
+  }
+  .challenge-options {
+    grid-template-columns: 1fr;
+  }
+  .challenge-start {
+    padding: 22px 16px;
+  }
+  .challenge-start h1 {
+    font-size: 27px;
+  }
+  .prospect-pick-list {
+    grid-template-columns: 1fr;
+  }
+  .challenge-options > button {
+    padding: 18px;
+  }
+  .challenge-options > button[aria-pressed='true'] {
+    padding: 17px;
+  }
+}
+
+.matchday-prospects {
+  padding: 20px 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+}
+.matchday-prospects p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+.matchday-prospects b {
+  color: var(--foreground);
+}
