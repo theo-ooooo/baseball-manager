@@ -16,6 +16,7 @@ import {
 } from '@dugout/shared/career-engagement';
 import type { Act } from './game-contracts';
 import { useCareerExperience } from './use-career-experience';
+import { LineupCompetitionPanel } from './lineup-competition-panel';
 
 export function MatchStakesBanner({ stakes }: { stakes: MatchStakes }) {
   return (
@@ -119,6 +120,7 @@ export function CareerStoryPanel({
           ))}
         </div>
       )}
+      <LineupCompetitionPanel g={g} act={act} busy={busy} />
       <details className="career-weekly">
         <summary>
           <Newspaper size={16} /> 지난 7일 브리핑{' '}

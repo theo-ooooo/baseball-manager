@@ -9,6 +9,7 @@ import { Stadium2DField } from './stadium-2d-field';
 import { Play, ClipboardList, ArrowRight } from 'lucide-react';
 import { MatchClubStanding } from './match-club-standing';
 import { MatchAugmentationReveal } from './match-augmentation-reveal';
+import { TacticalDuelSummary } from './tactical-duel-panel';
 
 export function MatchPreview({
   g,
@@ -79,6 +80,17 @@ export function MatchPreview({
           </button>
         </div>
       </section>
+      {live.duel && (
+        <section className="tactical-duel-panel" aria-label="확정한 경기 대응">
+          <header>
+            <div>
+              <span>경기 시작 때 확정한 대응</span>
+              <h2>오늘의 벤치 수싸움</h2>
+            </div>
+          </header>
+          <TacticalDuelSummary duel={live.duel} ownHome={live.home === g.club} />
+        </section>
+      )}
       <div className="match-preview-lineups">
         {view.teams?.map((team, side) => (
           <section key={team.club} className="match-preview-team">

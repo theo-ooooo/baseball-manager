@@ -1,0 +1,181 @@
+.tactical-duel-panel {
+  border: 1px solid #a5b5b3;
+  border-radius: 8px;
+  padding: 22px;
+  background: #f1f5f2;
+  color: #1b343b;
+}
+.tactical-duel-panel > header {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.tactical-duel-panel header span,
+.tactical-duel-summary article > span {
+  font-size: 12px;
+  color: #49625e;
+}
+.tactical-duel-panel h2 {
+  font-size: 20px;
+  margin: 6px 0;
+  color: #1b343b;
+}
+.tactical-duel-summary,
+.competition-scoreboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.tactical-duel-summary article {
+  border-left: 3px solid #33775d;
+  padding-left: 16px;
+  min-width: 0;
+}
+.tactical-duel-summary article + article {
+  border-color: #966132;
+}
+.tactical-duel-summary h3 {
+  color: #1b343b;
+  font-size: 19px;
+  margin: 10px 0;
+}
+.tactical-duel-summary p,
+.tactical-duel-panel footer p {
+  color: #465c60;
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 8px 0;
+}
+.tactical-duel-summary strong {
+  color: #263f43;
+  font-size: 14px;
+}
+.tactical-duel-panel footer {
+  border-top: 1px solid #bdccca;
+  margin-top: 18px;
+  padding-top: 10px;
+}
+.tactical-duel-panel footer a {
+  color: #1d654d;
+  font-size: 13px;
+  font-weight: 700;
+}
+.lineup-competition-panel {
+  margin: 22px 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-left: 4px solid #a57525;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.career-story-desk > .lineup-competition-panel {
+  margin: 0 24px 24px;
+}
+.lineup-competition-panel h2 {
+  font-size: 21px;
+  margin: 8px 0 14px;
+}
+.lineup-competition-panel header > span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.lineup-competition-panel p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+.lineup-competition-panel .competition-policy strong {
+  color: var(--foreground);
+}
+.lineup-competition-panel progress {
+  width: 100%;
+  height: 8px;
+  accent-color: #33775d;
+  margin: 14px 0;
+}
+.competition-scoreboard article {
+  border: 1px solid var(--border);
+  padding: 16px;
+  background: var(--background);
+  border-radius: 6px;
+}
+.competition-scoreboard span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.competition-scoreboard h3 {
+  font-size: 19px;
+  margin: 8px 0 14px;
+}
+.competition-scoreboard strong {
+  font-size: 13px;
+}
+.lineup-competition-panel .competition-outcome {
+  background: var(--background);
+  color: var(--foreground);
+  padding: 16px;
+  border-radius: 4px;
+}
+.bench-choice-dialog {
+  width: min(700px, calc(100vw - 28px));
+  max-width: 700px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  color: var(--foreground);
+  background: var(--card);
+}
+.bench-choice-list {
+  display: grid;
+  gap: 12px;
+}
+.bench-choice-list > button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  text-align: left;
+  line-height: 1.7;
+}
+.bench-choice-list > button[aria-pressed='true'] {
+  outline: 2px solid #33775d;
+  outline-offset: -2px;
+}
+.bench-choice-list span {
+  font-size: 14px;
+}
+.bench-choice-list small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.bench-choice-list > button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+@media (max-width: 640px) {
+  .tactical-duel-panel,
+  .lineup-competition-panel {
+    padding: 16px;
+  }
+  .tactical-duel-panel > header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tactical-duel-summary,
+  .competition-scoreboard {
+    grid-template-columns: 1fr;
+  }
+  .career-story-desk > .lineup-competition-panel {
+    margin: 0 14px 18px;
+  }
+  .bench-choice-dialog {
+    padding: 20px 16px;
+  }
+}

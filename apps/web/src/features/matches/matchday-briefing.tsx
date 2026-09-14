@@ -15,6 +15,7 @@ import { useWorld } from '../career/world-context';
 import { MatchClubStanding } from './match-club-standing';
 import { useUpcomingFixture } from './use-upcoming-fixture';
 import { MatchDelegation } from './match-delegation';
+import { TacticalDuelPanel } from './tactical-duel-panel';
 import type { Act } from '../career/game-contracts';
 import { clubSeasonStatus, isClubSeasonRest } from '@dugout/shared/season-status';
 
@@ -160,6 +161,7 @@ export function MatchdayBriefing({
           </button>
         </div>
       </section>
+      <TacticalDuelPanel g={g} act={act} busy={busy} />
       {!!g.engagement?.prospects.some((s) => s.active && s.club === g.club) && (
         <section className="matchday-prospects">
           <strong>오늘 지켜볼 선수</strong>

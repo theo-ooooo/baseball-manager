@@ -1,4 +1,5 @@
 import { MatchBoxScore } from '../matches/match-box-score';
+import { LineupCompetitionPanel } from '../career/lineup-competition-panel';
 import { isClosedClubReport } from '@dugout/shared/employment-reports';
 import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
 import { isClubSeasonRest } from '@dugout/shared/season-status';
@@ -361,29 +362,35 @@ export function InboxReport({
             compact
           />
         )}
-        {news.choiceKind && !news.choice && !resolution && !isClubSeasonRest(g) && (
-          <section className="inbox-decision">
-            <h3>감독님의 답변을 기다리고 있습니다</h3>
-            <p>출전 기회를 약속하거나 현재 운용 방침을 설명해 주세요.</p>
-            <div>
-              <button
-                className="button primary"
-                disabled={busy}
-                onClick={() => void act({ type: 'respondNews', id: news.id, choice: 'promise' })}
-              >
-                2주 내 출전 약속
-              </button>
-              <button
-                className="button secondary"
-                disabled={busy}
-                onClick={() => void act({ type: 'respondNews', id: news.id, choice: 'explain' })}
-              >
-                현재 운용 방침 설명
-              </button>
-            </div>
-            <small>타자 4경기 / 투수 1경기 출전 약속 · 이행 여부가 선수 신뢰에 반영됩니다.</small>
-          </section>
+        {news.competitionId && !resolution && (
+          <LineupCompetitionPanel g={g} act={act} busy={busy} id={news.competitionId} />
         )}
+        {news.choiceKind === 'playingTime' &&
+          !news.choice &&
+          !resolution &&
+          !isClubSeasonRest(g) && (
+            <section className="inbox-decision">
+              <h3>감독님의 답변을 기다리고 있습니다</h3>
+              <p>출전 기회를 약속하거나 현재 운용 방침을 설명해 주세요.</p>
+              <div>
+                <button
+                  className="button primary"
+                  disabled={busy}
+                  onClick={() => void act({ type: 'respondNews', id: news.id, choice: 'promise' })}
+                >
+                  2주 내 출전 약속
+                </button>
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => void act({ type: 'respondNews', id: news.id, choice: 'explain' })}
+                >
+                  현재 운용 방침 설명
+                </button>
+              </div>
+              <small>타자 4경기 / 투수 1경기 출전 약속 · 이행 여부가 선수 신뢰에 반영됩니다.</small>
+            </section>
+          )}
         {news.response && <p className="inbox-resolved">답변 완료 · {news.response}</p>}
         <footer className="inbox-letter-footer">
           <small>
