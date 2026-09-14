@@ -347,3 +347,46 @@ test('내 감독 능력치는 평판을 따라 오르고 강약점 모양은 유
   // 이름이 다르면 강약점 모양도 달라진다.
   assert.notEqual(shape(selfManagerAbility({ manager: '다른감독', reputation: 80 })), shape(high));
 });
+
+test('계약 만료된 전향 코치는 종료된 협상 기록이 있어도 다시 취업한다', () => {
+  const g = e.newGame('kbo-lotte', '코치 재취업 QA', 'short', 631);
+  const [person] = seedIdleManagers(g, 12, addDays(gameDate(g), -400));
+  g.coachAssignments ??= {};
+  g.coachAssignments[person.id] = {
+    club: 'kbo-lg',
+    coach: { ...person.coach, contractUntil: g.year },
+  };
+  g.coachDeals = [
+    {
+      id: 'expired-coach',
+      coach: person.coach,
+      role: person.coach.role,
+      salary: 1,
+      years: 1,
+      status: 'rejected',
+      day: g.day - 30,
+      year: g.year,
+      message: '',
+    },
+  ];
+  reconcileManagerPeople(g, world);
+  person.idleSince = addDays(gameDate(g), -500);
+  const converted = convertIdleManagersToCoaches(g, world);
+  assert.ok(converted.some((entry) => entry.person.id === person.id));
+  assert.ok(g.coachAssignments[person.id].coach.contractUntil > g.year);
+});
+
+test('무직 코치의 지도력은 현재 능력을 반영하고 재직 중 계약은 보존한다', () => {
+  const g = e.newGame('kbo-lotte', '코치 능력 QA', 'short', 632);
+  const [person] = seedIdleManagers(g, 1, gameDate(g));
+  person.coach.skill = 35;
+  person.ability = Object.fromEntries(managerAbilityKeys.map((key) => [key, 88]));
+  reconcileManagerPeople(g, world);
+  assert.equal(
+    person.coach.skill,
+    coachSkillFromAbility(managerAbility(person), person.coach.role),
+  );
+  g.staff.push({ ...person.coach, skill: 36, contractUntil: g.year + 2 });
+  reconcileManagerPeople(g, world);
+  assert.equal(g.staff.at(-1).skill, 36);
+});

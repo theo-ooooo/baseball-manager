@@ -54,7 +54,7 @@ import {
   describePreseasonSkipBlockers,
   preseasonSkipBlockers,
 } from '@dugout/shared/preseason';
-import type { Coach, GameState, Pos, Result, WorldCatalog } from '@dugout/shared/types';
+import type { Coach, GameState, Pos, Result, Stats, WorldCatalog } from '@dugout/shared/types';
 import { rememberCoaches, releaseCoach } from './coach-employment';
 import {
   blankStats,
@@ -84,7 +84,10 @@ import {
   developTrainingFamiliarity,
 } from './squad-management';
 import { releasePlayer } from './player-release';
-export function createGameEngine(world: WorldCatalog) {
+export function createGameEngine(
+  world: WorldCatalog,
+  scoutingPreviousStats: Record<string, Stats> = {},
+) {
   const {
     clubs,
     leagues,
@@ -102,7 +105,7 @@ export function createGameEngine(world: WorldCatalog) {
   const trades = createTrades(world);
   const rookieDraft = createRookieDraft(world);
   const recruitment = createRecruitment(world);
-  const scouting = createScouting(world);
+  const scouting = createScouting(world, scoutingPreviousStats);
   const managerCareer = createManagerCareer(world);
   const worldSimulation = createWorldSimulation(world);
   const registrations = createAiRegistrations(world);

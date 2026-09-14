@@ -49,11 +49,12 @@ export function signingOutlook(
   p: Player,
   fee: number,
   confidence: number,
+  evaluatedSalary = signingDemand(g, p),
 ): SigningOutlook {
   const personality = playerPersonality(p);
   const gap = signingGap(g, p);
-  const demand = signingDemand(g, p);
-  const spread = Math.max(1, Math.round((demand * (100 - confidence)) / 260));
+  const demand = evaluatedSalary;
+  const spread = Math.max(0.1, (demand * (100 - confidence)) / 260);
   const free = p.club === 'fa';
   const affordable = fee + demand * 1.05 <= g.budget;
   const chance: SigningOutlook['chance'] = !affordable
@@ -79,7 +80,10 @@ export function signingOutlook(
   return {
     chance,
     label: labels[chance],
-    demand: [Math.max(1, demand - spread), demand + spread],
+    demand: [
+      Math.max(0.01, Math.floor((demand - spread) * 100) / 100),
+      Math.ceil((demand + spread) * 100) / 100,
+    ],
     fee,
     affordable,
     reason:

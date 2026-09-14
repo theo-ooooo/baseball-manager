@@ -83,7 +83,7 @@ export function coachSubstitution(g: GameState, cursor: number): CoachSubstituti
         }
       | undefined;
     for (const pos of Object.keys(plan.defense) as DefensivePosition[]) {
-      if (pos === 'P') continue;
+      if (pos === 'P' || pos === 'DH') continue;
       const out = byId.get(plan.defense[pos]!);
       const slot = plan.lineup.indexOf(plan.defense[pos]!);
       if (!out || slot < 0) continue;

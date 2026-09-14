@@ -2,6 +2,7 @@ import { recordBoardTransaction } from './board-transactions';
 import { reconcileManagerPeople } from './manager-people';
 import { managerCoachingStance, playerPersonality } from '@dugout/shared/personality';
 import { signingGap } from '@dugout/shared/signing-outlook';
+import { coachSkillFromAbility, managerAbility } from '@dugout/shared/manager-ability';
 import { archivePlayer } from './world-simulation';
 import type {
   CoachDeal,
@@ -567,7 +568,13 @@ export function createRecruitment(world: WorldCatalog) {
       if (outgoing) releaseCoach(g, outgoing);
       g.staff = [
         ...g.staff.filter((c) => c.role !== d.role),
-        { ...d.coach, role: d.role, salary: d.salary, contractUntil: g.year + d.years },
+        {
+          ...d.coach,
+          role: d.role,
+          salary: d.salary,
+          contractUntil: g.year + d.years,
+          ...(person ? { skill: coachSkillFromAbility(managerAbility(person), d.role) } : {}),
+        },
       ];
       rememberCoaches(g);
       reconcileManagerPeople(g, world);

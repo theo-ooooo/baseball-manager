@@ -93,7 +93,20 @@ export class CareerService {
         error: '다른 화면에서 변경됐습니다. 최신 커리어를 불러왔습니다.',
         ...presentCareer(attachPortraits(refreshed(), world)),
       });
-    const engine = createGameEngine(world);
+    const scoutIds = [
+      'advance',
+      'continue',
+      'continueDay',
+      'delegateMatch',
+      'completeMatch',
+      'skipPreseason',
+    ].includes(String(action.type))
+      ? current.state?.scouting?.assignments
+          .filter((task) => task.status === 'active')
+          .flatMap((task) => task.candidateIds || []) || []
+      : [];
+    const scoutingSeasons = await this.careers.scoutingSeasons(db, user, scoutIds);
+    const engine = createGameEngine(world, scoutingSeasons);
     let next;
     try {
       if (action.type === 'start') {

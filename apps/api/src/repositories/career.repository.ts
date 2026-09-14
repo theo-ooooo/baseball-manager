@@ -1,11 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { careerProjections } from './career-projections';
-import type { GameState, WorldCatalog, FinanceEntry, Result } from '@dugout/shared/types';
+import type { GameState, WorldCatalog, FinanceEntry, Result, Stats } from '@dugout/shared/types';
 import type { PlayerCareerRecord } from '@dugout/shared/long-term';
 
 type CareerRow = { state: string; revision: number };
 @Injectable()
 export class CareerRepository {
+  /** At most three missions × three candidates, one batch of indexed lookups. */
+  async scoutingSeasons(db: D1Database, user: string, ids: string[]) {
+    const unique = [...new Set(ids)].slice(0, 9);
+    if (!unique.length) return {};
+    const rows = await db.batch<{ data: string }>(
+      unique.map((id) =>
+        db
+          .prepare(
+            "SELECT data FROM career_player_records WHERE user_id=? AND player_id=? AND kind='season' ORDER BY season DESC,id DESC LIMIT 1",
+          )
+          .bind(user, id),
+      ),
+    );
+    const result: Record<string, Stats> = {};
+    rows.forEach((row, i) => {
+      const stats = row.results[0] && (JSON.parse(row.results[0].data) as PlayerCareerRecord).stats;
+      if (stats) result[unique[i]] = stats;
+    });
+    return result;
+  }
   async lastPlayerSeason(db: D1Database, user: string, playerId: string) {
     const row = await db
       .prepare(

@@ -273,6 +273,7 @@ function weakenDefense(g) {
   const position = Object.keys(plan.defense).find(
     (pos) =>
       pos !== 'P' &&
+      pos !== 'DH' &&
       g.roster.some(
         (p) =>
           p.pos !== 'P' &&
@@ -467,4 +468,17 @@ test('뒤진 상황에서는 리드 상황보다 타격 손실을 더 무겁게 
   // 순이득 기준을 넘기 어려우므로 두 결과가 같을 수 없다.
   assert.ok(lead || behind, '두 상황 중 하나는 판정이 나와야 한다');
   if (behind && !lead) assert.fail('뒤진 상황이 리드 상황보다 먼저 제안되면 가중이 반대다');
+});
+
+test('DH의 수비 수치만 낮아도 대수비를 추천하지 않는다', () => {
+  const g = start(902);
+  const { plan } = matchPlanAt(g, 1);
+  assert.ok(plan.defense.DH);
+  for (const p of g.roster) if (p.pos !== 'P') p.field = 95;
+  g.roster.find((p) => p.id === plan.defense.DH).field = 1;
+  for (let cursor = 1; cursor < g.liveMatch.timeline.log.length; cursor++) {
+    const suggestion = coachSubstitution(g, cursor);
+    assert.ok(suggestion?.kind !== 'fielder' || suggestion.outgoing.id !== plan.defense.DH);
+    assert.ok(suggestion?.kind !== 'fielder' || suggestion.plan.defense.DH === plan.defense.DH);
+  }
 });

@@ -10,7 +10,7 @@ buildSync({
     contents: `export * from './tests/fixtures/engine';
       export * from './packages/shared/src/scouting-guide';
       export * from './apps/web/src/features/inbox/report-destination';
-      export * from './packages/shared/src/signing-outlook';`,
+      export * from './packages/shared/src/signing-outlook'; export * from './apps/api/src/domain/scouting'; export * from './apps/api/src/domain/free-agent-valuation';`,
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -21,6 +21,9 @@ buildSync({
 });
 const {
   engine: e,
+  world,
+  createScouting,
+  freeAgentValuation,
   scoutingGuide,
   presentScoutingNews,
   reportDestination,
@@ -256,4 +259,23 @@ test('도착한 스카우트 보고서와 뉴스에 영입 전망이 담긴다',
   assert.ok(section.body.includes(r.signing.reason), '본문에 근거가 보여야 한다');
   assert.match(section.body, /기대 연봉/);
   assert.match(section.body, /예산/);
+});
+
+test('FA 관찰 보고는 전년도 성적을 반영한 협상 평가액을 사용한다', () => {
+  let g = game();
+  const p = candidate(g);
+  const previous = { ...p.stats, ab: 400, h: 160, hr: 35, outs: 300, er: 20 };
+  g = e.applyAction(g, request(g, p));
+  g.scouting.assignments[0].due = '2000-01-01';
+  const salary = freeAgentValuation(g, p, 'kbo', previous).salary;
+  createScouting(world, { [p.id]: previous }).tick(g);
+  const report = g.scouting.reports.find((r) => r.playerId === p.id);
+  assert.deepEqual(
+    report.signing.demand,
+    signingOutlook(g, p, 0, report.confidence, salary).demand,
+  );
+  assert.deepEqual(
+    signingOutlook(g, { ...p, salary: 99999 }, 0, 95, salary).demand,
+    signingOutlook(g, { ...p, salary: 1 }, 0, 95, salary).demand,
+  );
 });

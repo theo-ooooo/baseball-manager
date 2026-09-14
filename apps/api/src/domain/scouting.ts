@@ -1,4 +1,5 @@
-import type { GameState, Player, Pos, WorldCatalog } from '@dugout/shared/types';
+import type { GameState, Player, Pos, Stats, WorldCatalog } from '@dugout/shared/types';
+import { freeAgentValuation } from './free-agent-valuation';
 import type { ScoutAssignment, ScoutReport } from '@dugout/shared/scouting';
 import { signingOutlook } from '@dugout/shared/signing-outlook';
 import { scoutingCost, scoutingDurations } from '@dugout/shared/scouting';
@@ -35,7 +36,7 @@ function signingLines(g: GameState, r: ScoutReport) {
   );
   return lines;
 }
-export function createScouting(world: WorldCatalog) {
+export function createScouting(world: WorldCatalog, previousStats: Record<string, Stats> = {}) {
   const view = createGameView(world);
   const state = (g: GameState) => (g.scouting ??= { shortlist: [], assignments: [], reports: [] });
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
@@ -185,7 +186,15 @@ export function createScouting(world: WorldCatalog) {
       ],
       salary: p.salary,
       fee: askPrice(p),
-      signing: signingOutlook(g, p, askPrice(p), confidence),
+      signing: signingOutlook(
+        g,
+        p,
+        askPrice(p),
+        confidence,
+        p.club === 'fa'
+          ? freeAgentValuation(g, p, view.getClub(g.club).league, previousStats[p.id]).salary
+          : undefined,
+      ),
     };
   }
   function tick(g: GameState) {

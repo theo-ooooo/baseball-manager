@@ -122,6 +122,12 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
       source: person.source,
       verifiedRole: '감독 경력 · 게임 내 코치 보직 전환',
     };
+    const assignment = g.coachAssignments?.[person.id];
+    if (
+      !g.staff.some((c) => c.managerPersonId === person.id) &&
+      !(assignment && assignment.club !== 'fa' && (assignment.coach.contractUntil || 0) > g.year)
+    )
+      person.coach.skill = coachSkillFromAbility(managerAbility(person), person.coach.role);
   }
   for (const person of Object.values(people)) {
     const job = active.get(person.id);
@@ -229,7 +235,7 @@ export function convertIdleManagersToCoaches(g: GameState, world: WorldCatalog) 
   const assignments = (g.coachAssignments ??= {});
   const perClub = new Map<string, number>();
   for (const assignment of Object.values(assignments))
-    if (assignment.club !== 'fa')
+    if (assignment.club !== 'fa' && (assignment.coach.contractUntil || 0) > g.year)
       perClub.set(assignment.club, (perClub.get(assignment.club) || 0) + 1);
   const today = gameDate(g);
   const converted: { person: ManagerRecord; club: string }[] = [];
@@ -238,8 +244,17 @@ export function convertIdleManagersToCoaches(g: GameState, world: WorldCatalog) 
       (person) =>
         !!person.coach &&
         idleDays(g, person) >= 150 &&
-        !assignments[person.id] &&
-        !g.coachDeals?.some((deal) => deal.coach.id === person.id) &&
+        !(
+          assignments[person.id]?.club !== 'fa' &&
+          (assignments[person.id]?.coach.contractUntil || 0) > g.year
+        ) &&
+        !g.coachDeals?.some(
+          (deal) =>
+            deal.coach.id === person.id &&
+            ['pending', 'accepted', 'counter'].includes(deal.status) &&
+            (deal.year ?? g.year) === g.year &&
+            (deal.expires ?? deal.day + 14) >= g.day,
+        ) &&
         !g.staff.some((coach) => coach.managerPersonId === person.id),
     )
     .sort((a, b) => idleDays(g, b) - idleDays(g, a) || a.id.localeCompare(b.id))
