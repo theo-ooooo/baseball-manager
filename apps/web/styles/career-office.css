@@ -2613,7 +2613,7 @@
   font-size: 21px;
 }
 .player-role-workspace small {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .player-role-columns {
   display: grid;
@@ -2634,7 +2634,7 @@
   font-size: 14px;
 }
 .player-role-columns p {
-  color: var(--muted);
+  color: var(--muted-foreground);
   line-height: 1.7;
   font-size: 13px;
 }
@@ -2706,7 +2706,7 @@
   font-size: 12px;
 }
 .player-position-levels b {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .player-role-registration {
   display: grid;
@@ -2720,7 +2720,7 @@
 .player-data-sources {
   font-size: 12px;
   padding: 16px 0;
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .player-data-sources summary {
   cursor: pointer;

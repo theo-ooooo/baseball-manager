@@ -828,7 +828,7 @@
   font-size: 28px;
 }
 .augmentation-room > header p {
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: 14px;
   line-height: 1.8;
 }
@@ -884,7 +884,7 @@
 }
 .augmentation-card small,
 .augmentation-note {
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: 12px;
 }
 .augmentation-card button {
@@ -912,7 +912,7 @@
 }
 .tactic-card-room > header p {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--muted-foreground);
   line-height: 1.7;
 }
 .tactic-card-room h2 {

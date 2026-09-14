@@ -3064,7 +3064,7 @@ input,
 }
 .section-tabs a {
   padding: 12px 16px;
-  color: var(--muted);
+  color: var(--muted-foreground);
   border-bottom: 3px solid transparent;
   font-size: 13px;
   font-weight: 600;
@@ -3108,7 +3108,7 @@ input,
 }
 .trade-player-list small {
   display: block;
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .trade-player-list input {
   width: 18px;

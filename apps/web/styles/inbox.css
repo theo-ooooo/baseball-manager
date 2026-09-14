@@ -939,7 +939,7 @@
 .box-score-note {
   display: block;
   margin-top: 16px;
-  color: var(--muted);
+  color: var(--muted-foreground);
   line-height: 1.7;
 }
 @media (max-width: 600px) {

@@ -466,12 +466,14 @@
 }
 .match-use-cards > button:disabled {
   background: #1b292e;
+  color: #9aafb9;
+  opacity: 1;
 }
 .match-use-cards > button:disabled b {
   color: #a5b8bb;
 }
 .match-use-cards .is-spent {
-  opacity: 0.55;
+  border-style: dashed;
 }
 .match-card-activation,
 .match-effect-notice {
@@ -628,7 +630,10 @@
   --text-3: #9aafb9;
   --brand: #bcf16b;
   --brand-soft: #283d2d;
-  --muted: #9aafb9;
+  --surface-3: #23343d;
+  --foreground: var(--text);
+  --muted: var(--surface-3);
+  --muted-foreground: var(--text-3);
   display: flex;
   flex-direction: column;
   width: min(900px, calc(100vw - 24px));

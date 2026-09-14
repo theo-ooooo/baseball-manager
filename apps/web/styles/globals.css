@@ -13,7 +13,7 @@
   --line-strong: #8298a3;
   --text: #22323a;
   --text-2: #435b66;
-  --text-3: #617680;
+  --text-3: #506570;
   --brand: #236247;
   --brand-hover: #184b35;
   --brand-fg: #ffffff;
@@ -40,6 +40,7 @@
   --primary-foreground: var(--brand-fg);
   --secondary: var(--surface-3);
   --secondary-foreground: var(--text);
+  /* Muted backgrounds and text use separate tokens; do not use --muted as a text color. */
   --muted: var(--surface-3);
   --muted-foreground: var(--text-3);
   --accent: var(--brand-soft);
@@ -3679,7 +3680,7 @@ b {
   font-size: 24px;
 }
 .catalog-loading p {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .ledger-panel {
   margin-bottom: 24px;
