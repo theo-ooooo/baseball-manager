@@ -1510,8 +1510,17 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - QA 커리어·로컬 서버·스크린샷·빌드 결과는 Git에 포함하지 않았다. 검증용 브라우저와 서버는 종료했다. 타입·린트·포맷 검사 통과. GitHub 푸시·공개 배포는 아직 남아 있다.
 
 
-## 2026-09-14 — v0.7.0 릴리스 준비
+## 2026-09-15 — v0.7.0 릴리스 준비
 
 - 공개 버전을 0.7.0으로 올리고 빌드 식별자 표시를 유지했다. 선택적 저장 필드를 사용하므로 기존 커리어를 초기화할 필요가 없다.
 - `docs/tactical-stories-0.7.0.md`에 전술 관측/확률 보정, 주전 경쟁 생성 조건과 6경기 약속/사기 반영, 코드 위치, 저장 한도와 검증 범위를 기록했다. 이번 범위는 앞서 추천한 상대 전술 대응과 주전 경쟁이다.
 - 최종 프로덕션 빌드·413개 테스트·타입·린트·포맷·PC/모바일 핵심 모달 검증을 완료했다. 기존 관리형 Cloudflare 배포 경로를 사용하며 사용자 GitHub main 푸시와 CI의 실제 publish, 공개 0.7.0/빌드 확인이 남아 있다.
+
+
+## 2026-09-15 — v0.7.0 공개 배포 완료
+
+- 사용자 GitHub `theo-ooooo/baseball-manager` main과 `v0.7.0` 주석 태그가 릴리스 소스 `169546c6b0d2dbd22ccfb390a611fdd4e9fe5a84`를 가리키는 것을 원격 조회로 확인했다. 서버/공유/테스트 `3563823`, 화면/훅 `e02a9ef`, 버전/동작 문서 `169546c`로 나눠 커밋했다.
+- GitHub Actions `34859669549`의 테스트 및 배포 잡 성공을 확인했다. CI에서도 413개 테스트 전부 통과했으며 `Apply forward migrations and publish verified Worker`가 실제 실행돼 성공했다. Worker Version ID는 `747e81c0-7f1f-4e3a-8874-3d9d42aab6a0`이다.
+- 공개 `https://baseball-manager.kkwondev.workers.dev`를 다시 요청해 JavaScript `assets/game-CW5UvlJW.js`의 0.7.0/빌드 `169546c`, 수비 대응과 주전 경쟁 명령/화면 문구를 확인했다. 공개 CSS `/assets/index-DDEVFc0c.css`에 전술 분석·선택 모달·주전 경쟁 스타일이 포함됐다. 기존 가독성·포스트시즌·날씨·0.6.0 기능 자산 검사도 통과했다.
+- `/api/health` 정상(Vinext/NestJS/Cloudflare D1), 카탈로그 `world-2026-09-14-v17` 및 지붕 구장 15곳을 확인했다. 공개 사용자 저장은 변경하지 않았다. `.openai/hosting.json`의 프로젝트 정체성과 인프라 요금제는 그대로다.
+- 알려진 범위: 관측 기록에 따른 규칙 기반 수비 대응, 타자 중심의 같은 포지션 주전 경쟁이다. 장기 난이도 균형·전체 리그 심리 재현을 검증한 것은 아니다. 이번 릴리스의 남은 게시 차단 요인은 없다. 이 완료 기록은 배포 소스를 바꾸지 않는 별도 `[skip ci]` 문서 커밋으로 푸시한다.
