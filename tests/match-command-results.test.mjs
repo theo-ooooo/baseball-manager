@@ -51,6 +51,10 @@ test('Only completed commanded plays appear; hit size and tactical success are d
 });
 test('Pitching signs celebrate outs without runs and do not claim intentional walks prevent a crisis', () => {
   assert.equal(
+    matchCommandResults(result(event('pitchAround', '볼넷', 1)), 1, 'own')[0].label,
+    '볼넷 허용',
+  );
+  assert.equal(
     matchCommandResults(
       result(event('attackBatter', '삼진', 1, { outs: 2 }, { outs: 3 })),
       1,

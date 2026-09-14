@@ -67,7 +67,18 @@ export function matchCommandResults(
             ? hit
               ? '번트 안타!'
               : '희생번트 성공!'
-            : labels[kind];
+            : defending && ['single', 'double', 'triple', 'homeRun', 'walk', 'error'].includes(kind)
+              ? (
+                  {
+                    single: '1루타 허용',
+                    double: '2루타 허용',
+                    triple: '3루타 허용',
+                    homeRun: '홈런 허용',
+                    walk: '볼넷 허용',
+                    error: '실책으로 출루 허용',
+                  } as Record<string, string>
+                )[kind]
+              : labels[kind];
     const playerId = defending
       ? play.pitcher
       : play.plateAppearance === false
