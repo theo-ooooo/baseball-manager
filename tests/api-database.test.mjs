@@ -2237,3 +2237,92 @@ test('An unplayed KBO save repairs to five seeds without a write and the first s
     progressed.state.postseason,
   );
 });
+
+test('A finished-season manager counterproposal receives a persisted reply once, signs and unlocks the next season', async () => {
+  const user = 'manager-renewal-reply';
+  await action(
+    { type: 'start', club: 'kbo-kia', manager: 'Renewal API', mode: 'short', preseason: false },
+    user,
+  );
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  raw.phase = 'finished';
+  raw.day = raw.rounds;
+  raw.news = [];
+  raw.champion = raw.club;
+  const c = raw.managerCareer.contract;
+  c.throughYear = raw.year;
+  c.reviewedYear = raw.year;
+  c.targetRank = 1;
+  raw.standings.kbo.find((s) => s.club === raw.club).w = 100;
+  const date = new Date(Date.UTC(raw.year, 2, 28) + raw.day * 86400000).toISOString().slice(0, 10);
+  const expires = new Date(Date.parse(date) + 14 * 86400000).toISOString().slice(0, 10);
+  const offer = {
+    id: 'api-renewal',
+    club: raw.club,
+    source: 'renewal',
+    salary: c.salary * 1.15,
+    targetRank: 1,
+    applied: date,
+    due: date,
+    expires,
+    status: 'offered',
+    message: 'Renewal',
+  };
+  raw.managerCareer.offers = [offer];
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const terms = { version: 1 };
+  const proposed = await action(
+    {
+      type: 'negotiateManagerContract',
+      id: offer.id,
+      termsVersion: terms.version,
+      salary: offer.salary * 1.05,
+      signingBonus: 0,
+      years: 1,
+      targetRank: 1,
+    },
+    user,
+  );
+  assert.equal(proposed.state.managerCareer.offers[0].contractTerms.status, 'pending');
+  const blocked = await call(
+    '/api/career',
+    { type: 'nextSeason', revision: proposed.revision, requestId: crypto.randomUUID() },
+    user,
+  );
+  assert.equal(blocked.status, 400);
+  const command = {
+    type: 'managerContinue',
+    count: 1,
+    revision: proposed.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const reply = await call('/api/career', command, user);
+  assert.equal(reply.status, 201);
+  assert.equal(reply.body.state.day, raw.day + 1);
+  const agreed = reply.body.state.managerCareer.offers[0];
+  assert.equal(agreed.contractTerms.status, 'agreed');
+  assert.equal(reply.body.state.phase, 'finished');
+  assert.deepEqual((await call('/api/career', command, user)).body, reply.body);
+  assert.deepEqual((await call('/api/career', undefined, user)).body, reply.body);
+  const signed = await action(
+    {
+      type: 'signManager',
+      id: offer.id,
+      termsVersion: agreed.contractTerms.version,
+      signature: raw.manager,
+    },
+    user,
+  );
+  assert.ok(
+    !signed.state.managerCareer.offers.some((o) => o.id === offer.id && o.status === 'offered'),
+  );
+  assert.equal(signed.state.managerCareer.contract.salary, agreed.contractTerms.salary);
+  const next = await action({ type: 'nextSeason' }, user);
+  assert.equal(next.state.year, raw.year + 1);
+  assert.ok(next.state.managerCareer.contract.throughYear >= next.state.year);
+});

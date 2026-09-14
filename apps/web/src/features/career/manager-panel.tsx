@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { managerRenewalStep } from './manager-flow';
 import { ManagerPersonProfile } from './manager-person-profile';
 import { departureLabel, departureDetail } from '@dugout/shared/manager-departure';
 import { ManagerInterviewSession } from './manager-interview-session';
@@ -32,6 +33,7 @@ export function ManagerPanel({
     unemployed = isUnemployed(g);
   const [days, setDays] = useState(7),
     [resign, setResign] = useState(false);
+  const renewal = managerRenewalStep(g);
   const active =
     m?.offers.filter((o) => ['invited', 'pending', 'interview', 'offered'].includes(o.status)) ||
     [];
@@ -174,15 +176,23 @@ export function ManagerPanel({
                   ? '휴가 마무리까지 진행 · 복귀 후 보고 확인'
                   : '최대 7일 진행 · 채용 답변 시 정지'}
               </button>
-              {g.phase === 'finished' && (
-                <button
-                  className="button secondary"
-                  disabled={busy}
-                  onClick={() => void act({ type: 'nextSeason' })}
-                >
-                  다음 시즌 시작
-                </button>
-              )}
+              {g.phase === 'finished' &&
+                (renewal ? (
+                  <Link
+                    className="button secondary"
+                    href={`/interviews/${encodeURIComponent(renewal.offerId!)}`}
+                  >
+                    {renewal.kind === 'contractReply' ? '재계약 답변 확인' : renewal.label}
+                  </Link>
+                ) : (
+                  <button
+                    className="button secondary"
+                    disabled={busy}
+                    onClick={() => void act({ type: 'nextSeason' })}
+                  >
+                    다음 시즌 시작
+                  </button>
+                ))}
             </div>
           )}
           {!unemployed && (

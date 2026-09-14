@@ -975,7 +975,10 @@ export function createGameEngine(
           );
           if (
             addDays(gameDate(s), 1) >=
-            addDays(nextOpening, s.rules?.preseason ? -PRESEASON_DAYS : 0)
+              addDays(nextOpening, s.rules?.preseason ? -PRESEASON_DAYS : 0) &&
+            !s.managerCareer?.offers.some(
+              (o) => o.source === 'renewal' && o.club === s.club && o.status === 'offered',
+            )
           ) {
             nextSeason(s);
             medicalTick(s);

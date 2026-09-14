@@ -287,6 +287,11 @@ export function GameScreen({
         else if (view === 'media') toast.info('질문과 팀 대화에 답하거나 코치에게 맡겨 주세요.');
         else setView('media');
       } else setView('matchday');
+    } else if (step.kind === 'contractReply') {
+      const next = await act({ type: 'managerContinue', count: 1 });
+      if (next) openReport(next.news.find((n) => n.managerOfferId === step.offerId && !n.read)?.id);
+    } else if (step.kind === 'contract') {
+      router.push(`/interviews/${encodeURIComponent(step.offerId!)}`);
     } else if (step.kind === 'season') {
       const next = await act({ type: 'nextSeason' });
       if (next) openReport();

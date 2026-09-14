@@ -2,11 +2,43 @@ import type { GameState } from '@dugout/shared/types';
 import { orderedInbox } from '../inbox/inbox-order';
 
 export type ManagerStep = {
-  kind: 'decision' | 'report' | 'matchday' | 'media' | 'live' | 'season' | 'continue';
+  kind:
+    | 'decision'
+    | 'report'
+    | 'matchday'
+    | 'media'
+    | 'live'
+    | 'season'
+    | 'continue'
+    | 'contractReply'
+    | 'contract';
   label: string;
   detail: string;
   reportId?: string;
+  offerId?: string;
 };
+
+/** A finished career needs a reply/signature before opening the next season. */
+export function managerRenewalStep(g: GameState): ManagerStep | undefined {
+  if (g.phase !== 'finished') return undefined;
+  const renewal = g.managerCareer?.offers.find(
+    (offer) => offer.source === 'renewal' && offer.club === g.club && offer.status === 'offered',
+  );
+  if (renewal?.contractTerms?.status === 'pending')
+    return {
+      kind: 'contractReply',
+      label: '재계약 답변까지 진행',
+      offerId: renewal.id,
+      detail: '하루를 진행하고 이사회의 수정 제안 답변을 확인합니다.',
+    };
+  if (renewal && g.managerCareer?.contract && g.managerCareer.contract.throughYear <= g.year)
+    return {
+      kind: 'contract',
+      label: renewal.contractTerms?.status === 'agreed' ? '재계약 서명' : '재계약 조건 확인',
+      offerId: renewal.id,
+      detail: '이사회 답변을 확인하고 계약에 서명하거나 제안을 거절해 주세요.',
+    };
+}
 
 /** Read-only navigation decisions. Opening a screen must never advance the career. */
 export function managerStep(g: GameState, hasFixture: boolean, view: string): ManagerStep {
@@ -67,12 +99,15 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
       detail: report.title,
       reportId: report.id,
     };
-  if (g.phase === 'finished')
+  if (g.phase === 'finished') {
+    const renewal = managerRenewalStep(g);
+    if (renewal) return renewal;
     return {
       kind: 'season',
       label: '다음 시즌',
       detail: '재계약과 선수단을 점검하고 새 시즌을 시작하세요.',
     };
+  }
   if (hasFixture)
     return {
       kind: 'matchday',

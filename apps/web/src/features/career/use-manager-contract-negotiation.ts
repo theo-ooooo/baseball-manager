@@ -104,6 +104,15 @@ export function useManagerContractNegotiation(
     valid,
     changed,
     send,
+    async waitForReply() {
+      if (busy || submitting.current || !waiting || g.phase !== 'finished') return;
+      submitting.current = true;
+      try {
+        await act({ type: 'managerContinue', count: 1 });
+      } finally {
+        submitting.current = false;
+      }
+    },
     reset() {
       salary.setAmount(current.salary);
       bonus.setAmount(current.signingBonus);

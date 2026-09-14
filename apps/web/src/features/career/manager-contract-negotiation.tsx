@@ -98,6 +98,7 @@ export function ManagerContractNegotiation({
     setInk,
     agreed,
     waiting,
+    waitForReply,
     final,
     valid,
     changed,
@@ -299,9 +300,20 @@ export function ManagerContractNegotiation({
             </button>
           )}
           {waiting && (
-            <Link className="button secondary" href="/?view=inbox">
-              수신함으로 · 답변 기다리기
-            </Link>
+            <>
+              {g.phase === 'finished' && (
+                <button
+                  className="button primary"
+                  disabled={busy}
+                  onClick={() => void waitForReply()}
+                >
+                  하루 진행 · 이사회 답변 받기
+                </button>
+              )}
+              <Link className="button secondary" href="/?view=inbox">
+                수신함으로 · 답변 기다리기
+              </Link>
+            </>
           )}
           <button
             className="text-button"
