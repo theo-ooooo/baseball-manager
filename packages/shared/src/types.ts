@@ -128,6 +128,14 @@ export type Standing = {
   form: string[];
 };
 export type Result = {
+  managerReview?: {
+    version: 1;
+    club: string;
+    commands: MatchCommand[];
+    changes: MatchChange[];
+    reunions?: { id: string; name: string }[];
+  };
+
   matchCards?: MatchCardSummary;
   augmentation?: AugmentationKind;
   delegatedBy?: string;

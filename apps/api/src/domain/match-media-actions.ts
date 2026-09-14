@@ -11,6 +11,8 @@ import { prepareDynamics, postNews } from './club-dynamics';
 import { conversationReaction } from './match-media-reactions';
 import { coachMediaAnswers } from './coach-media';
 import { selfManagerAbility } from '@dugout/shared/manager-ability';
+import { managerConnection } from '@dugout/shared/manager-journey';
+import { creditManagerExperience, managerRelationshipReaction } from './manager-journey';
 
 function recordConversation(
   g: GameState,
@@ -44,18 +46,35 @@ function recordConversation(
     ? ((g.staff.find((c) => c.role === '수석') || g.staff[0])?.skill ?? 50)
     : selfManagerAbility(g).motivation;
   const reactions = players.map((p) => {
-    const reaction = conversationReaction(p, context, canonical, !!delegated, motivation);
+    const reaction = conversationReaction(
+      p,
+      context,
+      canonical,
+      !!delegated,
+      motivation,
+      managerConnection(g, p.id)?.trust,
+    );
     if (automatic) {
       reaction.after = reaction.before;
       reaction.reason = '자동 진행 중 언론 담당자가 일정에 맞춰 응대함';
     }
     p.mood!.value = reaction.after;
     if (reaction.after !== reaction.before) p.mood!.reason = reaction.reason;
+    if (!delegated)
+      managerRelationshipReaction(g, p.id, Math.sign(reaction.after - reaction.before));
     return reaction;
   });
   const record: ConversationRecord = { ...context, answers: canonical, delegated, reactions };
   g.media ??= { journal: [] };
   g.media.journal = [record, ...g.media.journal].slice(0, 20);
+  if (!delegated)
+    creditManagerExperience(
+      g,
+      'motivation',
+      1 + Number(reactions.some((r) => r.after > r.before)),
+      context.key,
+      '직접 전한 인터뷰와 라커룸 메시지',
+    );
   if (context.stage === 'pre') g.media.preparedFor = context.key;
   else delete g.media.pending;
   const pendingId = `media-pending:${context.key}`;

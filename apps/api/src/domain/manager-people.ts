@@ -86,7 +86,7 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
   }
   for (const person of Object.values(people)) {
     person.personality ??= managerPersonality(person.id);
-    person.ability ??= managerAbility(person);
+    person.ability ??= managerAbility({ id: person.id, reputation: person.reputation });
     if (!person.background || person.background.version < 2) {
       const origin = world.clubs.find((c) => c.id === person.originClub);
       const catalogBackground = origin?.manager?.background;

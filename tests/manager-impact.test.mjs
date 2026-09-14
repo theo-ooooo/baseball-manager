@@ -127,8 +127,8 @@ test('Own manager development affects training and decline with the same staff, 
   delete veteran.development;
   const low = structuredClone(base),
     high = structuredClone(base);
-  low.managerCareer.reputation = 20;
-  high.managerCareer.reputation = 95;
+  low.managerCareer.journey.baseAbility = abilities(20);
+  high.managerCareer.journey.baseAbility = abilities(95);
   for (let day = 0; day < 28; day++) {
     developPlayers(low);
     developPlayers(high);
@@ -159,8 +159,8 @@ test('Motivation changes actual mood responses; coach delegation follows the coa
   };
   const low = structuredClone(base),
     high = structuredClone(base);
-  low.managerCareer.reputation = 20;
-  high.managerCareer.reputation = 95;
+  low.managerCareer.journey.baseAbility = abilities(20);
+  high.managerCareer.journey.baseAbility = abilities(95);
   const a = e.applyAction(low, action),
     b = e.applyAction(high, action);
   const total = (g) => g.media.journal[0].reactions.reduce((s, r) => s + r.after - r.before, 0);
@@ -219,8 +219,8 @@ test('Evaluation improves a completed scout report with the same scout and obser
   g.day += 7;
   const low = structuredClone(g),
     high = structuredClone(g);
-  low.managerCareer.reputation = 20;
-  high.managerCareer.reputation = 95;
+  low.managerCareer.journey.baseAbility = abilities(20);
+  high.managerCareer.journey.baseAbility = abilities(95);
   scouting.tick(low);
   scouting.tick(high);
   assert.ok(high.scouting.reports[0].confidence > low.scouting.reports[0].confidence);

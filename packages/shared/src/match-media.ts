@@ -140,6 +140,22 @@ export function postMatchConversation(
     margin: own - against,
     playerIds: [...appeared],
     questions: [
+      ...(result.managerReview?.reunions?.length
+        ? [
+            {
+              id: 'reunion',
+              room: 'press' as const,
+              speaker: '구단 출입 기자',
+              topic: 'selection' as const,
+              text: `함께했던 ${result.managerReview.reunions.map((p) => p.name).join(', ')} 선수를 상대 팀에서 만났습니다. 어떤 마음이 드십니까?`,
+              choices: choices(
+                '함께 흘린 땀을 기억합니다. 다른 유니폼을 입어도 성장을 응원합니다.',
+                '잘 아는 선수일수록 승부에서는 더 철저히 준비해야 합니다.',
+                '반갑게 인사를 나눴습니다. 오늘은 각자 팀의 경기에 집중했습니다.',
+              ),
+            },
+          ]
+        : []),
       {
         id: 'result',
         room: 'press',

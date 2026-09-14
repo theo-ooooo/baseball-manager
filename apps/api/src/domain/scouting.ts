@@ -1,3 +1,4 @@
+import { creditManagerExperience } from './manager-journey';
 import type { GameState, Player, Pos, Stats, WorldCatalog } from '@dugout/shared/types';
 import { freeAgentValuation } from './free-agent-valuation';
 import type { ScoutAssignment, ScoutReport } from '@dugout/shared/scouting';
@@ -210,6 +211,13 @@ export function createScouting(world: WorldCatalog, previousStats: Record<string
         return p ? [report(g, p, task)] : [];
       });
       task.status = 'completed';
+      creditManagerExperience(
+        g,
+        'evaluation',
+        reports.length * 2,
+        task.id,
+        '스카우트 관찰 보고 검토',
+      );
       task.reportIds = reports.map((r) => r.playerId);
       delete task.candidateIds;
       const ids = new Set(task.reportIds);

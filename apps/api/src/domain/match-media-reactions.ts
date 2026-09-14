@@ -7,6 +7,7 @@ export function conversationReaction(
   answers: { id: string; choice: MediaChoice['id'] }[],
   delegated: boolean,
   motivation = 50,
+  trust = 50,
 ) {
   const before = player.mood!.value;
   let change = 0;
@@ -32,6 +33,7 @@ export function conversationReaction(
   }
   const cap = delegated ? 1 : 2;
   const influence = 0.75 + Math.max(20, Math.min(95, motivation)) * 0.005;
+  if (!delegated && change > 0) change += Math.min(0.25, Math.max(0, trust - 50) / 200);
   change = Math.max(
     -cap,
     Math.min(cap, (change > 0 ? change * influence : change / influence) * (delegated ? 0.5 : 1)),

@@ -236,7 +236,7 @@ test('감독마다 지도 능력이 정해지고 저장본을 오가도 값이 �
   const saved = JSON.parse(JSON.stringify(person.ability));
   // 예전 저장본(능력치 없음)에서도 같은 값으로 복원되어야 한다.
   delete person.ability;
-  assert.deepEqual(managerAbility(person), saved);
+  assert.deepEqual(managerAbility(person), managerAbility({ ...person, ability: saved }));
   reconcileManagerPeople(g, world);
   assert.deepEqual(g.managerPeople[person.id].ability, saved);
 });
@@ -275,7 +275,7 @@ test('코치로 전향하면 보직에 맞는 지도 능력을 지도력으로 �
   for (const person of Object.values(g.managerPeople))
     assert.equal(
       person.coach.skill,
-      coachSkillFromAbility(person.ability, person.coach.role),
+      coachSkillFromAbility(managerAbility(person), person.coach.role),
       person.name,
     );
 });

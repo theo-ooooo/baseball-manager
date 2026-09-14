@@ -1,4 +1,8 @@
 import { hash } from './game-view';
+import { applyManagerTrait } from './manager-traits';
+import { managerExperienceBonus } from './manager-journey';
+import type { ManagerCareer } from './manager-career';
+import type { ManagerBackground } from './manager-background';
 
 /**
  * 감독의 지도 능력. 평판이 "구단과 언론이 보는 명성" 이라면 이쪽은 실제 운영 역량이다.
@@ -44,15 +48,16 @@ export function managerAbility(person: {
   id: string;
   reputation: number;
   ability?: ManagerAbility;
+  background?: ManagerBackground;
 }): ManagerAbility {
-  if (person.ability) return person.ability;
-  return {
+  const base = person.ability || {
     tactics: rate(person.id, 'tactics', person.reputation),
     bullpen: rate(person.id, 'bullpen', person.reputation),
     development: rate(person.id, 'development', person.reputation),
     motivation: rate(person.id, 'motivation', person.reputation),
     evaluation: rate(person.id, 'evaluation', person.reputation),
   };
+  return applyManagerTrait(base, person.background);
 }
 
 /** 한 줄로 보여 줄 종합 수치. 경기 운영에 무게를 둔다. */
@@ -120,19 +125,25 @@ export function managerDevelopmentFactor(ability?: ManagerAbility) {
   return Math.round((0.7 + (ability.development / 100) * 0.6) * 1000) / 1000;
 }
 
-/**
- * 내 감독의 지도 능력. 컴퓨터 감독은 한 번 정해지면 고정이지만, 내 감독은 현재 평판을
- * 중심으로 계산해 성적이 쌓이면 같이 오른다. 강점·약점의 모양은 이름에 묶여 고정이다.
- */
+/** 기존 시작 능력을 보존하고 평판과 독립된 지도 경험 및 선수 경력 특성을 반영한다. */
 export function selfManagerAbility(g: {
   manager: string;
   reputation: number;
-  managerCareer?: { reputation: number };
+  managerCareer?: Pick<ManagerCareer, 'reputation' | 'background' | 'journey'>;
 }) {
-  return managerAbility({
-    id: `self:${g.manager}`,
-    reputation: g.managerCareer?.reputation ?? g.reputation,
-  });
+  const journey = g.managerCareer?.journey;
+  const base = journey
+    ? (Object.fromEntries(
+        managerAbilityKeys.map((key) => [
+          key,
+          Math.min(95, journey.baseAbility[key] + managerExperienceBonus(journey.experience[key])),
+        ]),
+      ) as ManagerAbility)
+    : managerAbility({
+        id: `self:${g.manager}`,
+        reputation: g.managerCareer?.reputation ?? g.reputation,
+      });
+  return applyManagerTrait(base, g.managerCareer?.background);
 }
 
 /** 경기 시작 때 고정한 능력에만 적용한다. 55가 기준이며 선수 기량을 소폭 보조한다. */

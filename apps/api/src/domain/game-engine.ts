@@ -1,3 +1,4 @@
+import { recordManagerMatch, awardManagerAchievement } from './manager-journey';
 import { tacticCardAction, consumeTacticCard } from './tactic-cards';
 import { augmentationAction, afterAugmentedMatch } from './augmentations';
 import { recordBoardTransaction } from './board-transactions';
@@ -269,11 +270,24 @@ export function createGameEngine(
     const appearances = new Map(g.roster.map((p) => [p.id, p.stats.g]));
     if (matching && live.prepared && live.timeline) {
       const result = applyMatchEffects(g);
+      result.managerReview = {
+        version: 1,
+        club: g.club,
+        commands: live.commands || [],
+        changes: live.changes || [],
+      };
       if (g.phase !== 'preseason' && !post) recordBoardAppearances(g, appearances);
       return result;
     }
     const iterator = simulateMatch(g, home, away, matching ? rng(live.seed) : random, post);
     const result = runMatch(iterator);
+    if (matching)
+      result.managerReview = {
+        version: 1,
+        club: g.club,
+        commands: live.commands || [],
+        changes: live.changes || [],
+      };
     if (g.phase !== 'preseason' && !post) recordBoardAppearances(g, appearances);
     if (matching) delete g.liveMatch;
     return result;
@@ -420,6 +434,13 @@ export function createGameEngine(
           } else {
             g.phase = 'finished';
             g.champion = winners[0];
+            if (g.champion === g.club)
+              awardManagerAchievement(
+                g,
+                `champion:${g.year}:${g.club}`,
+                `${g.year} 시즌 우승`,
+                '포스트시즌을 마치고 우승 트로피를 들어 올렸습니다.',
+              );
             const rank = standings(g).findIndex((s) => s.club === g.club) + 1;
             const own = g.standings[ownLeague].find((s) => s.club === g.club)!;
             g.past.push({ year: g.year, rank, w: own.w, l: own.l, champion: g.champion });
@@ -520,6 +541,7 @@ export function createGameEngine(
     return g;
   }
   function afterMatch(g: GameState, res: Result) {
+    recordManagerMatch(g, res);
     nextStarter(g, true);
     matchMorale(g, res);
     afterAugmentedMatch(g, res);

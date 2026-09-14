@@ -1,3 +1,4 @@
+import { recordManagerInternational } from './manager-journey';
 import type { GameState, Player, WorldCatalog } from '@dugout/shared/types';
 import {
   internationalCalendar,
@@ -187,6 +188,7 @@ export function createInternational(world: WorldCatalog) {
           stage: 'selected',
         };
         events = [...events, event];
+        recordManagerInternational(g, event);
         changed = true;
         report(g, event);
       }

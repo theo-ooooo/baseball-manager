@@ -1,3 +1,4 @@
+import { coachConnectionDiscount } from '@dugout/shared/manager-journey';
 import { recordBoardTransaction } from './board-transactions';
 import { reconcileManagerPeople } from './manager-people';
 import { managerCoachingStance, playerPersonality } from '@dugout/shared/personality';
@@ -411,9 +412,11 @@ export function createRecruitment(world: WorldCatalog) {
       notify(g, d, '코치 제안 거절');
       return;
     }
+    const discount = coachConnectionDiscount(g, d.coach.id);
     const demand =
-      stance?.demand ??
-      d.coach.salary * (1 + Math.max(0, d.coach.skill - g.reputation - 8) * 0.015);
+      (stance?.demand ??
+        d.coach.salary * (1 + Math.max(0, d.coach.skill - g.reputation - 8) * 0.015)) *
+      (1 - discount);
     const cost = d.salary * 0.1 + d.compensation;
     if (cost > g.budget || d.salary < demand * 0.65 || g.staff.some((c) => c.id === d.coach.id)) {
       d.status = 'rejected';
@@ -440,7 +443,7 @@ export function createRecruitment(world: WorldCatalog) {
       record(
         g,
         d,
-        `${stance ? stance.reason + ' ' : ''}보직과 계약 조건에 동의했습니다. 최종 서명 후 코칭 스태프에 합류합니다.`,
+        `${discount ? '함께한 인연을 고려해 연봉 기대치를 낮췄습니다. ' : ''}${stance ? stance.reason + ' ' : ''}보직과 계약 조건에 동의했습니다. 최종 서명 후 코칭 스태프에 합류합니다.`,
       );
     }
     d.responseDay = undefined;

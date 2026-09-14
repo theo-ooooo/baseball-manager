@@ -1,3 +1,4 @@
+import { prepareManagerJourney } from './manager-journey';
 import {
   reconcileManagerPeople,
   availableManager,
@@ -140,6 +141,7 @@ export function createManagerCareer(world: WorldCatalog) {
       );
     }
     addFictionalPlayingCareer(`self:${g.manager}`, g.managerCareer.background);
+    prepareManagerJourney(g, world);
     for (const offer of g.managerCareer.offers) {
       if (
         offer.expectation ||

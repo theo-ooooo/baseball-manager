@@ -202,3 +202,103 @@ test('D1 nationality migration corrects foreign players and carries national ass
     '베네수엘라',
   );
 });
+
+test('D1 최신 시즌 성적이 FA 관찰·협상에 함께 반영되고 감독 경험이 저장·재요청에도 유지된다', async () => {
+  const user = 'manager-journey-fa';
+  const initial = await call('/api/career', undefined, user);
+  let current = await call(
+    '/api/career',
+    {
+      type: 'start',
+      club: 'kbo-lotte',
+      manager: '김기록',
+      mode: 'full',
+      preseason: true,
+      revision: initial.body.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(current.status, 201);
+  const journey = structuredClone(current.body.state.managerCareer.journey);
+  assert.equal(journey.connections[0].origin, 'teammate');
+  const catalog = await call('/api/catalog');
+  const player = catalog.body.players.find((p) => p.club === 'fa' && p.pos !== 'P');
+  assert.ok(player);
+  const db = await mf.getD1Database('DB');
+  const stats = { ...current.body.state.roster[0].stats, ab: 400, h: 180, hr: 40 };
+  const record = {
+    id: 'previous-fa',
+    playerId: player.id,
+    name: player.name,
+    season: current.body.state.year - 1,
+    club: 'kbo-lg',
+    kind: 'season',
+    stats,
+  };
+  await db
+    .prepare(
+      'INSERT INTO career_player_records (user_id,id,player_id,name,season,club_id,kind,data) VALUES (?,?,?,?,?,?,?,?)',
+    )
+    .bind(
+      user,
+      record.id,
+      player.id,
+      player.name,
+      record.season,
+      record.club,
+      record.kind,
+      JSON.stringify(record),
+    )
+    .run();
+  const quote = await call(
+    `/api/career/contracts/${encodeURIComponent(player.id)}/quote`,
+    undefined,
+    user,
+  );
+  assert.equal(quote.status, 200);
+  assert.match(quote.body.basis, /최근 출전 성적/);
+  current = await call(
+    '/api/career',
+    {
+      type: 'assignScout',
+      playerId: player.id,
+      scoutId: current.body.state.staff.find((c) => c.role === '스카우트').id,
+      days: 7,
+      revision: current.body.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(current.status, 201);
+  await db
+    .prepare(
+      "UPDATE careers SET state=json_set(state,'$.scouting.assignments[0].due','2000-01-01') WHERE user_id=?",
+    )
+    .bind(user)
+    .run();
+  const command = {
+    type: 'advance',
+    count: 1,
+    revision: current.body.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const completed = await call('/api/career', command, user);
+  assert.equal(completed.status, 201, JSON.stringify(completed.body).slice(0, 300));
+  const report = completed.body.state.scouting.reports.find((r) => r.playerId === player.id);
+  assert.ok(
+    report.signing.demand[0] <= quote.body.salary && report.signing.demand[1] >= quote.body.salary,
+  );
+  assert.equal(completed.body.state.managerCareer.journey.experience.evaluation, 2);
+  const retried = await call('/api/career', command, user);
+  assert.deepEqual(
+    retried.body.state.managerCareer.journey,
+    completed.body.state.managerCareer.journey,
+  );
+  const restored = await call('/api/career', undefined, user);
+  assert.deepEqual(
+    restored.body.state.managerCareer.journey,
+    completed.body.state.managerCareer.journey,
+  );
+  assert.deepEqual(restored.body.state.managerCareer.journey.baseAbility, journey.baseAbility);
+});

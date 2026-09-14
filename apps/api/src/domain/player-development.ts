@@ -1,3 +1,4 @@
+import { observeManagerTraining } from './manager-journey';
 import { isAvailable } from '@dugout/shared/long-term';
 import type { GameState, Player, PlayerDevelopment } from '@dugout/shared/types';
 import { coachSkill, hash } from '@dugout/shared/game-view';
@@ -74,6 +75,7 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
     const d = p.development!,
       c = d.curve!;
     if (d.lastTrained === date) continue;
+    const beforeGrowth = abilityAverage(p);
     const previous = d.lastGames;
     const appeared =
       previous.year === g.year &&
@@ -140,6 +142,8 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
       p[key] = Math.max(20, Math.min(99, p[key] + delta));
     }
     checkTrainingGoal(g, p);
+    if (g.training !== 'rest' && isAvailable(p))
+      observeManagerTraining(g, p, Math.max(0, abilityAverage(p) - beforeGrowth));
   }
 }
 export function developmentReports(g: GameState) {
