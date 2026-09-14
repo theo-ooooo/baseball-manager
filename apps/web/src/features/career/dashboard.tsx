@@ -1,4 +1,5 @@
 'use client';
+import { isPostseasonPhase, postseasonTarget } from '@dugout/shared/postseason';
 import { PostseasonPanel } from '../schedule/postseason-panel';
 import { MatchWeatherStrip } from '../matches/match-weather-strip';
 import { useMatchWeather } from '../matches/use-match-weather';
@@ -24,13 +25,6 @@ const tactics: Record<string, string> = {
   power: '장타 중심',
   smallball: '기동력 야구',
   patient: '선구안 중심',
-};
-const phaseLabel: Record<GameState['phase'], string> = {
-  preseason: '프리시즌',
-  regular: '정규 시즌',
-  semifinal: '포스트시즌 · 준결승',
-  final: '포스트시즌 · 결승',
-  finished: '시즌 종료',
 };
 const TIRED = 70;
 
@@ -90,7 +84,7 @@ export function Dashboard({
   const upcoming = useUpcomingFixture(g);
 
   const series = g.series.find((s) => s.a === g.club || s.b === g.club),
-    seriesTarget = g.phase === 'semifinal' ? 2 : 3,
+    seriesTarget = isPostseasonPhase(g.phase) ? postseasonTarget(g.phase, g.postseason?.format) : 0,
     ownWins = series ? (series.a === g.club ? series.aw : series.bw) : 0,
     oppWins = series ? (series.a === g.club ? series.bw : series.aw) : 0;
 
@@ -99,12 +93,13 @@ export function Dashboard({
       ? { value: '개막 준비', sub: `정규시즌 개막까지 ${-g.day}일 · 연습경기 ${friendlies}/4회` }
       : g.phase === 'regular' && played === 0
         ? { value: '개막 대기', sub: `${league.name} ${rows.length}개 구단 · 첫 경기 전` }
-        : g.phase === 'semifinal' || g.phase === 'final'
+        : isPostseasonPhase(g.phase)
           ? {
               value: series ? `${ownWins}승 ${oppWins}패` : `${rank}위`,
-              sub:
-                !season.eliminated && series
-                  ? `${phaseLabel[g.phase]} · ${seriesTarget}승 선취 · ${own.w}승 ${own.l}패`
+              sub: season.waiting
+                ? `${season.label} · 앞선 라운드 승자 대기`
+                : !season.eliminated && series
+                  ? `${season.label} · ${seriesTarget}승 선취 · ${own.w}승 ${own.l}패`
                   : `우리 팀 시즌 종료 · 정규 ${own.w}승 ${own.l}패 · 타 구단 포스트시즌 진행 중`,
             }
           : {
@@ -172,7 +167,7 @@ export function Dashboard({
               <h2 id="next-game-title">
                 {fixture ? '오늘의 경기' : nextPair ? '다가오는 경기' : '다음 일정'}
               </h2>
-              <span className="dashboard-tag">{phaseLabel[g.phase]}</span>
+              <span className="dashboard-tag">{season.label}</span>
             </header>
             {weather && (
               <MatchWeatherStrip

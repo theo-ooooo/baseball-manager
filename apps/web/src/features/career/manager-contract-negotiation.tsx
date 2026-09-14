@@ -1,4 +1,5 @@
 'use client';
+import { isPostseasonPhase } from '@dugout/shared/postseason';
 import Link from 'next/link';
 import { FileSignature, Handshake, PenLine, LockKeyhole } from 'lucide-react';
 import {
@@ -422,7 +423,7 @@ export function ManagerContractNegotiation({
               </button>
               <button
                 className="button primary"
-                disabled={busy || !ink || ['semifinal', 'final'].includes(g.phase)}
+                disabled={busy || !ink || isPostseasonPhase(g.phase)}
                 onClick={() => void send('signManager')}
               >
                 <PenLine size={16} />

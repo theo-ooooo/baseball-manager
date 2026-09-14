@@ -42,6 +42,7 @@ function bracket() {
     { a: g.club, b: 'kbo-lg', aw: 0, bw: 0 },
     { a: 'kbo-ssg', b: 'kbo-doosan', aw: 0, bw: 0 },
   ];
+  g.postseason = { year: g.year, league: 'kbo', format: 'four-team', rounds: [] };
   preparePostseason(g, 'kbo');
   return g;
 }
@@ -220,7 +221,8 @@ test('A cancelled regular-season finale is played before qualification starts', 
   assert.equal(g.rounds, 2);
   assert.equal(g.history.length, 0);
   engine.advance(g, 1);
-  assert.equal(g.phase, 'semifinal');
+  assert.equal(g.phase, 'wildcard');
+  assert.equal(g.postseason.seeds.length, 5);
   assert.equal(g.history[0].fixtureId, 'last-game');
   assert.equal(g.history[0].date, '2026-03-29');
   assert.equal(

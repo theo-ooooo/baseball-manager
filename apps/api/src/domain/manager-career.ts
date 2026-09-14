@@ -1,3 +1,4 @@
+import { isPostseasonPhase } from '@dugout/shared/postseason';
 import { prepareManagerJourney } from './manager-journey';
 import {
   reconcileManagerPeople,
@@ -825,8 +826,7 @@ export function createManagerCareer(world: WorldCatalog) {
         offer.signingBonus = t.signingBonus || 0;
         offer.targetRank = t.targetRank;
       }
-      if (g.phase === 'semifinal' || g.phase === 'final')
-        throw new Error('포스트시즌을 마친 뒤 취임할 수 있습니다.');
+      if (isPostseasonPhase(g.phase)) throw new Error('포스트시즌을 마친 뒤 취임할 수 있습니다.');
       if (offer.source === 'renewal') {
         if (isUnemployed(g) || offer.club !== g.club || !m.contract)
           throw new Error('현재 소속 구단의 재계약 제안이 아닙니다.');

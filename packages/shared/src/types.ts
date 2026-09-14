@@ -233,8 +233,8 @@ export type GameState = {
   ownership: Record<string, string>;
   transferred: Player[];
   past: { year: number; rank: number; w: number; l: number; champion: string }[];
-  phase: 'preseason' | 'regular' | 'semifinal' | 'final' | 'finished';
-  series: { a: string; b: string; aw: number; bw: number }[];
+  phase: 'preseason' | 'regular' | import('./postseason').PostseasonStage | 'finished';
+  series: import('./postseason').PostseasonSeries[];
   postseason?: import('./postseason').PostseasonState;
   weather?: import('./match-weather').WeatherSeason;
   champion: string;

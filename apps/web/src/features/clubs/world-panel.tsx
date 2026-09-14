@@ -8,6 +8,7 @@ import { useWorld } from '../career/world-context';
 import { type GameState, type Player, overall } from '@dugout/shared/game-view';
 import { Choice, Empty } from '../../components/game-ui';
 import { StandingsTable } from './club-overview';
+import { PostseasonPanel } from '../schedule/postseason-panel';
 import { PlayerTable } from '../players/player-table';
 
 export function World({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => void }) {
@@ -52,29 +53,32 @@ export function World({ g, onPlayer }: { g: GameState; onPlayer: (p: Player) => 
       </nav>
       {tab === 'players' && <PlayerLeaderboard key={lid} g={g} league={lid} onPlayer={onPlayer} />}
       {tab === 'standings' && (
-        <section className="panel">
-          <div className="panel-header">
-            <h2>
-              {l.flag} {l.label}
-            </h2>
-            <a href={l.source} target="_blank" rel="noreferrer" className="text-button">
-              공식 리그 <ExternalLink size={14} />
-            </a>
-          </div>
-          <StandingsTable g={g} league={lid} />
-          <div className="panel-foot">
-            <span>
-              {leagueCountries(l).map((country, i) => (
-                <span key={country}>
-                  {i > 0 ? ' · ' : ''}
-                  <Link href={countryPath(country)}>{country}</Link>
-                </span>
-              ))}{' '}
-              · {l.season}
-            </span>
-            <span>게임 내 순위 · 현실 리그 성적과 별도</span>
-          </div>
-        </section>
+        <>
+          {lid === getClub(g.club).league && <PostseasonPanel g={g} compact />}
+          <section className="panel">
+            <div className="panel-header">
+              <h2>
+                {l.flag} {l.label}
+              </h2>
+              <a href={l.source} target="_blank" rel="noreferrer" className="text-button">
+                공식 리그 <ExternalLink size={14} />
+              </a>
+            </div>
+            <StandingsTable g={g} league={lid} />
+            <div className="panel-foot">
+              <span>
+                {leagueCountries(l).map((country, i) => (
+                  <span key={country}>
+                    {i > 0 ? ' · ' : ''}
+                    <Link href={countryPath(country)}>{country}</Link>
+                  </span>
+                ))}{' '}
+                · {l.season}
+              </span>
+              <span>게임 내 순위 · 현실 리그 성적과 별도</span>
+            </div>
+          </section>
+        </>
       )}
       {tab === 'clubs' && (
         <section className="panel club-inspector">

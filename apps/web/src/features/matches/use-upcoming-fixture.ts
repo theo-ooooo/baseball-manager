@@ -1,3 +1,4 @@
+import { isPostseasonPhase } from '@dugout/shared/postseason';
 import type { GameState } from '@dugout/shared/types';
 import { postseasonFixtures } from '@dugout/shared/postseason';
 import { daysBetween, gameDate } from '@dugout/shared/calendar';
@@ -5,7 +6,7 @@ import { useWorld } from '../career/world-context';
 
 export function useUpcomingFixture(g: GameState) {
   const { fixtures, getClub, nextFixture } = useWorld();
-  if (g.phase === 'regular' || g.phase === 'semifinal' || g.phase === 'final') {
+  if (g.phase === 'regular' || isPostseasonPhase(g.phase)) {
     const today = gameDate(g);
     const done = new Set(g.history.map((result) => result.fixtureId));
     const candidates =

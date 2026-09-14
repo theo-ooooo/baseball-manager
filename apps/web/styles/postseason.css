@@ -244,3 +244,86 @@
     padding: 14px 16px;
   }
 }
+
+.postseason-qualification-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 7px;
+  border: 1px solid #c0cdd4;
+  border-radius: 4px;
+  background: #eaf0f3;
+  color: #425965;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.postseason-qualification-badge.confirmed {
+  color: #6b4b0c;
+  background: #fff1c3;
+  border-color: #d5b867;
+}
+.standings-qualification-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 14px 18px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.standings-club-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.standings-table .postseason-qualified-row > td:first-child {
+  box-shadow: inset 3px 0 #9a7027;
+}
+.standings-table .postseason-cutoff-row > td {
+  border-bottom: 2px solid #9a7027;
+}
+
+.postseason-rounds.kbo {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}
+.postseason-rounds.kbo .postseason-round > header {
+  flex-wrap: wrap;
+}
+.postseason-rounds.kbo .postseason-round > header > span {
+  width: 100%;
+  margin-left: 23px;
+}
+.postseason-rounds.kbo .postseason-game-list > div {
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.postseason-rounds.kbo .postseason-awaiting {
+  padding: 20px 14px;
+}
+.postseason-waiting-club {
+  color: var(--post-text);
+}
+.postseason-advantage {
+  color: var(--post-gold);
+  font-size: 11px;
+  line-height: 1.7;
+}
+@media (max-width: 1100px) {
+  .postseason-rounds.kbo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .postseason-rounds.kbo {
+    grid-template-columns: 1fr;
+  }
+}

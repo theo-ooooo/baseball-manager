@@ -2,9 +2,19 @@ import { internationalDutyFor } from './international';
 import { battingProfile } from '@dugout/shared/player-attributes';
 import { createCalendarView, gameDate } from '@dugout/shared/calendar';
 import { canPlayWeather } from './match-weather';
+import { isPostseasonPhase, postseasonTarget, postseasonWinner } from './postseason';
 import { unpackStats } from './long-term';
 import type { WorldCatalog, GameState, Player, Stats, Pos, Coach } from '@dugout/shared/types';
 export * from '@dugout/shared/types';
+export function rankStandings(rows: GameState['standings'][string]) {
+  return [...rows].sort(
+    (a, b) =>
+      b.w / (b.w + b.l || 1) - a.w / (a.w + a.l || 1) ||
+      b.w - a.w ||
+      b.rf - b.ra - (a.rf - a.ra) ||
+      a.club.localeCompare(b.club),
+  );
+}
 export const blankStats = (): Stats => ({
   ab: 0,
   h: 0,
@@ -358,13 +368,7 @@ export function createGameView(world: WorldCatalog) {
     return groups;
   }
   function standings(g: GameState, league = getClub(g.club).league) {
-    return [...g.standings[league]].sort(
-      (a, b) =>
-        b.w / (b.w + b.l || 1) - a.w / (a.w + a.l || 1) ||
-        b.w - a.w ||
-        b.rf - b.ra - (a.rf - a.ra) ||
-        a.club.localeCompare(b.club),
-    );
+    return rankStandings(g.standings[league]);
   }
   function pairings(league: string, day: number) {
     const ids = clubs.filter((c) => c.league === league).map((c) => c.id);
@@ -407,9 +411,10 @@ export function createGameView(world: WorldCatalog) {
           ? [fixture.home, fixture.away]
           : null;
       }
-      const target = g.phase === 'semifinal' ? 2 : 3;
+      if (!isPostseasonPhase(g.phase)) return null;
+      const target = postseasonTarget(g.phase, g.postseason?.format);
       const s = g.series.find(
-        (s) => (s.a === g.club || s.b === g.club) && s.aw < target && s.bw < target,
+        (s) => (s.a === g.club || s.b === g.club) && !postseasonWinner(s, target),
       );
       return s ? ((s.aw + s.bw) % 2 ? [s.b, s.a] : [s.a, s.b]) : null;
     }

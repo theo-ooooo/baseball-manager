@@ -1,6 +1,17 @@
 import { recordManagerMatch, awardManagerAchievement } from './manager-journey';
-import { preparePostseason, recordPostseason } from './postseason-calendar';
-import { currentPostseasonRound } from '@dugout/shared/postseason';
+import {
+  preparePostseason,
+  recordPostseason,
+  beginPostseason,
+  advancePostseasonRound,
+} from './postseason-calendar';
+import {
+  currentPostseasonRound,
+  postseasonTarget,
+  postseasonWinner,
+  postseasonLabel,
+  postseasonRuleNote,
+} from '@dugout/shared/postseason';
 import { postponeForWeather, prepareWeather } from './weather-scheduling';
 import { matchWeather } from '@dugout/shared/match-weather';
 import { tacticCardAction, consumeTacticCard } from './tactic-cards';
@@ -423,9 +434,9 @@ export function createGameEngine(
       } else if (g.phase === 'regular') {
         // Scheduled fixtures were processed for all leagues on this calendar date.
       } else {
-        const target = g.phase === 'semifinal' ? 2 : 3;
+        const target = postseasonTarget(g.phase, g.postseason?.format);
         for (const [seriesIndex, s] of g.series.entries()) {
-          if (s.aw >= target || s.bw >= target) continue;
+          if (postseasonWinner(s, target)) continue;
           const fixture = currentPostseasonRound(g)?.fixtures.find(
             (fixture) =>
               fixture.seriesIndex === seriesIndex &&
@@ -440,9 +451,6 @@ export function createGameEngine(
           res.fixtureId = fixture.id;
           res.date = fixture.date;
           res.post = true;
-          const winner = res.homeScore > res.awayScore ? home : away;
-          if (winner === s.a) s.aw++;
-          else s.bw++;
           recordPostseason(g, res);
           g.worldResults = [
             { ...res, log: [], replayTeams: undefined },
@@ -450,48 +458,45 @@ export function createGameEngine(
           ].slice(0, 450);
           if (home === g.club || away === g.club) afterMatch(g, res);
         }
-        if (g.series.every((s) => s.aw >= target || s.bw >= target)) {
-          const winners = g.series.map((s) => (s.aw >= target ? s.a : s.b));
-          if (g.phase === 'semifinal') {
-            g.phase = 'final';
-            g.series = [{ a: winners[0], b: winners[1], aw: 0, bw: 0 }];
-            preparePostseason(g, ownLeague, g.day + 1);
-            news(
+        const roundProgress = advancePostseasonRound(g);
+        if (roundProgress === 'advanced') {
+          const stage = currentPostseasonRound(g)!;
+          const matchup = g.series[0];
+          news(
+            g,
+            `${postseasonLabel(stage.stage, g.postseason?.format)} 대진 확정`,
+            `${getClub(matchup.a).name} vs ${getClub(matchup.b).name} · ${postseasonTarget(stage.stage, g.postseason?.format)}승 선취`,
+            'league',
+            { actionView: 'schedule' },
+          );
+        } else if (roundProgress === 'finished') {
+          g.phase = 'finished';
+          if (g.champion === g.club)
+            awardManagerAchievement(
               g,
-              '챔피언십 대진 확정',
-              `${getClub(winners[0]).name} vs ${getClub(winners[1]).name} · 5전 3선승제`,
-              'league',
-              { actionView: 'schedule' },
+              `champion:${g.year}:${g.club}`,
+              `${g.year} 시즌 우승`,
+              '포스트시즌을 마치고 우승 트로피를 들어 올렸습니다.',
             );
-          } else {
-            g.phase = 'finished';
-            g.champion = winners[0];
-            if (g.champion === g.club)
-              awardManagerAchievement(
-                g,
-                `champion:${g.year}:${g.club}`,
-                `${g.year} 시즌 우승`,
-                '포스트시즌을 마치고 우승 트로피를 들어 올렸습니다.',
-              );
-            const rank = standings(g).findIndex((s) => s.club === g.club) + 1;
-            const own = g.standings[ownLeague].find((s) => s.club === g.club)!;
-            g.past.push({ year: g.year, rank, w: own.w, l: own.l, champion: g.champion });
-            const prize =
-              g.champion === g.club ? teamBudget(ownLeague) * 0.25 : teamBudget(ownLeague) * 0.04;
-            g.budget += prize;
-            g.income += prize;
-            g.reputation = clamp(
-              g.reputation + (g.champion === g.club ? 4 : rank <= 4 ? 2 : -1),
-              40,
-              99,
-            );
-            news(
-              g,
-              `${getClub(g.champion).name}, 시즌 우승!`,
-              `${g.year} 시즌이 끝났습니다. 상금 ${money(prize)}이 입금됐습니다.`,
-              'league',
-            );
-          }
+          const rank = standings(g).findIndex((s) => s.club === g.club) + 1;
+          const own = g.standings[ownLeague].find((s) => s.club === g.club)!;
+          g.past.push({ year: g.year, rank, w: own.w, l: own.l, champion: g.champion });
+          const prize =
+            g.champion === g.club ? teamBudget(ownLeague) * 0.25 : teamBudget(ownLeague) * 0.04;
+          g.budget += prize;
+          g.income += prize;
+          g.reputation = clamp(
+            g.reputation +
+              (g.champion === g.club ? 4 : rank <= (g.postseason?.seeds?.length || 4) ? 2 : -1),
+            40,
+            99,
+          );
+          news(
+            g,
+            `${getClub(g.champion).name}, 시즌 우승!`,
+            `${g.year} 시즌이 끝났습니다. 상금 ${money(prize)}이 입금됐습니다.`,
+            'league',
+          );
         }
       }
       developSquad(
@@ -550,20 +555,20 @@ export function createGameEngine(
       }
       if (g.phase === 'regular' && g.day >= g.rounds) {
         const ranked = standings(g),
-          top = ranked.slice(0, 4);
+          top = ranked.slice(0, ownLeague === 'kbo' ? 5 : 4);
         const rank = ranked.findIndex((s) => s.club === g.club) + 1;
         const qualified = top.some((s) => s.club === g.club);
-        g.phase = 'semifinal';
-        g.series = [
-          { a: top[0].club, b: top[3].club, aw: 0, bw: 0 },
-          { a: top[1].club, b: top[2].club, aw: 0, bw: 0 },
-        ];
-        preparePostseason(g, ownLeague);
+        beginPostseason(
+          g,
+          ownLeague,
+          ranked.map((row) => row.club),
+          g.day + (ownLeague === 'kbo' ? 1 : 0),
+        );
         prepareSeasonRest(g);
         news(
           g,
           qualified ? '포스트시즌 진출' : `정규시즌 종료 · ${rank}위`,
-          `${getClub(g.club).name}는 정규시즌 ${rank}위로 ${qualified ? '포스트시즌에 진출했습니다.' : '포스트시즌에 진출하지 못했습니다. 우리 팀 경기는 끝났으며 다른 구단의 포스트시즌이 진행됩니다.'} 진출 구단: ${top.map((s) => getClub(s.club).name).join(', ')}. 현재 게임 규칙은 상위 4개 구단의 3전 2선승 준결승과 5전 3선승 결승입니다.`,
+          `${getClub(g.club).name}는 정규시즌 ${rank}위로 ${qualified ? '포스트시즌에 진출했습니다.' : '포스트시즌에 진출하지 못했습니다. 우리 팀 경기는 끝났으며 다른 구단의 포스트시즌이 진행됩니다.'} 진출 구단: ${top.map((s) => getClub(s.club).name).join(', ')}. ${postseasonRuleNote(g.postseason?.format)}.`,
           'league',
           { actionView: 'schedule' },
         );

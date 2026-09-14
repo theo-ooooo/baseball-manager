@@ -13,7 +13,7 @@ import { MatchClubStanding } from './match-club-standing';
 import { useUpcomingFixture } from './use-upcoming-fixture';
 import { MatchDelegation } from './match-delegation';
 import type { Act } from '../career/game-contracts';
-import { isClubSeasonRest } from '@dugout/shared/season-status';
+import { clubSeasonStatus, isClubSeasonRest } from '@dugout/shared/season-status';
 
 export function MatchdayBriefing({
   g,
@@ -36,6 +36,7 @@ export function MatchdayBriefing({
   const pair = nextFixture(g);
   const upcoming = useUpcomingFixture(g);
   const seasonRest = isClubSeasonRest(g);
+  const season = clubSeasonStatus(g);
   const weather = useMatchWeather(g);
   if (!pair)
     return (
@@ -43,13 +44,16 @@ export function MatchdayBriefing({
         <Link className="matchday-back" href="/?view=home">
           ← 구단으로 돌아가기
         </Link>
+        <PostseasonPanel g={g} compact />
         {weather && <MatchWeatherStrip weather={weather.weather} showCancellation />}
         <h2>
           {seasonRest
             ? '우리 팀의 시즌 일정이 끝났습니다'
             : weather?.weather.cancellation
               ? '오늘 경기는 기상 취소 대상입니다'
-              : '오늘은 훈련과 구단 업무를 보는 날입니다'}
+              : season.waiting
+                ? `${season.label} · 상대 팀을 기다립니다`
+                : '오늘은 훈련과 구단 업무를 보는 날입니다'}
         </h2>
         <p>
           {seasonRest

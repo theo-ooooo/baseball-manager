@@ -88,7 +88,7 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
                     >
                       {post && (
                         <b className="calendar-postseason-label">
-                          {postseasonLabel(post.stage)} · {post.game}차전
+                          {postseasonLabel(post.stage, g.postseason?.format)} · {post.game}차전
                         </b>
                       )}
                       <span className="club-label">

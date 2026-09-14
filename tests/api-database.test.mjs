@@ -2058,7 +2058,7 @@ test('Legacy postseason calendars are repaired on read without writes and comple
   raw.news = [];
   raw.series = [
     { a: raw.club, b: 'kbo-lg', aw: 0, bw: 0 },
-    { a: 'kbo-kia', b: 'kbo-ssg', aw: 0, bw: 0 },
+    { a: 'kbo-kia', b: 'kbo-ssg', aw: 1, bw: 0 },
   ];
   delete raw.postseason;
   await db
@@ -2071,7 +2071,8 @@ test('Legacy postseason calendars are repaired on read without writes and comple
     .first();
   const read = await call('/api/career', undefined, user);
   assert.equal(read.status, 200);
-  assert.equal(read.body.state.postseason.rounds[0].fixtures.length, 6);
+  assert.equal(read.body.state.postseason.rounds[0].fixtures.length, 5);
+  assert.equal(read.body.state.postseason.format, 'four-team');
   assert.deepEqual(
     await db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first(),
     stored,
@@ -2176,3 +2177,63 @@ for (const [reason, seed] of [
       state.weather,
     );
   });
+
+test('An unplayed KBO save repairs to five seeds without a write and the first seed waits for the Korean Series', async () => {
+  const user = 'kbo-bye-migration';
+  await action(
+    { type: 'start', club: 'kbo-kia', manager: 'Bye API', mode: 'short', preseason: false },
+    user,
+  );
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  const seeds = ['kbo-kia', 'kbo-lg', 'kbo-ssg', 'kbo-doosan', 'kbo-lotte'];
+  raw.phase = 'semifinal';
+  raw.day = raw.rounds;
+  raw.news = [];
+  raw.series = [
+    { a: seeds[0], b: seeds[3], aw: 0, bw: 0 },
+    { a: seeds[1], b: seeds[2], aw: 0, bw: 0 },
+  ];
+  seeds.forEach((club, i) =>
+    Object.assign(
+      raw.standings.kbo.find((s) => s.club === club),
+      { w: 100 - i * 5, l: 40 + i * 5 },
+    ),
+  );
+  delete raw.postseason;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const before = await db
+    .prepare('SELECT state,revision FROM careers WHERE user_id=?')
+    .bind(user)
+    .first();
+  const read = await call('/api/career', undefined, user);
+  assert.equal(read.body.state.phase, 'wildcard');
+  assert.equal(read.body.state.postseason.format, 'kbo');
+  assert.deepEqual(read.body.state.postseason.seeds, seeds);
+  assert.deepEqual(
+    await db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first(),
+    before,
+  );
+  const rejected = await call(
+    '/api/career',
+    { type: 'startMatch', revision: read.body.revision, requestId: crypto.randomUUID() },
+    user,
+  );
+  assert.equal(rejected.status, 400);
+  assert.deepEqual(
+    await db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first(),
+    before,
+  );
+  const progressed = await action({ type: 'continue' }, user);
+  assert.equal(progressed.state.postseason.format, 'kbo');
+  assert.equal(progressed.state.history.length, 0);
+  assert.deepEqual(progressed.state.standings.kbo, raw.standings.kbo);
+  assert.deepEqual(
+    (await call('/api/career', undefined, user)).body.state.postseason,
+    progressed.state.postseason,
+  );
+});
