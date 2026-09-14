@@ -2362,6 +2362,71 @@
   gap: 20px;
   align-items: start;
 }
+.manager-playing-career {
+  grid-column: 1 / -1;
+  border-top: 3px solid var(--brand);
+}
+.manager-playing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 36px;
+}
+.manager-playing-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 32px;
+  margin: 0 0 20px;
+}
+.manager-playing-facts dt {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.manager-playing-facts dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+.manager-playing-summary,
+.manager-playing-retirement p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-2);
+}
+.manager-playing-record {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.8;
+  color: var(--brand);
+}
+.manager-playing-retirement {
+  padding: 16px;
+  margin-top: 20px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--line-strong);
+}
+.manager-playing-retirement h3,
+.manager-playing-teams-title {
+  font-size: 13px;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.manager-playing-retirement p {
+  margin: 0;
+}
+.manager-playing-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.manager-playing-sources a {
+  color: var(--text-2);
+  font-size: 11px;
+  text-decoration: underline;
+}
 .manager-history-list {
   list-style: none;
   padding: 0;
@@ -2425,6 +2490,7 @@
 }
 @media (max-width: 760px) {
   .manager-profile-layout,
+  .manager-playing-layout,
   .manager-history-grid {
     grid-template-columns: minmax(0, 1fr);
   }

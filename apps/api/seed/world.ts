@@ -102,7 +102,7 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-14-v15',
+    version: 'world-2026-09-14-v16',
     draftRules,
     year: 2026,
     clubs: clubs.map((club) => ({

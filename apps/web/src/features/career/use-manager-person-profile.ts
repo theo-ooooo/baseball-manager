@@ -87,6 +87,9 @@ export function useManagerPersonProfile(g: GameState, id: string) {
     abilityOverall: ability && managerAbilityOverall(ability),
     strongest,
     background,
+    backgroundEntries: [...(background?.entries || [])]
+      .filter((entry) => !background?.playingCareer || !entry.role.startsWith('선수'))
+      .reverse(),
     career,
     draws,
     winRate: wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : undefined,

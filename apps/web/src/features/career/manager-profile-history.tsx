@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { useManagerPersonProfile } from './use-manager-person-profile';
+import { ManagerPlayingCareerCard } from './manager-playing-career-card';
 type Profile = ReturnType<typeof useManagerPersonProfile>;
 
 export function ManagerProfileHistory({
@@ -12,6 +13,12 @@ export function ManagerProfileHistory({
   const background = p.background;
   return (
     <div className={compact ? 'manager-history-preview' : 'manager-history-grid'}>
+      {!compact && background?.playingCareer && (
+        <ManagerPlayingCareerCard
+          career={background.playingCareer}
+          fictional={background.kind === 'fictional'}
+        />
+      )}
       <section className="dossier-card">
         <header>
           <h2>게임에서 이어가는 경력</h2>
@@ -43,14 +50,14 @@ export function ManagerProfileHistory({
         )}
         {compact && (
           <button className="button secondary" onClick={() => p.setTab('history')}>
-            부임 전 이력까지 보기 →
+            선수 시절·전체 경력 보기 →
           </button>
         )}
       </section>
       {!compact && (
         <section className="dossier-card">
           <header>
-            <h2>부임 전 발자취</h2>
+            <h2>{background?.playingCareer ? '지도자·구단 활동' : '부임 전 발자취'}</h2>
             <span>
               {p.person?.self || !p.person?.record?.real ? '가상 배경' : '확인된 실제 이력'}
             </span>
@@ -59,11 +66,11 @@ export function ManagerProfileHistory({
             <>
               <p className="manager-background-summary">{background.summary}</p>
               <ol className="manager-history-list">
-                {[...background.entries].reverse().map((entry, i) => (
+                {p.backgroundEntries.map((entry, i) => (
                   <li key={`${entry.from}:${entry.team}:${i}`}>
                     <div className="manager-history-date">
                       {entry.from}
-                      <span>{entry.to || '취임'}</span>
+                      {entry.to && entry.to !== entry.from && <span>{entry.to}</span>}
                     </div>
                     <div>
                       <span className="manager-history-role">{entry.role}</span>

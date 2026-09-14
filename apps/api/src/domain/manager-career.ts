@@ -39,7 +39,7 @@ import { postNews, prepareDynamics } from './club-dynamics';
 import { annualPayroll } from '@dugout/shared/club-finance';
 import { prepareFinances, settleClubDay, reviewFinances } from './club-finance';
 import { saveWorldPlayer, worldEvent } from './world-simulation';
-import { fictionalManagerBackground } from './manager-background';
+import { addFictionalPlayingCareer, fictionalManagerBackground } from './manager-background';
 import { selfManagerAbility } from '@dugout/shared/manager-ability';
 
 export function createManagerCareer(world: WorldCatalog) {
@@ -139,6 +139,7 @@ export function createManagerCareer(world: WorldCatalog) {
         selfManagerAbility(g),
       );
     }
+    addFictionalPlayingCareer(`self:${g.manager}`, g.managerCareer.background);
     for (const offer of g.managerCareer.offers) {
       if (
         offer.expectation ||

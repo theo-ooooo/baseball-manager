@@ -1,6 +1,6 @@
 {
   "kbo-kia": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "한화·소프트뱅크·KIA에서 선수로 뛰고, KIA 퓨처스 감독과 타격코치를 거쳐 1군 감독이 됐다.",
     "asOf": "2026-09-14",
@@ -44,10 +44,55 @@
         "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
         "from": "2024-02-13"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2019",
+      "position": "3루수",
+      "summary": "한화에서 프로 생활을 시작해 일본 소프트뱅크를 거쳐 KIA에서 뛰었다.",
+      "retirement": "2019년 KIA에서 은퇴한 뒤 코치 연수와 퓨처스팀 지휘를 거쳐 지도자로 자리 잡았다.",
+      "record": "KBO 정규시즌 · 2,001경기 · 1,727안타 · 329홈런",
+      "entries": [
+        {
+          "to": "2009",
+          "team": "한화 이글스",
+          "role": "선수",
+          "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+          "from": "2000"
+        },
+        {
+          "to": "2010",
+          "team": "소프트뱅크 호크스",
+          "role": "선수",
+          "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+          "from": "2010"
+        },
+        {
+          "to": "2019",
+          "team": "KIA 타이거즈",
+          "role": "선수",
+          "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+          "from": "2011"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=70756"
+        },
+        {
+          "label": "KIA 선수·지도자 이력",
+          "url": "https://tigers.co.kr/contents/press/1015493?fromHome=y"
+        },
+        {
+          "label": "포지션 기록",
+          "url": "https://www.osen.co.kr/article/G0812010024"
+        }
+      ],
+      "from": "2000"
+    }
   },
   "kbo-samsung": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "현대와 삼성에서 선수로 활약했다. 삼성 수비·작전코치, 퓨처스 감독, 1군 감독대행을 거쳐 정식 감독으로 선임됐다.",
     "asOf": "2026-09-14",
@@ -88,10 +133,51 @@
         "source": "https://www.samsunglions.com/intro/intro02.asp?act=view&idx=970012",
         "from": "2022-10-18"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2015",
+      "position": "유격수",
+      "summary": "현대·삼성·SK의 유격수로 뛰며 20시즌 동안 KBO 정규시즌에 출전했다.",
+      "retirement": "2015년까지 SK에서 선수로 뛰었다. 이후 코칭스태프를 거쳐 삼성 감독을 맡았다.",
+      "record": "KBO 정규시즌 · 1,993경기 · 1,574안타 · 153홈런",
+      "entries": [
+        {
+          "to": "2004",
+          "team": "현대 유니콘스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=96307",
+          "from": "1996"
+        },
+        {
+          "to": "2010",
+          "team": "삼성 라이온즈",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=96307",
+          "from": "2005"
+        },
+        {
+          "to": "2015",
+          "team": "SK 와이번스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=96307",
+          "from": "2011"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=96307"
+        },
+        {
+          "label": "포지션 기록",
+          "url": "https://www.osen.co.kr/article/G0812010024"
+        }
+      ],
+      "from": "1996"
+    }
   },
   "kbo-lotte": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "두산을 8시즌 지휘하며 한국시리즈 세 차례 우승을 이끌고 롯데 감독으로 선임됐다.",
     "asOf": "2026-09-14",
@@ -111,10 +197,44 @@
         "source": "https://www.yna.co.kr/view/AKR20231020094351007",
         "from": "2023-10-20"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2001",
+      "position": "포수",
+      "summary": "OB와 두산에서 포수로 뛰었다. 같은 구단에서 선수 생활을 마치고 배터리 코치로 경험을 이어갔다.",
+      "retirement": "2001년 선수 생활을 마치고 두산과 SK에서 배터리 코치를 맡았다.",
+      "record": "KBO 정규시즌 · 828경기 · 432안타 · 157타점",
+      "entries": [
+        {
+          "to": "1998",
+          "team": "OB 베어스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=90214",
+          "from": "1990"
+        },
+        {
+          "to": "2001",
+          "team": "두산 베어스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=90214",
+          "from": "1999"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=90214"
+        },
+        {
+          "label": "선수·코치 전환 이력",
+          "url": "https://www.mt.co.kr/sports/2023/10/20/2023102017151759889"
+        }
+      ],
+      "from": "1990"
+    }
   },
   "kbo-kt": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "두산 수석코치를 거쳐 KT를 맡았다. 2019시즌부터 팀을 지휘해 2021년 구단 첫 통합 우승을 이끌었다.",
     "asOf": "2026-09-14",
@@ -141,10 +261,55 @@
         "source": "https://www.ktwiz.co.kr/ktwiz/history",
         "from": "2021"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2005",
+      "position": "투수 · 언더핸드",
+      "summary": "해태에서 데뷔해 10년 연속 두 자릿수 승리를 기록했고, 삼성을 거쳐 타이거즈로 복귀했다.",
+      "retirement": "2005년 KIA에서 선수 생활을 마쳤다.",
+      "record": "KBO 정규시즌 · 602경기 · 152승 · 1,751탈삼진",
+      "entries": [
+        {
+          "to": "1999",
+          "team": "해태 타이거즈",
+          "role": "선수",
+          "source": "https://www.seoul.co.kr/news/2001/07/31/20010731018001",
+          "from": "1989"
+        },
+        {
+          "to": "2001",
+          "team": "삼성 라이온즈",
+          "role": "선수",
+          "source": "https://www.seoul.co.kr/news/2001/07/31/20010731018001",
+          "from": "2000"
+        },
+        {
+          "to": "2005",
+          "team": "해태 · KIA 타이거즈",
+          "role": "선수",
+          "source": "https://www.seoul.co.kr/news/2001/07/31/20010731018001",
+          "from": "2001"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Pitcher.aspx?playerId=89620"
+        },
+        {
+          "label": "KBO 선수 이력",
+          "url": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=8465"
+        },
+        {
+          "label": "2001년 복귀 보도",
+          "url": "https://www.seoul.co.kr/news/2001/07/31/20010731018001"
+        }
+      ],
+      "from": "1989"
+    }
   },
   "kbo-lg": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "넥센에서 감독 경력을 시작해 SK와 LG의 지휘봉을 잡았다.",
     "asOf": "2026-09-14",
@@ -180,10 +345,44 @@
         "source": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11509",
         "from": "2024"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2000",
+      "position": "유격수 · 내야수",
+      "summary": "태평양과 현대에서 10시즌 동안 뛰며 수비와 주루 경험을 쌓았다.",
+      "retirement": "2000년까지 KBO 정규시즌에 출전했다. 선수 생활 이후 감독으로 현장에 돌아왔다.",
+      "record": "KBO 정규시즌 · 896경기 · 283안타 · 83도루",
+      "entries": [
+        {
+          "to": "1995",
+          "team": "태평양 돌핀스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=91350",
+          "from": "1991"
+        },
+        {
+          "to": "2000",
+          "team": "현대 유니콘스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=91350",
+          "from": "1996"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=91350"
+        },
+        {
+          "label": "현역 포지션",
+          "url": "https://www.fnnews.com/news/201310091736190659"
+        }
+      ],
+      "from": "1991"
+    }
   },
   "kbo-hanwha": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "두산과 NC를 지휘하고 국가대표 감독을 역임했다. 2024년 한화 사령탑으로 KBO리그에 복귀했다.",
     "asOf": "2026-09-14",
@@ -219,10 +418,51 @@
         "source": "https://www.koreabaseball.com/MediaNews/News/KboPhoto/View.aspx?bdSe=445962",
         "from": "2024"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "1991",
+      "position": "포수",
+      "summary": "KBO 원년인 1982년 OB에서 데뷔한 포수다. 태평양을 거쳐 OB로 돌아와 선수 생활을 마쳤다.",
+      "retirement": "1991년 은퇴 후 미국에서 코치 연수를 받았고 삼성과 OB 코칭스태프를 거쳤다.",
+      "record": "KBO 정규시즌 · 703경기 · 329안타 · 126타점",
+      "entries": [
+        {
+          "to": "1989",
+          "team": "OB 베어스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=82211",
+          "from": "1982"
+        },
+        {
+          "to": "1990",
+          "team": "태평양 돌핀스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=82211",
+          "from": "1990"
+        },
+        {
+          "to": "1991",
+          "team": "OB 베어스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=82211",
+          "from": "1991"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=82211"
+        },
+        {
+          "label": "선수·지도자 전환 이력",
+          "url": "https://www.koreabaseball.com/MediaNews/News/KboPhoto/View.aspx?bdSe=445961"
+        }
+      ],
+      "from": "1982"
+    }
   },
   "kbo-nc": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "NC에서 선수 생활을 마친 뒤 NC와 LG의 타격·수석코치를 거쳐 NC 감독으로 돌아왔다.",
     "asOf": "2026-09-14",
@@ -266,10 +506,55 @@
         "source": "https://www.yna.co.kr/view/AKR20241022141000007",
         "from": "2024-10-22"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2017",
+      "position": "투수 → 타자",
+      "summary": "해태에서 투수로 프로 생활을 시작한 뒤 타자로 전향했다. SK와 NC에서 중심 타선의 한 축을 맡았다.",
+      "retirement": "2017년 NC에서 은퇴한 뒤 요미우리 코치 연수를 거쳐 지도자 생활을 시작했다.",
+      "record": "KBO 정규시즌 · 타자 2,053경기 · 1,880안타 · 337홈런",
+      "entries": [
+        {
+          "to": "2000",
+          "team": "해태 타이거즈",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94629",
+          "from": "1994"
+        },
+        {
+          "to": "2012",
+          "team": "SK 와이번스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94629",
+          "from": "2000"
+        },
+        {
+          "to": "2017",
+          "team": "NC 다이노스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94629",
+          "from": "2013"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94629"
+        },
+        {
+          "label": "KBO 투수 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Pitcher.aspx?playerId=94629"
+        },
+        {
+          "label": "은퇴 후 지도자 이력",
+          "url": "https://www.yna.co.kr/view/AKR20241022141000007"
+        }
+      ],
+      "from": "1994"
+    }
   },
   "kbo-ssg": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "KT에서 타격코치와 단장, 육성총괄을 경험한 뒤 SSG 감독으로 선임됐다.",
     "asOf": "2026-09-14",
@@ -304,10 +589,55 @@
         "source": "https://www.edaily.co.kr/News/Read?mediaCodeNo=258&newsId=01289046635808016",
         "from": "2023-11-21"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2011",
+      "position": "1루수",
+      "summary": "태평양·현대·히어로즈에서 선수로 뛰며 통산 2,000경기를 넘겼다.",
+      "retirement": "2011년 선수 생활을 마치고 해설위원으로 활동한 뒤 KT 코치로 현장에 복귀했다.",
+      "record": "KBO 정규시즌 · 2,001경기 · 1,727안타 · 162홈런",
+      "entries": [
+        {
+          "to": "1995",
+          "team": "태평양 돌핀스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94310",
+          "from": "1994"
+        },
+        {
+          "to": "2007",
+          "team": "현대 유니콘스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94310",
+          "from": "1996"
+        },
+        {
+          "to": "2011",
+          "team": "우리 · 히어로즈 · 넥센 히어로즈",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94310",
+          "from": "2008"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=94310"
+        },
+        {
+          "label": "선수·은퇴 후 이력",
+          "url": "https://www.edaily.co.kr/News/Read?mediaCodeNo=258&newsId=01289046635808016"
+        },
+        {
+          "label": "포지션 기록",
+          "url": "https://www.osen.co.kr/article/G0812010024"
+        }
+      ],
+      "from": "1994"
+    }
   },
   "kbo-doosan": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "두산 투수코치와 SSG 감독을 거쳐 두산 사령탑을 맡았다. SSG에서 2022년 통합 우승을 경험했다.",
     "asOf": "2026-09-14",
@@ -328,10 +658,44 @@
         "source": "https://www.mt.co.kr/sports/2026/03/27/2026032716100319141",
         "from": "2021"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2011",
+      "position": "투수",
+      "summary": "쌍방울에서 데뷔해 SK까지 선수 생활을 이어간 투수다.",
+      "retirement": "2011년 현역에서 물러났으며 2012년 은퇴식을 치렀다. SK 루키 투수코치로 지도자 생활을 시작했다.",
+      "record": "KBO 정규시즌 · 545경기 · 134승 · 1,246탈삼진",
+      "entries": [
+        {
+          "to": "1999",
+          "team": "쌍방울 레이더스",
+          "role": "선수",
+          "source": "https://www.koreabaseball.com/Record/Retire/Pitcher.aspx?playerId=91848",
+          "from": "1991"
+        },
+        {
+          "to": "2011",
+          "team": "SK 와이번스",
+          "role": "선수",
+          "source": "https://www.chosun.com/site/data/html_dir/2012/04/02/2012040202206.html",
+          "from": "2000"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Pitcher.aspx?playerId=91848"
+        },
+        {
+          "label": "은퇴·코치 전환 보도",
+          "url": "https://www.chosun.com/site/data/html_dir/2012/04/02/2012040202206.html"
+        }
+      ],
+      "from": "1991"
+    }
   },
   "kbo-kiwoom": {
-    "version": 1,
+    "version": 2,
     "kind": "verified",
     "summary": "히어로즈 프런트와 코칭스태프를 두루 경험했다. 퓨처스 감독과 1군 감독대행을 거쳐 정식 감독이 됐다.",
     "asOf": "2026-09-14",
@@ -366,6 +730,41 @@
         "source": "https://heroesbaseball.co.kr/story/heroesNews/view.do?num=22346",
         "from": "2025-09-28"
       }
-    ]
+    ],
+    "playingCareer": {
+      "to": "2001",
+      "position": "타자 → 투수",
+      "summary": "현대에서 타자로 데뷔한 뒤 투수로 전향했다. 선수 생활 이후 구단 운영과 육성 현장으로 활동을 넓혔다.",
+      "retirement": "2001년까지 선수로 활동했고, 2002년 현대 매니저로 프런트 업무를 시작했다.",
+      "record": "KBO 정규시즌 · 타자 9경기 · 투수 5경기",
+      "entries": [
+        {
+          "to": "2001",
+          "team": "현대 유니콘스",
+          "role": "선수",
+          "source": "https://heroesbaseball.co.kr/mobile/heroes/introduce/introduce.do",
+          "from": "1996"
+        }
+      ],
+      "sources": [
+        {
+          "label": "KBO 통산 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Hitter.aspx?playerId=96340"
+        },
+        {
+          "label": "KBO 투수 기록",
+          "url": "https://www.koreabaseball.com/Record/Retire/Pitcher.aspx?playerId=96340"
+        },
+        {
+          "label": "구단 선수 이력",
+          "url": "https://heroesbaseball.co.kr/mobile/heroes/introduce/introduce.do"
+        },
+        {
+          "label": "프런트 전환 이력",
+          "url": "https://heroesbaseball.co.kr/mobile/players/all/view.do?num=383"
+        }
+      ],
+      "from": "1996"
+    }
   }
 }

@@ -9,7 +9,7 @@ import {
   coachSkillFromAbility,
 } from '@dugout/shared/manager-ability';
 import { createPlayerGenerator } from './player-generator';
-import { fictionalManagerBackground } from './manager-background';
+import { addFictionalPlayingCareer, fictionalManagerBackground } from './manager-background';
 const reputation = (level: number) => Math.max(25, Math.min(95, level - 10));
 export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
   const people = (g.managerPeople ??= {}),
@@ -87,12 +87,14 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
   for (const person of Object.values(people)) {
     person.personality ??= managerPersonality(person.id);
     person.ability ??= managerAbility(person);
-    if (!person.background) {
+    if (!person.background || person.background.version < 2) {
       const origin = world.clubs.find((c) => c.id === person.originClub);
-      if (person.real && origin?.manager?.name === person.name)
-        person.background = origin.manager.background && structuredClone(origin.manager.background);
-      else if (!person.real)
-        person.background = fictionalManagerBackground(
+      const catalogBackground = origin?.manager?.background;
+      if (person.real && origin?.manager?.name === person.name && catalogBackground) {
+        if (!person.background || catalogBackground.version > person.background.version)
+          person.background = structuredClone(catalogBackground);
+      } else if (!person.real) {
+        person.background ??= fictionalManagerBackground(
           person.id,
           person.career
             .map((c) => c.from)
@@ -101,6 +103,8 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
           origin?.city || '연고지',
           person.ability,
         );
+        addFictionalPlayingCareer(person.id, person.background);
+      }
     }
     const league = world.clubs.find((c) => c.id === person.originClub)?.league || 'kbo';
     const role = coachRoles[hash(person.id) % coachRoles.length];

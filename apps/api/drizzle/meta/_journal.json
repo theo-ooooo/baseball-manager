@@ -162,6 +162,13 @@
       "when": 1789346914455,
       "tag": "0022_manager_backgrounds",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1789349187521,
+      "tag": "0023_manager_playing_careers",
+      "breakpoints": true
     }
   ]
 }
