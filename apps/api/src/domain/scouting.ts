@@ -6,6 +6,7 @@ import { addDays, gameDate } from '@dugout/shared/calendar';
 import { abilityKeys, abilityLabels } from '@dugout/shared/development';
 import { askPrice, createGameView, hash, money, overall } from '@dugout/shared/game-view';
 import { postNews } from './club-dynamics';
+import { selfManagerAbility } from '@dugout/shared/manager-ability';
 
 export function prepareKnowledge(g: GameState, world: WorldCatalog) {
   const league = world.clubs.find((c) => c.id === g.club)!.league;
@@ -143,7 +144,8 @@ export function createScouting(world: WorldCatalog) {
   }
   function report(g: GameState, p: Player, task: ScoutAssignment): ScoutReport {
     const skill = g.staff.find((c) => c.id === task.scoutId)?.skill ?? 35;
-    const confidence = Math.min(95, Math.round(35 + task.days * 1.2 + skill * 0.25));
+    const assessment = (selfManagerAbility(g).evaluation - 55) / 8;
+    const confidence = Math.min(95, Math.round(35 + task.days * 1.2 + skill * 0.25 + assessment));
     const width = Math.max(2, Math.round((100 - confidence) / 7));
     const range = (value: number, key: string): [number, number] => {
       const bias = (hash(`${p.id}:${task.started}:${key}`) % (width + 1)) - Math.floor(width / 2);

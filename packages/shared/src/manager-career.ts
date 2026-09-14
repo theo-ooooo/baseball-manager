@@ -66,6 +66,7 @@ export type ManagerOffer = {
   message: string;
 };
 export type ManagerCareer = {
+  background?: import('./manager-background').ManagerBackground;
   status: 'employed' | 'unemployed';
   contract?: ManagerContract;
   reputation: number;

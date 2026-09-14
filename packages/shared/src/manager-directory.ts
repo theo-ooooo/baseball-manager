@@ -2,6 +2,7 @@ import type { GameState, Coach } from './types';
 import type { ClubManagerJob } from './manager-career';
 import type { ManagerAbility } from './manager-ability';
 export type ManagerRecord = {
+  background?: import('./manager-background').ManagerBackground;
   id: string;
   aliases?: string[];
   name: string;

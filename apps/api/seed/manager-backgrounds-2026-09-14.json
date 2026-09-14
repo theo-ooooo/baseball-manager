@@ -1,0 +1,371 @@
+{
+  "kbo-kia": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "한화·소프트뱅크·KIA에서 선수로 뛰고, KIA 퓨처스 감독과 타격코치를 거쳐 1군 감독이 됐다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "to": "2009",
+        "team": "한화 이글스",
+        "role": "선수",
+        "detail": "프로 선수 생활 시작",
+        "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+        "from": "2000"
+      },
+      {
+        "to": "2010",
+        "team": "소프트뱅크 호크스",
+        "role": "선수",
+        "detail": "일본 프로야구 진출",
+        "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+        "from": "2010"
+      },
+      {
+        "to": "2019",
+        "team": "KIA 타이거즈",
+        "role": "선수",
+        "detail": "KIA에서 선수 생활 마무리",
+        "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+        "from": "2011"
+      },
+      {
+        "to": "2021",
+        "team": "KIA 타이거즈",
+        "role": "퓨처스 감독",
+        "detail": "은퇴 후 코치 연수를 거쳐 육성팀 지휘",
+        "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+        "from": "2021"
+      },
+      {
+        "team": "KIA 타이거즈",
+        "role": "1군 감독 선임",
+        "detail": "1군 타격코치에서 감독으로 선임",
+        "source": "https://tigers.co.kr/contents/press/1015493?fromHome=y",
+        "from": "2024-02-13"
+      }
+    ]
+  },
+  "kbo-samsung": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "현대와 삼성에서 선수로 활약했다. 삼성 수비·작전코치, 퓨처스 감독, 1군 감독대행을 거쳐 정식 감독으로 선임됐다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "team": "현대 유니콘스",
+        "role": "선수 입단",
+        "detail": "프로 선수 생활 시작",
+        "source": "https://www.samsunglions.com/intro/intro02.asp?act=view&idx=970012",
+        "from": "1996"
+      },
+      {
+        "team": "삼성 라이온즈",
+        "role": "선수 이적",
+        "detail": "FA 계약으로 삼성 합류",
+        "source": "https://www.samsunglions.com/intro/intro02.asp?act=view&idx=970012",
+        "from": "2005"
+      },
+      {
+        "to": "2021",
+        "team": "삼성 라이온즈",
+        "role": "수비·작전 코치",
+        "detail": "5시즌 코치 역임",
+        "source": "https://www.samsunglions.com/intro/intro02.asp?act=view&idx=970012",
+        "from": "2017"
+      },
+      {
+        "team": "삼성 라이온즈",
+        "role": "퓨처스 감독 · 1군 감독대행",
+        "detail": "퓨처스팀 지휘 후 8월부터 1군 대행",
+        "source": "https://www.samsunglions.com/intro/intro02.asp?act=view&idx=970012",
+        "from": "2022"
+      },
+      {
+        "team": "삼성 라이온즈",
+        "role": "1군 감독 선임",
+        "detail": "제16대 감독 선임",
+        "source": "https://www.samsunglions.com/intro/intro02.asp?act=view&idx=970012",
+        "from": "2022-10-18"
+      }
+    ]
+  },
+  "kbo-lotte": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "두산을 8시즌 지휘하며 한국시리즈 세 차례 우승을 이끌고 롯데 감독으로 선임됐다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "to": "2022",
+        "team": "두산 베어스",
+        "role": "감독",
+        "detail": "2015·2016·2019 한국시리즈 우승, 2015~2021 7년 연속 한국시리즈 진출",
+        "source": "https://www.yna.co.kr/view/AKR20231020094351007",
+        "from": "2015"
+      },
+      {
+        "team": "롯데 자이언츠",
+        "role": "감독 선임",
+        "detail": "제21대 감독으로 선임",
+        "source": "https://www.yna.co.kr/view/AKR20231020094351007",
+        "from": "2023-10-20"
+      }
+    ]
+  },
+  "kbo-kt": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "두산 수석코치를 거쳐 KT를 맡았다. 2019시즌부터 팀을 지휘해 2021년 구단 첫 통합 우승을 이끌었다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "team": "두산 베어스",
+        "role": "수석 코치",
+        "detail": "KT 감독 선임 전 두산 수석코치 역임",
+        "source": "https://www.ktwiz.co.kr/ktwiz/history",
+        "from": "2018"
+      },
+      {
+        "team": "KT 위즈",
+        "role": "감독 선임",
+        "detail": "제3대 감독으로 선임되어 2019시즌부터 지휘",
+        "source": "https://www.ktwiz.co.kr/ktwiz/history",
+        "from": "2018"
+      },
+      {
+        "to": "2021",
+        "team": "KT 위즈",
+        "role": "감독",
+        "detail": "구단 첫 정규시즌·한국시리즈 통합 우승",
+        "source": "https://www.ktwiz.co.kr/ktwiz/history",
+        "from": "2021"
+      }
+    ]
+  },
+  "kbo-lg": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "넥센에서 감독 경력을 시작해 SK와 LG의 지휘봉을 잡았다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "team": "넥센 히어로즈",
+        "role": "감독",
+        "detail": "감독 첫 시즌, 3월 31일 첫 승",
+        "source": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11509",
+        "from": "2013"
+      },
+      {
+        "to": "2016",
+        "team": "넥센 히어로즈",
+        "role": "감독",
+        "detail": "9월 15일 통산 300승 달성",
+        "source": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11509",
+        "from": "2016"
+      },
+      {
+        "to": "2020",
+        "team": "SK 와이번스",
+        "role": "감독",
+        "detail": "5월 31일 통산 400승 달성",
+        "source": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11509",
+        "from": "2020"
+      },
+      {
+        "to": "2024",
+        "team": "LG 트윈스",
+        "role": "감독",
+        "detail": "4월 7일 통산 500승 달성",
+        "source": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11509",
+        "from": "2024"
+      }
+    ]
+  },
+  "kbo-hanwha": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "두산과 NC를 지휘하고 국가대표 감독을 역임했다. 2024년 한화 사령탑으로 KBO리그에 복귀했다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "to": "2011-06",
+        "team": "두산 베어스",
+        "role": "감독",
+        "detail": "두산 1군 지휘",
+        "source": "https://www.koreabaseball.com/MediaNews/News/KboPhoto/View.aspx?bdSe=445962",
+        "from": "2004"
+      },
+      {
+        "to": "2008",
+        "team": "대한민국 국가대표",
+        "role": "감독",
+        "detail": "베이징 올림픽 9전 전승 금메달",
+        "source": "https://www.koreabaseball.com/MediaNews/News/KboPhoto/View.aspx?bdSe=445962",
+        "from": "2008"
+      },
+      {
+        "to": "2018-06",
+        "team": "NC 다이노스",
+        "role": "감독",
+        "detail": "신생 구단 NC의 초대 감독",
+        "source": "https://www.koreabaseball.com/MediaNews/News/KboPhoto/View.aspx?bdSe=445962",
+        "from": "2011-08"
+      },
+      {
+        "team": "한화 이글스",
+        "role": "감독 선임",
+        "detail": "6년 만의 KBO리그 감독 복귀",
+        "source": "https://www.koreabaseball.com/MediaNews/News/KboPhoto/View.aspx?bdSe=445962",
+        "from": "2024"
+      }
+    ]
+  },
+  "kbo-nc": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "NC에서 선수 생활을 마친 뒤 NC와 LG의 타격·수석코치를 거쳐 NC 감독으로 돌아왔다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "to": "2017",
+        "team": "NC 다이노스",
+        "role": "선수",
+        "detail": "NC에서 5시즌 활약",
+        "source": "https://www.yna.co.kr/view/AKR20241022141000007",
+        "from": "2013"
+      },
+      {
+        "to": "2018",
+        "team": "요미우리 자이언츠",
+        "role": "코치 연수",
+        "detail": "은퇴 후 지도자 연수",
+        "source": "https://www.yna.co.kr/view/AKR20241022141000007",
+        "from": "2018"
+      },
+      {
+        "to": "2021",
+        "team": "NC 다이노스",
+        "role": "타격 코치",
+        "detail": "2020년 구단 첫 통합 우승에 기여",
+        "source": "https://www.yna.co.kr/view/AKR20241022141000007",
+        "from": "2019"
+      },
+      {
+        "to": "2024",
+        "team": "LG 트윈스",
+        "role": "타격 · QC · 수석 코치",
+        "detail": "LG 코칭스태프 역임",
+        "source": "https://www.yna.co.kr/view/AKR20241022141000007",
+        "from": "2022"
+      },
+      {
+        "team": "NC 다이노스",
+        "role": "감독 선임",
+        "detail": "NC 선수 출신 첫 사령탑",
+        "source": "https://www.yna.co.kr/view/AKR20241022141000007",
+        "from": "2024-10-22"
+      }
+    ]
+  },
+  "kbo-ssg": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "KT에서 타격코치와 단장, 육성총괄을 경험한 뒤 SSG 감독으로 선임됐다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "to": "2011",
+        "team": "태평양 · 현대 · 히어로즈",
+        "role": "선수",
+        "detail": "프로 통산 2,001경기 출전",
+        "source": "https://www.edaily.co.kr/News/Read?mediaCodeNo=258&newsId=01289046635808016",
+        "from": "1994"
+      },
+      {
+        "to": "2013",
+        "team": "야구 중계",
+        "role": "해설위원",
+        "detail": "은퇴 후 해설 활동",
+        "source": "https://www.edaily.co.kr/News/Read?mediaCodeNo=258&newsId=01289046635808016",
+        "from": "2012"
+      },
+      {
+        "team": "KT 위즈",
+        "role": "타격 코치",
+        "detail": "지도자 생활 시작",
+        "source": "https://www.edaily.co.kr/News/Read?mediaCodeNo=258&newsId=01289046635808016",
+        "from": "2014"
+      },
+      {
+        "team": "SSG 랜더스",
+        "role": "감독 취임",
+        "detail": "인천에서 감독 커리어 시작",
+        "source": "https://www.edaily.co.kr/News/Read?mediaCodeNo=258&newsId=01289046635808016",
+        "from": "2023-11-21"
+      }
+    ]
+  },
+  "kbo-doosan": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "두산 투수코치와 SSG 감독을 거쳐 두산 사령탑을 맡았다. SSG에서 2022년 통합 우승을 경험했다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "to": "2020",
+        "team": "두산 베어스",
+        "role": "투수 코치",
+        "detail": "두산 코칭스태프 역임",
+        "source": "https://www.mt.co.kr/sports/2026/03/27/2026032716100319141",
+        "from": "2019"
+      },
+      {
+        "to": "2023",
+        "team": "SSG 랜더스",
+        "role": "감독",
+        "detail": "2022년 정규시즌·한국시리즈 통합 우승",
+        "source": "https://www.mt.co.kr/sports/2026/03/27/2026032716100319141",
+        "from": "2021"
+      }
+    ]
+  },
+  "kbo-kiwoom": {
+    "version": 1,
+    "kind": "verified",
+    "summary": "히어로즈 프런트와 코칭스태프를 두루 경험했다. 퓨처스 감독과 1군 감독대행을 거쳐 정식 감독이 됐다.",
+    "asOf": "2026-09-14",
+    "entries": [
+      {
+        "team": "히어로즈",
+        "role": "매니저 · 육성팀장 · 잔류군 투수코치",
+        "detail": "프런트와 현장 보직 역임",
+        "source": "https://heroesbaseball.co.kr/story/heroesNews/view.do?num=22346",
+        "from": "2008"
+      },
+      {
+        "to": "2025",
+        "team": "고양 히어로즈",
+        "role": "퓨처스 감독",
+        "detail": "6시즌 육성팀 지휘",
+        "source": "https://heroesbaseball.co.kr/story/heroesNews/view.do?num=22346",
+        "from": "2020"
+      },
+      {
+        "to": "2025-09-27",
+        "team": "키움 히어로즈",
+        "role": "1군 감독대행",
+        "detail": "1군 지휘봉을 이어받음",
+        "source": "https://heroesbaseball.co.kr/story/heroesNews/view.do?num=22346",
+        "from": "2025-07-14"
+      },
+      {
+        "team": "키움 히어로즈",
+        "role": "1군 감독 선임",
+        "detail": "제7대 감독 선임",
+        "source": "https://heroesbaseball.co.kr/story/heroesNews/view.do?num=22346",
+        "from": "2025-09-28"
+      }
+    ]
+  }
+}

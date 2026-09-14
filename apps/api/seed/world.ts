@@ -1,5 +1,7 @@
 import draftRules from './draft-rules-2026.json';
 import managers from './club-managers-2026-09-09.json';
+import managerBackgrounds from './manager-backgrounds-2026-09-14.json';
+import type { ManagerBackground } from '@dugout/shared/manager-background';
 import portraits from './kbo-portraits-2026-09-10.json';
 import nationalities from './player-nationalities-2026-09-11.json';
 import logos from './club-logos.json';
@@ -100,12 +102,17 @@ export function buildSeedWorld(): WorldCatalog {
     ),
   );
   return {
-    version: 'world-2026-09-11-v14',
+    version: 'world-2026-09-14-v15',
     draftRules,
     year: 2026,
     clubs: clubs.map((club) => ({
       ...club,
-      manager: (managers as Record<string, WorldCatalog['clubs'][number]['manager']>)[club.id],
+      manager: (managers as Record<string, WorldCatalog['clubs'][number]['manager']>)[club.id] && {
+        ...(managers as Record<string, NonNullable<WorldCatalog['clubs'][number]['manager']>>)[
+          club.id
+        ],
+        background: (managerBackgrounds as Record<string, ManagerBackground>)[club.id],
+      },
       logo: (logos as Record<string, ClubLogo>)[club.id],
     })),
     leagues,

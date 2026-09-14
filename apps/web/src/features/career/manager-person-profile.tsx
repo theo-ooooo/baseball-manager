@@ -6,13 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { GameState } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import { abilityText } from '@dugout/shared/ratings';
-import { departureLabel } from '@dugout/shared/manager-departure';
-import {
-  managerAbilityKeys,
-  managerAbilityLabels,
-  managerAbilityNote,
-} from '@dugout/shared/manager-ability';
+import { managerAbilityLabels } from '@dugout/shared/manager-ability';
 import { useManagerPersonProfile } from './use-manager-person-profile';
+import { ManagerProfileHistory } from './manager-profile-history';
+import { ManagerProfileAbilities } from './manager-profile-abilities';
+
 export function ManagerPersonProfile({
   g,
   id,
@@ -32,64 +30,9 @@ export function ManagerPersonProfile({
         <p>통합 검색에서 감독 이름을 찾아 주세요.</p>
       </section>
     );
-  const { person, contract, getClub } = p,
-    { job, self, club, record } = person;
+  const { person, contract, getClub } = p;
+  const { job, self, club, record } = person;
   const target = contract?.targetRank ?? job?.expectation?.targetRank;
-  const history = (
-    <section className="dossier-card">
-      <header>
-        <h2>감독 경력</h2>
-        <span>현재 커리어에 남은 기록</span>
-      </header>
-      <div className="manager-career-timeline">
-        {self && club && (
-          <div>
-            <span className="dossier-badge">재임 중</span>
-            <h3>
-              <Link href={`/clubs/${club}`}>{getClub(club).name}</Link>
-            </h3>
-            <p>{job?.appointed} ~ 현재</p>
-          </div>
-        )}
-        {self &&
-          g.managerCareer?.history.map((h, i) => (
-            <div key={`${h.from}:${i}`}>
-              <span>{departureLabel(h)}</span>
-              <h3>
-                <Link href={`/clubs/${h.club}`}>{getClub(h.club).name}</Link>
-              </h3>
-              <p>
-                {h.from} ~ {h.to} · 퇴임 {h.rank}위
-              </p>
-            </div>
-          ))}
-        {record?.career.map((h, i) => (
-          <div key={`${h.club}:${i}`}>
-            <span className={h.active ? 'dossier-badge' : undefined}>
-              {h.role || '감독'} · {h.active ? '재임 중' : '이전 소속'}
-            </span>
-            <h3>
-              <Link href={`/clubs/${h.club}`}>{getClub(h.club).name}</Link>
-            </h3>
-            <p>
-              {h.from
-                ? `${h.from} ~ ${h.active ? '현재' : h.to || '퇴임일 미기록'}`
-                : '재임 날짜 기록 없음'}
-            </p>
-            {h.wins !== undefined && (
-              <p>
-                {h.wins}승 {h.losses || 0}패 · 기록된 재임 성적
-              </p>
-            )}
-            {h.reason && <small>{h.reason}</small>}
-          </div>
-        ))}
-        {self && !club && !g.managerCareer?.history.length && (
-          <p>아직 구단을 맡은 경력이 없습니다.</p>
-        )}
-      </div>
-    </section>
-  );
   const contractInfo = (
     <section className="dossier-card">
       <header>
@@ -153,110 +96,140 @@ export function ManagerPersonProfile({
   );
   return (
     <article className="manager-dossier">
-      <header className="country-dossier-header manager-dossier-header">
-        <div className="country-identity">
-          <span className="person-monogram" aria-hidden="true">
-            감독
+      <header className="manager-profile-hero">
+        <div className="manager-profile-identity">
+          <span className="manager-profile-monogram" aria-hidden="true">
+            {person.name.slice(0, 1)}
           </span>
           <div>
-            <span className="country-kicker">
-              {self ? '내 감독 프로필' : record?.real ? '실명 지도자' : '가상 지도자'}
+            <span className="manager-profile-kicker">
+              {self ? '내 감독' : record?.real ? '실명 지도자' : '가상 지도자'} ·{' '}
+              {record?.role || '감독'}
             </span>
             <h1>{person.name}</h1>
             <p>
               {club ? (
-                <Link href={`/clubs/${club}`}>
-                  {getClub(club).name} · {record?.role || '감독'}
-                </Link>
+                <Link href={`/clubs/${club}`}>{getClub(club).name} ↗</Link>
               ) : (
-                '무직 · 새 구단 취임 가능'
+                '무직 · 다음 구단을 기다리는 중'
               )}
             </p>
+            {p.strongest && (
+              <span className="manager-style-tag">{managerAbilityLabels[p.strongest]} 중심</span>
+            )}
           </div>
         </div>
-        <dl className="country-headline-stats">
+        <dl className="manager-profile-scoreboard">
           <div>
-            <dt>평판</dt>
+            <dt>이번 시즌 취임 후</dt>
             <dd>
-              {abilityText(p.reputation)}
-              <small>/ 100</small>
-            </dd>
-          </div>
-          <div>
-            <dt>이사회 신뢰</dt>
-            <dd>
-              {job ? abilityText(job.confidence) : '—'}
-              <small>{job ? '/ 100' : club ? '코치 재직' : '소속 없음'}</small>
+              {job ? `${p.wins}승 ${p.losses}패` : '—'}
+              <small>
+                {job
+                  ? `${p.draws}무 · 승률 ${p.winRate ? `${p.winRate}%` : '—'}`
+                  : '현재 재임 기록 없음'}
+              </small>
             </dd>
           </div>
           <div>
             <dt>지도 능력</dt>
             <dd>
-              {p.abilityOverall !== undefined ? abilityText(p.abilityOverall) : '—'}
-              <small>{p.abilityOverall !== undefined ? '/ 100' : '기록 없음'}</small>
+              {abilityText(p.abilityOverall)}
+              <small>종합 / 100</small>
             </dd>
           </div>
           <div>
-            <dt>리그 순위</dt>
+            <dt>평판</dt>
             <dd>
-              {p.rank || '—'}
-              <small>{p.rank ? '위' : club ? '경기 전' : '무직'}</small>
+              {abilityText(p.reputation)}
+              <small>구단의 채용 평가</small>
             </dd>
           </div>
         </dl>
       </header>
+      <div className="manager-profile-intro">
+        <p>
+          {p.background?.summary ||
+            (record?.real
+              ? '현역 지도자의 공개 이력과 이 커리어에서의 행보를 확인하세요.'
+              : '첫 부임부터 다음 도전까지, 감독의 경력을 기록합니다.')}
+        </p>
+        <div className="manager-profile-actions">
+          {self ? (
+            <>
+              <Link className="button secondary" href="/manager/offers">
+                받은 제안
+              </Link>
+              <Link className="button secondary" href="/?view=jobs">
+                채용 센터
+              </Link>
+            </>
+          ) : (
+            p.coach &&
+            record &&
+            !record.club &&
+            act &&
+            g.managerCareer?.status !== 'unemployed' && (
+              <button
+                className="button primary"
+                disabled={busy || !!g.managerCareer?.vacationUntil}
+                onClick={() => p.setOffering(true)}
+              >
+                코치직 제안
+              </button>
+            )
+          )}
+        </div>
+      </div>
       <Tabs value={p.tab} onValueChange={p.setTab}>
         <TabsList className="dossier-tabs" variant="line">
-          <TabsTrigger value="overview">개요</TabsTrigger>
+          <TabsTrigger value="overview">프로필</TabsTrigger>
+          <TabsTrigger value="history">경력 · 히스토리</TabsTrigger>
           <TabsTrigger value="contract">계약 · 구단 기대</TabsTrigger>
-          <TabsTrigger value="history">경력</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
-          <div className="manager-overview-grid">
-            <section className="dossier-card">
-              <header>
-                <h2>감독 평가</h2>
-                <span>{g.year} 시즌</span>
-              </header>
-              <div className="manager-evaluation">
-                {p.reputation !== undefined && (
-                  <div>
-                    <span>
-                      평판<strong>{abilityText(p.reputation)} / 100</strong>
-                    </span>
-                    <progress max={100} value={p.reputation} aria-label="감독 평판" />
-                    <p>구단의 채용 심사와 감독 영입 제안에 반영됩니다.</p>
-                  </div>
-                )}
-                {job ? (
-                  <div>
-                    <span>
-                      이사회 신뢰<strong>{abilityText(job.confidence)} / 100</strong>
-                    </span>
-                    <progress max={100} value={job.confidence} aria-label="이사회 신뢰" />
-                    <p>{job.reason}</p>
-                  </div>
-                ) : (
-                  <p>현재 소속 구단이 없어 이사회 평가와 시즌 목표가 없습니다.</p>
-                )}
-                {job && (
+          <div className="manager-profile-layout">
+            <div className="manager-profile-main">
+              {p.ability && <ManagerProfileAbilities ability={p.ability} self={self} />}
+              <ManagerProfileHistory profile={p} compact />
+            </div>
+            <aside className="manager-profile-aside">
+              <section className="dossier-card">
+                <header>
+                  <h2>구단의 평가</h2>
+                  <span>{g.year} 시즌</span>
+                </header>
+                <div className="manager-evaluation">
+                  {job ? (
+                    <div>
+                      <span>
+                        이사회 신뢰<strong>{abilityText(job.confidence)} / 100</strong>
+                      </span>
+                      <progress max={100} value={job.confidence} aria-label="이사회 신뢰" />
+                      <p>{job.reason}</p>
+                    </div>
+                  ) : (
+                    <p>{club ? '코치로 재직 중입니다.' : '현재 소속 구단이 없습니다.'}</p>
+                  )}
                   <dl className="dossier-facts">
                     <div>
-                      <dt>이번 시즌 취임 후</dt>
-                      <dd>
-                        {p.wins}승 {p.losses}패
-                      </dd>
+                      <dt>리그 순위</dt>
+                      <dd>{p.rank ? `${p.rank}위` : '—'}</dd>
                     </div>
                     <div>
-                      <dt>선두로 마친 경기</dt>
-                      <dd>{job.board?.leaderGames || 0}경기</dd>
+                      <dt>시즌 목표</dt>
+                      <dd>{target ? `${target}위 이내` : '—'}</dd>
                     </div>
                   </dl>
-                )}
-              </div>
+                </div>
+              </section>
+              {contractInfo}
               {record?.personality && (
-                <div className="manager-personality">
-                  <h3>보직 · 협상 성향</h3>
+                <section className="dossier-card">
+                  <header>
+                    <h2>보직 · 협상 성향</h2>
+                  </header>
+                  <p className="manager-background-summary">{p.stance?.reason}</p>
                   <dl className="dossier-facts">
                     {[
                       ['감독직 선호', record.personality.managerPreference],
@@ -270,90 +243,18 @@ export function ManagerPersonProfile({
                       </div>
                     ))}
                   </dl>
-                  <p>{p.stance?.reason}</p>
-                  <small>실제 인물의 성격과 별개인 게임 내 성향입니다.</small>
-                </div>
+                  <p className="person-profile-note">
+                    게임 내 성향이며 실제 인물의 성격을 뜻하지 않습니다.
+                  </p>
+                </section>
               )}
-              {p.coach &&
-                record &&
-                !record.club &&
-                act &&
-                g.managerCareer?.status !== 'unemployed' && (
-                  <div className="manager-profile-actions">
-                    <button
-                      className="button primary"
-                      disabled={busy || !!g.managerCareer?.vacationUntil}
-                      onClick={() => p.setOffering(true)}
-                    >
-                      코치직 제안
-                    </button>
-                    <Link className="button secondary" href="/?view=staff">
-                      코치 협상 현황
-                    </Link>
-                  </div>
-                )}
-              <p className="person-profile-note">
-                {self
-                  ? '게임 내 평판과 재임 성과입니다. 내 구단의 선수 훈련은 담당 코치의 능력치를 따릅니다.'
-                  : '게임 내 평판과 재임 성과입니다. 선수 훈련은 구단 코치의 능력치를 따릅니다.'}
-              </p>
-            </section>
-            {p.ability && (
-              <section className="dossier-card">
-                <header>
-                  <h2>지도 능력</h2>
-                  <span>종합 {abilityText(p.abilityOverall)} / 100</span>
-                </header>
-                <div className="manager-ability">
-                  {managerAbilityKeys.map((key) => (
-                    <div key={key}>
-                      <span>
-                        {managerAbilityLabels[key]}
-                        <strong>{p.ability![key]} / 100</strong>
-                      </span>
-                      <progress
-                        max={100}
-                        value={p.ability![key]}
-                        aria-label={managerAbilityLabels[key]}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <p>{managerAbilityNote(p.ability)}</p>
-                <small>
-                  {self
-                    ? '평판을 중심으로 계산한 값이라 성적이 쌓이면 같이 오릅니다. 강점과 약점의 모양은 고정입니다. 내 구단 경기는 실제 지시대로 진행되므로 이 값이 결과를 바꾸지 않습니다.'
-                    : '평판이 명성이라면 지도 능력은 실제 운영 역량입니다. 컴퓨터 구단의 경기 운영과 선수 육성, 구단의 감독 채용 심사, 코치로 전향했을 때의 지도력에 반영됩니다.'}
-                </small>
-              </section>
-            )}
-            {contractInfo}
-            {history}
-            {self && (
-              <section className="dossier-card">
-                <header>
-                  <h2>다음 커리어</h2>
-                </header>
-                <p>면접 제안과 구단이 제시한 계약 조건을 확인하세요.</p>
-                <div className="manager-profile-actions">
-                  <Link className="button primary" href="/manager/offers">
-                    받은 제안
-                  </Link>
-                  <Link className="button secondary" href="/?view=jobs">
-                    채용 센터
-                  </Link>
-                  {club && (
-                    <Link className="button secondary" href="/?view=vision">
-                      구단 비전
-                    </Link>
-                  )}
-                </div>
-              </section>
-            )}
+            </aside>
           </div>
         </TabsContent>
+        <TabsContent value="history">
+          <ManagerProfileHistory profile={p} />
+        </TabsContent>
         <TabsContent value="contract">{contractInfo}</TabsContent>
-        <TabsContent value="history">{history}</TabsContent>
       </Tabs>
       {p.offering && p.coach && act && (
         <CoachOfferDialog

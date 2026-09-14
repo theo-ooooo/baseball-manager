@@ -107,12 +107,12 @@ export function managerAbilityNote(ability: ManagerAbility) {
   const best = entries.reduce((a, b) => (b.value > a.value ? b : a));
   const worst = entries.reduce((a, b) => (b.value < a.value ? b : a));
   return best.value - worst.value < 10
-    ? `${managerAbilityLabels[best.key]} 을 비롯해 전 항목이 고른 유형입니다.`
-    : `${managerAbilityLabels[best.key]} 이 강점이고 ${managerAbilityLabels[worst.key]} 이 약점입니다.`;
+    ? '능력이 고르게 분포한 균형형 지도자입니다.'
+    : `강점: ${managerAbilityLabels[best.key]} · 보완: ${managerAbilityLabels[worst.key]}`;
 }
 
 /**
- * 컴퓨터 구단 선수의 성장 배율. 육성이 좋은 감독 밑에서 유망주가 더 크고, 노장의 기량
+ * 소속 선수의 성장 배율. 육성이 좋은 감독 밑에서 유망주가 더 크고, 노장의 기량
  * 하락도 더디다. 감독이 없거나 능력치를 모르면 1 — 즉 기존 속도 그대로다.
  */
 export function managerDevelopmentFactor(ability?: ManagerAbility) {
@@ -134,3 +134,25 @@ export function selfManagerAbility(g: {
     reputation: g.managerCareer?.reputation ?? g.reputation,
   });
 }
+
+/** 경기 시작 때 고정한 능력에만 적용한다. 55가 기준이며 선수 기량을 소폭 보조한다. */
+export function managerMatchEffects(ability?: ManagerAbility) {
+  const offset = (key: keyof ManagerAbility) =>
+    ability ? Math.max(-35, Math.min(40, ability[key] - 55)) : 0;
+  return {
+    contact: offset('tactics') * 0.0002 + offset('motivation') * 0.00005,
+    pitching: offset('bullpen') * 0.045 + offset('motivation') * 0.005,
+    control: offset('bullpen') * 0.06,
+    defense: offset('tactics') * 0.03,
+    execution: offset('tactics') * 0.3,
+    fatigueThreshold: 40 + offset('bullpen') * 0.125,
+  };
+}
+
+export const managerAbilityEffects: Record<keyof ManagerAbility, string> = {
+  tactics: '타석 운영과 수비 조직력, 번트·도루 수행을 돕습니다.',
+  bullpen: '투구·제구를 보조하고 자동 교체 시 피로 판단에 반영됩니다.',
+  development: '훈련 성장률과 노장 선수의 기량 유지에 반영됩니다.',
+  motivation: '경기 집중력과 직접 전하는 라커룸 메시지의 반응에 반영됩니다.',
+  evaluation: '스카우트 보고의 정확도를 보조합니다. AI 감독은 채용·코치 전향 평가에도 반영됩니다.',
+};

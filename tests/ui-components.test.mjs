@@ -192,7 +192,7 @@ test('Manager job listings show board confidence and vacancies separately from t
   assert.match(jobs, /role="meter"/);
   assert.match(jobs, /공석/);
   assert.match(jobs, /관심 전하기/);
-  assert.match(office, /소속 없음/);
+  assert.match(office, /무직/);
   assert.match(office, /\?view=jobs/);
   assert.match(office, /내 프로필/);
 });

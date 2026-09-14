@@ -9,6 +9,7 @@ import { matchCommandAction } from './match-command-actions';
 import { finishPendingConversation, queuePostMatchConversation } from './match-media-actions';
 import { gameDate } from '@dugout/shared/calendar';
 import { postNews } from './club-dynamics';
+import { snapshotMatchManagers } from './manager-match-abilities';
 
 type Advance = (game: GameState, count?: number, pauseAfterOwn?: boolean) => GameState;
 export function createLiveMatchActions(
@@ -63,6 +64,7 @@ export function createLiveMatchActions(
       registrations.prepare(g, away, g.phase === 'regular');
       finishPendingConversation(g);
       g.liveMatch = {
+        managers: snapshotMatchManagers(g, home, away),
         home,
         away,
         seed: g.seed,

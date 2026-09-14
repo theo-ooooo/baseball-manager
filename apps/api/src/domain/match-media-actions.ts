@@ -10,6 +10,7 @@ import {
 import { prepareDynamics, postNews } from './club-dynamics';
 import { conversationReaction } from './match-media-reactions';
 import { coachMediaAnswers } from './coach-media';
+import { selfManagerAbility } from '@dugout/shared/manager-ability';
 
 function recordConversation(
   g: GameState,
@@ -39,8 +40,11 @@ function recordConversation(
     return { id: q.id, choice: choice.id, text: choice.text };
   });
   const players = g.roster.filter((p) => context.playerIds.includes(p.id));
+  const motivation = delegated
+    ? ((g.staff.find((c) => c.role === '수석') || g.staff[0])?.skill ?? 50)
+    : selfManagerAbility(g).motivation;
   const reactions = players.map((p) => {
-    const reaction = conversationReaction(p, context, canonical, !!delegated);
+    const reaction = conversationReaction(p, context, canonical, !!delegated, motivation);
     if (automatic) {
       reaction.after = reaction.before;
       reaction.reason = '자동 진행 중 언론 담당자가 일정에 맞춰 응대함';

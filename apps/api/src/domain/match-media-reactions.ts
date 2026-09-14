@@ -6,6 +6,7 @@ export function conversationReaction(
   context: MatchConversation,
   answers: { id: string; choice: MediaChoice['id'] }[],
   delegated: boolean,
+  motivation = 50,
 ) {
   const before = player.mood!.value;
   let change = 0;
@@ -30,7 +31,11 @@ export function conversationReaction(
     } else if (context.outcome === 'loss' && before < 60) change += 0.5;
   }
   const cap = delegated ? 1 : 2;
-  change = Math.max(-cap, Math.min(cap, change * (delegated ? 0.5 : 1)));
+  const influence = 0.75 + Math.max(20, Math.min(95, motivation)) * 0.005;
+  change = Math.max(
+    -cap,
+    Math.min(cap, (change > 0 ? change * influence : change / influence) * (delegated ? 0.5 : 1)),
+  );
   const after = Math.max(0, Math.min(100, before + change));
   const reason =
     after > before

@@ -128,7 +128,10 @@ test('Match scoring, stats, world standings and next season remain consistent', 
   assert.equal(g.phase, 'preseason');
   assert.equal(g.lineup.length, 9);
   assert.ok(g.roster.some((p) => !p.real && p.id.includes('2027')));
-  e.applyAction(g, { type: 'lineup', ids: g.lineup });
+  // A changed match outcome may miss the board target; next season also supports unemployment.
+  if (g.managerCareer?.status === 'unemployed')
+    assert.throws(() => e.applyAction(g, { type: 'lineup', ids: g.lineup }), /무직/);
+  else e.applyAction(g, { type: 'lineup', ids: g.lineup });
 });
 test('Agent negotiation, signing, resale and coach hiring update actual resources', () => {
   let g = e.newGame('mlb-dodgers', 'Test', 'short', 9);

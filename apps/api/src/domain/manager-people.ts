@@ -9,6 +9,7 @@ import {
   coachSkillFromAbility,
 } from '@dugout/shared/manager-ability';
 import { createPlayerGenerator } from './player-generator';
+import { fictionalManagerBackground } from './manager-background';
 const reputation = (level: number) => Math.max(25, Math.min(95, level - 10));
 export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
   const people = (g.managerPeople ??= {}),
@@ -86,6 +87,21 @@ export function reconcileManagerPeople(g: GameState, world: WorldCatalog) {
   for (const person of Object.values(people)) {
     person.personality ??= managerPersonality(person.id);
     person.ability ??= managerAbility(person);
+    if (!person.background) {
+      const origin = world.clubs.find((c) => c.id === person.originClub);
+      if (person.real && origin?.manager?.name === person.name)
+        person.background = origin.manager.background && structuredClone(origin.manager.background);
+      else if (!person.real)
+        person.background = fictionalManagerBackground(
+          person.id,
+          person.career
+            .map((c) => c.from)
+            .filter((d): d is string => !!d)
+            .sort()[0] || `${world.year}-01-01`,
+          origin?.city || '연고지',
+          person.ability,
+        );
+    }
     const league = world.clubs.find((c) => c.id === person.originClub)?.league || 'kbo';
     const role = coachRoles[hash(person.id) % coachRoles.length];
     person.coach ??= {

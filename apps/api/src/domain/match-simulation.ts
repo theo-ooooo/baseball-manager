@@ -42,6 +42,8 @@ import { delegatedMatchCommand } from './delegated-match-command';
 import { createMatchEnergy, fatigueFactor } from './match-energy';
 import { pitchingModifiers } from './pitching-tactics';
 import { createMatchCardRuntime } from './match-card-runtime';
+import { managerMatchEffects } from '@dugout/shared/manager-ability';
+import { snapshotMatchManagers } from './manager-match-abilities';
 
 export function createMatchSimulator(world: WorldCatalog) {
   return createSimulator(createGameView(world));
@@ -73,6 +75,12 @@ function createSimulator({
     post = false,
   ): Generator<Result, Result> {
     const involved = home === g.club || away === g.club;
+    // Ongoing legacy matches remain neutral, including when regenerated after a command.
+    const managers = g.liveMatch ? g.liveMatch.managers : snapshotMatchManagers(g, home, away);
+    const managerEffects = [
+      managerMatchEffects(managers?.away),
+      managerMatchEffects(managers?.home),
+    ];
     const matchCards = involved ? g.liveMatch?.cards : undefined;
     const activateCards = createMatchCardRuntime(matchCards);
     const rosters = [
@@ -255,7 +263,10 @@ function createSimulator({
               ) * 2,
             ),
           );
-        const tired = energyEnabled && currentStats.outs > 0 && energy.get(current) < 40;
+        const tired =
+          energyEnabled &&
+          currentStats.outs > 0 &&
+          energy.get(current) < managerEffects[defending].fatigueThreshold;
         const protectCloser = modernRelief && Math.abs(lead) >= 4 && current.id === plan.closer;
         const longRelief =
           modernRelief &&
@@ -331,13 +342,15 @@ function createSimulator({
           const pStrength =
             overall(pitcher) * (0.75 + pitcher.condition / 400) +
             ((pitcher.mood?.value ?? 65) - 65) * 0.08 +
+            managerEffects[1 - side].pitching +
             (ownPitch ? (coachSkill(g, '투수') - 50) / 6 : 0);
           const defense =
             (ownPitch
               ? defenseStrength(g)
               : rosters[1 - side].filter((p) => p.pos !== 'P').reduce((s, p) => s + p.field, 0) /
                 Math.max(1, rosters[1 - side].filter((p) => p.pos !== 'P').length)) +
-            (ownPitch ? (coachSkill(g, '수비') - 50) / 5 : 0);
+            (ownPitch ? (coachSkill(g, '수비') - 50) / 5 : 0) +
+            managerEffects[1 - side].defense;
           return { pitcher, pStrength, defense };
         };
         let { pitcher, pStrength, defense } = context();
@@ -375,7 +388,7 @@ function createSimulator({
             (pStrength +
               (overall(cardPitcher) - overall(pitcher)) * (0.75 + pitcher.condition / 400)) *
             pitcherFactor;
-          const control = cardPitcher.control * pitcherFactor;
+          const control = (cardPitcher.control + managerEffects[1 - side].control) * pitcherFactor;
           const approach =
             command?.kind === 'attackBatter'
               ? 'attack'
@@ -397,14 +410,19 @@ function createSimulator({
             const catcher = rosters[1 - side].find((p) => p.id === catcherId);
             const safe =
               random() <
-              stealChance(
-                {
-                  ...runner,
-                  speed: runner.speed * fatigueFactor(runner.condition, energy.get(runner)),
-                },
-                { ...pitcher, control },
-                catcher?.field || 50,
-                from === 1,
+              clamp(
+                stealChance(
+                  {
+                    ...runner,
+                    speed: runner.speed * fatigueFactor(runner.condition, energy.get(runner)),
+                  },
+                  { ...pitcher, control },
+                  catcher?.field || 50,
+                  from === 1,
+                ) +
+                  managerEffects[side].execution * 0.001,
+                0.15,
+                0.9,
               );
             const play: ReplayPlay = {
               batter: lineups[side][order[side] % lineups[side].length].id,
@@ -485,6 +503,7 @@ function createSimulator({
             0.24 +
               ((p.mood?.value ?? 65) - 65) * 0.0005 +
               cohesion +
+              managerEffects[side].contact +
               augment.contact +
               (p.contact * cond - strength) * 0.0028 +
               bonus +
@@ -519,7 +538,7 @@ function createSimulator({
             const outcome = buntResult(
               { ...p, contact: p.contact * batterFactor, speed: p.speed * batterFactor },
               defense,
-              g.tacticFamiliarity ?? 70,
+              (g.tacticFamiliarity ?? 70) + managerEffects[side].execution,
               roll,
             );
             if (outcome === 'hit' || outcome === 'sacrifice') {

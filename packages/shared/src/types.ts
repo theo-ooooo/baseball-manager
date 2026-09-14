@@ -322,7 +322,12 @@ export type Club = {
   city: string;
   division: string;
   logo?: ClubLogo;
-  manager?: { name: string; source: string; asOf: string };
+  manager?: {
+    name: string;
+    source: string;
+    asOf: string;
+    background?: import('./manager-background').ManagerBackground;
+  };
 };
 export type ClubLogo = {
   path: string;
@@ -593,6 +598,12 @@ export type PitchingPlan = {
   chase?: string[];
 };
 export type LiveMatch = {
+  /** Frozen at kickoff. Missing in older games, which keep the previous simulation rules. */
+  managers?: {
+    version: 1;
+    home?: import('./manager-ability').ManagerAbility;
+    away?: import('./manager-ability').ManagerAbility;
+  };
   cards?: MatchCardDraft;
   delegation?: { coachId: string; name: string; cursor: number };
   home: string;

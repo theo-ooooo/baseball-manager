@@ -14,6 +14,7 @@ import { postNews } from './club-dynamics';
 import { checkTrainingGoal, individualTrainingFactors } from './individual-training';
 import type { PlayerTrainingDay } from '@dugout/shared/training-center';
 import { specialistTraining } from './coaching-specialties';
+import { managerDevelopmentFactor, selfManagerAbility } from '@dugout/shared/manager-ability';
 
 function curveFor(p: Player): Pick<PlayerDevelopment, 'pattern' | 'curve'> {
   const seed = hash(`${p.id}:development-v1`);
@@ -67,6 +68,7 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
   prepareDevelopment(g);
   const date = gameDate(g),
     seasonDays = Math.max(60, g.rounds + (g.rules?.preseason ? 28 : 0));
+  const managerFactor = managerDevelopmentFactor(selfManagerAbility(g));
   for (const p of g.roster) {
     if (p.internationalDuty) continue;
     const d = p.development!,
@@ -133,6 +135,7 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
           1 - Math.min(0.3, coachSkill(g, '체력') / 400 + (g.training === 'rest' ? 0.08 : 0));
         delta = (-ageLoss * physical * care * individual) / seasonDays;
       }
+      delta = delta > 0 ? delta * managerFactor : delta / managerFactor;
       if (delta > 0) delta = Math.min(delta, Math.max(0, p.potential - p[key]));
       p[key] = Math.max(20, Math.min(99, p[key] + delta));
     }

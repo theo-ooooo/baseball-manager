@@ -39,6 +39,8 @@ import { postNews, prepareDynamics } from './club-dynamics';
 import { annualPayroll } from '@dugout/shared/club-finance';
 import { prepareFinances, settleClubDay, reviewFinances } from './club-finance';
 import { saveWorldPlayer, worldEvent } from './world-simulation';
+import { fictionalManagerBackground } from './manager-background';
+import { selfManagerAbility } from '@dugout/shared/manager-ability';
 
 export function createManagerCareer(world: WorldCatalog) {
   const view = createGameView(world),
@@ -127,6 +129,16 @@ export function createManagerCareer(world: WorldCatalog) {
         throughYear: g.year,
       },
     };
+    if (!g.managerCareer.background) {
+      const firstJob = [...g.managerCareer.history].sort((a, b) => a.from.localeCompare(b.from))[0];
+      const club = view.getClub(firstJob?.club || g.club);
+      g.managerCareer.background = fictionalManagerBackground(
+        `self:${g.manager}`,
+        firstJob?.from || g.managerJobs[club.id]?.appointed || `${world.year}-01-01`,
+        club.city,
+        selfManagerAbility(g),
+      );
+    }
     for (const offer of g.managerCareer.offers) {
       if (
         offer.expectation ||

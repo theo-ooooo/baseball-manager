@@ -8,7 +8,9 @@ import {
   managerAbility,
   managerAbilityOverall,
   selfManagerAbility,
+  managerAbilityKeys,
 } from '@dugout/shared/manager-ability';
+import { departureLabel } from '@dugout/shared/manager-departure';
 import { useWorld } from './world-context';
 export function useManagerPersonProfile(g: GameState, id: string) {
   const [tab, setTab] = useState('overview');
@@ -28,6 +30,49 @@ export function useManagerPersonProfile(g: GameState, id: string) {
   const row = table.find((r) => r.club === club);
   const wins = row && job ? Math.max(0, row.w - job.startWins) : 0;
   const losses = row && job ? Math.max(0, row.l - job.startLosses) : 0;
+  const draws = row && job ? Math.max(0, row.d - (job.startDraws || 0)) : 0;
+  const background = person?.self ? g.managerCareer?.background : person?.record?.background;
+  const career = person?.self
+    ? [
+        ...(club && job
+          ? [
+              {
+                club,
+                from: job.appointed,
+                to: undefined,
+                role: '감독',
+                active: true,
+                detail: `${wins}승 ${losses}패 ${draws}무 · 이번 시즌 취임 후`,
+              },
+            ]
+          : []),
+        ...(g.managerCareer?.history || []).map((h) => ({
+          club: h.club,
+          from: h.from,
+          to: h.to,
+          role: '감독',
+          active: false,
+          detail: `${departureLabel(h)} · 퇴임 당시 ${h.rank}위${h.detail ? ` · ${h.detail}` : ''}`,
+        })),
+      ]
+    : (person?.record?.career || []).map((h) => ({
+        club: h.club,
+        from: h.from,
+        to: h.to,
+        role: h.role || '감독',
+        active: h.active,
+        detail: [
+          h.wins !== undefined ? `${h.wins}승 ${h.losses || 0}패 · 기록된 재임 성적` : '',
+          h.reason,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      }));
+  career.sort(
+    (a, b) => Number(b.active) - Number(a.active) || (b.from || '').localeCompare(a.from || ''),
+  );
+  const strongest =
+    ability && managerAbilityKeys.reduce((a, b) => (ability[b] > ability[a] ? b : a));
   return {
     tab,
     setTab,
@@ -40,6 +85,11 @@ export function useManagerPersonProfile(g: GameState, id: string) {
     person,
     ability,
     abilityOverall: ability && managerAbilityOverall(ability),
+    strongest,
+    background,
+    career,
+    draws,
+    winRate: wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : undefined,
     getClub,
     wins,
     losses,
