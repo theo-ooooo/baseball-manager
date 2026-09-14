@@ -1,4 +1,7 @@
 'use client';
+import { PostseasonPanel } from '../schedule/postseason-panel';
+import { MatchWeatherStrip } from './match-weather-strip';
+import { useMatchWeather } from './use-match-weather';
 import Link from 'next/link';
 import { ArrowRight, ClipboardList, Users } from 'lucide-react';
 import type { GameState, Player } from '@dugout/shared/types';
@@ -33,21 +36,27 @@ export function MatchdayBriefing({
   const pair = nextFixture(g);
   const upcoming = useUpcomingFixture(g);
   const seasonRest = isClubSeasonRest(g);
+  const weather = useMatchWeather(g);
   if (!pair)
     return (
       <section className="panel panel-content matchday-rest">
         <Link className="matchday-back" href="/?view=home">
           ← 구단으로 돌아가기
         </Link>
+        {weather && <MatchWeatherStrip weather={weather.weather} showCancellation />}
         <h2>
           {seasonRest
             ? '우리 팀의 시즌 일정이 끝났습니다'
-            : '오늘은 훈련과 구단 업무를 보는 날입니다'}
+            : weather?.weather.cancellation
+              ? '오늘 경기는 기상 취소 대상입니다'
+              : '오늘은 훈련과 구단 업무를 보는 날입니다'}
         </h2>
         <p>
           {seasonRest
             ? '선수단은 휴식합니다. 계약 등 남은 구단 업무는 수신함에서 확인하세요.'
-            : '수신함을 확인하고 진행하면 다음 보고나 경기일에 멈춥니다.'}
+            : weather?.weather.cancellation
+              ? '계속 진행하면 재편성 일정이 수신함과 달력에 반영됩니다.'
+              : '수신함을 확인하고 진행하면 다음 보고나 경기일에 멈춥니다.'}
         </p>
         {upcoming && (
           <div className="matchday-upcoming">
@@ -83,6 +92,8 @@ export function MatchdayBriefing({
       <Link className="matchday-back" href="/?view=home">
         ← 구단으로 돌아가기
       </Link>
+      <PostseasonPanel g={g} compact />
+      {weather && <MatchWeatherStrip weather={weather.weather} />}
       <section className="matchday-overview">
         <div className="matchday-caption">
           <span>MATCHDAY · 경기 전 브리핑</span>

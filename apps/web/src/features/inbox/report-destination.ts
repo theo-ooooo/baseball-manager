@@ -3,6 +3,13 @@ import { scoutingGuide } from '@dugout/shared/scouting-guide';
 import { tradeNeedsConfirmation, tradeStatus, isActiveTrade } from '@dugout/shared/trade-status';
 
 export function reportDestination(news: NewsItem, g?: GameState) {
+  if (news.actionView === 'schedule')
+    return {
+      href: '/?view=schedule',
+      label: '대진 · 경기 일정 확인',
+      detail: '차전별 일정과 기상 취소 후 재편성을 확인하세요.',
+      guide: false,
+    };
   if (news.actionView === 'augmentations')
     return {
       href: '/?view=augmentations',

@@ -1,4 +1,6 @@
 'use client';
+import { PostseasonPanel } from '../schedule/postseason-panel';
+import { MatchWeatherStrip } from './match-weather-strip';
 import type { GameState } from '@dugout/shared/types';
 import { ClubBadge } from '../../components/club-badge';
 import { useWorld } from '../career/world-context';
@@ -30,6 +32,8 @@ export function MatchPreview({
       {live.cards?.version === 2 && (
         <MatchAugmentationReveal key={live.cards.id} draft={live.cards} />
       )}
+      {result.post && <PostseasonPanel g={g} compact />}
+      {live.weather && <MatchWeatherStrip weather={live.weather} />}
       <section className="match-preview-hero">
         <div className="match-preview-field" aria-hidden="true">
           <Stadium2DField viewBox="0 0 1536 1024" />

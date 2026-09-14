@@ -1,13 +1,18 @@
 import type { GameState } from '@dugout/shared/types';
+import { postseasonFixtures } from '@dugout/shared/postseason';
 import { daysBetween, gameDate } from '@dugout/shared/calendar';
 import { useWorld } from '../career/world-context';
 
 export function useUpcomingFixture(g: GameState) {
   const { fixtures, getClub, nextFixture } = useWorld();
-  if (g.phase === 'regular') {
+  if (g.phase === 'regular' || g.phase === 'semifinal' || g.phase === 'final') {
     const today = gameDate(g);
     const done = new Set(g.history.map((result) => result.fixtureId));
-    const fixture = fixtures(g, getClub(g.club).league).find(
+    const candidates =
+      g.phase === 'regular'
+        ? fixtures(g, getClub(g.club).league)
+        : postseasonFixtures(g, getClub(g.club).league).filter((f) => f.status === 'scheduled');
+    const fixture = candidates.find(
       (fixture) =>
         (fixture.home === g.club || fixture.away === g.club) &&
         fixture.date > today &&

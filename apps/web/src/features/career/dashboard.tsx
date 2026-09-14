@@ -1,4 +1,7 @@
 'use client';
+import { PostseasonPanel } from '../schedule/postseason-panel';
+import { MatchWeatherStrip } from '../matches/match-weather-strip';
+import { useMatchWeather } from '../matches/use-match-weather';
 import {
   CalendarDays,
   ChevronRight,
@@ -52,6 +55,7 @@ export function Dashboard({
 }) {
   const { getClub, getLeague, standings, nextFixture } = useWorld();
   const season = clubSeasonStatus(g);
+  const weather = useMatchWeather(g);
   const club = getClub(g.club),
     league = getLeague(club.league),
     rows = standings(g),
@@ -160,6 +164,7 @@ export function Dashboard({
           </span>
         </div>
       </header>
+      <PostseasonPanel g={g} compact />
       <div className="dashboard-command-grid">
         <div className="dashboard-main-column">
           <section className="dashboard-card next-game" aria-labelledby="next-game-title">
@@ -169,6 +174,12 @@ export function Dashboard({
               </h2>
               <span className="dashboard-tag">{phaseLabel[g.phase]}</span>
             </header>
+            {weather && (
+              <MatchWeatherStrip
+                weather={weather.weather}
+                showCancellation={g.phase !== 'preseason' && !g.liveMatch}
+              />
+            )}
             {nextPair ? (
               <>
                 <p className="next-game-date">
