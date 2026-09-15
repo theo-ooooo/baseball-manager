@@ -302,6 +302,7 @@ export function createGameView(world: WorldCatalog) {
         next.condition = delta.condition ?? 100;
         next.careerBaseline = delta.stint;
         next.personality = delta.personality ?? next.personality;
+        next.remodel = delta.remodel ?? next.remodel;
         if (delta.observation) next.observation = delta.observation;
       }
       const entry = registered.get(next.club);

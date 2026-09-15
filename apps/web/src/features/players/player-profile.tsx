@@ -1,4 +1,5 @@
 'use client';
+import { PlayerRemodelPanel } from './player-remodel-panel';
 import { PlayerRoleCard } from './player-role-card';
 import { nationalCountry } from '@dugout/shared/international';
 import { ClubBadge } from '../../components/club-badge';
@@ -333,6 +334,7 @@ export function PlayerProfile(props: Props) {
               </div>
               <p>관찰한 변화에 맞춰 다음 훈련을 계획하세요.</p>
             </header>
+            <PlayerRemodelPanel player={player} g={game} act={act} busy={busy} />
             <TrainingPlanForm
               key={JSON.stringify(player.trainingPlan) || player.id}
               player={player}

@@ -75,6 +75,7 @@ export type Player = {
   mood?: PlayerMood;
   development?: PlayerDevelopment;
   trainingPlan?: TrainingPlan;
+  remodel?: import('./player-remodel').PlayerRemodel;
   careerBaseline?: CareerBaseline;
   injury?: MedicalCase;
   internationalDuty?: InternationalDuty;

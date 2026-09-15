@@ -1,3 +1,4 @@
+import { remodelAction } from './player-remodel';
 import { defensivePlans } from '@dugout/shared/tactical-duel';
 import { setDefensivePlan, recordTacticalEvidence } from './tactical-duel';
 import {
@@ -1191,6 +1192,8 @@ export function createGameEngine(
     if (lineupReport) return lineupReport;
     const reportAction = coachReportAction(s, a);
     if (reportAction) return reportAction;
+    const remodel = remodelAction(s, a);
+    if (remodel) return remodel;
     const trained = individualTrainingAction(s, a);
     if (trained) return trained;
     const teamTraining = trainingCenterAction(s, a);

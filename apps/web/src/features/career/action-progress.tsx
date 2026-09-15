@@ -10,6 +10,8 @@ const labels: Record<string, string> = {
   delegateSeriesDay: '코치가 연전을 지휘하고 있습니다',
   followProspect: '육성 선수와 목표를 기록하고 있습니다',
   setDefensivePlan: '오늘 경기의 수비 대응을 저장하고 있습니다',
+  startRemodel: '선수와 코치에게 개조 계획을 전달하고 있습니다',
+  cancelRemodel: '폼 개조를 중단하고 있습니다',
   reviseDeadlineTrade: '경쟁 구단의 조건과 수정 제안을 검토하고 있습니다',
   respondCompetition: '주전 경쟁 방침을 선수들에게 전달하고 있습니다',
   lineup: '타순을 저장하고 있습니다',

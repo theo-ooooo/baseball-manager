@@ -1,3 +1,4 @@
+import { advanceRemodel } from './player-remodel';
 import { observeManagerTraining } from './manager-journey';
 import { isAvailable } from '@dugout/shared/long-term';
 import type { GameState, Player, PlayerDevelopment } from '@dugout/shared/types';
@@ -141,6 +142,7 @@ export function developPlayers(g: GameState, trainingDays?: Map<string, PlayerTr
       if (delta > 0) delta = Math.min(delta, Math.max(0, p.potential - p[key]));
       p[key] = Math.max(20, Math.min(99, p[key] + delta));
     }
+    advanceRemodel(g, p, daily);
     checkTrainingGoal(g, p);
     if (g.training !== 'rest' && isAvailable(p))
       observeManagerTraining(g, p, Math.max(0, abilityAverage(p) - beforeGrowth));

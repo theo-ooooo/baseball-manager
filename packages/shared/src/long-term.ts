@@ -58,6 +58,7 @@ export type WorldPlayerState = {
   condition?: number;
   stint?: CareerBaseline;
   personality?: Player['personality'];
+  remodel?: Player['remodel'];
   observation?: Player['observation'];
   generated?: {
     name: string;
