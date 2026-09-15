@@ -18,6 +18,15 @@ export function createTransferMarket(world: WorldCatalog) {
     return tradeWindow(g, view.getClub(club).league).closed;
   }
   function assess(g: GameState, p: Player): SellerDecision {
+    if (g.deadlineMarket?.listings.some((l) => l.status === 'open' && l.player.id === p.id))
+      return {
+        club: p.club,
+        status: 'refused',
+        role: '마감 경쟁 매물',
+        fee: 0,
+        reason:
+          '경쟁 구단의 선수 교환 제안이 들어온 매물입니다. 트레이드 센터에서 선수와 현금 조건을 함께 제안해 주세요.',
+      };
     if (p.club === 'fa')
       return {
         club: 'fa',

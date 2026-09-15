@@ -53,6 +53,25 @@ const value = (p: Player, roster: Player[]) => {
     { franchise: 2.5, core: 1.65, prospect: 1.45, starter: 1.15, depth: 1 }[tier]
   );
 };
+/** Same valuation and cash cap used by the seller; no extra weight for the human club. */
+export function tradePackageValue(
+  roster: Player[],
+  incoming: Player[],
+  outgoing: Player[],
+  cash: number,
+) {
+  const requested = outgoing.reduce((sum, p) => sum + value(p, roster), 0) * 1.06;
+  const players = incoming.reduce(
+    (sum, p) => sum + value(p, incoming.length >= 22 ? incoming : []),
+    0,
+  );
+  return {
+    requested,
+    players,
+    cashLimit: requested * 0.3,
+    total: players + Math.min(cash, requested * 0.3),
+  };
+}
 export function assessTradeReturn(
   roster: Player[],
   incoming: Player[],
@@ -104,13 +123,11 @@ export function assessTradeReturn(
         `${old[0].name} 선수가 빠지면 ${pos} 전력 공백이 큽니다. 해당 포지션의 대체 선수를 포함해 주세요.`,
       );
   }
-  const requested = outgoing.reduce((sum, p) => sum + value(p, roster), 0) * 1.06;
-  // Value is independent of the seller's roster rank: an unranked offer cannot lose its ability value.
-  const offered = incoming.reduce(
-    (sum, p) => sum + value(p, incoming.length >= 22 ? incoming : []),
-    0,
-  );
-  const maximumCash = requested * 0.3;
+  const {
+    requested,
+    players: offered,
+    cashLimit: maximumCash,
+  } = tradePackageValue(roster, incoming, outgoing, cash);
   if (offered < requested - maximumCash)
     return refuse(
       '선수 구성의 전력 가치 차이가 큽니다. 현금은 조건을 보완할 뿐, 선수 대가의 30%를 넘는 차이를 대신할 수 없습니다.',

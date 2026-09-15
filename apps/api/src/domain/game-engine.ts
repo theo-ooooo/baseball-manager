@@ -1002,6 +1002,7 @@ export function createGameEngine(
     prepareEngagement(s);
     tickChallenge(s, world);
     prepareCompetitions(s);
+    trades.prepare(s);
     lineupReports.prepare(s);
     if (s.draft?.status === 'open' && ['resignManager', 'signManager'].includes(String(a.type)))
       rookieDraft.progress(s, true);

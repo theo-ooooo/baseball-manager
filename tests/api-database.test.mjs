@@ -2336,6 +2336,74 @@ async function slotAction(payload, user, slot = 'challenge') {
   return { ...result.body, command };
 }
 
+test('Deadline bids persist one rival offer, reject other owners and complete one real player exchange after confirmation', async () => {
+  const user = 'deadline-bid-owner';
+  await action(
+    { type: 'start', club: 'kbo-lotte', manager: '마감 경쟁', mode: 'short', preseason: false },
+    user,
+  );
+  const raw = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  raw.day = Math.floor(raw.rounds * 0.8) - 7;
+  raw.news = [];
+  raw.weather.seed = 0;
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const opened = await action({ type: 'careerReportMode', mode: 'important' }, user),
+    listing = opened.state.deadlineMarket.listings[0];
+  assert.ok(listing);
+  const repeat = await action({ type: 'careerReportMode', mode: 'important' }, user);
+  assert.deepEqual(repeat.state.deadlineMarket, opened.state.deadlineMarket);
+  const chosen = repeat.state.roster
+    .filter((p) => p.pos === listing.player.pos)
+    .sort(
+      (a, b) =>
+        b.contact + b.power + b.stuff + b.control - (a.contact + a.power + a.stuff + a.control),
+    )[0];
+  const payload = {
+    type: 'proposeTrade',
+    deadlineId: listing.id,
+    club: listing.seller,
+    incoming: [listing.player.id],
+    outgoing: [chosen.id],
+    cash: 1000,
+    revision: repeat.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const bid = await call('/api/career', payload, user);
+  assert.equal(bid.status, 201, JSON.stringify(bid.body));
+  const offer = bid.body.state.trades[0];
+  assert.equal(offer.deadline.id, listing.id);
+  assert.ok(offer.deadline.leading);
+  assert.deepEqual(bid.body.state.roster, repeat.state.roster);
+  assert.equal(bid.body.state.budget, repeat.state.budget);
+  assert.deepEqual((await call('/api/career', payload, user)).body, bid.body);
+  assert.equal((await call('/api/career', payload, 'deadline-foreign-owner')).status, 409);
+  const restored = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(restored.state.trades[0].deadline, offer.deadline);
+  const accept = {
+    type: 'acceptTrade',
+    id: offer.id,
+    revision: restored.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const signed = await call('/api/career', accept, user);
+  assert.equal(signed.status, 201, JSON.stringify(signed.body));
+  assert.equal(signed.body.state.deadlineMarket.listings[0].status, 'won');
+  assert.ok(signed.body.state.roster.some((p) => p.id === listing.player.id));
+  const duplicate = await call('/api/career', accept, user);
+  assert.deepEqual(duplicate.body, signed.body);
+  const stored = JSON.parse(
+    (await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first()).state,
+  );
+  assert.equal(stored.ownership[listing.player.id], raw.club);
+  assert.equal(stored.ownership[chosen.id], listing.seller);
+  assert.equal(stored.deadlineMarket.listings[0].status, 'won');
+});
+
 test('Tactical plans persist atomically, freeze at kickoff and survive bounded command patches without exposing prepared inputs', async () => {
   const user = 'tactical-plan-owner';
   await action(

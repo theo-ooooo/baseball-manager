@@ -36,6 +36,7 @@ import '../styles/overlays.css';
 import '../styles/postseason.css';
 import '../styles/career-experience.css';
 import '../styles/tactical-stories.css';
+import '../styles/deadline-market.css';
 import '../styles/match-weather.css';
 import { DialogViewport } from '../src/features/career/dialog-viewport';
 

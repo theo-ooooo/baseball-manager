@@ -206,6 +206,7 @@ export type CoachDeal = {
   history: NegotiationRound[];
 };
 export type GameState = {
+  deadlineMarket?: import('./deadline-market').DeadlineMarket;
   engagement?: import('./career-engagement').CareerEngagement;
   challenge?: import('./career-engagement').CareerChallenge;
   seasonStandings?: Record<string, string[]>;

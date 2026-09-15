@@ -102,10 +102,12 @@ export function TradeOfferCard({
           {ready ? (
             <button
               className="button primary"
-              disabled={busy || !!g.liveMatch}
+              disabled={busy || !!g.liveMatch || !!(offer.deadline && !offer.deadline.leading)}
               onClick={() => void act({ type: 'acceptTrade', id: offer.id })}
             >
-              이 조건으로 트레이드 확정
+              {offer.deadline && !offer.deadline.leading
+                ? '경쟁 조건 보강 필요'
+                : '이 조건으로 트레이드 확정'}
             </button>
           ) : (
             <span>상대 구단의 답변을 기다리고 있습니다.</span>

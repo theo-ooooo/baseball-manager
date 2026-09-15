@@ -11,6 +11,7 @@ import { useWorld } from '../career/world-context';
 import type { Act } from '../career/game-contracts';
 import { Choice, Badge } from '../../components/game-ui';
 import { TradeOfferCard } from './trade-offer-card';
+import { DeadlineMarketPanel } from './deadline-market-panel';
 export function TradePanel({
   g,
   act,
@@ -85,6 +86,7 @@ export function TradePanel({
           보호합니다.
         </span>
       </p>
+      <DeadlineMarketPanel g={g} act={act} busy={busy} />
       <nav className="trade-tabs" aria-label="트레이드 업무">
         {[
           ['active', '진행 중', d.active.length],

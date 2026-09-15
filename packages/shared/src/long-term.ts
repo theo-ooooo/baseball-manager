@@ -106,6 +106,7 @@ export type MedicalCase = {
 export const isAvailable = (p: Player) =>
   !p.internationalDuty && (!p.injury || p.injury.phase === 'earlyReturn');
 export type TradeOffer = {
+  deadline?: { id: string; leading: boolean; reviewed: string; round: number; feedback?: string };
   id: string;
   club: string;
   outgoing: string[];

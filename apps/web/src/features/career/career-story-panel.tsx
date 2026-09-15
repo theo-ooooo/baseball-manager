@@ -17,6 +17,7 @@ import {
 import type { Act } from './game-contracts';
 import { useCareerExperience } from './use-career-experience';
 import { LineupCompetitionPanel } from './lineup-competition-panel';
+import { DeadlineMarketPanel } from '../market/deadline-market-panel';
 
 export function MatchStakesBanner({ stakes }: { stakes: MatchStakes }) {
   return (
@@ -46,6 +47,7 @@ export function CareerStoryPanel({
   return (
     <section className="career-story-desk" aria-label="구단의 이야기">
       {s.stakes && <MatchStakesBanner stakes={s.stakes} />}
+      <DeadlineMarketPanel g={g} act={act} busy={busy} compact />
       <div className="career-story-heading">
         <div>
           <span>내가 믿는 선수</span>

@@ -1,0 +1,213 @@
+.deadline-market {
+  margin: 20px 0;
+  padding: 22px;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 4px solid #a05d32;
+  border-radius: 8px;
+}
+.career-story-desk > .deadline-market {
+  margin: 22px 24px;
+}
+.deadline-market > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.deadline-market header span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8b4d24;
+  font-size: 13px;
+  font-weight: 700;
+}
+.deadline-market h2 {
+  font-size: 22px;
+  margin: 10px 0;
+}
+.deadline-market p {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.deadline-compact-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+.deadline-compact-list p {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.deadline-compact-list strong {
+  color: var(--foreground);
+}
+.deadline-listings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.deadline-listings > article {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px;
+  background: var(--background);
+}
+.deadline-listings h3 {
+  font-size: 21px;
+  margin: 12px 0 6px;
+}
+.deadline-listing-status {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.deadline-listing-status.open {
+  color: #8b4d24;
+  font-weight: 700;
+}
+.deadline-listing-status.won {
+  color: #236247;
+  font-weight: 700;
+}
+.deadline-rival {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  margin: 18px 0;
+  border-left: 3px solid #a05d32;
+  background: var(--card);
+}
+.deadline-rival span,
+.deadline-rival small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.deadline-rival strong {
+  font-size: 14px;
+}
+.deadline-time {
+  display: flex;
+  flex-direction: column;
+}
+.deadline-time b {
+  color: var(--foreground);
+}
+.deadline-response {
+  padding: 13px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid #a05d32;
+  margin: 14px 0;
+}
+.deadline-response.leading {
+  border-left-color: #236247;
+}
+.deadline-response strong {
+  font-size: 13px;
+}
+.deadline-response p {
+  white-space: pre-line;
+}
+.deadline-own-return {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.deadline-own-return small {
+  color: var(--muted-foreground);
+}
+.deadline-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.deadline-bid-dialog {
+  width: min(680px, calc(100vw - 28px));
+  max-width: 680px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  color: var(--foreground);
+  background: var(--card);
+}
+.deadline-bid-dialog > p {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.deadline-bid-dialog > label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.deadline-bid-rival,
+.deadline-bid-summary {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--background);
+}
+.deadline-bid-players {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.deadline-bid-players label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+.deadline-bid-players label.selected {
+  background: #e4efe8;
+  color: #1d4433;
+}
+.deadline-bid-players span {
+  display: grid;
+  gap: 5px;
+}
+.deadline-bid-players small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.deadline-bid-summary p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 1000px) {
+  .deadline-listings {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .deadline-market {
+    padding: 16px;
+  }
+  .career-story-desk > .deadline-market {
+    margin: 18px 14px;
+  }
+  .deadline-market > header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .deadline-compact-list p {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .deadline-bid-dialog {
+    padding: 20px 16px;
+  }
+}

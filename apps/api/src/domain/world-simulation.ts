@@ -232,6 +232,11 @@ export function createWorldSimulation(world: WorldCatalog) {
     for (const trade of g.trades || [])
       if (['pending', 'accepted', 'counter'].includes(trade.status))
         trade.incoming.forEach((id) => unavailable.add(id));
+    for (const listing of g.deadlineMarket?.listings || [])
+      if (listing.status === 'open') {
+        unavailable.add(listing.player.id);
+        unavailable.add(listing.rival.player.id);
+      }
     const all = view.marketPlayers(g);
     // 구단마다 한 번만 찾아 두고 재사용한다. 주간 성장은 전 리그 선수를 훑는다.
     const developmentFactors = new Map<string, number>();
