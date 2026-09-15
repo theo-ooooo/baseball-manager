@@ -1,0 +1,174 @@
+.club-legacy {
+  display: grid;
+  gap: 22px;
+}
+.legacy-trophy-room {
+  background: #172e29;
+  color: #f6efdb;
+  padding: 32px;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  border-top: 4px solid #be984e;
+  border-radius: 8px;
+}
+.legacy-trophy-room h2 {
+  margin: 6px 0;
+  font-size: 26px;
+}
+.legacy-trophy-room p {
+  color: #c5d3c8;
+  margin: 8px 0;
+}
+.legacy-trophy-room > strong {
+  margin-left: auto;
+  text-align: center;
+  font-size: 44px;
+}
+.legacy-trophy-room > strong span {
+  display: block;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #e1cfaa;
+}
+.legacy-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.legacy-section-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 21px;
+}
+.legacy-section-heading p,
+.legacy-empty,
+.legacy-moments p,
+.legacy-seasons p {
+  color: var(--muted-foreground);
+  line-height: 1.7;
+  font-size: 13px;
+}
+.legacy-moments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.legacy-moments article {
+  border: 1px solid var(--border);
+  border-top: 3px solid #a05d32;
+  background: var(--background);
+  padding: 20px;
+  border-radius: 5px;
+  min-width: 0;
+}
+.legacy-moments small {
+  color: var(--muted-foreground);
+}
+.legacy-moments h3 {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+  margin: 12px 0;
+}
+.legacy-score {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+.legacy-score b {
+  font-size: 26px;
+  white-space: nowrap;
+}
+.legacy-score span {
+  font-size: 13px;
+}
+.legacy-seasons {
+  display: grid;
+  gap: 18px;
+}
+.legacy-seasons article {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 22px;
+}
+.legacy-seasons article.champion {
+  border-top: 4px solid #a78336;
+}
+.legacy-seasons article > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.legacy-seasons h3 {
+  font-size: 22px;
+  margin: 0;
+}
+.legacy-heroes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+.legacy-heroes a {
+  display: grid;
+  gap: 8px;
+  background: var(--background);
+  padding: 18px;
+  border-radius: 5px;
+  color: var(--foreground);
+}
+.legacy-heroes small,
+.legacy-heroes span {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.legacy-heroes strong {
+  font-size: 20px;
+}
+.legacy-dialog {
+  width: min(600px, calc(100vw - 28px));
+  max-width: 600px;
+  max-height: 90dvh;
+  overflow: auto;
+}
+.legacy-dialog label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.legacy-dialog select {
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .legacy-trophy-room {
+    padding: 22px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .legacy-trophy-room h2 {
+    font-size: 22px;
+  }
+  .legacy-trophy-room > strong {
+    margin-left: 0;
+  }
+  .legacy-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .legacy-heroes {
+    grid-template-columns: 1fr;
+  }
+  .legacy-seasons article {
+    padding: 16px;
+  }
+  .legacy-seasons article > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

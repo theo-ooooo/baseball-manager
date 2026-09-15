@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useClubProfile } from './use-club-profile';
+import { ClubLegacyPanel } from './club-legacy-panel';
 import Link from 'next/link';
 import type { GameState, Player } from '@dugout/shared/types';
 import { isUnemployed, managerJobOpen } from '@dugout/shared/manager-career';
@@ -23,8 +24,7 @@ export function ClubProfile({
   onPlayer: (p: Player) => void;
 }) {
   const { clubs, getClub, getLeague, rosterFor, standings, fixtures, coachPool } = useWorld();
-  const [tab, setTab] = useState('overview'),
-    [applying, setApplying] = useState(false);
+  const { tab, setTab, applying, setApplying } = useClubProfile();
   const c = clubs.find((c) => c.id === clubId);
   if (!c)
     return (
@@ -82,6 +82,7 @@ export function ClubProfile({
           ['schedule', '일정 · 결과'],
           ['staff', '감독 · 스태프'],
           ['news', '구단 소식'],
+          ['legacy', '기록실 · 명예의 전당'],
         ].map(([id, label]) => (
           <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>
             {label}
@@ -184,6 +185,7 @@ export function ClubProfile({
           )}
         </section>
       )}
+      {tab === 'legacy' && <ClubLegacyPanel g={g} club={c.id} act={act} busy={busy} />}
       {tab === 'news' && (
         <section className="panel panel-content">
           <h2>구단 소식</h2>

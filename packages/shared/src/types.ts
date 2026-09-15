@@ -238,6 +238,7 @@ export type GameState = {
   coachDeals?: CoachDeal[];
   ownership: Record<string, string>;
   transferred: Player[];
+  clubLegacy?: import('./club-legacy').ClubLegacy;
   past: { year: number; rank: number; w: number; l: number; champion: string }[];
   phase: 'preseason' | 'regular' | import('./postseason').PostseasonStage | 'finished';
   series: import('./postseason').PostseasonSeries[];

@@ -38,6 +38,7 @@ import '../styles/career-experience.css';
 import '../styles/tactical-stories.css';
 import '../styles/deadline-market.css';
 import '../styles/player-remodel.css';
+import '../styles/club-legacy.css';
 import '../styles/match-weather.css';
 import { DialogViewport } from '../src/features/career/dialog-viewport';
 

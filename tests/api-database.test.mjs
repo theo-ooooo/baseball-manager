@@ -2404,6 +2404,82 @@ test('Deadline bids persist one rival offer, reject other owners and complete on
   assert.equal(stored.deadlineMarket.listings[0].status, 'won');
 });
 
+test('Remodel and club memories persist in the owner career and reject forged results and duplicate seasonal projects', async () => {
+  const user = 'remodel-memory-owner';
+  const started = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '육성 기록', mode: 'short', preseason: false },
+    user,
+  );
+  const row = await db.prepare('SELECT state FROM careers WHERE user_id=?').bind(user).first(),
+    raw = JSON.parse(row.state),
+    p = raw.roster.find((p) => p.pos !== 'P');
+  p.power = 60;
+  p.contact = 65;
+  p.potential = 90;
+  raw.history = [
+    {
+      id: 'persisted-memory',
+      home: raw.club,
+      away: 'kbo-kia',
+      homeScore: 4,
+      awayScore: 3,
+      mvp: p.name,
+      day: 0,
+      date: '2026-03-28',
+      hits: [8, 9],
+      errors: [0, 0],
+      innings: [[0], [0]],
+      log: [],
+    },
+  ];
+  await db
+    .prepare('UPDATE careers SET state=? WHERE user_id=?')
+    .bind(JSON.stringify(raw), user)
+    .run();
+  const begun = await action({ type: 'startRemodel', id: p.id, kind: 'slugger' }, user);
+  assert.equal(begun.state.roster.find((v) => v.id === p.id).remodel.status, 'training');
+  const saved = await action(
+    { type: 'pinClubMoment', id: 'persisted-memory', caption: '우리의 첫 승', homeScore: 90 },
+    user,
+  );
+  assert.equal(saved.state.clubLegacy.moments[0].homeScore, 4);
+  assert.equal(
+    (
+      await call(
+        '/api/career',
+        { type: 'pinClubMoment', id: 'fake', revision: saved.revision },
+        user,
+      )
+    ).status,
+    400,
+  );
+  const restored = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(restored.state.clubLegacy, saved.state.clubLegacy);
+  assert.equal(restored.state.roster.find((v) => v.id === p.id).remodel.kind, 'slugger');
+  const cancelled = await action({ type: 'cancelRemodel', id: p.id }, user);
+  assert.equal(
+    (
+      await call(
+        '/api/career',
+        { type: 'startRemodel', id: p.id, kind: 'contact', revision: cancelled.revision },
+        user,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call(
+        '/api/career',
+        { type: 'cancelRemodel', id: p.id, revision: cancelled.revision },
+        'foreign-remodel-owner',
+      )
+    ).status,
+    409,
+  );
+  assert.equal(started.state.budget, cancelled.state.budget);
+});
+
 test('Tactical plans persist atomically, freeze at kickoff and survive bounded command patches without exposing prepared inputs', async () => {
   const user = 'tactical-plan-owner';
   await action(

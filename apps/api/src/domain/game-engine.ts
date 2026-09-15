@@ -1,3 +1,4 @@
+import { recordClubSeason, clubLegacyAction } from './club-legacy';
 import { remodelAction } from './player-remodel';
 import { defensivePlans } from '@dugout/shared/tactical-duel';
 import { setDefensivePlan, recordTacticalEvidence } from './tactical-duel';
@@ -509,6 +510,7 @@ export function createGameEngine(
           const rank = standings(g).findIndex((s) => s.club === g.club) + 1;
           const own = g.standings[ownLeague].find((s) => s.club === g.club)!;
           g.past.push({ year: g.year, rank, w: own.w, l: own.l, champion: g.champion });
+          recordClubSeason(g, world);
           const prize =
             g.champion === g.club ? teamBudget(ownLeague) * 0.25 : teamBudget(ownLeague) * 0.04;
           g.budget += prize;
@@ -761,6 +763,7 @@ export function createGameEngine(
         '감독 재계약 제안에 수락하거나 거절한 뒤 새 시즌을 시작해 주세요. 수신함의 재계약 제안을 확인하세요.',
       );
     if (g.draft?.status === 'open') rookieDraft.progress(g, true);
+    recordClubSeason(g, world);
     worldSimulation.finishSeason(g);
     for (const offer of g.managerCareer?.offers || [])
       if (
@@ -1001,6 +1004,7 @@ export function createGameEngine(
     if (!s.liveMatch) prepareWorld(s);
     managerCareer.prepare(s);
     prepareEngagement(s);
+    recordClubSeason(s, world);
     tickChallenge(s, world);
     prepareCompetitions(s);
     trades.prepare(s);
@@ -1192,6 +1196,8 @@ export function createGameEngine(
     if (lineupReport) return lineupReport;
     const reportAction = coachReportAction(s, a);
     if (reportAction) return reportAction;
+    const legacy = clubLegacyAction(s, a);
+    if (legacy) return legacy;
     const remodel = remodelAction(s, a);
     if (remodel) return remodel;
     const trained = individualTrainingAction(s, a);
