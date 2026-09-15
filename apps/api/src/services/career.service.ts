@@ -1,3 +1,5 @@
+import { recommendTrades } from '../domain/trade-recommendations';
+import { gameDate } from '@dugout/shared/calendar';
 import { createManagerCareer } from '../domain/manager-career';
 import { preparePostseason } from '../domain/postseason-calendar';
 import { prepareWeather } from '../domain/weather-scheduling';
@@ -72,6 +74,28 @@ export class CareerService {
     const terms = await this.freeAgentTerms(db, user, current.state, world, id);
     if (!terms) throw new NotFoundException('현재 자유계약 선수만 요구 조건을 조회할 수 있습니다.');
     return terms;
+  }
+  async tradeRecommendations(db: D1Database, user: string, input: Record<string, unknown>) {
+    const [current, world] = await Promise.all([
+      this.careers.read(db, user),
+      this.catalog.getWorld(db),
+    ]);
+    if (!current.state) throw new BadRequestException('먼저 커리어를 시작해 주세요.');
+    try {
+      const suggestions = recommendTrades(current.state, world, input);
+      return {
+        revision: current.revision,
+        date: gameDate(current.state),
+        suggestions,
+        message: suggestions.length
+          ? '현재 조건에서 구단이 검토할 수 있는 교환안입니다. 선수·현금 조건을 확인한 뒤 제안하세요.'
+          : '핵심 선수를 보호하고 예산·선수 구성을 맞출 수 있는 추천안이 없습니다. 받을 선수나 협상 구단을 바꿔 보세요.',
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        error instanceof Error ? error.message : '추천 조건을 확인해 주세요.',
+      );
+    }
   }
   async act(db: D1Database, user: string, action: Record<string, unknown>) {
     const requestId =

@@ -13,6 +13,7 @@ const labels: Record<string, string> = {
   startRemodel: '선수와 코치에게 개조 계획을 전달하고 있습니다',
   cancelRemodel: '폼 개조를 중단하고 있습니다',
   pinClubMoment: '기억할 경기를 기록실에 보관하고 있습니다',
+  reviseTrade: '수정 조건을 상대 구단에 전달하고 있습니다',
   reviseDeadlineTrade: '경쟁 구단의 조건과 수정 제안을 검토하고 있습니다',
   respondCompetition: '주전 경쟁 방침을 선수들에게 전달하고 있습니다',
   lineup: '타순을 저장하고 있습니다',

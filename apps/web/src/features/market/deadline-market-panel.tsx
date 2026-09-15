@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { TradeRecommendationsPicker } from './trade-recommendations-picker';
 import { Clock3, ArrowRight } from 'lucide-react';
 import {
   Dialog,
@@ -172,6 +173,17 @@ export function DeadlineMarketPanel({
               {getClub(s.listing.rival.club).name} 제안: {s.listing.rival.player.name} +{' '}
               {money(s.listing.rival.cash)}
             </p>
+          )}
+          {s.listing && (
+            <TradeRecommendationsPicker
+              g={g}
+              club={s.listing.seller}
+              incoming={[s.listing.player.id]}
+              offerId={s.offer?.id}
+              onSelect={s.applySuggestion}
+              disabled={s.locked}
+              label="이 선수를 받을 교환 대가 추천"
+            />
           )}
           <label>
             우리 선수 검색

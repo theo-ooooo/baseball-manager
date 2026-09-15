@@ -106,7 +106,21 @@ export type MedicalCase = {
 };
 export const isAvailable = (p: Player) =>
   !p.internationalDuty && (!p.injury || p.injury.phase === 'earlyReturn');
+export type TradeRound = {
+  round: number;
+  date: string;
+  outgoing: string[];
+  incoming: string[];
+  cash: number;
+  status: TradeOffer['status'];
+  message: string;
+  counterOutgoing?: string[];
+  counterIncoming?: string[];
+  counterCash?: number;
+};
 export type TradeOffer = {
+  round?: number;
+  history?: TradeRound[];
   deadline?: { id: string; leading: boolean; reviewed: string; round: number; feedback?: string };
   id: string;
   club: string;

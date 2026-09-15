@@ -6,6 +6,7 @@ import { daysBetween, gameDate } from '@dugout/shared/calendar';
 import {
   isActiveTrade,
   tradeNeedsConfirmation,
+  tradeCanRevise,
   tradeStatus,
   tradeStatusLabels,
 } from '@dugout/shared/trade-status';
@@ -17,11 +18,13 @@ export function TradeOfferCard({
   offer,
   act,
   busy,
+  onRevise,
 }: {
   g: GameState;
   offer: TradeOffer;
   act: Act;
   busy: boolean;
+  onRevise: (offer: TradeOffer) => void;
 }) {
   const { getClub, rosterFor } = useWorld();
   const status = tradeStatus(g, offer),
@@ -43,14 +46,16 @@ export function TradeOfferCard({
         <div>
           <h3>{getClub(offer.club).name}</h3>
           <small>
-            {offer.date} 제안{status === 'pending' ? ` · ${offer.due} 답변 예정` : ''}
+            {offer.date} · {offer.round ?? offer.deadline?.round ?? 1}차 제안
+            {status === 'pending' ? ` · ${offer.due} 답변 예정` : ''}
           </small>
         </div>
         <span className="trade-status">{tradeStatusLabels[status]}</span>
       </header>
       {ready && (
         <p className="trade-ready-notice">
-          상대 구단이 조건을 제시했습니다. 아래 조건을 확인한 뒤 확정하면 트레이드가 완료됩니다.
+          상대 조건을 수락하거나, 선수·현금을 바꿔 다시 제안할 수 있습니다. 최종 확정할 때만 선수가
+          이동합니다.
         </p>
       )}
       <p className="trade-club-reply">{offer.message}</p>
@@ -67,7 +72,7 @@ export function TradeOfferCard({
       </div>
       {status === 'counter' && offer.counterOutgoing && (
         <details className="trade-original-offer">
-          <summary>내가 처음 제안한 선수 구성</summary>
+          <summary>이번 차수에서 내가 제안한 선수 구성</summary>
           <div>
             {names(offer.outgoing)}
             <span>⇄</span>
@@ -97,7 +102,32 @@ export function TradeOfferCard({
           </div>
         )}
       </dl>
-      {active && (
+      {!!offer.history?.length && (
+        <details className="trade-round-history">
+          <summary>이전 협상 {offer.history.length}건</summary>
+          {offer.history.map((r) => (
+            <div key={r.round}>
+              <strong>
+                {r.round}차 · {r.date} · {tradeStatusLabels[r.status]}
+              </strong>
+              <p>
+                제안: {names(r.outgoing)} ⇄ {names(r.incoming)} · {r.cash >= 0 ? '지급' : '수령'}{' '}
+                {money(Math.abs(r.cash))}
+              </p>
+              {r.status === 'counter' && (
+                <p>
+                  상대 역제안: {names(r.counterOutgoing || r.outgoing)} ⇄{' '}
+                  {names(r.counterIncoming || r.incoming)} ·{' '}
+                  {(r.counterCash ?? r.cash) >= 0 ? '지급' : '수령'}{' '}
+                  {money(Math.abs(r.counterCash ?? r.cash))}
+                </p>
+              )}
+              <p>{r.message}</p>
+            </div>
+          ))}
+        </details>
+      )}
+      {(active || tradeCanRevise(g, offer)) && (
         <footer className="trade-offer-actions">
           {ready ? (
             <button
@@ -110,15 +140,30 @@ export function TradeOfferCard({
                 : '이 조건으로 트레이드 확정'}
             </button>
           ) : (
-            <span>상대 구단의 답변을 기다리고 있습니다.</span>
+            <span>
+              {status === 'pending'
+                ? '상대 구단의 답변을 기다리고 있습니다.'
+                : '선수 구성을 바꿔 다시 제안할 수 있습니다.'}
+            </span>
           )}
-          <button
-            className="button secondary"
-            disabled={busy || !!g.liveMatch}
-            onClick={() => void act({ type: 'withdrawTrade', id: offer.id })}
-          >
-            제안 철회
-          </button>
+          {tradeCanRevise(g, offer) && (
+            <button
+              className="button secondary"
+              disabled={busy || !!g.liveMatch}
+              onClick={() => onRevise(offer)}
+            >
+              조건 수정해서 다시 제안
+            </button>
+          )}
+          {active && (
+            <button
+              className="button secondary"
+              disabled={busy || !!g.liveMatch}
+              onClick={() => void act({ type: 'withdrawTrade', id: offer.id })}
+            >
+              제안 철회
+            </button>
+          )}
         </footer>
       )}
     </article>

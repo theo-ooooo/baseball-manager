@@ -120,6 +120,9 @@ async function dispatch(request: Request): Promise<Response> {
   else if (method === 'POST' && path === '/api/career') {
     result = await app.get(CareerController).action(input);
     status = 201;
+  } else if (method === 'POST' && path === '/api/career/trades/recommendations') {
+    result = await app.get(CareerController).tradeRecommendations(input);
+    status = 201;
   } else if (get && path.startsWith('/api/career/matches/') && !path.slice(20).includes('/'))
     result = await app.get(CareerController).match(input, parameter('/api/career/matches/'));
   else if (get && /^\/api\/career\/contracts\/[^/]+\/quote$/.test(path))

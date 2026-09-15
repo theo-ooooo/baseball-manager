@@ -59,6 +59,10 @@ export function useDeadlineMarket(g: GameState, act: Act, busy: boolean) {
       Number.isFinite(amount) &&
       amount >= 0 &&
       amount <= g.budget,
+    applySuggestion(s: import('@dugout/shared/trade-recommendations').TradeSuggestion) {
+      setOutgoing(s.outgoing.map((p) => p.id));
+      setCash(String(toManwon(s.cash)));
+    },
     candidates: g.roster.filter((p) => `${p.name} ${p.pos}`.includes(query.trim())),
     show(l: DeadlineListing) {
       const previous = deadlineOffer(g, l);

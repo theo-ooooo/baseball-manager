@@ -12,6 +12,7 @@ import { repairMedicalSelection } from './medical';
 import { postNews, prepareDynamics } from './club-dynamics';
 import { prepareDevelopment } from './player-development';
 import { createDeadlineMarket } from './deadline-market';
+import { tradeCanRevise } from '@dugout/shared/trade-status';
 import { tradeWindow } from '@dugout/shared/trade-window';
 export function createTrades(world: WorldCatalog) {
   const view = createGameView(world),
@@ -82,7 +83,7 @@ export function createTrades(world: WorldCatalog) {
       {
         actionView: 'trade',
         tradeId: o.id,
-        id: `trade:${o.id}:${o.status}:${gameDate(g)}${o.deadline ? `:${o.deadline.round}` : ''}`,
+        id: `trade:${o.id}:${o.status}:${gameDate(g)}:${o.round ?? o.deadline?.round ?? 1}`,
       },
     );
   }
@@ -175,9 +176,13 @@ export function createTrades(world: WorldCatalog) {
   }
   function action(g: GameState, a: Record<string, unknown>) {
     if (
-      !['proposeTrade', 'reviseDeadlineTrade', 'acceptTrade', 'withdrawTrade'].includes(
-        String(a.type),
-      )
+      ![
+        'proposeTrade',
+        'reviseTrade',
+        'reviseDeadlineTrade',
+        'acceptTrade',
+        'withdrawTrade',
+      ].includes(String(a.type))
     )
       return null;
     if (g.liveMatch) throw new Error('경기 종료 후 트레이드를 진행해 주세요.');
@@ -189,6 +194,7 @@ export function createTrades(world: WorldCatalog) {
       const today = gameDate(g),
         o: TradeOffer = {
           id: `trade-${g.year}-${g.simulation!.serial++}`,
+          round: 1,
           club: String(a.club),
           outgoing: a.outgoing as string[],
           incoming: a.incoming as string[],
@@ -251,7 +257,7 @@ export function createTrades(world: WorldCatalog) {
         'pending',
         'accepted',
         'counter',
-        ...(a.type === 'reviseDeadlineTrade' ? ['rejected'] : []),
+        ...(['reviseTrade', 'reviseDeadlineTrade'].includes(String(a.type)) ? ['rejected'] : []),
       ].includes(offer.status)
     )
       throw new Error('진행 중인 트레이드 제안이 없습니다.');
@@ -261,30 +267,82 @@ export function createTrades(world: WorldCatalog) {
       notice(g, offer);
       return g;
     }
-    if (a.type === 'reviseDeadlineTrade') {
-      if (!offer.deadline) throw new Error('마감 경쟁 중인 제안만 이곳에서 수정할 수 있습니다.');
-      deadline.requireOpen(g, offer.deadline.id);
+    if (a.type === 'reviseTrade' || a.type === 'reviseDeadlineTrade') {
+      if (!tradeCanRevise(g, offer)) throw new Error('협상 기한이 지났거나 종료된 제안입니다.');
+      if (a.type === 'reviseDeadlineTrade' && !offer.deadline)
+        throw new Error('마감 경쟁 중인 제안만 이곳에서 수정할 수 있습니다.');
+      if (offer.deadline) deadline.requireOpen(g, offer.deadline.id);
       if (
         offer.status === 'rejected' &&
         g.trades.filter((o) => ['pending', 'accepted', 'counter'].includes(o.status)).length >= 3
       )
         throw new Error('동시에 세 건까지 제안할 수 있습니다.');
-      const revised = { ...offer, outgoing: a.outgoing as string[], cash: Number(a.cash) };
+      const revised = {
+        ...offer,
+        outgoing: a.outgoing as string[],
+        incoming: a.incoming === undefined ? offer.incoming : (a.incoming as string[]),
+        cash: Number(a.cash),
+      };
       validate(g, revised);
+      const listed =
+        g.deadlineMarket?.club === g.club && g.deadlineMarket.year === g.year
+          ? g.deadlineMarket.listings.find(
+              (l) => l.status === 'open' && revised.incoming.includes(l.player.id),
+            )
+          : undefined;
+      if (offer.deadline || listed) {
+        const listing = deadline.requireOpen(g, offer.deadline?.id ?? listed!.id);
+        if (
+          revised.club !== listing.seller ||
+          revised.incoming.length !== 1 ||
+          revised.incoming[0] !== listing.player.id
+        )
+          throw new Error('마감 경쟁에서는 대상 선수를 바꿀 수 없습니다.');
+        revised.deadline ??= {
+          id: listing.id,
+          leading: false,
+          reviewed: gameDate(g),
+          round: offer.round ?? 1,
+        };
+        revised.expires = [offer.expires, addDays(listing.closes, -1)].sort()[0];
+      }
+      const ids = [...revised.outgoing, ...revised.incoming];
       if (
         g.trades.some(
           (o) =>
             o.id !== offer.id &&
             ['pending', 'accepted', 'counter'].includes(o.status) &&
-            [...o.outgoing, ...(o.counterOutgoing || [])].some((id) =>
-              revised.outgoing.includes(id),
-            ),
+            [
+              ...o.outgoing,
+              ...o.incoming,
+              ...(o.counterOutgoing || []),
+              ...(o.counterIncoming || []),
+            ].some((id) => ids.includes(id)),
         )
       )
         throw new Error('다른 협상에 포함된 선수입니다.');
+      offer.history = [
+        ...(offer.history || []),
+        {
+          round: offer.round ?? offer.deadline?.round ?? 1,
+          date: gameDate(g),
+          outgoing: [...offer.outgoing],
+          incoming: [...offer.incoming],
+          cash: offer.cash,
+          status: offer.status,
+          message: offer.message.slice(0, 240),
+          counterOutgoing: offer.counterOutgoing && [...offer.counterOutgoing],
+          counterIncoming: offer.counterIncoming && [...offer.counterIncoming],
+          counterCash: offer.counterCash,
+        },
+      ].slice(-6);
+      offer.round = (offer.round ?? offer.deadline?.round ?? 1) + 1;
       offer.outgoing = revised.outgoing;
-      offer.deadline.round++;
+      offer.incoming = revised.incoming;
       offer.cash = revised.cash;
+      offer.deadline = revised.deadline;
+      offer.expires = revised.expires;
+      if (offer.deadline) offer.deadline.round = offer.round;
       offer.status = 'pending';
       offer.due = gameDate(g);
       delete offer.counterCash;

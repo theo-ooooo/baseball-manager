@@ -18,6 +18,14 @@ export function tradeStatus(g: GameState, offer: TradeOffer): TradeOffer['status
     : offer.status;
 }
 
+export function tradeCanRevise(g: GameState, offer: TradeOffer) {
+  return (
+    g.managerCareer?.status !== 'unemployed' &&
+    gameDate(g) <= offer.expires &&
+    ['pending', 'accepted', 'counter', 'rejected'].includes(offer.status)
+  );
+}
+
 export function isActiveTrade(g: GameState, offer: TradeOffer) {
   return ['pending', 'accepted', 'counter'].includes(tradeStatus(g, offer));
 }

@@ -2336,6 +2336,86 @@ async function slotAction(payload, user, slot = 'challenge') {
   return { ...result.body, command };
 }
 
+test('Trade recommendations read the current owner save without writes and repeated counteroffers persist one negotiation', async () => {
+  const user = 'trade-recommendation-owner';
+  await action({ type: 'start', club: 'kbo-lotte', manager: '교환안 감독', mode: 'short' }, user);
+  const before = await db
+    .prepare('SELECT state,revision FROM careers WHERE user_id=?')
+    .bind(user)
+    .first();
+  const recommended = await call('/api/career/trades/recommendations', {}, user);
+  assert.equal(recommended.status, 201, JSON.stringify(recommended.body));
+  assert.ok(recommended.body.suggestions.length);
+  assert.deepEqual(
+    await db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first(),
+    before,
+  );
+  assert.ok(!JSON.stringify(recommended.body).includes('potential'));
+  const s = recommended.body.suggestions[0];
+  let proposed = await action(
+    {
+      type: 'proposeTrade',
+      club: s.club,
+      incoming: s.incoming.map((p) => p.id),
+      outgoing: s.outgoing.map((p) => p.id),
+      cash: s.cash - 1000,
+    },
+    user,
+  );
+  const id = proposed.state.trades[0].id;
+  proposed = await action(
+    {
+      type: 'reviseTrade',
+      id,
+      incoming: s.incoming.map((p) => p.id),
+      outgoing: s.outgoing.map((p) => p.id),
+      cash: s.cash - 1000,
+    },
+    user,
+  );
+  const o = proposed.state.trades[0];
+  assert.equal(o.status, 'counter');
+  assert.equal(o.round, 2);
+  const quote = await call(
+    '/api/career/trades/recommendations',
+    { offerId: id, club: o.club, incoming: o.incoming },
+    user,
+  );
+  assert.equal(quote.status, 201);
+  assert.ok(quote.body.suggestions.length);
+  assert.equal(
+    (
+      await call(
+        '/api/career/trades/recommendations',
+        { offerId: id },
+        'foreign-recommendation-owner',
+      )
+    ).status,
+    400,
+  );
+  const payload = {
+    type: 'reviseTrade',
+    id,
+    incoming: o.counterIncoming || o.incoming,
+    outgoing: o.counterOutgoing || o.outgoing,
+    cash: o.counterCash,
+    revision: proposed.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const revised = await call('/api/career', payload, user);
+  assert.equal(revised.status, 201, JSON.stringify(revised.body));
+  assert.equal(revised.body.state.trades.length, 1);
+  assert.equal(revised.body.state.trades[0].round, 3);
+  assert.equal(revised.body.state.trades[0].status, 'accepted');
+  assert.equal(revised.body.state.budget, proposed.state.budget);
+  assert.deepEqual(revised.body.state.roster, proposed.state.roster);
+  assert.deepEqual((await call('/api/career', payload, user)).body, revised.body);
+  const restored = (await call('/api/career', undefined, user)).body;
+  assert.deepEqual(restored.state.trades[0].history, revised.body.state.trades[0].history);
+  const finished = await action({ type: 'acceptTrade', id }, user);
+  assert.equal(finished.state.trades[0].status, 'completed');
+});
+
 test('Deadline bids persist one rival offer, reject other owners and complete one real player exchange after confirmation', async () => {
   const user = 'deadline-bid-owner';
   await action(

@@ -33,6 +33,17 @@ export class CareerController {
     return this.careers.contractQuote(env.DB, userId(request), id);
   }
 
+  @Post('trades/recommendations')
+  async tradeRecommendations(@Req() request: ApiRequest) {
+    if (!request.body || typeof request.body !== 'object' || Array.isArray(request.body))
+      throw new BadRequestException('추천 조건을 확인해 주세요.');
+    return this.careers.tradeRecommendations(
+      env.DB,
+      userId(request),
+      request.body as Record<string, unknown>,
+    );
+  }
+
   @Post()
   async action(@Req() request: ApiRequest) {
     const user = userId(request),
