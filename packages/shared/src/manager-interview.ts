@@ -1,5 +1,28 @@
 import type { GameState } from './types';
 import type { ManagerOffer } from './manager-career';
+import { contextualInterviewQuestions } from './manager-interview-context';
+export type InterviewProfile = {
+  kind: 'first' | 'move' | 'proven' | 'rebuild' | 'return';
+  rank?: number;
+  targetRank?: number;
+  endKind?: 'resignation' | 'nonrenewal' | 'dismissal';
+};
+export function managerInterviewProfile(g: Pick<GameState, 'managerCareer'>): InterviewProfile {
+  const prior = g.managerCareer?.history[0];
+  if (!prior) return { kind: g.managerCareer?.status === 'employed' ? 'move' : 'first' };
+  const endKind = prior.endKind || (prior.reason === 'sacked' ? 'dismissal' : 'resignation');
+  return {
+    kind:
+      endKind === 'dismissal' || (prior.targetRank !== undefined && prior.rank > prior.targetRank)
+        ? 'rebuild'
+        : prior.rank <= (prior.targetRank ?? 3)
+          ? 'proven'
+          : 'return',
+    rank: prior.rank,
+    targetRank: prior.targetRank,
+    endKind,
+  };
+}
 export type InterviewAnswer = { id: string; text: string; score: number; reaction: string };
 export type InterviewQuestion = {
   id: string;
@@ -22,7 +45,7 @@ export function managerInterviewQuestions(
 ): InterviewQuestion[] {
   const prior = g.managerCareer?.history[0],
     employed = g.managerCareer?.status === 'employed';
-  return [
+  const questions: InterviewQuestion[] = [
     {
       id: 'motivation',
       topic: '지원 동기',
@@ -193,4 +216,10 @@ export function managerInterviewQuestions(
       ],
     },
   ];
+  return contextualInterviewQuestions(
+    questions,
+    o.interviewProfile || managerInterviewProfile(g),
+    o,
+    clubName,
+  );
 }

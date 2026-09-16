@@ -1,7 +1,10 @@
 import { isClubDutyReport } from '@dugout/shared/employment-reports';
 import type { ManagerConversationState } from '@dugout/shared/manager-commands';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
-import { managerInterviewQuestions } from '@dugout/shared/manager-interview';
+import {
+  managerInterviewProfile,
+  managerInterviewQuestions,
+} from '@dugout/shared/manager-interview';
 import type { ManagerOffer } from '@dugout/shared/manager-career';
 import { addDays, gameDate } from '@dugout/shared/calendar';
 import { teamBudget } from '@dugout/shared/game-view';
@@ -81,6 +84,7 @@ export function managerConversationAction<T extends ManagerConversationState>(
       return g;
     }
     if (offer.status !== 'interview') throw new Error('진행 중인 면접이 없습니다.');
+    offer.interviewProfile ??= managerInterviewProfile(g);
     const questions = managerInterviewQuestions(g, offer, club.name);
     const question = questions[offer.interview?.length || 0];
     if (!question || a.question !== question.id)

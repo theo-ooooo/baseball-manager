@@ -39,6 +39,7 @@ export type ManagerOffer = {
   answer?: 'win' | 'youth' | 'budget';
   rivalScore?: number;
   interview?: InterviewTurn[];
+  interviewProfile?: import('./manager-interview').InterviewProfile;
   proposal?: string;
   reminderDate?: string;
   budgetAdjustment?: number;
