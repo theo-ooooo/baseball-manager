@@ -20,6 +20,7 @@ export type Agreement = {
   role: string;
   salary: number;
   years: number;
+  startYear?: number;
   costs: { label: string; amount: number }[];
 };
 export function ContractSigning({
@@ -129,7 +130,14 @@ export function ContractSigning({
             <div>
               <dt>03 · 계약 기간</dt>
               <dd>
-                {agreement.years}년 <small>{g.year} 시즌부터</small>
+                {agreement.years}년{' '}
+                <small>
+                  {agreement.startYear ?? g.year}~
+                  {(agreement.startYear ?? g.year) + agreement.years - 1} 시즌
+                </small>
+                {(agreement.startYear ?? g.year) > g.year && (
+                  <small>올 시즌도 소속을 유지합니다. 연봉은 체결 즉시 적용됩니다.</small>
+                )}
               </dd>
             </div>
             {costs.map((cost, i) => (

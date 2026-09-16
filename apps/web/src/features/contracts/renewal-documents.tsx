@@ -44,7 +44,8 @@ export function RenewalDocuments({
           </DialogTitle>
           <DialogDescription>
             만료 예정 선수의 제안 조건을 확인하세요. 답변은 1~2일 뒤 도착하며, 합의 후 개별 서명하면
-            계약이 체결됩니다.
+            계약이 체결됩니다. 재계약 기간은 {g.year + 1} 시즌부터 계산하며, 올 시즌도 소속을
+            유지합니다.
           </DialogDescription>
         </DialogHeader>
         <form

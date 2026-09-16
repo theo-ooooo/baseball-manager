@@ -25,6 +25,7 @@ import {
   contractSignedThisYear,
   MAX_PLAYER_NEGOTIATIONS,
   renewalUnavailableReason,
+  playerDealPeriod,
 } from '@dugout/shared/contract-status';
 
 type Offer = Deal | CoachDeal;
@@ -321,11 +322,12 @@ export function createRecruitment(world: WorldCatalog) {
     g.budget -= cash;
     g.expenses += cash;
     if (deal.type === 'buy' && g.simulation) archivePlayer(g, current, 'transfer', [], g.club);
+    const period = playerDealPeriod(g.year, deal.type, deal.years);
     const p = {
       ...current,
       club: g.club,
       salary: deal.salary,
-      years: deal.years,
+      years: period.remainingYears,
       contractSigned: { year: g.year, day: g.day, dealId: deal.id },
       condition: current.condition,
       stats: current.stats,
@@ -345,7 +347,7 @@ export function createRecruitment(world: WorldCatalog) {
     postNews(
       g,
       `${p.name} ${deal.type === 'buy' ? '영입' : '재계약'} 완료`,
-      `${deal.years}년 · 연봉 ${money(deal.salary)} · 에이전트 ${view.agentFor(p).name}`,
+      `${deal.years}년 (${period.startYear}~${period.endYear} 시즌) · 연봉 ${money(deal.salary)} · 에이전트 ${view.agentFor(p).name}`,
       'transfer',
       { playerId: p.id, actionView: 'squad' },
     );

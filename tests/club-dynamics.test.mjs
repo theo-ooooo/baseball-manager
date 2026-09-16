@@ -176,6 +176,6 @@ test('Contract review reports retain player details and renewal replies link to 
     g.roster.find((v) => v.id === p.id).stats,
     before.roster.find((v) => v.id === p.id).stats,
   );
-  assert.equal(g.roster.find((v) => v.id === p.id).years, 2);
+  assert.equal(g.roster.find((v) => v.id === p.id).years, 3);
   assert.throws(() => e.applyAction(g, { type: 'sign', id }));
 });

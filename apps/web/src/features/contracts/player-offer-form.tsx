@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import type { Deal } from '@dugout/shared/types';
 import { money } from '@dugout/shared/game-view';
 import type { PlayerContractProps as Props } from './contract-types';
+import { PlayerContractPeriod } from './player-contract-period';
 
 export function PlayerOfferForm({
   player,
@@ -128,6 +129,7 @@ export function PlayerOfferForm({
           ))}
         </div>
       </div>
+      <PlayerContractPeriod year={g.year} type={own ? 'renew' : 'buy'} years={years} />
       {!own && player.club !== 'fa' && (
         <div className="contract-term-row">
           <label htmlFor={`fee-${player.id}`}>

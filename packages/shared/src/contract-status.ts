@@ -2,6 +2,12 @@ import type { Deal, GameState, NewsItem, Player } from './types';
 import { gameDate } from './calendar';
 
 export const MAX_PLAYER_NEGOTIATIONS = 128;
+/** Remaining seasons include this season; a renewal guarantees the following full seasons. */
+export function playerDealPeriod(year: number, type: Deal['type'], years: number) {
+  const startYear = year + (type === 'renew' ? 1 : 0);
+  const endYear = startYear + years - 1;
+  return { startYear, endYear, remainingYears: endYear - year + 1 };
+}
 export function activePlayerDeal(g: Pick<GameState, 'year' | 'day'>, d: Deal) {
   return (
     ['pending', 'counter', 'accepted'].includes(d.status) &&

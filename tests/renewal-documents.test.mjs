@@ -19,6 +19,7 @@ const {
   createRecruitment,
   freeAgentValuation,
   renewalUnavailableReason,
+  playerDealPeriod,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
 );
@@ -51,7 +52,7 @@ test('Batch renewal keeps every active offer beyond the old 30-deal limit and sp
   r.signDeal(next, deal.id);
   const signed = next.roster.find((p) => p.id === selected[0].id);
   assert.equal(signed.salary, deal.salary);
-  assert.equal(signed.years, 3);
+  assert.equal(signed.years, 4);
   assert.equal(next.budget, prior.budget - deal.salary * 0.05 - deal.agentFee);
   assert.throws(() => r.negotiate(next, signed.id, signed.salary, 3, 'renew'), /이미 계약/);
   assert.equal(next.deals.length, 40);
@@ -102,4 +103,60 @@ test('FA demand ignores prior pay and hidden potential, reflects age, recent per
   assert.ok(freeAgentValuation(g, p, 'mlb').salary > terms.salary);
   assert.ok(freeAgentValuation(g, { ...p, contact: 80, power: 80 }, 'kbo').salary > terms.salary);
   assert.equal(freeAgentValuation(g, { ...p, age: 36 }, 'kbo').years, 1);
+});
+
+test('One-year and three-year renewals survive the next opening day and expire only after the agreed full seasons', () => {
+  let g = ready();
+  const r = createRecruitment(world);
+  const [one, three, old] = g.roster;
+  for (const p of g.roster) p.age = 24;
+  g.managerCareer.contract.throughYear = 2040;
+  g.managerCareer.offers = [];
+  g = e.applyAction(g, {
+    type: 'renewContracts',
+    offers: [
+      { ...offer(one), years: 1 },
+      { ...offer(three), years: 3 },
+    ],
+  });
+  // Isolate the signing/expiry boundary from the agent's preference for a longer offer.
+  for (const deal of [...g.deals]) {
+    deal.status = 'accepted';
+    r.signDeal(g, deal.id);
+  }
+  assert.equal(g.roster.find((p) => p.id === one.id).years, 2);
+  assert.equal(g.roster.find((p) => p.id === three.id).years, 4);
+  const budgetAfterSigning = g.budget;
+  assert.throws(() => r.signDeal(g, `missing`));
+  assert.equal(g.budget, budgetAfterSigning);
+  for (let n = 1; n <= 4; n++) {
+    g.phase = 'finished';
+    g.champion = g.club;
+    g = e.nextSeason(g);
+    assert.equal(g.year, 2026 + n);
+    assert.equal(g.roster.find((p) => p.id === one.id)?.years, n === 1 ? 1 : undefined);
+    assert.equal(g.roster.find((p) => p.id === three.id)?.years, n < 4 ? 4 - n : undefined);
+    assert.equal(
+      g.roster.some((p) => p.id === old.id),
+      false,
+    );
+  }
+});
+
+test('Renewal papers describe following seasons while a new FA contract still starts in the signing season', () => {
+  assert.deepEqual(playerDealPeriod(2026, 'renew', 1), {
+    startYear: 2027,
+    endYear: 2027,
+    remainingYears: 2,
+  });
+  assert.deepEqual(playerDealPeriod(2026, 'renew', 3), {
+    startYear: 2027,
+    endYear: 2029,
+    remainingYears: 4,
+  });
+  assert.deepEqual(playerDealPeriod(2026, 'buy', 1), {
+    startYear: 2026,
+    endYear: 2026,
+    remainingYears: 1,
+  });
 });

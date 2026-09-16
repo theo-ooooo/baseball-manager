@@ -124,13 +124,14 @@ test('A signed one-year renewal is resolved in old reports and does not request 
   });
   g = recruit.signDeal(g, deal.id);
   const current = g.roster.find((x) => x.id === p.id);
-  assert.equal(current.years, 1);
+  assert.equal(current.years, 2);
   assert.equal(current.contractSigned.year, g.year);
   assert.equal(needsContractReview(g, current), false);
   const reply = g.news.find((n) => n.id === 'reply');
   assert.equal(contractReportStatus(g, reply), 'signed');
   assert.equal(newsNeedsAction(reply, g), false);
   const legacy = structuredClone(g);
+  legacy.roster.find((x) => x.id === p.id).years = 1;
   delete legacy.roster.find((x) => x.id === p.id).contractSigned;
   assert.equal(
     needsContractReview(
@@ -141,6 +142,7 @@ test('A signed one-year renewal is resolved in old reports and does not request 
   );
   assert.throws(() => recruit.signDeal(g, deal.id));
   g.year++;
+  current.years--;
   assert.equal(needsContractReview(g, current), true);
 });
 

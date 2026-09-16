@@ -17,6 +17,8 @@ import { transfersBlocked } from '@dugout/shared/management';
 import { useWorld } from '../career/world-context';
 import { NegotiationHistory, negotiationLabels } from '../market/negotiation-details';
 import { ContractSigning } from './contract-signing';
+import { playerDealPeriod } from '@dugout/shared/contract-status';
+import { PlayerContractPeriod } from './player-contract-period';
 
 import { PlayerOfferForm } from './player-offer-form';
 import type { PlayerContractProps as Props } from './contract-types';
@@ -276,6 +278,7 @@ export function PlayerContractRoom({
                   <dd>{money(deal.fee + deal.agentFee + deal.salary * 0.05)}</dd>
                 </div>
               </dl>
+              <PlayerContractPeriod year={g.year} type={deal.type} years={deal.years} />
               <div className="contract-room-actions">
                 {deal.status === 'pending' ? (
                   <p className="contract-wait">
@@ -349,6 +352,7 @@ export function PlayerContractRoom({
             role: signing.type === 'renew' ? '선수 재계약' : '선수 영입',
             salary: signing.salary,
             years: signing.years,
+            startYear: playerDealPeriod(g.year, signing.type, signing.years).startYear,
             costs: [
               { label: '계약금 · 연봉의 5%', amount: signing.salary * 0.05 },
               { label: '에이전트 수수료', amount: signing.agentFee },
