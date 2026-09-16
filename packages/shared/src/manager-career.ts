@@ -75,6 +75,7 @@ export type ManagerCareer = {
   earnings: number;
   unemployedSince?: string;
   vacationUntil?: string;
+  vacationStarted?: string;
   lastApproach?: string;
   approachHistory?: Record<
     string,

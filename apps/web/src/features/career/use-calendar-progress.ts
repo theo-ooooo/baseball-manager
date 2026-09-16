@@ -62,7 +62,7 @@ export function useCalendarProgress(g: GameState | null, act: Act) {
                     ? '휴가 중 · 보고는 복귀 후 확인합니다'
                     : '다음 일정을 확인하고 있습니다';
         if (vacation && !next.managerCareer?.vacationUntil)
-          status = '휴가가 끝났습니다. 모인 보고를 확인하세요';
+          status = '휴가 복귀 · 먼저 결정할 일을 모았습니다';
         if (mounted.current)
           setJourney({
             year: next.year,

@@ -104,7 +104,13 @@ test('Vacation continues past ordinary reports and returns with accumulated unre
   assert.equal(g.managerCareer.vacationUntil, undefined);
   assert.equal(g.progress.stop, 'report');
   assert.ok(g.progress.newsIds.includes(first));
-  assert.ok(g.news.some((n) => n.title === '휴가에서 복귀했습니다'));
+  const summary = g.news.find((n) => n.vacationSummary);
+  assert.deepEqual(summary.vacationSummary, {
+    club: g.club,
+    from: gameDate({ ...g, day: start }),
+    through: end,
+  });
+  assert.equal(g.managerCareer.vacationStarted, undefined);
   assert.ok(g.news.filter((n) => !n.read).length > 1);
 });
 

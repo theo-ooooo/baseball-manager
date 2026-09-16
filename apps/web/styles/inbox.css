@@ -962,3 +962,53 @@
     padding: 10px 8px;
   }
 }
+.vacation-return-summary {
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--brand);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--foreground);
+}
+.vacation-return-summary h3 {
+  margin: 20px 0 10px;
+  font-size: 16px;
+}
+.vacation-return-summary h3 span {
+  color: var(--brand);
+  margin-left: 8px;
+}
+.vacation-return-summary p {
+  line-height: 1.7;
+}
+.vacation-return-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.vacation-return-summary li + li {
+  border-top: 1px solid var(--border);
+}
+.vacation-return-summary a {
+  display: grid;
+  gap: 5px;
+  padding: 13px 0;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.vacation-return-summary a:hover span {
+  text-decoration: underline;
+}
+.vacation-return-summary small {
+  color: var(--muted-foreground);
+}
+.vacation-return-summary details {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.vacation-return-summary summary {
+  cursor: pointer;
+  font-weight: 600;
+}

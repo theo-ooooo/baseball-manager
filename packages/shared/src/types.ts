@@ -542,6 +542,7 @@ export type PlayerMood = {
   promise?: { due: number; games: number; startGames: number };
 };
 export type NewsItem = {
+  vacationSummary?: { club: string; from: string; through: string };
   priority?: 'urgent' | 'story';
   id: string;
   year?: number;

@@ -1,4 +1,5 @@
 import { isPostseasonPhase } from '@dugout/shared/postseason';
+import { finishManagerVacation } from './manager-vacation';
 import { prepareManagerJourney } from './manager-journey';
 import {
   reconcileManagerPeople,
@@ -239,6 +240,7 @@ export function createManagerCareer(world: WorldCatalog) {
     m.unemployedSince = gameDate(g);
     delete m.contract;
     delete m.vacationUntil;
+    delete m.vacationStarted;
     g.deals = [];
     g.coachDeals = [];
     g.saleOffers = [];
@@ -543,8 +545,7 @@ export function createManagerCareer(world: WorldCatalog) {
       }
     }
     if (m.vacationUntil && today >= m.vacationUntil) {
-      delete m.vacationUntil;
-      report(g, '휴가에서 복귀했습니다', '코치에게 위임한 경기와 선수단 보고를 확인해 주세요.');
+      finishManagerVacation(g);
     }
     archiveTick(g);
     review(g);
@@ -810,6 +811,7 @@ export function createManagerCareer(world: WorldCatalog) {
         throw new Error('휴가는 1~28일로 선택해 주세요.');
       if (m.vacationUntil) throw new Error('이미 휴가 중입니다.');
       m.vacationUntil = addDays(gameDate(g), days);
+      m.vacationStarted = gameDate(g);
       g.media = undefined;
       report(
         g,
@@ -818,8 +820,7 @@ export function createManagerCareer(world: WorldCatalog) {
       );
     } else if (a.type === 'endVacation') {
       if (!m.vacationUntil) throw new Error('현재 휴가 중이 아닙니다.');
-      delete m.vacationUntil;
-      report(g, '휴가 조기 복귀', '오늘부터 직접 구단을 지휘합니다.');
+      finishManagerVacation(g, true);
     } else if (a.type === 'signManager') {
       const offer = m.offers.find((o) => o.id === a.id);
       if (!offer || offer.status !== 'offered' || offer.expires < gameDate(g))

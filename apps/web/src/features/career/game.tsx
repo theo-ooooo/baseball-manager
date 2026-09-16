@@ -263,7 +263,10 @@ export function GameScreen({
     if (g.managerCareer?.vacationUntil && !isUnemployed(g)) {
       const days = Math.max(1, daysBetween(gameDate(g), g.managerCareer.vacationUntil));
       const next = await calendarProgress.run(g, days, true);
-      if (next && !next.managerCareer?.vacationUntil) openReport();
+      if (next && !next.managerCareer?.vacationUntil) {
+        calendarProgress.close();
+        openReport(next.news.find((n) => n.vacationSummary?.through === gameDate(next))?.id);
+      }
       return;
     }
     if (awayFromClub) {

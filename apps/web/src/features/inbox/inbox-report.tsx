@@ -1,4 +1,5 @@
 import { MatchBoxScore } from '../matches/match-box-score';
+import { VacationReturnSummary } from './vacation-return-summary';
 import { LineupCompetitionPanel } from '../career/lineup-competition-panel';
 import { isClosedClubReport } from '@dugout/shared/employment-reports';
 import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
@@ -95,6 +96,7 @@ export function InboxReport({
         </div>
       </header>
       <div className="inbox-report-content">
+        {news.vacationSummary && <VacationReturnSummary g={g} news={news} />}
         {match && (
           <section className="inbox-match-result" aria-label="경기 최종 결과">
             <div>
