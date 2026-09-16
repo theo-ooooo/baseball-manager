@@ -1,5 +1,6 @@
 import type { GameState, Result } from './types';
 import { gameDate } from './calendar';
+import { clubResults } from './club-results';
 
 export type MediaChoice = { id: 'support' | 'challenge' | 'calm'; tone: string; text: string };
 export type MediaQuestion = {
@@ -47,7 +48,7 @@ export function preMatchConversation(
 ): MatchConversation {
   const players = g.roster.filter((p) => g.lineup.includes(p.id) || p.id === g.starter);
   const starter = players.find((p) => p.id === g.starter);
-  const recent = g.history.slice(0, 3),
+  const recent = clubResults(g).slice(0, 3),
     losses = recent.filter(
       (r) =>
         (r.home === g.club ? r.homeScore : r.awayScore) <

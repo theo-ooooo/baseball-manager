@@ -4,6 +4,7 @@ import { addDays, daysBetween, gameDate } from '@dugout/shared/calendar';
 import { preseasonFixtures } from '@dugout/shared/management';
 import { postseasonFixtures, type PostseasonFixture } from '@dugout/shared/postseason';
 import { useWorld } from '../career/world-context';
+import { clubResults } from '@dugout/shared/club-results';
 
 export function useSchedule(g: GameState) {
   const { clubs, getClub, fixtures, scheduleNote } = useWorld();
@@ -40,6 +41,7 @@ export function useSchedule(g: GameState) {
   );
   const friendlies = g.rules?.preseason ? preseasonFixtures(g, { clubs }) : [];
   return {
+    clubResults: clubResults(g),
     scope,
     setScope,
     month,

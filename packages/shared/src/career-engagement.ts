@@ -1,6 +1,7 @@
 import type { GameState, WorldCatalog } from './types';
 import { gameDate } from './calendar';
 import { rankStandings } from './game-view';
+import { clubResults } from './club-results';
 
 export type ProspectGoal = 'starts' | 'hits' | 'homer' | 'strikeouts';
 export const prospectGoals: Record<ProspectGoal, { label: string; target: number; unit: string }> =
@@ -112,7 +113,7 @@ export function matchStakes(
   // Older saves may use only matches actually present in their archive summary.
   const recent =
     rival?.recent ||
-    g.history
+    clubResults(g)
       .filter(
         (r) =>
           !r.friendly && [r.home, r.away].includes(g.club) && [r.home, r.away].includes(opponent),
@@ -169,7 +170,9 @@ export function routineBriefing(
     (n) =>
       (n.date || gameDate({ ...g, year: n.year || g.year }, n.day)) >= from && !isImportant(g, n),
   );
-  const matches = g.history.filter((m) => (m.date || gameDate(g, m.day)) >= from && !m.friendly);
+  const matches = clubResults(g).filter(
+    (m) => (m.date || gameDate(g, m.day)) >= from && !m.friendly,
+  );
   const wins = matches.filter(
     (m) =>
       (m.home === g.club ? m.homeScore : m.awayScore) >

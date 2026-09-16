@@ -10,6 +10,7 @@ import { postseasonLabel } from '@dugout/shared/postseason';
 import { MatchWeatherStrip } from '../matches/match-weather-strip';
 import { useWorld } from '../career/world-context';
 import { useSchedule } from './use-schedule';
+import { hasMatchReplay } from '@dugout/shared/club-results';
 export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result) => void }) {
   const { getClub } = useWorld(),
     view = useSchedule(g);
@@ -123,7 +124,7 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
                       {g.weather?.postponed[f.id] && (
                         <small className="calendar-rescheduled">기상 취소 후 재편성</small>
                       )}
-                      {own && result && (
+                      {own && result && hasMatchReplay(result) && (
                         <button className="text-button" onClick={() => replay(result)}>
                           리플레이 →
                         </button>
@@ -167,10 +168,16 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
       <section className="panel training-block">
         <div className="panel-header">
           <h2>우리 구단 경기 기록</h2>
-          <span>{g.history.length}경기</span>
+          <span>{view.clubResults.length}경기</span>
         </div>
-        {g.history.map((r) => (
-          <button className="result-row" key={r.id} onClick={() => replay(r)}>
+        {view.clubResults.map((r) => (
+          <button
+            className="result-row"
+            key={r.id}
+            disabled={!hasMatchReplay(r)}
+            style={!hasMatchReplay(r) ? { opacity: 1 } : undefined}
+            onClick={() => replay(r)}
+          >
             <span className="muted">
               {r.date?.slice(5).replace('-', '/') || dateLabel(g, r.day)}
               {r.post && ' · PS'}
@@ -186,7 +193,7 @@ export function SchedulePanel({ g, replay }: { g: GameState; replay: (r: Result)
               <ClubBadge club={getClub(r.home)} size="tiny" />
               {getClub(r.home).short}
             </span>
-            <span>리플레이 →</span>
+            <span>{hasMatchReplay(r) ? '리플레이 →' : '점수 기록'}</span>
           </button>
         ))}
       </section>

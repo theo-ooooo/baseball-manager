@@ -22,6 +22,7 @@ import { clubSeasonStatus, isClubSeasonRest } from '@dugout/shared/season-status
 import { needsContractReview } from '@dugout/shared/contract-status';
 import { tradeNeedsConfirmation } from '@dugout/shared/trade-status';
 import { useUpcomingFixture } from '../matches/use-upcoming-fixture';
+import { clubResults, hasMatchReplay } from '@dugout/shared/club-results';
 const tactics: Record<string, string> = {
   balanced: '균형 잡힌 야구',
   power: '장타 중심',
@@ -54,6 +55,7 @@ export function Dashboard({
   const { getClub, getLeague, standings, nextFixture } = useWorld();
   const season = clubSeasonStatus(g);
   const weather = useMatchWeather(g);
+  const results = clubResults(g);
   const club = getClub(g.club),
     league = getLeague(club.league),
     rows = standings(g),
@@ -62,8 +64,8 @@ export function Dashboard({
     played = own.w + own.l + own.d,
     fixture = nextFixture(g),
     today = gameDate(g),
-    playedToday = g.history.some((r) => (r.date ? r.date === today : r.day === g.day)),
-    friendlies = g.history.filter((r) => r.friendly).length;
+    playedToday = results.some((r) => (r.date ? r.date === today : r.day === g.day)),
+    friendlies = results.filter((r) => r.friendly).length;
   const starter = g.roster.find((p) => p.id === g.starter);
   const tired = g.roster.filter((p) => p.condition < TIRED);
   const unread = g.news.filter((n) => !n.read).length,
@@ -263,9 +265,9 @@ export function Dashboard({
                 <ChevronRight size={14} />
               </button>
             </header>
-            {g.history.length ? (
+            {results.length ? (
               <ul className="dashboard-results">
-                {g.history.slice(0, 4).map((result) => {
+                {results.slice(0, 4).map((result) => {
                   const home = result.home === g.club,
                     us = home ? result.homeScore : result.awayScore,
                     them = home ? result.awayScore : result.homeScore;
@@ -273,7 +275,11 @@ export function Dashboard({
                     outcome = us > them ? 'W' : us < them ? 'L' : 'D';
                   return (
                     <li key={result.id}>
-                      <button onClick={() => replay(result)}>
+                      <button
+                        disabled={!hasMatchReplay(result)}
+                        style={!hasMatchReplay(result) ? { opacity: 1 } : undefined}
+                        onClick={() => replay(result)}
+                      >
                         <span className={`dashboard-result ${outcome}`}>{outcome}</span>
                         <span>
                           <strong>{opponent.name}</strong>
@@ -281,12 +287,13 @@ export function Dashboard({
                             {result.date?.slice(5).replace('-', '/') || dateLabel(g, result.day)} ·{' '}
                             {home ? '홈' : '원정'}
                             {result.friendly ? ' · 연습경기' : ''}
+                            {!hasMatchReplay(result) && ' · 점수 기록'}
                           </small>
                         </span>
                         <b>
                           {us} : {them}
                         </b>
-                        <ChevronRight size={14} />
+                        {hasMatchReplay(result) && <ChevronRight size={14} />}
                       </button>
                     </li>
                   );
