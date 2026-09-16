@@ -1,6 +1,7 @@
 import type { LiveMatch } from './types';
 
 export const isLiveMatchCommand = (type: unknown) =>
+  type === 'delegateInning' ||
   type === 'matchCommand' ||
   type === 'cancelMatchCommand' ||
   type === 'chooseMatchCards' ||

@@ -23,6 +23,8 @@ export function MatchDecisionBar({
   onRepeat,
   coach,
   cards,
+  onDelegateInning,
+  handoff,
 }: {
   decision: ReturnType<typeof matchDecision>;
   paused: boolean;
@@ -35,6 +37,8 @@ export function MatchDecisionBar({
   onRepeat: () => void;
   coach?: ReactNode;
   cards?: ReactNode;
+  onDelegateInning?: () => void;
+  handoff?: ReactNode;
 }) {
   if (!paused || decision.finished) return null;
   return (
@@ -73,6 +77,7 @@ export function MatchDecisionBar({
           </DialogDescription>
         </DialogHeader>
         <div className="match-decision-scroll">
+          {handoff}
           {cards}
           {coach}
           {decision.kind && previousCommand && (
@@ -91,6 +96,15 @@ export function MatchDecisionBar({
           )}
         </div>
         <div className="match-decision-actions">
+          {onDelegateInning && (
+            <button
+              disabled={busy}
+              onClick={onDelegateInning}
+              title="남은 이번 이닝의 작전·카드 사용을 맡기고 다음 이닝에 돌아옵니다."
+            >
+              이번 이닝만 코치에게
+            </button>
+          )}
           <button disabled={busy} onClick={onPlan}>
             {decision.attacking ? '대타 · 선수 교체' : '투수 · 수비 교체'}
           </button>

@@ -632,6 +632,13 @@ export type LiveMatch = {
   };
   cards?: MatchCardDraft;
   delegation?: { coachId: string; name: string; cursor: number };
+  inningDelegations?: {
+    coachId: string;
+    name: string;
+    cursor: number;
+    inning: number;
+    endCursor?: number;
+  }[];
   home: string;
   away: string;
   seed: number;

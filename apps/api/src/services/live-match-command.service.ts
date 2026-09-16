@@ -4,6 +4,7 @@ import type { LiveMatchPatchResponse } from '@dugout/shared/live-match-commands'
 import { matchCommandAction } from '../domain/match-command-actions';
 import { createPreparedMatchSimulator } from '../domain/match-simulation';
 import { chooseMatchCards, consumeMatchCard } from '../domain/match-cards';
+import { delegateInning } from '../domain/inning-delegation';
 
 @Injectable()
 export class LiveMatchCommandService {
@@ -85,6 +86,7 @@ export class LiveMatchCommandService {
       const simulate = createPreparedMatchSimulator(row.league);
       if (action.type === 'chooseMatchCards') chooseMatchCards(state, action, simulate);
       else if (action.type === 'useMatchCard') consumeMatchCard(state, action, simulate);
+      else if (action.type === 'delegateInning') delegateInning(state, action, simulate);
       else matchCommandAction(state, action, simulate);
     } catch (error) {
       throw new BadRequestException(

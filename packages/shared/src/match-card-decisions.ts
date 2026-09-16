@@ -18,7 +18,11 @@ export function matchCardUseReason(live: LiveMatch, club: string, cursor: number
     (entry) => entry.id === cardId && draft.selected!.includes(entry.id),
   );
   if (!card) return '이번 경기에 보유한 카드가 아닙니다.';
-  if (draft.used?.some((use) => use.cardId === cardId)) return '이미 사용한 카드입니다.';
+  if (
+    draft.used?.some((use) => use.cardId === cardId) ||
+    live.timeline?.log.slice(0, cursor).some((event) => event.play?.cards?.own === cardId)
+  )
+    return '이미 사용한 카드입니다.';
   if (draft.used?.some((use) => use.cursor === cursor))
     return '한 타석에는 카드 한 장만 사용할 수 있습니다.';
   if (!live.timeline || live.finished || cursor >= live.timeline.log.length)

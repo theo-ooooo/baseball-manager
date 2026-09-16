@@ -20,11 +20,11 @@ export function useMatchDelegation(
     );
   return {
     coach,
-    delegate: async () => {
+    delegate: async (inningOnly = false) => {
       if (busy || !coach) return;
       onStart?.();
       const next = await act({
-        type: 'delegateMatch',
+        type: inningOnly ? 'delegateInning' : 'delegateMatch',
         date: gameDate(g),
         ...(g.liveMatch
           ? {

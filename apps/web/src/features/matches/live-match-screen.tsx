@@ -14,6 +14,7 @@ import { MatchCardsPanel, MatchCardsSummary } from './match-cards-panel';
 import { MatchCardHand } from './match-card-hand';
 import { MatchEffectNotice } from './match-effect-notice';
 import { MatchDelegation } from './match-delegation';
+import { MatchInningHandoff } from './match-inning-handoff';
 import { MatchPreview } from './match-preview';
 import { MatchOverview } from './match-overview';
 import { MatchAudioSettings } from './match-audio-settings';
@@ -224,6 +225,10 @@ function TimelinePlayer({ g, act, busy }: { g: GameState; act: Act; busy: boolea
               onContinue={() => m.play()}
               previousCommand={m.previousCommand}
               onRepeat={m.repeatCommand}
+              onDelegateInning={
+                m.delegation.coach ? () => void m.delegation.delegate(true) : undefined
+              }
+              handoff={<MatchInningHandoff live={live} cursor={m.consumed} />}
               cards={
                 live.cards?.version === 2 && live.cards.selected ? (
                   <MatchCardHand

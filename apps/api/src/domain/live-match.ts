@@ -1,4 +1,5 @@
 import { tacticalDuel } from '@dugout/shared/tactical-duel';
+import { delegateInning } from './inning-delegation';
 import { matchStakes } from '@dugout/shared/career-engagement';
 import { createAiRegistrations } from './ai-registrations';
 import { chooseMatchCards, drawMatchCards, consumeMatchCard } from './match-cards';
@@ -23,6 +24,7 @@ export function createLiveMatchActions(
   const { nextFixture, rosterFor, getClub } = createGameView(world);
   const registrations = createAiRegistrations(world);
   function liveAction(g: GameState, a: Record<string, unknown>): GameState | null {
+    if (a.type === 'delegateInning') return delegateInning(g, a, simulateMatch);
     if (a.type === 'chooseMatchCards') return chooseMatchCards(g, a, simulateMatch);
     if (a.type === 'useMatchCard') return consumeMatchCard(g, a, simulateMatch);
     if (

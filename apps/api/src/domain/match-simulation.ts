@@ -365,12 +365,15 @@ function createSimulator({
         while (outs < 3 && appearances++ < 120) {
           if (applyChanges(inn, ownBat ? bases : undefined))
             ({ pitcher, pStrength, defense } = context());
+          const delegated =
+            (!!g.liveMatch?.delegation && log.length >= g.liveMatch.delegation.cursor) ||
+            !!g.liveMatch?.inningDelegations?.some(
+              (entry) => entry.inning === inn && log.length >= entry.cursor,
+            );
           const command =
             commands[commandIndex]?.cursor === log.length
               ? commands[commandIndex++]
-              : g.liveMatch?.delegation &&
-                  log.length >= g.liveMatch.delegation.cursor &&
-                  (ownBat || ownPitch)
+              : delegated && (ownBat || ownPitch)
                 ? delegatedMatchCommand(
                     ownBat,
                     lineups[side][order[side] % 9],
@@ -386,7 +389,7 @@ function createSimulator({
             ownBat,
             !!(bases[1] || bases[2]),
             !!command?.kind.startsWith('steal'),
-            !!g.liveMatch?.delegation && log.length >= g.liveMatch.delegation.cursor,
+            delegated,
           );
           const cardPitcher = activation
             ? matchCardPlayer(matchCards!, pitcher, !ownBat, activation.active)

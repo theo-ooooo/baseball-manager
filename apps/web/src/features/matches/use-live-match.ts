@@ -22,6 +22,7 @@ import { useMatchSubstitutions } from './use-match-substitutions';
 import { useCoachSubstitution } from './use-coach-substitution';
 import { useMatchCommandResults } from './use-match-command-results';
 import { useMatchEffects } from './use-match-effects';
+import { useMatchDelegation } from './use-match-delegation';
 
 export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
   const live = g.liveMatch!,
@@ -92,6 +93,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     setSoundPaused(true);
   }, [pausePlayback]);
   const consumed = Math.max(live.cursor, playback.cursor - (playback.settled ? 0 : 1));
+  const delegation = useMatchDelegation(g, act, busy || planDirty, consumed, pause);
   const effects = useMatchEffects(result, consumed, panel === 'watch');
   const cardsPending = !!live.cards && !live.cards.selected;
   useEffect(() => {
@@ -235,6 +237,7 @@ export function useLiveMatch(g: GameState, act: Act, busy: boolean) {
     consumed,
     decision,
     decisionVisible,
+    delegation,
     previousCommand,
     repeatCommand: () => {
       if (

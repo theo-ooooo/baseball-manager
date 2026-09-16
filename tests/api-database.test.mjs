@@ -2886,3 +2886,46 @@ test('Saved series commands and prospect milestones survive retry and reload wit
   assert.equal(stopped.state.history.length, 1);
   assert.equal(stopped.state.media.pending, undefined);
 });
+
+test('One-inning coaching persists a bounded live patch, returns control and deduplicates the request without advancing the date', async () => {
+  const user = 'inning-delegation-owner';
+  await action(
+    { type: 'start', club: 'kbo-lotte', manager: '이닝 지휘', mode: 'short', preseason: false },
+    user,
+  );
+  await db
+    .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',0) WHERE user_id=?")
+    .bind(user)
+    .run();
+  const started = await action({ type: 'startMatch' }, user),
+    live = started.state.liveMatch;
+  const payload = {
+    type: 'delegateInning',
+    date: live.timeline.date,
+    cursor: 2,
+    timelineVersion: live.timelineVersion,
+    playbackId: live.playbackId,
+    responseMode: 'patch',
+    revision: started.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const result = await call('/api/career', payload, user);
+  assert.equal(result.status, 201, JSON.stringify(result.body));
+  assert.deepEqual(Object.keys(result.body.patch), ['liveMatch']);
+  const next = result.body.patch.liveMatch;
+  assert.equal(next.timeline.log[next.cursor].inning, 2);
+  assert.equal(next.inningDelegations[0].inning, 1);
+  assert.equal(next.prepared, undefined);
+  assert.equal(next.opponents, undefined);
+  assert.deepEqual(next.timeline.log.slice(0, 2), live.timeline.log.slice(0, 2));
+  assert.deepEqual((await call('/api/career', payload, user)).body, result.body);
+  assert.equal(
+    (await call('/api/career', { ...payload, requestId: crypto.randomUUID() }, user)).status,
+    409,
+  );
+  assert.equal((await call('/api/career', payload, 'foreign-inning-owner')).status, 409);
+  const restored = (await call('/api/career', undefined, user)).body;
+  assert.equal(restored.state.day, started.state.day);
+  assert.equal(restored.state.history.length, started.state.history.length);
+  assert.deepEqual(restored.state.liveMatch.inningDelegations, next.inningDelegations);
+});
