@@ -63,6 +63,19 @@ export function contractReportStatus(g: GameState, n: NewsItem): 'signed' | 'clo
     : undefined;
 }
 
+/** A recruitment thread has one current decision; pending board replies require only time. */
+export function managerReportNeedsAction(g: GameState, n: NewsItem) {
+  if (!n.managerOfferId || contractReportStatus(g, n)) return false;
+  const offer = g.managerCareer?.offers.find((o) => o.id === n.managerOfferId);
+  const latest = g.news.find((item) => item.managerOfferId === n.managerOfferId);
+  return (
+    latest?.id === n.id &&
+    !!offer &&
+    ['invited', 'interview', 'offered'].includes(offer.status) &&
+    offer.contractTerms?.status !== 'pending'
+  );
+}
+
 /** A historical report or open dialog must use today's employer and negotiation scope. */
 export function playerContractContext(
   g: import('./types').GameState,

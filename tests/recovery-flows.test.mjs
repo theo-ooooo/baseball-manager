@@ -16,6 +16,7 @@ buildSync({
       export * from './packages/shared/src/training-center';
       export * from './packages/shared/src/contract-status';
       export * from './packages/shared/src/manager-departure';
+      export * from './packages/shared/src/career-pace';
       export * from './apps/web/src/features/inbox/inbox-model';`,
     resolveDir: process.cwd(),
     loader: 'ts',
@@ -43,9 +44,59 @@ const {
   contractReportStatus,
   newsNeedsAction,
   departureDetail,
+  importantCareerReport,
   postNews,
 } = createRequire(import.meta.url)(out);
 const game = () => e.newGame('kbo-lotte', '흐름 검증', 'short', 436, { preseason: false });
+
+test('Only the latest recruitment report asks for action and waiting for a board reply does not block progress', () => {
+  const g = game();
+  const offer = {
+    id: 'thread',
+    club: g.club,
+    source: 'renewal',
+    status: 'offered',
+    salary: 5,
+    targetRank: 3,
+    applied: gameDate(g),
+    due: gameDate(g),
+    expires: '2027-03-27',
+    message: '역제안',
+    contractTerms: {
+      status: 'counter',
+      salary: 5,
+      years: 1,
+      targetRank: 3,
+      round: 1,
+      version: 2,
+      history: [],
+    },
+  };
+  g.managerCareer.offers = [offer];
+  g.news = ['latest', 'interview', 'application'].map((id) => ({
+    id,
+    managerOfferId: offer.id,
+    day: g.day,
+    kind: 'manager',
+    title: id,
+    body: '',
+    read: false,
+  }));
+  assert.deepEqual(
+    g.news.map((n) => newsNeedsAction(n, g)),
+    [true, false, false],
+  );
+  assert.deepEqual(
+    g.news.map((n) => importantCareerReport(g, n)),
+    [true, false, false],
+  );
+  offer.contractTerms.status = 'pending';
+  assert.ok(g.news.every((n) => !newsNeedsAction(n, g) && !importantCareerReport(g, n)));
+  offer.contractTerms.status = 'agreed';
+  assert.equal(newsNeedsAction(g.news[0], g), true);
+  offer.expires = '2025-12-31';
+  assert.ok(g.news.every((n) => !newsNeedsAction(n, g) && !importantCareerReport(g, n)));
+});
 
 test('An eliminated club rests both squads despite saved training plans, freezes promises and receives no deployment reports', () => {
   const g = game();

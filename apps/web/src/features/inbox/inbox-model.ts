@@ -1,6 +1,10 @@
 import { isClosedClubReport } from '@dugout/shared/employment-reports';
 import { isClubSeasonRest } from '@dugout/shared/season-status';
-import { needsContractReview, contractReportStatus } from '@dugout/shared/contract-status';
+import {
+  needsContractReview,
+  contractReportStatus,
+  managerReportNeedsAction,
+} from '@dugout/shared/contract-status';
 import { lineupRecommendationError } from '@dugout/shared/lineup-recommendation';
 import type { GameState, NewsItem } from '@dugout/shared/types';
 import { tradeNeedsConfirmation } from '@dugout/shared/trade-status';
@@ -39,13 +43,7 @@ export function newsNeedsAction(news: NewsItem, g: GameState) {
   if (isClubSeasonRest(g) && (news.choiceKind === 'playingTime' || news.kind === 'training'))
     return false;
   if (news.lineupRecommendation) return !lineupRecommendationError(g, news);
-  if (news.managerOfferId)
-    return (
-      g.managerCareer?.offers.some(
-        (o) =>
-          o.id === news.managerOfferId && ['invited', 'interview', 'offered'].includes(o.status),
-      ) || false
-    );
+  if (news.managerOfferId) return managerReportNeedsAction(g, news);
   if (news.id === `media-pending:${g.media?.pending?.key}`) return true;
   if (
     g.coachRecommendations?.some(

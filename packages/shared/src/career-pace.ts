@@ -1,23 +1,14 @@
 import type { GameState, NewsItem } from './types';
-import { contractReportStatus } from './contract-status';
+import { contractReportStatus, managerReportNeedsAction } from './contract-status';
 import { isClosedClubReport } from './employment-reports';
-import { gameDate } from './calendar';
 import { tradeNeedsConfirmation } from './trade-status';
 
 /** One shared priority policy for navigation and server date progression. Never marks mail read. */
 export function importantCareerReport(g: GameState, n: NewsItem) {
   if (isClosedClubReport(g, n) || contractReportStatus(g, n)) return false;
+  if (n.managerOfferId) return managerReportNeedsAction(g, n);
   if (n.choiceKind && !n.choice) return true;
   if (n.priority === 'urgent') return true;
-  if (n.managerOfferId)
-    return (
-      g.managerCareer?.offers.some(
-        (o) =>
-          o.id === n.managerOfferId &&
-          ['invited', 'interview', 'offered'].includes(o.status) &&
-          o.expires >= gameDate(g),
-      ) || false
-    );
   if (n.tradeId)
     return g.trades?.some((o) => o.id === n.tradeId && tradeNeedsConfirmation(g, o)) || false;
   if (
