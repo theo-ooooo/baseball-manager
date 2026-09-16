@@ -863,6 +863,7 @@ export function createGameEngine(
     prepareCalendar(g, world, true);
     prepareWeather(g);
     g.phase = g.rules?.preseason ? 'preseason' : 'regular';
+    managerCareer.expireContract(g);
     // A new opening roster must not retain last season's retired/departed registration IDs.
     if (g.registrations) g.registrations.clubs = {};
     for (const p of g.roster) if (p.injury && p.injury.returnDate <= gameDate(g)) delete p.injury;
@@ -905,9 +906,11 @@ export function createGameEngine(
     news(
       g,
       `${g.year} 시즌 시작`,
-      `${departed.length}명 계약 만료. 베테랑 은퇴와 노쇠화가 반영됐습니다. 스카우트 → 신인 드래프트에서 후보를 확인하고 지명하세요.`,
+      isUnemployed(g)
+        ? '새 시즌이 시작됐습니다. 채용 센터에서 지원할 구단을 찾거나 날짜를 진행해 새 연락을 기다려 보세요.'
+        : `${departed.length}명 계약 만료. 베테랑 은퇴와 노쇠화가 반영됐습니다. 스카우트 → 신인 드래프트에서 후보를 확인하고 지명하세요.`,
       'league',
-      { actionView: 'draft' },
+      { actionView: isUnemployed(g) ? 'jobs' : 'draft' },
     );
     international.tick(g);
     managerCareer.tick(g);

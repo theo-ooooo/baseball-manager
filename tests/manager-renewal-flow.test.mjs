@@ -8,7 +8,7 @@ const out = join(tmpdir(), 'dugout-manager-renewal-flow.cjs');
 buildSync({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './packages/shared/src/calendar';export * from './apps/api/src/domain/manager-contracts';export * from './apps/web/src/features/career/manager-flow';",
+      "export * from './tests/fixtures/engine';export * from './packages/shared/src/calendar';export * from './packages/shared/src/manager-departure';export * from './apps/api/src/domain/manager-contracts';export * from './apps/web/src/features/career/manager-flow';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -24,6 +24,8 @@ const {
   daysBetween,
   prepareManagerTerms,
   managerStep,
+  departureLabel,
+  departureDetail,
 } = createRequire(import.meta.url)(out);
 function game() {
   const g = e.newGame('kbo-kia', 'Renewal manager', 'short', 45, { preseason: false });
@@ -89,3 +91,59 @@ for (const boundary of [false, true])
     g = e.applyAction(g, { type: 'nextSeason' });
     assert.equal(g.year, year + 1);
   });
+
+test('Declining renewal preserves the closing rank and ends employment before new-season club duties', () => {
+  let g = game();
+  g.phase = 'finished';
+  g.champion = g.club;
+  g.managerCareer.contract.throughYear = g.year;
+  g.managerCareer.contract.reviewedYear = g.year;
+  g.managerJobs[g.club].confidence = 82;
+  g.managerCareer.offers = [
+    {
+      id: 'declined-renewal',
+      club: g.club,
+      source: 'renewal',
+      status: 'offered',
+      salary: 5,
+      targetRank: 3,
+      applied: gameDate(g),
+      due: gameDate(g),
+      expires: `${g.year + 1}-03-27`,
+      message: '재계약',
+    },
+  ];
+  g = e.applyAction(g, { type: 'declineManager', id: 'declined-renewal' });
+  assert.equal(g.managerCareer.status, 'employed');
+  g = e.applyAction(g, { type: 'nextSeason' });
+  const h = g.managerCareer.history[0];
+  assert.equal(g.managerCareer.status, 'unemployed');
+  assert.equal(g.managerCareer.contract, undefined);
+  assert.equal(h.rank, 1);
+  assert.equal(h.confidence, 82);
+  assert.equal(h.endKind, 'nonrenewal');
+  assert.equal(departureLabel(h), '계약 만료 · 재계약 불발');
+  assert.doesNotMatch(departureDetail(g, { ...h, detail: undefined }), /사퇴/);
+  assert.ok(g.news.some((n) => n.title === '감독 계약 만료 · 재계약 없이 퇴임했습니다'));
+  assert.ok(!g.news.some((n) => n.title === '감독직에서 사퇴했습니다'));
+  const opening = g.news.find((n) => n.title === `${g.year} 시즌 시작`);
+  assert.equal(opening.actionView, 'jobs');
+  assert.doesNotMatch(opening.body, /지명하세요/);
+  assert.throws(() => e.applyAction(g, { type: 'startMatch' }), /무직/);
+  g = e.applyAction(g, { type: 'managerContinue', count: 3 });
+  assert.equal(g.managerCareer.history.length, 1);
+  assert.equal(g.managerCareer.history[0].rank, 1);
+});
+
+test('A continuing multi-season contract keeps the new-season draft route and voluntary resignation stays distinct', () => {
+  let g = game();
+  g.phase = 'finished';
+  g.managerCareer.contract.throughYear = g.year + 1;
+  g = e.applyAction(g, { type: 'nextSeason' });
+  assert.equal(g.managerCareer.status, 'employed');
+  assert.equal(g.managerCareer.history.length, 0);
+  assert.equal(g.news.find((n) => n.title === `${g.year} 시즌 시작`).actionView, 'draft');
+  g = e.applyAction(g, { type: 'resignManager', confirm: true });
+  assert.equal(departureLabel(g.managerCareer.history[0]), '사퇴');
+  assert.ok(g.news.some((n) => n.title === '감독직에서 사퇴했습니다'));
+});

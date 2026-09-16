@@ -266,10 +266,10 @@ export function createManagerCareer(world: WorldCatalog) {
       }
     report(
       g,
-      reason === 'resigned'
-        ? '감독직에서 사퇴했습니다'
-        : endKind === 'nonrenewal'
-          ? '감독 계약 만료 · 재계약하지 않기로 결정했습니다'
+      endKind === 'nonrenewal'
+        ? '감독 계약 만료 · 재계약 없이 퇴임했습니다'
+        : reason === 'resigned'
+          ? '감독직에서 사퇴했습니다'
           : '구단주가 감독을 경질했습니다',
       `${view.getClub(g.club).name} 이사회 결정: ${detail}\n현재 무직입니다. 감독 채용에 지원하고 제안을 받은 뒤 계약하면 해당 구단의 시즌을 이어갑니다. 무직 기간에는 감독 급여가 지급되지 않습니다.`,
     );
@@ -321,10 +321,10 @@ export function createManagerCareer(world: WorldCatalog) {
       report(g, '목표 달성 · 감독 재계약 제안', offer.message, offer);
     }
   }
-  function tick(g: GameState) {
-    prepare(g);
-    const m = g.managerCareer!,
-      today = gameDate(g);
+  /** End employment while the closing season's standings and board confidence still exist. */
+  function expireContract(g: GameState) {
+    const m = g.managerCareer;
+    if (!m) return;
     if (m.status === 'employed' && m.contract && m.contract.throughYear < g.year)
       leave(
         g,
@@ -332,6 +332,12 @@ export function createManagerCareer(world: WorldCatalog) {
         '계약 기간이 끝났으며 감독이 새 계약에 서명하지 않아 퇴임했습니다.',
         'nonrenewal',
       );
+  }
+  function tick(g: GameState) {
+    prepare(g);
+    const m = g.managerCareer!,
+      today = gameDate(g);
+    expireContract(g);
     const finance = !isUnemployed(g) ? reviewFinances(g, view.getClub(g.club).league) : undefined;
     for (const job of Object.values(g.managerJobs!)) {
       if (job.vacant) {
@@ -954,5 +960,5 @@ export function createManagerCareer(world: WorldCatalog) {
     reconcileManagerPeople(g, world);
     return g;
   }
-  return { prepare, action, tick, review };
+  return { prepare, action, tick, review, expireContract };
 }
