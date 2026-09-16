@@ -7,6 +7,7 @@ export function isDateProgressCommand(type: unknown) {
     'nextSeason',
     'skipPreseason',
     'completeMatch',
+    'startMatch',
     'delegateMatch',
     'beginSeriesDelegation',
     'delegateSeriesDay',

@@ -124,6 +124,9 @@ test('an existing active match gains KBO photos on read without rewriting the sa
       '/api/career',
       {
         ...action,
+        ...(action.type === 'continue'
+          ? { readNewsIds: current.body.state.news.filter((n) => !n.read).map((n) => n.id) }
+          : {}),
         revision: current.body.revision,
         requestId: crypto.randomUUID(),
       },
@@ -139,6 +142,7 @@ test('an existing active match gains KBO photos on read without rewriting the sa
       await act({ type: 'respondNews', id: news.id, choice: 'explain' });
     if (next.state.progress?.stop === 'fixture') break;
   }
+  await act({ type: 'readAllNews' });
   await act({ type: 'startMatch' });
   const db = await mf.getD1Database('DB');
   const readRow = () =>
@@ -280,6 +284,7 @@ test('D1 최신 시즌 성적이 FA 관찰·협상에 함께 반영되고 감독
   const command = {
     type: 'advance',
     count: 1,
+    readNewsIds: current.body.state.news.filter((n) => !n.read).map((n) => n.id),
     revision: current.body.revision,
     requestId: crypto.randomUUID(),
   };

@@ -1,6 +1,7 @@
 import type { GameState } from './types';
 import { preseasonSkipBlockers, describePreseasonSkipBlockers } from './preseason';
 import { importantCareerReport } from './career-pace';
+import { matchInboxDecision } from './match-inbox';
 
 /** Use the same pending decisions on the screen and when validating a saved command. */
 export function seriesDelegationDecision(g: GameState) {
@@ -30,6 +31,8 @@ export function seriesDelegationDecision(g: GameState) {
     };
     return { reason: describePreseasonSkipBlockers(blocks), ...destinations[first.kind] };
   }
+  const inbox = matchInboxDecision(g);
+  if (g.engagement?.seriesRun?.status !== 'running' && inbox) return inbox;
   const report = g.news.find((n) => !n.read && importantCareerReport(g, n));
   if (report)
     return {

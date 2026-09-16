@@ -464,7 +464,7 @@ export function GameScreen({
                   : saveFailed
                     ? '저장 확인 필요'
                     : inboxReads.viewed.size
-                      ? '읽음은 날짜 진행 시 저장'
+                      ? '읽음은 다음 진행 시 저장'
                       : '자동 저장됨'}
               </span>
               <button className="icon-button" aria-label="게임 안내" onClick={() => setHelp(true)}>

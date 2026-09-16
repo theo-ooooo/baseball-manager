@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import type { GameState } from '@dugout/shared/types';
 import { gameDate } from '@dugout/shared/calendar';
+import { matchInboxDecision } from '@dugout/shared/match-inbox';
 import type { Act } from '../career/game-contracts';
 export function useMatchDelegation(
   g: GameState,
@@ -11,6 +12,7 @@ export function useMatchDelegation(
   onStart?: () => void,
 ) {
   const router = useRouter();
+  const inbox = matchInboxDecision(g);
   const coach =
     g.staff.find(
       (c) => c.role === '수석' && (c.contractUntil === undefined || c.contractUntil > g.year),
@@ -20,8 +22,14 @@ export function useMatchDelegation(
     );
   return {
     coach,
+    inbox,
     delegate: async (inningOnly = false) => {
-      if (busy || !coach) return;
+      if (busy) return;
+      if (inbox) {
+        router.push(inbox.href);
+        return;
+      }
+      if (!coach) return;
       onStart?.();
       const next = await act({
         type: inningOnly ? 'delegateInning' : 'delegateMatch',

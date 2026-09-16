@@ -1,5 +1,6 @@
 'use client';
 import { matchStakes } from '@dugout/shared/career-engagement';
+import { matchInboxDecision } from '@dugout/shared/match-inbox';
 import { MatchStakesBanner } from '../career/career-story-panel';
 import { rememberMatchWatchMode } from './use-match-watch-mode';
 import { PostseasonPanel } from '../schedule/postseason-panel';
@@ -43,6 +44,7 @@ export function MatchdayBriefing({
   const seasonRest = isClubSeasonRest(g);
   const season = clubSeasonStatus(g);
   const weather = useMatchWeather(g);
+  const inbox = matchInboxDecision(g);
   if (!pair)
     return (
       <section className="panel panel-content matchday-rest">
@@ -127,9 +129,11 @@ export function MatchdayBriefing({
         </div>
         <p className="matchday-coach-note">
           <strong>수석 코치 브리핑</strong>
-          {issues.length
-            ? issues.join(' · ')
-            : '출전 준비가 됐습니다. 선발과 타순을 최종 확인하고 경기장으로 이동하세요.'}
+          {inbox
+            ? inbox.reason
+            : issues.length
+              ? issues.join(' · ')
+              : '출전 준비가 됐습니다. 선발과 타순을 최종 확인하고 경기장으로 이동하세요.'}
         </p>
         <div className="matchday-actions">
           <button className="button secondary" onClick={() => onView('tactics')}>
@@ -138,16 +142,18 @@ export function MatchdayBriefing({
           <button className="button secondary" onClick={() => onView('reserves')}>
             <Users size={16} /> 1군·2군 교체
           </button>
-          <button
-            className="button secondary"
-            disabled={busy}
-            onClick={() => {
-              rememberMatchWatchMode('highlights');
-              onContinue();
-            }}
-          >
-            승부처만 지휘
-          </button>
+          {!inbox && (
+            <button
+              className="button secondary"
+              disabled={busy}
+              onClick={() => {
+                rememberMatchWatchMode('highlights');
+                onContinue();
+              }}
+            >
+              승부처만 지휘
+            </button>
+          )}
           <button
             className="button primary"
             disabled={busy}

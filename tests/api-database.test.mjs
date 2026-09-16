@@ -34,11 +34,27 @@ async function call(path = '/api/career', action, user = 'test-owner-a', extra =
   });
   return { status: response.status, body: await response.json() };
 }
+// Successful gameplay helpers model reading the existing inbox before starting a game.
+// Inbox rejection tests use raw call() so this acknowledgement cannot mask a bypass.
+function readBeforeGame(payload, state) {
+  const progresses =
+    ['startMatch', 'delegateMatch', 'beginSeriesDelegation', 'continue', 'advance'].includes(
+      payload.type,
+    ) ||
+    (payload.type === 'continueDay' && payload.simulateGames === true);
+  return progresses && payload.readNewsIds === undefined
+    ? { ...payload, readNewsIds: (state?.news || []).filter((n) => !n.read).map((n) => n.id) }
+    : payload;
+}
 async function action(payload, user = 'test-owner-a') {
   const current = await call('/api/career', undefined, user);
   const result = await call(
     '/api/career',
-    { ...payload, revision: current.body.revision, requestId: crypto.randomUUID() },
+    {
+      ...readBeforeGame(payload, current.body.state),
+      revision: current.body.revision,
+      requestId: crypto.randomUUID(),
+    },
     user,
   );
   assert.ok(result.status >= 200 && result.status < 300, JSON.stringify(result));
@@ -1970,8 +1986,8 @@ test('A date action saves all locally read IDs in the same revision and preserve
     },
     user,
   );
-  const ids = started.state.news.slice(0, 2).map((n) => n.id);
-  assert.equal(ids.length, 2);
+  const ids = started.state.news.map((n) => n.id);
+  assert.ok(ids.length >= 2);
   const command = {
     type: 'continueDay',
     simulateGames: true,
@@ -2133,7 +2149,12 @@ for (const [reason, seed] of [
       .first();
     const rejected = await call(
       '/api/career',
-      { type: 'startMatch', revision: initial.revision, requestId: crypto.randomUUID() },
+      {
+        type: 'startMatch',
+        readNewsIds: initial.state.news.map((n) => n.id),
+        revision: initial.revision,
+        requestId: crypto.randomUUID(),
+      },
       user,
     );
     assert.equal(rejected.status, 400);
@@ -2144,6 +2165,7 @@ for (const [reason, seed] of [
     const command = {
       type: 'advance',
       count: 1,
+      readNewsIds: initial.state.news.map((n) => n.id),
       revision: initial.revision,
       requestId: crypto.randomUUID(),
     };
@@ -2330,7 +2352,11 @@ test('A finished-season manager counterproposal receives a persisted reply once,
 async function slotAction(payload, user, slot = 'challenge') {
   const headers = { 'x-career-slot': slot };
   const current = await call('/api/career', undefined, user, headers);
-  const command = { ...payload, revision: current.body.revision, requestId: crypto.randomUUID() };
+  const command = {
+    ...readBeforeGame(payload, current.body.state),
+    revision: current.body.revision,
+    requestId: crypto.randomUUID(),
+  };
   const result = await call('/api/career', command, user, headers);
   assert.equal(result.status, 201, JSON.stringify(result.body).slice(0, 500));
   return { ...result.body, command };
@@ -2928,4 +2954,74 @@ test('One-inning coaching persists a bounded live patch, returns control and ded
   assert.equal(restored.state.day, started.state.day);
   assert.equal(restored.state.history.length, started.state.history.length);
   assert.deepEqual(restored.state.liveMatch.inningDelegations, next.inningDelegations);
+});
+
+test('Unread inbox blocks every external match start without writes; queued read IDs permit kickoff once', async () => {
+  const user = 'inbox-match-gate';
+  const initial = await action(
+    { type: 'start', club: 'kbo-lotte', manager: '수신함 우선', mode: 'short', preseason: false },
+    user,
+  );
+  await db
+    .prepare("UPDATE careers SET state=json_set(state,'$.weather.seed',0) WHERE user_id=?")
+    .bind(user)
+    .run();
+  const row = () =>
+    db.prepare('SELECT state,revision FROM careers WHERE user_id=?').bind(user).first();
+  const before = await row();
+  const ids = initial.state.news.filter((n) => !n.read).map((n) => n.id);
+  assert.ok(ids.length > 1);
+  for (const payload of [
+    { type: 'startMatch' },
+    { type: 'delegateMatch' },
+    { type: 'beginSeriesDelegation' },
+    { type: 'continue' },
+    { type: 'continueDay', simulateGames: true },
+    { type: 'advance', count: 1 },
+    { type: 'startMatch', readNewsIds: ids.slice(1) },
+    { type: 'startMatch', readNewsIds: ['not-a-real-report'] },
+  ]) {
+    const result = await call(
+      '/api/career',
+      { ...payload, revision: initial.revision, requestId: crypto.randomUUID() },
+      user,
+    );
+    assert.equal(result.status, 400, JSON.stringify(payload));
+    assert.match(JSON.stringify(result.body), /안 읽은 수신함/);
+    assert.deepEqual(await row(), before);
+  }
+  const invalid = await call(
+    '/api/career',
+    {
+      type: 'startMatch',
+      readNewsIds: [3],
+      revision: initial.revision,
+      requestId: crypto.randomUUID(),
+    },
+    user,
+  );
+  assert.equal(invalid.status, 400);
+  assert.match(JSON.stringify(invalid.body), /읽은 보고 목록/);
+  assert.deepEqual(await row(), before);
+  const command = {
+    type: 'startMatch',
+    readNewsIds: ids,
+    revision: initial.revision,
+    requestId: crypto.randomUUID(),
+  };
+  const started = await call('/api/career', command, user);
+  assert.equal(started.status, 201, JSON.stringify(started.body).slice(0, 500));
+  assert.ok(started.body.state.liveMatch);
+  assert.equal(started.body.state.day, initial.state.day);
+  assert.equal(started.body.revision, initial.revision + 1);
+  const stored = await row();
+  assert.ok(
+    JSON.parse(stored.state)
+      .news.filter((n) => ids.includes(n.id))
+      .every((n) => n.read),
+  );
+  const duplicate = await call('/api/career', command, user);
+  assert.equal(duplicate.status, 201);
+  assert.deepEqual(await row(), stored);
+  assert.equal(duplicate.body.state.liveMatch.id, started.body.state.liveMatch.id);
 });

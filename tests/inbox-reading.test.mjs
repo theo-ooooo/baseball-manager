@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 const built = await build({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './apps/web/src/features/inbox/inbox-order';export * from './apps/web/src/features/inbox/inbox-read-memory';export * from './apps/web/src/features/career/manager-flow';export * from './packages/shared/src/calendar';",
+      "export * from './tests/fixtures/engine';export * from './packages/shared/src/match-inbox';export * from './apps/api/src/domain/match-inbox-gate';export * from './apps/web/src/features/inbox/inbox-order';export * from './apps/web/src/features/inbox/inbox-read-memory';export * from './apps/web/src/features/career/manager-flow';export * from './packages/shared/src/calendar';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -15,6 +15,8 @@ const built = await build({
 });
 const {
   engine: e,
+  matchInboxDecision,
+  matchInboxGate,
   orderedInbox,
   inboxReadingOrder,
   firstUnreadReport,
@@ -146,4 +148,34 @@ test('List stays newest first while reading uses original oldest arrival order u
       inboxReadingOrder(g, g.news, orderedInbox(g, g.news, order)).map((n) => n.id),
       ['first', 'later', 'new'],
     );
+});
+
+test('Match preparation requires every unread report in arrival order and honours queued reading without mutating the save', () => {
+  const g = game();
+  g.engagement.reportMode = 'important';
+  g.news = [
+    { id: 'new', title: '새 일반 보고', kind: 'training', date: '2026-03-30' },
+    { id: 'later', title: '둘째 보고', kind: 'training', date: '2026-03-28' },
+    { id: 'first/report', title: '첫 보고', kind: 'training', date: '2026-03-28' },
+  ];
+  const before = structuredClone(g);
+  assert.equal(matchInboxDecision(g).count, 3);
+  assert.equal(matchInboxDecision(g).href, '/?view=inbox&report=first%2Freport');
+  assert.equal(managerStep(g, true, 'matchday').label, '수신함 확인 · 3');
+  const command = { type: 'startMatch', readNewsIds: ['first/report', 'later'] };
+  assert.equal(matchInboxGate(g, command, true).reportId, 'new');
+  command.readNewsIds.push('new');
+  assert.equal(matchInboxGate(g, command, true), null);
+  assert.deepEqual(g, before);
+  assert.throws(
+    () => matchInboxGate(g, { type: 'startMatch', readNewsIds: [3] }, true),
+    /읽은 보고/,
+  );
+  assert.equal(matchInboxGate(g, { type: 'continueDay', simulateGames: false }, false), null);
+  assert.equal(matchInboxGate(g, { type: 'continue' }, false), null);
+  g.managerCareer.vacationUntil = '2026-04-10';
+  assert.equal(matchInboxGate(g, { type: 'continueDay', simulateGames: true }, true), null);
+  delete g.managerCareer.vacationUntil;
+  g.liveMatch = { cursor: 1 };
+  assert.equal(matchInboxGate(g, { type: 'delegateMatch' }, true), null);
 });

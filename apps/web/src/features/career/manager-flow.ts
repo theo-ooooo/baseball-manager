@@ -1,4 +1,5 @@
 import { stopsForReport } from '@dugout/shared/career-pace';
+import { unreadBeforeMatch } from '@dugout/shared/match-inbox';
 import type { GameState } from '@dugout/shared/types';
 import { orderedInbox } from '../inbox/inbox-order';
 
@@ -74,7 +75,9 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
   const decision = orderedInbox(g, g.news).find((n) => n.choiceKind && !n.choice);
   if (decision)
     return { kind: 'decision', label: '필수 답변', detail: decision.title, reportId: decision.id };
-  const unread = orderedInbox(g, g.news).filter((n) => !n.read && stopsForReport(g, n));
+  const unread = hasFixture
+    ? unreadBeforeMatch(g)
+    : orderedInbox(g, g.news).filter((n) => !n.read && stopsForReport(g, n));
   if (g.media?.pending && (g.engagement?.interviews === 'manual' || !g.staff.length)) {
     const matchReport = unread.find(
       (n) => n.kind === 'match' && `post:${n.matchId}` === g.media!.pending!.key,
@@ -96,7 +99,7 @@ export function managerStep(g: GameState, hasFixture: boolean, view: string): Ma
   if (report)
     return {
       kind: 'report',
-      label: `보고 확인 · ${unread.length}`,
+      label: `${hasFixture ? '수신함 확인' : '보고 확인'} · ${unread.length}`,
       detail: report.title,
       reportId: report.id,
     };

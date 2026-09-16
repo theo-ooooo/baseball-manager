@@ -1,4 +1,5 @@
 import { recommendTrades } from '../domain/trade-recommendations';
+import { matchInboxGate } from '../domain/match-inbox-gate';
 import { gameDate } from '@dugout/shared/calendar';
 import { createManagerCareer } from '../domain/manager-career';
 import { preparePostseason } from '../domain/postseason-calendar';
@@ -147,6 +148,14 @@ export class CareerService {
     const engine = createGameEngine(world, scoutingSeasons);
     let next;
     try {
+      if (current.state) {
+        const inbox = matchInboxGate(
+          current.state,
+          action,
+          action.type === 'continue' && !!createGameView(world).nextFixture(current.state),
+        );
+        if (inbox) throw new Error(inbox.reason);
+      }
       if (action.type === 'start') {
         if (current.state?.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
         if (current.state && action.replace !== true)

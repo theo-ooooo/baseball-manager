@@ -130,7 +130,7 @@ export function CareerStoryPanel({
             {s.briefing.matches}경기 · {s.briefing.wins}승 · 안 읽은 일반 소식 {s.briefing.unread}건
           </span>
         </summary>
-        <p>일반 소식은 경기 진행을 멈추지 않습니다. 필요한 보고를 골라 읽으세요.</p>
+        <p>날짜 진행 중 모인 소식입니다. 경기 전에는 안 읽은 보고를 모두 확인합니다.</p>
         <ul>
           {s.briefing.news.slice(0, 8).map((n) => (
             <li key={n.id}>
@@ -143,7 +143,7 @@ export function CareerStoryPanel({
         {!s.briefing.news.length && <p>이번 주에는 아직 모인 소식이 없습니다.</p>}
       </details>
       <label className="career-report-preference">
-        진행 중 멈추는 보고
+        날짜 진행 중 멈추는 보고
         <select
           aria-label="보고 진행 방식"
           value={g.engagement?.reportMode || 'important'}

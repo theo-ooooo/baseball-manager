@@ -37,13 +37,15 @@ function game() {
   return g;
 }
 
-test('Ordinary reports no longer block a fixture; important reports and the optional all-report mode still do', () => {
+test('Unread routine reports stop matchday even in important-only mode; required decisions keep priority', () => {
   const g = game();
   g.news = [
     { id: 'routine', title: 'Training', body: 'Report', kind: 'training', day: 0, read: false },
   ];
   const saved = structuredClone(g);
-  assert.equal(managerStep(g, true, 'home').kind, 'matchday');
+  assert.equal(managerStep(g, true, 'home').kind, 'report');
+  assert.equal(managerStep(g, true, 'home').reportId, 'routine');
+  assert.equal(managerStep(g, false, 'home').kind, 'continue');
   assert.deepEqual(g, saved);
   g.engagement.reportMode = 'all';
   assert.equal(managerStep(g, true, 'home').kind, 'report');
@@ -236,7 +238,7 @@ test('Challenge success, second-season failure and leaving the club are evaluate
   assert.equal(g.challenge.status, 'failed');
 });
 test('Series delegation saves one game per command, uses both teams cards and stops at the series boundary', () => {
-  let g = game();
+  let g = e.applyAction(game(), { type: 'readAllNews' });
   g = e.applyAction(g, { type: 'beginSeriesDelegation' });
   assert.equal(g.history.length, 0);
   assert.equal(g.engagement.seriesRun.fixtures.length, 2);
@@ -254,7 +256,7 @@ test('Series delegation saves one game per command, uses both teams cards and st
   assert.ok(g.media.journal.some((m) => m.stage === 'post' && m.delegated));
 });
 test('An important report interrupts a saved delegation before another game and cannot be bypassed by reading a pending contract', () => {
-  let g = game();
+  let g = e.applyAction(game(), { type: 'readAllNews' });
   g = e.applyAction(g, { type: 'beginSeriesDelegation' });
   const day = g.day;
   g.news.push({
@@ -329,4 +331,29 @@ test('The ten-game challenge settles on the same command that finishes its actua
   assert.ok(['success', 'failed'].includes(g.challenge.status));
   assert.equal(g.history.filter((m) => !m.post && !m.friendly).length, 10);
   assert.equal(g.news.filter((n) => n.kind === 'challenge').length, 1);
+});
+
+test('A new delegated series requires routine mail to be read; an already running series keeps its approved scope', () => {
+  let g = e.applyAction(game(), { type: 'readAllNews' });
+  g.news.unshift({
+    id: 'routine-before-series',
+    day: g.day,
+    title: '훈련 보고',
+    body: '',
+    kind: 'training',
+  });
+  assert.match(seriesDelegationDecision(g).reason, /안 읽은 수신함 1건/);
+  assert.throws(() => e.applyAction(g, { type: 'beginSeriesDelegation' }), /안 읽은 수신함/);
+  g = e.applyAction(g, { type: 'beginSeriesDelegation', readNewsIds: ['routine-before-series'] });
+  g.news.unshift({
+    id: 'routine-during-series',
+    day: g.day,
+    title: '훈련 보고',
+    body: '',
+    kind: 'training',
+  });
+  assert.equal(seriesDelegationDecision(g), null);
+  const next = e.applyAction(g, { type: 'delegateSeriesDay' });
+  assert.equal(next.engagement.seriesRun.played, 1);
+  assert.equal(next.news.find((n) => n.id === 'routine-during-series').read, undefined);
 });
