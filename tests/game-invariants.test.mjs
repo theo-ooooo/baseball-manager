@@ -124,7 +124,20 @@ test('Match scoring, stats, world standings and next season remain consistent', 
     assert.ok(p.condition <= 100 && p.condition >= 0);
   }
   g = e.acceptRenewal(g);
+  g.engagement.seriesRun = {
+    id: 'old-final',
+    club: g.club,
+    opponent: 'kbo-kia',
+    phase: 'final',
+    fixtures: ['old-final-1'],
+    played: 1,
+    started: '2026-05-01',
+    days: 1,
+    status: 'completed',
+    results: ['old-result'],
+  };
   g = e.nextSeason(g);
+  assert.equal(g.engagement.seriesRun, undefined);
   assert.equal(g.year, 2027);
   assert.equal(g.day, -28);
   assert.equal(g.phase, 'preseason');

@@ -779,6 +779,7 @@ export function createGameEngine(
     for (const key of Object.keys(g.seasonStandings))
       if (Number(key.split(':')[0]) < g.year - 2) delete g.seasonStandings[key];
     g.year++;
+    if (g.engagement) delete g.engagement.seriesRun;
     for (const center of [
       g.trainingCenter,
       ...Object.values(g.clubCareers || {}).map((c) => c.trainingCenter),

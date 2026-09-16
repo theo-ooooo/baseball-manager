@@ -149,7 +149,7 @@ export function createLineupReports(world: WorldCatalog) {
               ? rotationPlan.changes
                   .map(
                     ({ incoming, outgoing, recent, sample }) =>
-                      `${incoming.name}: 최근 ${sample}경기 중 ${recent}경기 출전${incoming.mood ? ` · 사기 ${incoming.mood.value}` : ''}. 기량 차이가 크지 않은 같은 포지션의 ${outgoing.name}와 선발 기회를 나눕니다.${incoming.mood && incoming.mood.value < 50 ? ' 낮은 사기와 출전 부족을 함께 고려했습니다.' : ''}`,
+                      `${incoming.name}: 최근 ${sample}경기 중 ${recent}경기 출전${incoming.mood ? ` · 사기 ${Math.round(incoming.mood.value)}` : ''}. 기량 차이가 크지 않은 같은 포지션의 ${outgoing.name}와 선발 기회를 나눕니다.${incoming.mood && incoming.mood.value < 50 ? ' 낮은 사기와 출전 부족을 함께 고려했습니다.' : ''}`,
                   )
                   .join('\n')
               : '최근 출전량·포지션·컨디션을 함께 검토했습니다. 전력과 수비 배치를 유지하면서 비교 가능한 후보에게 다음 기회를 배분합니다.',

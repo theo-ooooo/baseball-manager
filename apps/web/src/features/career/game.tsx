@@ -77,7 +77,8 @@ import { Agents } from '../market/agents-panel';
 import { Finance } from '../finance/finance-panel';
 import { Help } from './help-dialog';
 import { AppSidebar } from './game-sidebar';
-import { CalendarProgress, useCalendarProgress } from './calendar-progress';
+import { CalendarProgress } from './calendar-progress';
+import { useCalendarProgress } from './use-calendar-progress';
 import { clubSeasonStatus } from '@dugout/shared/season-status';
 import { managerStep, matchReportId } from './manager-flow';
 import { MatchdayBriefing } from '../matches/matchday-briefing';
@@ -196,7 +197,7 @@ export function GameScreen({
     return state;
   };
   const inboxReads = useInboxReadQueue(g);
-  const calendarProgress = useCalendarProgress(act);
+  const calendarProgress = useCalendarProgress(g, act);
   const seriesControl = useSeriesDelegation(g, act, busy);
   const progressing = calendarProgress.journey?.running === true || seriesControl.running;
   function openReport(id?: string) {
@@ -559,7 +560,7 @@ export function GameScreen({
           </div>
         )}
         <WorkspaceNavigation view={view} unemployed={isUnemployed(g)} onView={setView} />
-        {calendarProgress.journey && (
+        {calendarProgress.journey && !seriesControl.running && (
           <CalendarProgress
             journey={calendarProgress.journey}
             g={g}

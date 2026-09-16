@@ -8,7 +8,7 @@ const out = join(tmpdir(), 'dugout-career-engagement.cjs');
 buildSync({
   stdin: {
     contents:
-      "export * from './tests/fixtures/engine';export * from './packages/shared/src/calendar';export * from './packages/shared/src/career-pace';export * from './packages/shared/src/career-engagement';export * from './packages/shared/src/match-highlights';export * from './apps/api/src/domain/career-engagement';export * from './apps/api/src/domain/career-challenge';export * from './apps/api/src/domain/calendar-progression';export * from './apps/web/src/features/career/manager-flow';",
+      "export * from './tests/fixtures/engine';export * from './packages/shared/src/calendar';export * from './packages/shared/src/career-pace';export * from './packages/shared/src/series-delegation';export * from './packages/shared/src/career-engagement';export * from './packages/shared/src/match-highlights';export * from './apps/api/src/domain/career-engagement';export * from './apps/api/src/domain/career-challenge';export * from './apps/api/src/domain/calendar-progression';export * from './apps/web/src/features/career/manager-flow';",
     resolveDir: process.cwd(),
     loader: 'ts',
   },
@@ -27,6 +27,7 @@ const {
   recordEngagementMatch,
   matchStakes,
   tickChallenge,
+  seriesDelegationDecision,
   highlightCursor,
 } = createRequire(import.meta.url)(out);
 function game() {
@@ -264,6 +265,7 @@ test('An important report interrupts a saved delegation before another game and 
     kind: 'medical',
     actionView: 'medical',
   });
+  assert.equal(seriesDelegationDecision(g).href, '/?view=inbox&report=medical');
   g = e.applyAction(g, { type: 'delegateSeriesDay' });
   assert.equal(g.engagement.seriesRun.status, 'interrupted');
   assert.equal(g.day, day);
@@ -282,6 +284,24 @@ test('An important report interrupts a saved delegation before another game and 
     message: '',
   });
   assert.throws(() => e.applyAction(g, { type: 'beginSeriesDelegation' }), /계약/);
+  assert.equal(seriesDelegationDecision(g).href, '/interviews/offer');
+  g.managerCareer.offers[0].status = 'declined';
+  assert.equal(seriesDelegationDecision(g), null);
+  g.news = [
+    {
+      id: 'talk/1',
+      playerId: g.roster[0].id,
+      choiceKind: 'playingTime',
+      read: true,
+      kind: 'club',
+      title: '',
+      body: '',
+      day,
+    },
+  ];
+  assert.equal(seriesDelegationDecision(g).href, '/?view=inbox&report=talk%2F1');
+  g.news[0].choice = 'explain';
+  assert.equal(seriesDelegationDecision(g), null);
 });
 test('Highlight progression stops on an observed opportunity and cannot inspect later results to change its choice', () => {
   let g = game();

@@ -1,86 +1,10 @@
 'use client';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { CalendarDays, CircleDot, FileText, LoaderCircle, Pause, X } from 'lucide-react';
 import type { GameState } from '@dugout/shared/types';
 import { dateLabel, gameDate } from '@dugout/shared/calendar';
-import { useReducedMotion } from '../../hooks/use-reduced-motion';
 import { useWorld } from './world-context';
-import type { Act } from './game-contracts';
-
-type Journey = { start: number; day: number; limit: number; status: string; running: boolean };
-export function useCalendarProgress(act: Act) {
-  const [journey, setJourney] = useState<Journey | null>(null);
-  const active = useRef(false),
-    cancelled = useRef(false);
-  const reducedMotion = useReducedMotion();
-  useEffect(
-    () => () => {
-      cancelled.current = true;
-    },
-    [],
-  );
-  async function run(g: GameState, limit = 45, simulateGames = false) {
-    if (active.current) return null;
-    active.current = true;
-    cancelled.current = false;
-    let current = g;
-    const vacation = !!g.managerCareer?.vacationUntil;
-    let failed = false;
-    let status = vacation ? '휴가 일정을 진행하고 있습니다' : '일정을 확인하고 있습니다';
-    setJourney({ start: g.day, day: g.day, limit, status, running: true });
-    try {
-      for (let i = 0; i < limit && !cancelled.current; i++) {
-        const [next] = await Promise.all([
-          act({ type: 'continueDay', simulateGames }),
-          new Promise((resolve) => setTimeout(resolve, reducedMotion ? 0 : 420)),
-        ]);
-        if (!next) {
-          failed = true;
-          status = '저장 상태를 확인해 주세요';
-          break;
-        }
-        current = next;
-        const stop = next.progress?.stop;
-        status =
-          stop === 'decision'
-            ? '답변이 필요한 면담이 도착했습니다'
-            : stop === 'report'
-              ? `새 리포트 ${next.progress!.newsIds.length}건이 도착했습니다`
-              : stop === 'fixture'
-                ? '경기일에 도착했습니다'
-                : stop === 'season'
-                  ? '시즌 일정이 변경됐습니다'
-                  : vacation
-                    ? '휴가 중 · 보고는 복귀 후 확인합니다'
-                    : '다음 일정을 확인하고 있습니다';
-        if (vacation && !next.managerCareer?.vacationUntil)
-          status = '휴가가 끝났습니다. 모인 보고를 확인하세요';
-        setJourney({ start: g.day, day: next.day, limit, status, running: true });
-        if (
-          stop ||
-          (vacation && !next.managerCareer?.vacationUntil) ||
-          (next.day === g.day && i === 0)
-        )
-          break;
-      }
-      if (cancelled.current) status = '진행을 멈췄습니다';
-      else if (!current.progress?.stop && status !== '저장 상태를 확인해 주세요')
-        status = `${current.day - g.day}일 진행했습니다`;
-      return failed ? null : current;
-    } finally {
-      active.current = false;
-      setJourney(failed ? null : { start: g.day, day: current.day, limit, status, running: false });
-    }
-  }
-  return {
-    journey,
-    run,
-    pause: () => {
-      cancelled.current = true;
-    },
-    close: () => setJourney(null),
-  };
-}
+import { calendarDayResults, type CalendarJourney } from './calendar-progress-view';
 
 export function CalendarProgress({
   journey,
@@ -90,7 +14,7 @@ export function CalendarProgress({
   onReports,
   onMatchday,
 }: {
-  journey: Journey;
+  journey: CalendarJourney;
   g: GameState;
   pause: () => void;
   close: () => void;
@@ -141,7 +65,9 @@ export function CalendarProgress({
           style={{ '--advanced': journey.day - journey.start } as CSSProperties}
         >
           {days.map((day) => {
-            const pair = nextFixture({ ...g, day });
+            const results = calendarDayResults(g, day);
+            const result = results[0];
+            const pair = result ? [result.home, result.away] : nextFixture({ ...g, day });
             const opponent = pair ? getClub(pair.find((id) => id !== g.club)!) : null;
             return (
               <div
@@ -150,11 +76,20 @@ export function CalendarProgress({
               >
                 <small>{dateLabel(g, day).split(' ').at(-1)}</small>
                 <b>{gameDate(g, day).slice(5).replace('-', ' / ')}</b>
-                <span>
+                <span
+                  title={
+                    result
+                      ? `${getClub(result.away).short} ${result.awayScore} : ${result.homeScore} ${getClub(result.home).short}`
+                      : undefined
+                  }
+                >
                   {opponent ? (
                     <>
                       <CircleDot size={13} />
                       {opponent.short}
+                      {result &&
+                        ` ${result.home === g.club ? result.homeScore : result.awayScore}:${result.home === g.club ? result.awayScore : result.homeScore}`}
+                      {results.length > 1 && ` · ${results.length}경기`}
                     </>
                   ) : day % 7 === 0 ? (
                     <>

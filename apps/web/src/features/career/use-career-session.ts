@@ -44,6 +44,7 @@ export function useCareerSession(initial: CareerData) {
     if (!response.ok) throw new Error(next.error || '커리어를 불러오지 못했습니다.');
     install(next);
     retry.current = null;
+    setSaveFailed(false);
     return next as CareerData;
   }
   async function load() {
@@ -90,6 +91,7 @@ export function useCareerSession(initial: CareerData) {
             requestId: crypto.randomUUID(),
           };
     retry.current = { key, payload };
+    let saveUncertain = true;
     try {
       const response = await careerFetch('/api/career', {
         method: 'POST',
@@ -100,10 +102,15 @@ export function useCareerSession(initial: CareerData) {
       const next = await careerResponse(response);
       if (!response.ok) {
         if (response.status === 409) {
-          if ('state' in next) install(next);
-          else if (next.reload) await read();
+          if ('state' in next) {
+            install(next);
+            setSaveFailed(false);
+          } else if (next.reload) await read();
         }
-        if (response.status < 500) retry.current = null;
+        if (response.status < 500) {
+          retry.current = null;
+          saveUncertain = false;
+        }
         throw new Error(next.error || next.message || '요청을 처리하지 못했습니다.');
       }
       const merged = mergeCareerResponse(current.current, next);
@@ -112,7 +119,7 @@ export function useCareerSession(initial: CareerData) {
       setSaveFailed(false);
       return merged.state;
     } catch (e) {
-      setSaveFailed(true);
+      if (saveUncertain) setSaveFailed(true);
       toast.error(careerErrorMessage(e));
       return null;
     } finally {

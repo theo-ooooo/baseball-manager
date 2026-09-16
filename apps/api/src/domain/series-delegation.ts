@@ -1,8 +1,8 @@
 import type { GameState, WorldCatalog, Fixture } from '@dugout/shared/types';
 import { createCalendarView, gameDate, daysBetween } from '@dugout/shared/calendar';
 import { currentPostseasonRound } from '@dugout/shared/postseason';
-import { preseasonSkipBlockers, describePreseasonSkipBlockers } from '@dugout/shared/preseason';
 import { importantCareerReport } from '@dugout/shared/career-pace';
+import { seriesDelegationBlocker } from '@dugout/shared/series-delegation';
 import { conversationKey } from '@dugout/shared/match-media';
 import { prepareEngagement } from './career-engagement';
 import { createMatchMediaActions } from './match-media-actions';
@@ -26,14 +26,6 @@ export function createSeriesDelegation(world: WorldCatalog, engine: Engine) {
     g.staff.some(
       (c) => c.role !== '스카우트' && (c.contractUntil === undefined || c.contractUntil > g.year),
     );
-  const blocker = (g: GameState) => {
-    if (g.news.some((n) => n.choiceKind && !n.choice)) return '선수와의 필수 면담에 답변해 주세요.';
-    const blocks = preseasonSkipBlockers(g);
-    if (blocks.length) return describePreseasonSkipBlockers(blocks);
-    if (g.news.some((n) => !n.read && importantCareerReport(g, n)))
-      return '중요한 새 보고를 확인해 주세요.';
-    return '';
-  };
   function finish(g: GameState, reason: string, complete = false) {
     const run = g.engagement!.seriesRun!;
     run.status = complete ? 'completed' : 'interrupted';
@@ -66,7 +58,7 @@ export function createSeriesDelegation(world: WorldCatalog, engine: Engine) {
         throw new Error('이미 연전 위임이 진행 중입니다.');
       if (g.phase === 'preseason' || g.phase === 'finished')
         throw new Error('정규시즌이나 포스트시즌 경기일에 맡길 수 있습니다.');
-      const block = blocker(g);
+      const block = seriesDelegationBlocker(g);
       if (block) throw new Error(block);
       const pair = engine.nextFixture(g);
       if (!pair) throw new Error('오늘 경기 준비 화면에서 연전을 맡겨 주세요.');
@@ -105,7 +97,7 @@ export function createSeriesDelegation(world: WorldCatalog, engine: Engine) {
     if (!run || run.status !== 'running') throw new Error('연전 위임을 먼저 시작해 주세요.');
     if (run.club !== g.club || run.phase !== g.phase)
       return finish(g, '라운드나 소속 구단이 바뀌었습니다.', true);
-    const block = blocker(g);
+    const block = seriesDelegationBlocker(g);
     if (block) return finish(g, block);
     if (run.days >= 14)
       return finish(g, '날씨와 일정 변경으로 14일을 진행했습니다. 남은 일정을 직접 확인해 주세요.');
@@ -151,7 +143,7 @@ export function createSeriesDelegation(world: WorldCatalog, engine: Engine) {
         `${run.played}경기를 코치가 지휘했습니다. 기록과 다음 선발을 확인하세요.`,
         true,
       );
-    const after = blocker(g);
+    const after = seriesDelegationBlocker(g);
     if (after || g.news.some((n) => !before.has(n.id) && importantCareerReport(g, n)))
       return finish(g, after || '중요한 새 보고가 도착했습니다.');
     return g;

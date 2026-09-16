@@ -207,7 +207,7 @@ function ConversationForm({
       <div className="media-delegate">
         <div>
           <strong>{coach ? `${coach.name} 코치` : '코칭 스태프'}</strong>
-          <small>인터뷰와 팀 대화를 차분한 메시지로 대신 진행합니다.</small>
+          <small>경기 결과와 선수들의 사기·컨디션에 맞춰 인터뷰와 팀 대화를 맡깁니다.</small>
         </div>
         <button
           type="button"

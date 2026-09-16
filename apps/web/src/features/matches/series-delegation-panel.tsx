@@ -34,14 +34,19 @@ export function SeriesDelegationPanel({
             : '이번 연전은 코치에게'}
         </strong>
         <p>
-          {run
-            ? `${run.played}/${run.fixtures.length}경기 완료 · ${run.reason || '한 경기씩 자동 저장합니다.'}`
-            : '같은 상대와 최대 3경기. 중요한 결정이 생기면 멈춥니다.'}
+          {control.blocker ||
+            (run
+              ? `${run.played}/${run.fixtures.length}경기 완료 · ${run.reason || '한 경기씩 자동 저장합니다.'}`
+              : '같은 상대와 최대 3경기. 중요한 결정이 생기면 멈춥니다.')}
         </p>
       </div>
       {control.running ? (
         <button className="button secondary" onClick={control.pause}>
           <Pause size={15} /> 이번 저장 후 멈춤
+        </button>
+      ) : control.blocker ? (
+        <button className="button secondary" disabled={busy} onClick={control.reviewReports}>
+          {control.reviewLabel}
         </button>
       ) : run?.status === 'running' ? (
         <button className="button secondary" disabled={busy} onClick={() => void control.run(true)}>
@@ -65,7 +70,12 @@ export function SeriesDelegationPanel({
             필수 면담·계약 답변·중요한 부상 보고가 생기면 멈춥니다. 도중에 멈추거나 화면을 나가도
             완료한 경기는 저장됩니다.
           </p>
-          <button className="button primary" disabled={busy} onClick={() => void control.run()}>
+          {control.blocker && <p role="status">{control.blocker}</p>}
+          <button
+            className="button primary"
+            disabled={busy || !!control.blocker}
+            onClick={() => void control.run()}
+          >
             코치에게 연전 지휘 맡기기
           </button>
         </DialogContent>
