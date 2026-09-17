@@ -9,6 +9,7 @@ export const managerConversationCommands = [
   'declineManager',
   'negotiateManagerContract',
   'acceptManagerTerms',
+  'deferManagerContract',
 ] as const;
 export const isManagerConversationCommand = (type: unknown) =>
   managerConversationCommands.some((command) => command === type);

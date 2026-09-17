@@ -31,6 +31,7 @@ export type ManagerOffer = {
   applied: string;
   due: string;
   expires: string;
+  deferredDays?: number;
   closedAt?: string;
   status: 'invited' | 'pending' | 'interview' | 'offered' | 'rejected' | 'expired';
   source?: 'application' | 'approach' | 'renewal';

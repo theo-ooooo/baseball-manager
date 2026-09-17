@@ -65,6 +65,29 @@ function propose(g, o, terms = {}) {
   o.contractTerms.due = gameDate(g);
   tickManagerTerms(g, o);
 }
+test('Manager deferral routes through the engine, extends only expiry, and stops after 28 days', () => {
+  let { g, o } = fixture();
+  const expiry = o.expires;
+  for (let i = 0; i < 4; i++) {
+    const current = g.managerCareer.offers[0];
+    g = e.applyAction(g, {
+      type: 'deferManagerContract',
+      id: o.id,
+      termsVersion: current.contractTerms.version,
+    });
+  }
+  assert.equal(g.managerCareer.offers[0].expires, addDays(expiry, 28));
+  assert.equal(g.managerCareer.offers[0].contractTerms.salary, 100);
+  assert.throws(
+    () =>
+      e.applyAction(g, {
+        type: 'deferManagerContract',
+        id: o.id,
+        termsVersion: g.managerCareer.offers[0].contractTerms.version,
+      }),
+    /28/,
+  );
+});
 test('A long failed negotiation starts its contact cooldown on closure and remembers unmet terms after offer trimming', () => {
   const { g, o } = fixture();
   for (let i = 0; i < 3; i++) propose(g, o);

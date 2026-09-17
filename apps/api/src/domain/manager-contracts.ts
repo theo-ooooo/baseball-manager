@@ -136,8 +136,12 @@ export function managerContractAction<T extends ManagerConversationState>(
     throw new Error('유효한 계약 협상이 없습니다.');
   const t = prepareManagerTerms(o);
   if (a.type === 'deferManagerContract') {
+    if (a.termsVersion !== t.version) throw new Error('최신 계약 조건을 확인해 주세요.');
     if (t.status === 'agreed') throw new Error('이미 합의한 계약은 미룰 수 없습니다.');
+    if ((o.deferredDays ?? 0) >= 28) throw new Error('계약 연장은 최대 28일까지 가능합니다.');
     o.expires = addDays(o.expires, 7);
+    o.deferredDays = (o.deferredDays ?? 0) + 7;
+    t.version++;
     t.history.push({
       date: gameDate(g),
       speaker: 'manager',

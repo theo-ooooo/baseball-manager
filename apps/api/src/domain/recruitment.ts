@@ -499,6 +499,19 @@ export function createRecruitment(world: WorldCatalog) {
       );
       return g;
     }
+    if (a.type === 'deferDeal') {
+      if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+      const d = g.deals.find((deal) => deal.id === a.id);
+      if (!d) throw new Error('협상을 찾을 수 없습니다.');
+      if (!['counter', 'accepted'].includes(d.status))
+        throw new Error('답변이 도착한 계약만 일주일 미룰 수 있습니다.');
+      requireReply(g, d);
+      if ((d.deferredDays ?? 0) >= 28) throw new Error('계약 연장은 최대 28일까지 가능합니다.');
+      d.expires = (d.expires ?? d.day + 14) + 7;
+      d.deferredDays = (d.deferredDays ?? 0) + 7;
+      record(g, d, '구단이 계약 결정을 일주일 미뤘습니다. 연장된 기간 안에 계약을 확정하세요.');
+      return g;
+    }
     if (a.type === 'renewContracts') {
       if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
       if (!Array.isArray(a.offers) || a.offers.length < 1 || a.offers.length > 85)

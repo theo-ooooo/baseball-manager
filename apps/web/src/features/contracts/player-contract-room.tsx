@@ -292,6 +292,13 @@ export function PlayerContractRoom({
                   <>
                     <button
                       className="button secondary"
+                      disabled={busy || (deal.deferredDays ?? 0) >= 28}
+                      onClick={() => void act({ type: 'deferDeal', id: deal.id })}
+                    >
+                      계약 일주일 미루기
+                    </button>
+                    <button
+                      className="button secondary"
                       disabled={busy}
                       onClick={() => setEditingId(deal.id)}
                     >

@@ -32,6 +32,25 @@ function ready() {
   return g;
 }
 const offer = (p) => ({ id: p.id, salary: p.salary * 2, years: 3 });
+test('Player deferral preserves agreed terms and budget and rejects expiry or more than 28 days', () => {
+  let g = ready();
+  const r = createRecruitment(world);
+  r.negotiate(g, g.roster[0].id, g.roster[0].salary * 2, 3, 'renew');
+  const d = g.deals[0];
+  d.status = 'accepted';
+  d.stage = 'player';
+  d.expires = g.day + 7;
+  const expiry = d.expires,
+    budget = g.budget,
+    salary = d.salary;
+  for (let i = 0; i < 4; i++) g = e.applyAction(g, { type: 'deferDeal', id: d.id });
+  assert.equal(g.deals[0].expires, expiry + 28);
+  assert.equal(g.deals[0].salary, salary);
+  assert.equal(g.budget, budget);
+  assert.throws(() => e.applyAction(g, { type: 'deferDeal', id: d.id }), /28/);
+  g.day = g.deals[0].expires + 1;
+  assert.throws(() => e.applyAction(g, { type: 'deferDeal', id: d.id }), /유효기간/);
+});
 test('Batch renewal keeps every active offer beyond the old 30-deal limit and spends only after individual signing', () => {
   const g = ready(),
     r = createRecruitment(world);

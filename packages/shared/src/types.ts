@@ -188,6 +188,7 @@ export type Deal = {
   expires?: number;
   history?: NegotiationRound[];
   freeAgentTerms?: FreeAgentTerms;
+  deferredDays?: number;
 };
 export type FreeAgentTerms = { salary: number; years: number; basis: string };
 export type CoachDeal = {
