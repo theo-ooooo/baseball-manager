@@ -62,6 +62,20 @@ export function BattingOrderEditor({
               >
                 능력 {ratingText(p)} · 컨디션 {Math.round(p.condition)}%
               </button>
+              <label className="lineup-number-field">
+                등번호
+                <input
+                  aria-label={`${p.name} 등번호`}
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={p.number}
+                  disabled={busy}
+                  onChange={(e) =>
+                    void act({ type: 'playerNumber', id: p.id, number: e.target.value })
+                  }
+                />
+              </label>
             </div>
             <div className="lineup-arrows">
               <button

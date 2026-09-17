@@ -158,6 +158,16 @@ export function PositionTraining({ p, act, busy }: { p: Player; act: Act; busy: 
   const options = defensivePositions.filter((pos) => (pos === 'P') === (p.pos === 'P'));
   return (
     <label className="position-training">
+      등번호
+      <input
+        aria-label={`${p.name} 등번호`}
+        type="number"
+        min={1}
+        max={99}
+        value={p.number}
+        disabled={busy}
+        onChange={(e) => void act({ type: 'playerNumber', id: p.id, number: e.target.value })}
+      />
       개인 포지션 훈련
       <select
         aria-label={`${p.name} 훈련 포지션`}

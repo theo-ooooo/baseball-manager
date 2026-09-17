@@ -116,6 +116,17 @@ export function canRemove(g: GameState, p: Player) {
 }
 export function managementAction(g: GameState, a: Record<string, unknown>): GameState | null {
   switch (a.type) {
+    case 'playerNumber': {
+      const p = g.roster.find((v) => v.id === a.id && v.club === g.club);
+      const number = Number(a.number);
+      if (!p) throw new Error('선수를 선수단에서 선택해 주세요.');
+      if (!Number.isInteger(number) || number < 1 || number > 99)
+        throw new Error('등번호는 1번부터 99번까지 입력해 주세요.');
+      if (g.roster.some((v) => v.id !== p.id && v.club === g.club && v.number === number))
+        throw new Error(`${number}번은 이미 다른 선수가 사용 중입니다.`);
+      p.number = number;
+      return g;
+    }
     case 'syncCatalog':
       return g;
     case 'recommendPitching': {
