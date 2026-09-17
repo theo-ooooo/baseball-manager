@@ -1741,3 +1741,4 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 - 사용자 GitHub `main`의 사이드바 수정 커밋 `8f0f7da783d7aaeaccf22b2c6db9a4d24b58e39d`를 Actions `35174844767`에서 전체 테스트와 실제 Worker 게시 성공으로 확인했다.
 - 공개 `/api/health` 정상, 카탈로그 `world-2026-09-14-v17` 유지. 구단에 소속된 상태에서 사이드바 `구단과 리그` 아래에 `에이전트`가 직접 표시되며, 해당 화면의 `재계약 일괄 처리` 모달에서 합의 계약을 선택해 일괄 서명할 수 있다.
 - 수신함의 영입 협상 답변은 기존처럼 개별 계약서 검토·서명 흐름이며, 재계약 일괄 서명은 재계약 합의 건을 대상으로 한다. 남은 게시 차단 요인은 없다.
+- 후속 수정 커밋 `5c3376e55c84dbe87deb8abea9cda41d94ff3dad`도 Actions `35175505410`에서 테스트·게시 성공했다. 에이전트 화면 진입 시 스카우트가 함께 활성화되던 표시를 제거했다.
