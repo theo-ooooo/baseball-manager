@@ -72,10 +72,14 @@ export function PlayerContractRoom({
   const active = !!deal && !expired && !['withdrawn', 'rejected'].includes(deal.status);
   const editing = !active || editingId === deal?.id;
   const blocked = !own && transfersBlocked(g);
+  const international =
+    !own && player.club !== 'fa' && getClub(player.club)?.league !== getClub(g.club)?.league;
   const steps =
     own || player.club === 'fa'
       ? ['조건 제안', '답변·재협상', '최종 서명']
-      : ['트레이드 제안', '구단 답변', '최종 확정'];
+      : international
+        ? ['국제 이적 제안', '구단 답변', '최종 계약']
+        : ['트레이드 제안', '구단 답변', '최종 확정'];
   const current =
     deal?.status === 'accepted' && !expired ? 2 : deal && deal.stage !== 'club' ? 1 : 0;
   if (!found || g.managerCareer?.status === 'unemployed')
@@ -105,7 +109,7 @@ export function PlayerContractRoom({
         )}
       </section>
     );
-  if (!own && player.club !== 'fa')
+  if (!own && player.club !== 'fa' && !international)
     return (
       <section className="player-trade-overview">
         <small>구단 간 트레이드</small>

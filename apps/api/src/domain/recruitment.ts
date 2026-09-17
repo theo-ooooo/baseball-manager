@@ -113,7 +113,12 @@ export function createRecruitment(world: WorldCatalog) {
     if (type === 'buy' && transfersBlocked(g))
       throw new Error('첫 시즌 외부 영입 금지 조건입니다. 재계약·트레이드·코치 선임은 가능합니다.');
     const p = (type === 'renew' ? g.roster : view.marketPlayers(g)).find((p) => p.id === id);
-    if (p && type === 'buy' && p.club !== 'fa')
+    if (
+      p &&
+      type === 'buy' &&
+      p.club !== 'fa' &&
+      view.getClub(p.club).league === view.getClub(g.club).league
+    )
       throw new Error(
         '타 구단 소속 선수와 직접 계약할 수 없습니다. 트레이드를 제안하거나 FA가 된 뒤 협상하세요.',
       );
@@ -183,11 +188,7 @@ export function createRecruitment(world: WorldCatalog) {
     const p = (d.type === 'renew' ? g.roster : view.marketPlayers(g)).find(
       (p) => p.id === d.player.id,
     );
-    if (
-      !p ||
-      p.club !== d.player.club ||
-      (d.type === 'buy' && (p.club !== 'fa' || transfersBlocked(g)))
-    ) {
+    if (!p || p.club !== d.player.club || (d.type === 'buy' && transfersBlocked(g))) {
       d.status = 'rejected';
       record(g, d, '선수 소속 또는 영입 조건이 바뀌어 협상을 진행할 수 없습니다.');
     } else if (d.stage === 'club') {
@@ -287,7 +288,14 @@ export function createRecruitment(world: WorldCatalog) {
       d &&
       'player' in d &&
       d.type === 'buy' &&
-      view.marketPlayers(g).find((p) => p.id === d.player.id)?.club !== 'fa'
+      (() => {
+        const current = view.marketPlayers(g).find((p) => p.id === d.player.id);
+        return (
+          current?.club !== 'fa' &&
+          !!current &&
+          view.getClub(current.club).league === view.getClub(g.club).league
+        );
+      })()
     )
       throw new Error('타 구단 계약 선수는 트레이드로 영입해야 합니다.');
     if (d!.status !== 'accepted' || d!.stage === 'club')
@@ -298,7 +306,10 @@ export function createRecruitment(world: WorldCatalog) {
       const available = view.marketPlayers(g).find((p) => p.id === deal.player.id);
       if (!available || available.club !== deal.player.club)
         throw new Error('선수 소속이 변경됐습니다. 다시 협상하세요.');
-      if (available.club !== 'fa')
+      if (
+        available.club !== 'fa' &&
+        view.getClub(available.club).league === view.getClub(g.club).league
+      )
         throw new Error(
           '타 구단 계약 선수는 트레이드로 영입해야 합니다. 기존 직접 계약 협상은 체결할 수 없습니다.',
         );
