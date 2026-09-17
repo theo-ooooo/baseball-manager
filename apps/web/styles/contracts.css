@@ -1263,6 +1263,48 @@
   grid-template-columns: minmax(0, 1fr) 80px;
   gap: 10px;
 }
+.renewal-bulk-sign {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.renewal-bulk-sign .renewal-selection-heading {
+  margin: 0 0 12px;
+}
+.renewal-sign-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+.renewal-sign-row + .renewal-sign-row {
+  margin-top: 8px;
+}
+.renewal-sign-row input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--brand);
+}
+.renewal-sign-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.renewal-sign-row small {
+  color: var(--text-2);
+  font-size: 12px;
+}
+.renewal-bulk-sign > .button {
+  width: 100%;
+  margin-top: 14px;
+}
 .renewal-document-totals {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1302,6 +1344,9 @@
   .renewal-document-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+  .renewal-bulk-sign {
+    padding: 12px;
   }
   .renewal-documents-footer {
     padding: 12px;
