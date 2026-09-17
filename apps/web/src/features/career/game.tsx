@@ -56,7 +56,7 @@ import { CountryProfile } from '../clubs/country-profile';
 import { dateLabel, daysBetween, gameDate } from '@dugout/shared/calendar';
 import { StadiumReplay } from '../matches/stadium-replay';
 import { LiveMatchScreen } from '../matches/live-match-screen';
-import { TacticalBoard } from '../squad/management-panels';
+import { TacticalBoard, TeamLeadership } from '../squad/management-panels';
 import { CoachPanel } from '../squad/coach-panel';
 import { WorkspaceNavigation } from './workspace-navigation';
 import { RegistrationBoard } from '../squad/registration-board';
@@ -782,7 +782,12 @@ export function GameScreen({
           {view === 'reserves' && <ReservePanel g={g} act={act} busy={busy} onPlayer={setPlayer} />}
           {view === 'registrations' && <RegistrationBoard g={g} onPlayer={setPlayer} />}
           {view === 'training' && <TrainingCenterPanel key={g.club} g={g} act={act} busy={busy} />}
-          {view === 'tactics' && <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />}
+          {view === 'tactics' && (
+            <>
+              <TeamLeadership g={g} act={act} busy={busy} onPlayer={setPlayer} />
+              <TacticalBoard g={g} act={act} busy={busy} onPlayer={setPlayer} />
+            </>
+          )}
           {view === 'schedule' && <SchedulePanel g={g} replay={openReplay} />}
           {view === 'coach-profile' && initialCoachId && <CoachProfile g={g} id={initialCoachId} />}
           {view === 'manager-person' && initialManagerId && (

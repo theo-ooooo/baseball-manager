@@ -175,6 +175,73 @@ export function PositionTraining({ p, act, busy }: { p: Player; act: Act; busy: 
     </label>
   );
 }
+
+export function TeamLeadership({ g, act, busy }: Props) {
+  const players = g.roster.filter((p) => p.club === g.club && p.pos !== 'P');
+  return (
+    <section className="panel team-leadership-panel">
+      <div className="panel-header">
+        <h2>주장단</h2>
+        <span>선수단의 목소리</span>
+      </div>
+      <p className="person-profile-note">
+        주장단을 지정해 선수단의 리더십 기록을 남깁니다. 시즌 중에도 변경할 수 있습니다.
+      </p>
+      <div className="leadership-selects">
+        <label>
+          주장
+          <select
+            aria-label="주장"
+            disabled={busy}
+            value={g.captain || ''}
+            onChange={(e) =>
+              void act({ type: 'setCaptain', captain: e.target.value, viceCaptain: g.viceCaptain })
+            }
+          >
+            <option value="">선택하세요</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} · {p.age}세
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          부주장
+          <select
+            aria-label="부주장"
+            disabled={busy}
+            value={g.viceCaptain || ''}
+            onChange={(e) =>
+              void act({
+                type: 'setCaptain',
+                captain: g.captain,
+                viceCaptain: e.target.value || undefined,
+              })
+            }
+          >
+            <option value="">없음</option>
+            {players
+              .filter((p) => p.id !== g.captain)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} · {p.age}세
+                </option>
+              ))}
+          </select>
+        </label>
+      </div>
+      {g.captain && (
+        <small>
+          현재 주장: {players.find((p) => p.id === g.captain)?.name || '선수단'}
+          {g.viceCaptain
+            ? ` · 부주장 ${players.find((p) => p.id === g.viceCaptain)?.name || ''}`
+            : ''}
+        </small>
+      )}
+    </section>
+  );
+}
 export function TacticalBoard({ g, act, busy, onPlayer }: Props) {
   const { lineupView, setLineupView } = useLineupView();
   const router = useRouter();

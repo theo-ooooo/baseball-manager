@@ -224,6 +224,8 @@ export type GameState = {
   rounds: number;
   mode: 'short' | 'full';
   roster: Player[];
+  captain?: string;
+  viceCaptain?: string;
   lineup: string[];
   starter: string;
   tactic: string;

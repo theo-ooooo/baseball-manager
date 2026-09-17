@@ -37,6 +37,7 @@ import { tacticCardAction, consumeTacticCard } from './tactic-cards';
 import { augmentationAction, afterAugmentedMatch } from './augmentations';
 import { recordBoardTransaction } from './board-transactions';
 import { prepareSeasonRest } from './season-rest';
+import { teamLeadershipAction } from './team-leadership';
 import { scoutingGuide } from '@dugout/shared/scouting-guide';
 import { createInternational } from './international';
 import { pendingReadIds } from '@dugout/shared/inbox-read-intent';
@@ -1209,7 +1210,10 @@ export function createGameEngine(
     const teamTraining = trainingCenterAction(s, a);
     if (teamTraining) return teamTraining;
     const managed =
-      tacticCardAction(s, a, world) || augmentationAction(s, a) || managementAction(s, a);
+      teamLeadershipAction(s, a) ||
+      tacticCardAction(s, a, world) ||
+      augmentationAction(s, a) ||
+      managementAction(s, a);
     if (managed) return managed;
     switch (a.type) {
       case 'continue':
