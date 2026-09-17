@@ -84,7 +84,8 @@ export function playerContractContext(
   const employed = g.managerCareer?.status !== 'unemployed';
   const own =
     !!player && employed && player.club === g.club && g.roster.some((p) => p.id === player.id);
-  const allowed = !!player && employed && (own || player.club === 'fa');
+  // External players can also have an international transfer negotiation in progress.
+  const allowed = !!player && employed;
   const deal = allowed
     ? g.deals.find(
         (d) =>
