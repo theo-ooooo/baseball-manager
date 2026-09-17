@@ -42,7 +42,7 @@ export function AppSidebar({
       ]
     : [
         { label: '더그아웃', ids: ['home', 'inbox', 'squad', 'matchday', 'schedule'] },
-        { label: '구단과 리그', ids: ['scouting', 'world', 'staff', 'vision'] },
+        { label: '구단과 리그', ids: ['scouting', 'agents', 'world', 'staff', 'vision'] },
       ];
   const children: Record<string, string[]> = {
     home: ['manager', 'manager-contract', 'manager-history', 'job-offers', 'media'],
