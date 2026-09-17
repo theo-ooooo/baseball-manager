@@ -580,7 +580,14 @@ export function createRecruitment(world: WorldCatalog) {
     if (
       'player' in d &&
       d.type === 'buy' &&
-      view.marketPlayers(g).find((p) => p.id === d.player.id)?.club !== 'fa'
+      (() => {
+        const current = view.marketPlayers(g).find((p) => p.id === d.player.id);
+        return (
+          current?.club !== 'fa' &&
+          !!current &&
+          view.getClub(current.club).league === view.getClub(g.club).league
+        );
+      })()
     )
       throw new Error('타 구단 계약 선수는 트레이드로 영입해야 합니다.');
     if (a.type === 'signCoach' && 'coach' in d) {
