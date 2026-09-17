@@ -42,6 +42,36 @@ export function managerContactAvailable(m: ManagerCareer, club: string, today: s
   return !last || daysBetween(last.closedAt, today) >= 28;
 }
 
+/** Automatic outreach must remember why a previous employment ended. */
+export function recentManagerDeparture(m: ManagerCareer, club: string, today: string) {
+  const last = m.history
+    .filter((h) => h.club === club && h.to <= today)
+    .sort((a, b) => b.to.localeCompare(a.to))[0];
+  if (!last) return false;
+  return (
+    daysBetween(last.to, today) < 28 ||
+    ((last.reason === 'sacked' || last.endKind === 'nonrenewal') &&
+      last.to.slice(0, 4) === today.slice(0, 4))
+  );
+}
+
+export function closeDepartedClubApproaches(g: ManagerConversationState) {
+  const m = g.managerCareer;
+  if (!m) return;
+  const today = gameDate(g);
+  for (const o of m.offers) {
+    if (
+      o.source !== 'approach' ||
+      !recentManagerDeparture(m, o.club, today) ||
+      !['invited', 'pending', 'interview', 'offered'].includes(o.status)
+    )
+      continue;
+    o.status = 'expired';
+    o.message = '최근 감독 계약이 종료된 구단의 자동 채용 연락을 정리했습니다.';
+    closeManagerContact(g, o);
+  }
+}
+
 export function managerContactTermsFit(
   m: ManagerCareer,
   club: string,

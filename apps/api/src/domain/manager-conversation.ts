@@ -10,7 +10,7 @@ import { addDays, gameDate } from '@dugout/shared/calendar';
 import { teamBudget } from '@dugout/shared/game-view';
 import { postNews } from './club-dynamics';
 import { managerContractAction } from './manager-contracts';
-import { closeManagerContact } from './manager-contact';
+import { closeManagerContact, closeDepartedClubApproaches } from './manager-contact';
 
 /** Shared by full-save actions and the bounded D1 conversation path. */
 export function managerConversationAction<T extends ManagerConversationState>(
@@ -20,6 +20,7 @@ export function managerConversationAction<T extends ManagerConversationState>(
 ): T | null {
   if (!isManagerConversationCommand(a.type)) return null;
   if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+  closeDepartedClubApproaches(g);
   if (g.managerCareer?.status === 'unemployed')
     for (const news of g.news)
       if (isClubDutyReport(news)) {

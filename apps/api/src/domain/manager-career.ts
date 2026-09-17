@@ -17,6 +17,8 @@ import {
   closeManagerContact,
   managerContactAvailable,
   managerContactTermsFit,
+  recentManagerDeparture,
+  closeDepartedClubApproaches,
 } from './manager-contact';
 import { isManagerConversationCommand } from '@dugout/shared/manager-commands';
 import { createPlayerGenerator } from './player-generator';
@@ -144,6 +146,7 @@ export function createManagerCareer(world: WorldCatalog) {
     }
     addFictionalPlayingCareer(`self:${g.manager}`, g.managerCareer.background);
     prepareManagerJourney(g, world);
+    closeDepartedClubApproaches(g);
     for (const offer of g.managerCareer.offers) {
       if (
         offer.expectation ||
@@ -231,6 +234,7 @@ export function createManagerCareer(world: WorldCatalog) {
       rank: view.standings(g).findIndex((s) => s.club === g.club) + 1,
     });
     const job = g.managerJobs![g.club];
+    closeDepartedClubApproaches(g);
     job.vacant = true;
     job.managerName = '공석';
     job.confidence = 0;
@@ -340,6 +344,7 @@ export function createManagerCareer(world: WorldCatalog) {
     const m = g.managerCareer!,
       today = gameDate(g);
     expireContract(g);
+    closeDepartedClubApproaches(g);
     const finance = !isUnemployed(g) ? reviewFinances(g, view.getClub(g.club).league) : undefined;
     for (const job of Object.values(g.managerJobs!)) {
       if (job.vacant) {
@@ -483,6 +488,7 @@ export function createManagerCareer(world: WorldCatalog) {
         (j) =>
           (seeking || j.club !== g.club) &&
           managerJobOpen(j) &&
+          !recentManagerDeparture(m, j.club, today) &&
           m.reputation >= view.getLeague(view.getClub(j.club).league).level - 18 &&
           managerContactAvailable(m, j.club, today),
       );

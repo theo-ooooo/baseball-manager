@@ -27,6 +27,8 @@ const {
   lastManagerProposal,
   managerContactAvailable,
   managerContactTermsFit,
+  recentManagerDeparture,
+  closeDepartedClubApproaches,
   addDays,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(built.outputFiles[0].text).toString('base64')
@@ -65,6 +67,30 @@ function propose(g, o, terms = {}) {
   o.contractTerms.due = gameDate(g);
   tickManagerTerms(g, o);
 }
+test('Dismissal prevents same-year automatic recontact and closes legacy invitations while preserving manual applications', () => {
+  const { g, o } = fixture();
+  const today = gameDate(g);
+  g.managerCareer.history = [
+    {
+      club: o.club,
+      from: addDays(today, -90),
+      to: today,
+      reason: 'sacked',
+      endKind: 'dismissal',
+      rank: 10,
+    },
+  ];
+  o.source = 'approach';
+  o.status = 'invited';
+  const manual = { ...structuredClone(o), id: 'manual', source: 'application' };
+  g.managerCareer.offers.push(manual);
+  assert.equal(recentManagerDeparture(g.managerCareer, o.club, addDays(today, 30)), true);
+  assert.equal(recentManagerDeparture(g.managerCareer, 'another-club', today), false);
+  closeDepartedClubApproaches(g);
+  assert.equal(o.status, 'expired');
+  assert.equal(manual.status, 'invited');
+  assert.equal(recentManagerDeparture(g.managerCareer, o.club, '2027-03-27'), false);
+});
 test('Manager deferral routes through the engine, extends only expiry, and stops after 28 days', () => {
   let { g, o } = fixture();
   const expiry = o.expires;

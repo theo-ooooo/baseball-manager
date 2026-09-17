@@ -99,6 +99,17 @@ test('Season target is binding: a failure sacks the manager and success proposes
   assert.equal(g.managerCareer.status, 'unemployed');
   assert.equal(g.managerCareer.history[0].reason, 'sacked');
   assert.equal(g.managerCareer.contract, undefined);
+  // A vacancy created by dismissal must not immediately recruit the dismissed manager.
+  for (const job of Object.values(g.managerJobs)) {
+    if (job.club === g.club) continue;
+    job.vacant = false;
+    job.confidence = 100;
+    job.baseConfidence = 100;
+  }
+  delete g.managerCareer.lastApproach;
+  g.day += 3;
+  career.tick(g);
+  assert.ok(!g.managerCareer.offers.some((o) => o.club === g.club && o.source === 'approach'));
 });
 
 test('Vacation advances through games and reports, returns on time and validates bounds', () => {
