@@ -35,6 +35,8 @@ export function PlayerOfferForm({
     loading,
     retry,
   } = usePlayerOffer(player, g, deal, own);
+  const clubCounter =
+    !own && player.club !== 'fa' && deal?.stage === 'club' && deal.status === 'counter';
   return (
     <form
       className="contract-offer-form"
@@ -188,9 +190,16 @@ export function PlayerOfferForm({
           className="button primary"
           disabled={busy || blocked || !valid || cost > g.budget || deal?.status === 'pending'}
         >
-          <Send size={16} /> {deal ? '수정 조건 제안' : '계약 조건 제안'}
+          <Send size={16} />
+          {clubCounter
+            ? '이적료 수락 · 선수 조건 제안'
+            : deal
+              ? '수정 조건 제안'
+              : '계약 조건 제안'}
         </button>
-        <small>제안 후 1~2일 내 답변</small>
+        <small>
+          {clubCounter ? '이적료를 수락하면 선수 측 협상으로 넘어갑니다.' : '제안 후 1~2일 내 답변'}
+        </small>
       </div>
     </form>
   );
