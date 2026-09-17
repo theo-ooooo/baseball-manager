@@ -109,7 +109,9 @@ export function AppSidebar({
                       <SidebarMenuItem key={id}>
                         <SidebarMenuButton
                           className="nav-button"
-                          isActive={view === id || !!children[id]?.includes(view)}
+                          isActive={
+                            view === id || (id !== 'scouting' && !!children[id]?.includes(view))
+                          }
                           onClick={() => {
                             onView(id);
                             setOpenMobile(false);
