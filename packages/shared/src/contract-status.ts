@@ -84,15 +84,16 @@ export function playerContractContext(
   const employed = g.managerCareer?.status !== 'unemployed';
   const own =
     !!player && employed && player.club === g.club && g.roster.some((p) => p.id === player.id);
-  // External players can also have an international transfer negotiation in progress.
-  const allowed = !!player && employed;
-  const deal = allowed
-    ? g.deals.find(
-        (d) =>
-          d.player.id === player.id &&
-          d.player.club === player.club &&
-          (own ? d.type === 'renew' : d.type === 'buy'),
-      )
-    : undefined;
+  const allowed = !!player && employed && (own || player.club === 'fa');
+  // International transfer negotiations are stored as buy deals for external players.
+  const deal =
+    employed && player
+      ? g.deals.find(
+          (d) =>
+            d.player.id === player.id &&
+            d.player.club === player.club &&
+            (own ? d.type === 'renew' : d.type === 'buy'),
+        )
+      : undefined;
   return { own, allowed, found: !!player, deal };
 }
