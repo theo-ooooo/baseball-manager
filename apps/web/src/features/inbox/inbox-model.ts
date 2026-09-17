@@ -42,6 +42,8 @@ export function newsNeedsAction(news: NewsItem, g: GameState) {
   }
   if (isClubSeasonRest(g) && (news.choiceKind === 'playingTime' || news.kind === 'training'))
     return false;
+  if (news.choiceKind === 'playingTime' && !g.roster.some((p) => p.id === news.playerId))
+    return false;
   if (news.lineupRecommendation) return !lineupRecommendationError(g, news);
   if (news.managerOfferId) return managerReportNeedsAction(g, news);
   if (news.id === `media-pending:${g.media?.pending?.key}`) return true;

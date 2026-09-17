@@ -5,7 +5,7 @@ import { lineupAuto, money } from '@dugout/shared/game-view';
 import { preparePitching } from '@dugout/shared/pitching';
 import { releaseCompensation, releaseError } from '@dugout/shared/player-release';
 import { archivePlayer } from './world-simulation';
-import { postNews } from './club-dynamics';
+import { postNews, reconcilePlayingTimeNews } from './club-dynamics';
 
 export function releasePlayer(g: GameState, a: Record<string, unknown>) {
   const p = g.roster.find((player) => player.id === a.id);
@@ -23,6 +23,7 @@ export function releasePlayer(g: GameState, a: Record<string, unknown>) {
   g.ownership[p.id] = 'fa';
   g.transferred = [...g.transferred.filter((v) => v.id !== p.id), { ...p, club: 'fa', years: 0 }];
   g.roster = g.roster.filter((v) => v.id !== p.id);
+  reconcilePlayingTimeNews(g);
   g.deals = g.deals.filter((d) => d.player.id !== p.id);
   g.saleOffers = g.saleOffers?.filter((o) => o.playerId !== p.id);
   if (g.transferListed) delete g.transferListed[p.id];
