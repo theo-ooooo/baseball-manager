@@ -85,6 +85,24 @@ test('Invalid, stale, duplicate, already signed and over-budget batches are atom
   g.managerCareer.status = 'unemployed';
   assert.throws(() => e.applyAction(g, { type: 'renewContracts', offers: [offer(a)] }), /무직/);
 });
+test('합의한 재계약서는 여러 건을 한 번에 서명하고 하나라도 실패하면 모두 보존한다', () => {
+  let g = ready();
+  const r = createRecruitment(world);
+  const [a, b] = g.roster;
+  r.negotiate(g, a.id, a.salary * 2, 2, 'renew');
+  r.negotiate(g, b.id, b.salary * 2, 2, 'renew');
+  g.day += 2;
+  r.tick(g);
+  const ids = g.deals.filter((d) => d.status === 'accepted').map((d) => d.id);
+  assert.equal(ids.length, 2);
+  const before = g.budget;
+  g = e.applyAction(g, { type: 'signDeals', ids });
+  assert.equal(g.deals.length, 0);
+  assert.ok(g.roster.find((p) => p.id === a.id).contractSigned);
+  assert.ok(g.roster.find((p) => p.id === b.id).contractSigned);
+  assert.ok(g.budget < before);
+  assert.throws(() => e.applyAction(g, { type: 'signDeals', ids: ['missing'] }), /수락|역제안/);
+});
 test('FA demand ignores prior pay and hidden potential, reflects age, recent performance and destination league', () => {
   const g = ready(),
     p = structuredClone(g.roster.find((p) => p.pos !== 'P'));

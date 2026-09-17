@@ -31,6 +31,7 @@ export function useRenewalDraft(g: GameState, act: Act, busy: boolean, close: ()
   const [period, setPeriod] = useState(3);
   const submitting = useRef(false);
   const [sending, setSending] = useState(false);
+  const [signingIds, setSigningIds] = useState<string[]>([]);
   const locked = busy || sending;
   const rows = candidates.map((p) => ({
     player: p,
@@ -118,6 +119,19 @@ export function useRenewalDraft(g: GameState, act: Act, busy: boolean, close: ()
       setSending(false);
     }
   }
+  const accepted = g.deals.filter((d) => d.type === 'renew' && d.status === 'accepted');
+  async function signAll() {
+    if (!signingIds.length || locked) return;
+    setSending(true);
+    try {
+      if (await act({ type: 'signDeals', ids: signingIds })) {
+        toast.success(`${signingIds.length}명의 재계약을 한 번에 체결했습니다.`);
+        setSigningIds([]);
+      }
+    } finally {
+      setSending(false);
+    }
+  }
   return {
     rows,
     selected,
@@ -137,5 +151,9 @@ export function useRenewalDraft(g: GameState, act: Act, busy: boolean, close: ()
     adjustmentValid,
     applyTerms,
     send,
+    accepted,
+    signingIds,
+    setSigningIds,
+    signAll,
   };
 }

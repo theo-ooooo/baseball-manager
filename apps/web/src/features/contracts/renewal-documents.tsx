@@ -43,9 +43,8 @@ export function RenewalDocuments({
             <FileSignature size={22} /> 일괄 재계약 서류
           </DialogTitle>
           <DialogDescription>
-            만료 예정 선수의 제안 조건을 확인하세요. 답변은 1~2일 뒤 도착하며, 합의 후 개별 서명하면
-            계약이 체결됩니다. 재계약 기간은 {g.year + 1} 시즌부터 계산하며, 올 시즌도 소속을
-            유지합니다.
+            만료 예정 선수의 제안 조건을 확인하세요. 합의한 계약은 선택해 한 번에 서명할 수
+            있습니다. 재계약 기간은 {g.year + 1} 시즌부터 계산하며, 올 시즌도 소속을 유지합니다.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -163,6 +162,57 @@ export function RenewalDocuments({
                 </fieldset>
               ))}
             </div>
+            {!!form.accepted.length && (
+              <section className="renewal-bulk-sign" aria-label="합의한 재계약 일괄 서명">
+                <div className="renewal-selection-heading">
+                  <strong>
+                    서명 대기 {form.signingIds.length} / {form.accepted.length}명
+                  </strong>
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={form.locked}
+                    onClick={() =>
+                      form.setSigningIds(
+                        form.signingIds.length === form.accepted.length
+                          ? []
+                          : form.accepted.map((d) => d.id),
+                      )
+                    }
+                  >
+                    {form.signingIds.length === form.accepted.length ? '전체 해제' : '전체 선택'}
+                  </button>
+                </div>
+                {form.accepted.map((deal) => (
+                  <label key={deal.id} className="renewal-sign-row">
+                    <input
+                      type="checkbox"
+                      checked={form.signingIds.includes(deal.id)}
+                      disabled={form.locked}
+                      onChange={(e) =>
+                        form.setSigningIds((ids) =>
+                          e.target.checked ? [...ids, deal.id] : ids.filter((id) => id !== deal.id),
+                        )
+                      }
+                    />
+                    <span>
+                      <strong>{deal.player.name}</strong>
+                      <small>
+                        {money(deal.salary)} · {deal.years}년 · 최종 합의
+                      </small>
+                    </span>
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  className="button primary"
+                  disabled={form.locked || !form.signingIds.length}
+                  onClick={() => void form.signAll()}
+                >
+                  <FileSignature size={16} /> {form.signingIds.length}명 일괄 서명
+                </button>
+              </section>
+            )}
             {!available && (
               <p className="rule-notice">
                 새로 제안할 만료 예정 선수가 없습니다. 진행 중인 협상에서 답변과 계약서를

@@ -470,6 +470,24 @@ export function createRecruitment(world: WorldCatalog) {
     }
   }
   function action(g: GameState, a: Record<string, unknown>): GameState | null {
+    if (a.type === 'signDeals') {
+      if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
+      if (!Array.isArray(a.ids) || a.ids.length < 1 || a.ids.length > 85)
+        throw new Error('한 번에 서명할 계약을 1~85건 선택해 주세요.');
+      const ids = a.ids.map(String);
+      if (new Set(ids).size !== ids.length) throw new Error('같은 계약을 중복 선택할 수 없습니다.');
+      const staged = structuredClone(g);
+      for (const id of ids) signDeal(staged, id);
+      Object.assign(g, staged);
+      postNews(
+        g,
+        `선수 ${ids.length}명 · 재계약 일괄 체결`,
+        `${ids.length}명의 합의한 재계약서에 한 번에 서명했습니다. 선수단 계약과 예산에 반영했습니다.`,
+        'transfer',
+        { actionView: 'agents' },
+      );
+      return g;
+    }
     if (a.type === 'renewContracts') {
       if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
       if (!Array.isArray(a.offers) || a.offers.length < 1 || a.offers.length > 85)
