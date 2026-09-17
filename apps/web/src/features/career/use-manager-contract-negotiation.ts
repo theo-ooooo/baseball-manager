@@ -66,7 +66,12 @@ export function useManagerContractNegotiation(
     years !== current.years ||
     Number(target) !== current.targetRank;
   async function send(type: string) {
-    if (busy || submitting.current || (waiting && type !== 'declineManager')) return;
+    if (
+      busy ||
+      submitting.current ||
+      (waiting && !['declineManager', 'deferManagerContract'].includes(type))
+    )
+      return;
     if (type === 'negotiateManagerContract' && (!valid || !changed || final || agreed)) return;
     submitting.current = true;
     try {

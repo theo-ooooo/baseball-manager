@@ -293,6 +293,15 @@ export function ManagerContractNegotiation({
               {final ? '최종 조건 수락' : '구단 조건에 동의'}
             </button>
           )}
+          {!agreed && (
+            <button
+              className="button secondary"
+              disabled={busy}
+              onClick={() => void send('deferManagerContract')}
+            >
+              계약 일주일 미루기
+            </button>
+          )}
           {agreed && (
             <button className="button primary" disabled={busy} onClick={() => setSigning(true)}>
               <FileSignature size={17} />

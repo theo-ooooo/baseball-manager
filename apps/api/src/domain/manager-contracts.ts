@@ -113,7 +113,12 @@ export function managerContractAction<T extends ManagerConversationState>(
   g: T,
   a: Record<string, unknown>,
 ) {
-  if (!['negotiateManagerContract', 'acceptManagerTerms'].includes(String(a.type))) return null;
+  if (
+    !['negotiateManagerContract', 'acceptManagerTerms', 'deferManagerContract'].includes(
+      String(a.type),
+    )
+  )
+    return null;
   if (g.liveMatch) throw new Error('진행 중인 경기를 먼저 마쳐 주세요.');
   const o = g.managerCareer?.offers.find((o) => o.id === a.id);
   if (
@@ -130,6 +135,21 @@ export function managerContractAction<T extends ManagerConversationState>(
   )
     throw new Error('유효한 계약 협상이 없습니다.');
   const t = prepareManagerTerms(o);
+  if (a.type === 'deferManagerContract') {
+    if (t.status === 'agreed') throw new Error('이미 합의한 계약은 미룰 수 없습니다.');
+    o.expires = addDays(o.expires, 7);
+    t.history.push({
+      date: gameDate(g),
+      speaker: 'manager',
+      kind: 'proposal',
+      text: '계약 결정을 일주일 미뤘습니다.',
+      salary: t.salary,
+      signingBonus: t.signingBonus || 0,
+      years: t.years,
+      targetRank: t.targetRank,
+    });
+    return g;
+  }
   if (a.termsVersion !== t.version)
     throw new Error('계약 조건이 변경됐습니다. 최신 계약서를 확인해 주세요.');
   if (t.status === 'pending') throw new Error('이사회가 수정 제안을 검토하고 있습니다.');
