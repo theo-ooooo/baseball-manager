@@ -17,7 +17,9 @@ export function usePlayerOffer(player: Player, g: GameState, deal: Deal | undefi
     [yearInput, setYears] = useState<number | null>(null),
     [fee, setFee] = useState(String(toManwon(deal?.fee ?? askPrice(player))));
   const initial =
-    previous?.salary ?? deal?.salary ?? (own ? player.salary * 1.1 : valuation.quote?.salary);
+    previous?.salary ??
+    deal?.salary ??
+    (own ? player.salary * 1.1 : (valuation.quote?.salary ?? player.salary * 1.1));
   const salary = salaryInput ?? (initial === undefined ? '' : String(toManwon(initial)));
   const years =
     yearInput ?? previous?.years ?? deal?.years ?? (own ? 3 : (valuation.quote?.years ?? 2));
