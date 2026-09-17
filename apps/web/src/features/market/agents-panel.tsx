@@ -43,9 +43,13 @@ export function Agents({
             disabled={busy}
             onClick={() => documents.setOpen(true)}
           >
-            전체 재계약 서류 작성
+            재계약 일괄 처리
           </button>
-          <small>만료 예정 선수 선택 · 조건 일괄 조정 · 제안 발송</small>
+          <small>
+            만료 예정 선수 선택 · 조건 일괄 조정 · 제안 발송 · 합의 계약{' '}
+            {g.deals.filter((d) => d.type === 'renew' && d.status === 'accepted').length}건 일괄
+            서명
+          </small>
         </div>
       )}
       {documents.open && (
