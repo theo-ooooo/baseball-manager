@@ -1752,3 +1752,8 @@ Validation: production build, typechecking and all 23 tests pass, including stat
 
 - 해외 선수 역제안 수락 차단 조건을 수정하고 버전을 1.0.11로 올렸다. 릴리스 문서와 패키지 잠금 파일을 갱신했다.
 - 국제 영입 최종 배포와 CI 검증 결과를 다음 기록에 남긴다.
+
+## 2026-09-17 — 1.0.11 해외 국제 영입 공개 배포 완료
+
+- GitHub `main`과 `v1.0.11` 태그가 `b6954788666eced25e3e89db3f713cf6f2758dbb`를 가리키며, Actions `35186794997`의 전체 테스트와 Worker 게시가 성공했다.
+- 공개 `/api/health` 정상, 카탈로그 `world-2026-09-14-v17` 유지. 국제 이적 역제안 수락 단계와 해외 협상 상태 연결을 포함한다.
