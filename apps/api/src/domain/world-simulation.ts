@@ -15,6 +15,7 @@ import { createPlayerGenerator } from './player-generator';
 import { gameDate } from '@dugout/shared/calendar';
 import { managerAbility, managerDevelopmentFactor } from '@dugout/shared/manager-ability';
 import { postNews } from './club-dynamics';
+import { aiRenewalYears, playerRetires } from './player-career-lifecycle';
 
 export function prepareWorld(g: GameState) {
   g.simulation ??= {
@@ -39,6 +40,7 @@ export function saveWorldPlayer(g: GameState, p: Player, generated = false) {
     age: p.age,
     salary: p.salary,
     years: p.years,
+    contractSigned: p.contractSigned,
     condition: p.condition,
     stint: p.careerBaseline,
     personality: p.personality,
@@ -346,8 +348,7 @@ export function createWorldSimulation(world: WorldCatalog) {
       }
     }
     for (const p of players) {
-      const retires =
-        p.age >= 43 || (p.age >= 36 && hash(`${p.id}:${g.year}:retire`) % 100 < (p.age - 35) * 8);
+      const retires = playerRetires(p, g.year);
       archivePlayer(g, p, retires ? 'retirement' : 'season', awards.get(p.id) || []);
       if (retires) {
         if (catalogIds.has(p.id)) g.simulation!.retired.push(p.id);
@@ -365,13 +366,18 @@ export function createWorldSimulation(world: WorldCatalog) {
           postNews(
             g,
             `${p.name} 현역 은퇴`,
-            '통산 기록을 보관했습니다. 기록 보관함에서 코치로 영입할 수 있습니다.',
+            '계약 만료 시점에 나이·현재 기량·출전 기록을 검토해 현역 생활을 마쳤습니다. 기록 보관함에서 코치로 영입할 수 있습니다.',
             'contract',
             { playerId: p.id },
           );
       } else if (p.club !== g.club) {
         p.age++;
-        p.years = Math.max(1, p.years - 1);
+        p.years--;
+        if (p.club !== 'fa' && p.years <= 0) {
+          // AI clubs renew expiring contracts rather than freezing everyone at one year.
+          p.years = aiRenewalYears(p, g.year + 1);
+          p.contractSigned = { year: g.year + 1, day: 0, dealId: `ai-renew-${p.id}-${g.year + 1}` };
+        } else if (p.club === 'fa') p.years = 1;
         p.stats = blankStats();
         p.reserveStats = blankStats();
         p.condition = 100;

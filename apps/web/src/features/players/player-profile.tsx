@@ -189,7 +189,7 @@ export function PlayerProfile(props: Props) {
         <span>{profile.ready}</span>
         {game.rules?.revealPotential && <span>잠재력 {potentialText(player)}</span>}
         <span>연봉 {money(player.salary)}</span>
-        <span>계약 {player.years}년</span>
+        <span>잔여 계약 {player.years}년</span>
       </div>
       {player.internationalDuty && (
         <p className="international-player-note">

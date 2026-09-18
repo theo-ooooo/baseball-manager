@@ -1,3 +1,4 @@
+import contracts from './player-contracts-2026.json';
 import ballparks from './ballparks-2026.json';
 import draftRules from './draft-rules-2026.json';
 import managers from './club-managers-2026-09-09.json';
@@ -102,8 +103,15 @@ export function buildSeedWorld(): WorldCatalog {
       })),
     ),
   );
+  for (const p of players) {
+    const contract = (contracts as Record<string, NonNullable<Player['catalogContract']> & { club: string }>)[p.original];
+    if (p.real && contract && p.club === contract.club) {
+      p.catalogContract = { throughYear: contract.throughYear, source: contract.source };
+      p.years = Math.max(1, contract.throughYear - 2026 + 1);
+    }
+  }
   return {
-    version: 'world-2026-09-14-v17',
+    version: 'world-2026-09-18-v18',
     draftRules,
     year: 2026,
     clubs: clubs.map((club) => ({

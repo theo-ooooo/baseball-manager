@@ -61,6 +61,7 @@ export type Player = {
   marketValue?: number;
   salary: number;
   years: number;
+  catalogContract?: { throughYear: number; source: string };
   contractSigned?: { year: number; day: number; dealId: string };
   stats: Stats;
   squad?: 'first' | 'reserve';

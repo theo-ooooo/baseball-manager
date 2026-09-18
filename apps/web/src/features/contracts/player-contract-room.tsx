@@ -18,6 +18,7 @@ import { useWorld } from '../career/world-context';
 import { NegotiationHistory, negotiationLabels } from '../market/negotiation-details';
 import { ContractSigning } from './contract-signing';
 import { playerDealPeriod } from '@dugout/shared/contract-status';
+import { PlayerContractBasis } from './player-contract-basis';
 import { PlayerContractPeriod } from './player-contract-period';
 
 import { PlayerOfferForm } from './player-offer-form';
@@ -199,6 +200,7 @@ export function PlayerContractRoom({
                 </>
               )}
             </p>
+            <PlayerContractBasis player={player} />
           </div>
           <div className="contract-agent-note">
             <strong>구단 가용 예산</strong>

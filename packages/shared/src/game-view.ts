@@ -299,6 +299,7 @@ export function createGameView(world: WorldCatalog) {
         next.age = delta.age ?? next.age;
         next.salary = delta.salary ?? next.salary;
         next.years = delta.years ?? next.years;
+        next.contractSigned = delta.contractSigned ?? next.contractSigned;
         next.condition = delta.condition ?? 100;
         next.careerBaseline = delta.stint;
         next.personality = delta.personality ?? next.personality;

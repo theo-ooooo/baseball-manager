@@ -1460,6 +1460,7 @@ test('Player career archives leave the hot save, isolate users and supply truste
   raw.managerCareer.contract.throughYear = raw.year + 2;
   const retired = raw.roster.find((p) => p.pos === 'P');
   retired.age = 45;
+  retired.years = 1;
   retired.stats.outs = 90;
   retired.stats.wins = 5;
   raw.phase = 'finished';

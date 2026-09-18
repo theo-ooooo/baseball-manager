@@ -77,6 +77,9 @@ export class CatalogRepository {
     const nationalities: Record<string, Pick<Player, 'country' | 'nationalTeam'>> = JSON.parse(
       meta.player_nationalities || '{}',
     );
+    const contracts: Record<string, Player['catalogContract']> = JSON.parse(
+      meta.player_contracts || '{}',
+    );
     const players = (playerRows.results as unknown as Player[]).map((p) => ({
       ...p,
       country:
@@ -88,6 +91,7 @@ export class CatalogRepository {
           : p.country),
       nationalTeam: nationalities[p.id]?.nationalTeam,
       portrait: portraits[p.id],
+      catalogContract: contracts[p.id],
       rating: typeof p.rating === 'string' ? JSON.parse(p.rating) : p.rating,
       real: Boolean(p.real),
       ageEstimated: Boolean(p.ageEstimated),

@@ -39,7 +39,28 @@ export function prepareSquad(g: GameState, world: WorldCatalog) {
     const catalog = new Map(world.players.map((p) => [p.id, p]));
     for (const p of [...g.roster, ...g.transferred]) {
       const base = catalog.get(p.id);
-      if (base) refreshRatings(p, base);
+      if (base) {
+        refreshRatings(p, base);
+        if (
+          base.catalogContract &&
+          !p.contractSigned &&
+          p.club === base.club &&
+          (!g.ownership[p.id] || g.ownership[p.id] === base.club)
+        ) {
+          p.catalogContract = base.catalogContract;
+          p.years = Math.max(1, base.catalogContract.throughYear - g.year + 1);
+        }
+      }
+    }
+    for (const [id, delta] of Object.entries(g.simulation?.players || {})) {
+      const base = catalog.get(id);
+      if (
+        base?.catalogContract &&
+        !delta.contractSigned &&
+        (!g.ownership[id] || g.ownership[id] === base.club) &&
+        !g.transferred.some((p) => p.id === id)
+      )
+        delta.years = Math.max(1, base.catalogContract.throughYear - g.year + 1);
     }
     for (const d of g.deals) {
       const base = catalog.get(d.player.id);
@@ -59,6 +80,8 @@ export function prepareSquad(g: GameState, world: WorldCatalog) {
       )
         g.roster.push({ ...structuredClone(p), squad: 'reserve' });
     }
+    // Invalidate derived world rosters after repairing compact player contracts.
+    if (g.simulation) g.simulation.revision++;
     g.catalogVersion = world.version;
   }
   if (!g.reserve) {

@@ -4,6 +4,7 @@ import { money } from '@dugout/shared/game-view';
 import { playerPosition } from '@dugout/shared/management';
 import { playerPersonalityLabels } from '@dugout/shared/personality';
 import { abilityText } from '@dugout/shared/ratings';
+import { PlayerContractBasis } from '../contracts/player-contract-basis';
 import { usePlayerProfile } from './use-player-profile';
 const coordinates: Record<string, [number, number]> = {
   P: [50, 57],
@@ -217,7 +218,9 @@ export function PlayerOverview({
             </div>
             <div>
               <dt>잔여 계약</dt>
-              <dd>{p.years}년</dd>
+              <dd>
+                {p.years}년<PlayerContractBasis player={p} />
+              </dd>
             </div>
             <div>
               <dt>시장 가치</dt>

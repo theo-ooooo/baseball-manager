@@ -71,6 +71,10 @@ test('D1 catalog pages preserve career bytes, match canonical rows and fall back
       catalog = new CatalogRepository();
     const packed = await catalog.getWorld(meter.db);
     assert.ok(meter.total().rowsRead < 100, JSON.stringify(meter.total()));
+    const lee = packed.players.find((p) => p.original === 'Jung Hoo Lee');
+    assert.equal(lee.years, 4);
+    assert.equal(lee.catalogContract.throughYear, 2029);
+    assert.ok(lee.catalogContract.source.startsWith('https://www.mlb.com/'));
     meter.reset();
     assert.equal(await catalog.getWorld(meter.db), packed);
     assert.ok(meter.total().rowsRead <= 3);

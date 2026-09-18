@@ -229,7 +229,8 @@ test('Retirement archives careers, supplies coaching candidates and replenishes 
     club = 'kbo-lotte';
   const pitchers = e.rosterFor(g, club).filter((p) => p.pos === 'P');
   for (const p of pitchers) {
-    p.age = 44;
+    p.age = 45;
+    p.years = 1;
     sim.commit(g, p);
   }
   const retiredId = pitchers[0].id;

@@ -54,6 +54,7 @@ export type WorldPlayerState = {
   ratings?: number[];
   salary?: number;
   years?: number;
+  contractSigned?: Player['contractSigned'];
   age?: number;
   condition?: number;
   stint?: CareerBaseline;
